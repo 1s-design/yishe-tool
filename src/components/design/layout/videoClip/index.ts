@@ -87,6 +87,23 @@ function stopRecord() {
 
 export const animations = [
     {
+        title: "静止动画",
+        handle() {
+            if (isRecordingEnabled.value) {
+                startRecord("静止动画");
+            }
+            startAnimation();
+            
+            // 1秒后结束动画和录制
+            setTimeout(() => {
+                if (isRecordingEnabled.value) {
+                    stopRecord();
+                }
+                endAnimation();
+            }, 1000);
+        },
+    },
+    {
         title: "拉远再拉近",
         handle() {
             if (isRecordingEnabled.value) {
