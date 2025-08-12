@@ -2,7 +2,7 @@
  * @Author: chan-max jackieontheway666@gmail.com
  * @Date: 2025-05-20 06:50:38
  * @LastEditors: chan-max jackieontheway666@gmail.com
- * @LastEditTime: 2025-07-15 08:06:18
+ * @LastEditTime: 2025-08-13 07:28:26
  * @FilePath: /1s/src/components/design/layout/material/drawer.vue
  * @Description: 材质选择drawer组件
 -->
@@ -20,28 +20,27 @@
     :before-close="handleClose"
   >
     <div class="material-drawer-content">
-      <div
-        style="padding: 0 12px; height: 64px; width: 100%"
-        class="flex justify-between items-center"
-      >
-        <el-input style="width: 100%" placeholder="搜索材质" v-model="search"></el-input>
+      <!-- 搜索栏 -->
+      <div class="search-section">
+        <el-input placeholder="搜索材质" v-model="search"></el-input>
       </div>
       
+      <!-- 当前使用材质 -->
       <div
         v-if="currentModelController.state.material.textureInfo"
-        style="padding: 0 12px; margin-bottom: 12px"
-        class="flex items-center"
+        class="current-material-section"
       >
-        <span style="margin-right: 8px; font-size: 14px; color: #666;">正在使用:</span>
+        <span class="current-material-label">正在使用:</span>
         <s1-img
           :src="currentModelController.state?.material.textureInfo?.url"
-          style="width: 32px; height: 32px; margin-right: 8px"
+          class="current-material-image"
           fit="cover"
         ></s1-img>
         <el-button @click="removeMaterial" size="small" type="danger" plain> 移除 </el-button>
       </div>
       
-      <div style="height: calc(100% - 64px - 44px - 60px); overflow: auto; padding: 12px">
+      <!-- 材质列表区域 -->
+      <div class="material-list-container">
         <div class="material-list">
           <template v-for="(item, index) in list" :key="index">
             <div class="material-item-row">
@@ -49,7 +48,7 @@
               <div class="material-image">
                 <s1-img
                   :src="item.url"
-                  style="background: #f7f7f7; height: 80px; width: 80px; border-radius: 8px"
+                  class="material-thumbnail"
                   fit="cover"
                 ></s1-img>
               </div>
@@ -70,17 +69,17 @@
           </template>
         </div>
         
-        <div v-if="loading" style="text-align: center; padding: 20px; color: #999;">
+        <div v-if="loading" class="loading-state">
           加载中...
         </div>
         
-        <div v-if="isEmpty" style="text-align: center; padding: 20px; color: #999;">
+        <div v-if="isEmpty" class="empty-state">
           暂无材质
         </div>
       </div>
       
       <!-- 分页组件 -->
-      <div style="padding: 12px; border-top: 1px solid #eee; overflow: hidden;">
+      <div class="pagination-section">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -185,6 +184,40 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.search-section {
+  padding: 12px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.current-material-section {
+  padding: 0 12px 12px 12px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  
+  .current-material-label {
+    margin-right: 8px;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .current-material-image {
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+  }
+}
+
+.material-list-container {
+  flex: 1;
+  overflow: auto;
+  padding: 0 12px;
+  min-height: 0; /* 确保flex子元素可以正确收缩 */
+}
+
 .material-list {
   display: flex;
   flex-direction: column;
@@ -212,6 +245,13 @@ onMounted(() => {
 
 .material-image {
   flex-shrink: 0;
+}
+
+.material-thumbnail {
+  background: #f7f7f7;
+  height: 80px;
+  width: 80px;
+  border-radius: 8px;
 }
 
 .material-info-section {
@@ -254,5 +294,19 @@ onMounted(() => {
 .material-actions {
   margin-top: 8px;
   flex-shrink: 0;
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.pagination-section {
+  padding: 12px 12px 4px 12px;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+  background: #fff;
 }
 </style> 
