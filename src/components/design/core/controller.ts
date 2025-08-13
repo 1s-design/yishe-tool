@@ -592,9 +592,6 @@ export class ModelController {
         if (this.mesh) {
             this.mesh.material = material
         }
-        
-        // 优化白色材质显示效果
-        this.optimizeWhiteMaterial()
     }
 
     // 设置背景颜色
@@ -1571,23 +1568,7 @@ export class ModelController {
         this.setBgColor(color, opacity);
     }
 
-    // 优化白色材质的显示效果
-    public optimizeWhiteMaterial() {
-        if (this.material) {
-            // 确保白色材质能正确显示
-            this.material.envMapIntensity = 1.8;  // 增强环境反射，让白色更纯
-            this.material.roughness = Math.max(0.05, this.material.roughness || 0.8); // 降低粗糙度，增加反射
-            this.material.metalness = Math.min(0.05, this.material.metalness || 0.0); // 进一步降低金属度
-            
-            // 如果是白色材质，增强其纯度和亮度
-            if (this.material.color && this.material.color.getHexString() === 'ffffff') {
-                this.material.color.setHex(0xffffff);
-                // 轻微增加发光，让白色更纯
-                this.material.emissive = new Color(0xffffff);
-                this.material.emissiveIntensity = 0.1;
-            }
-        }
-    }
+
 }
 
 

@@ -43,11 +43,16 @@ export async function createMaterialFromOptions(options) {
         color,
         metalness,
         roughness,
-        textureRepeat
+        textureRepeat,
+        colorBlend = false // 新增：是否让颜色与纹理混合
     } = options
 
-    color ||= '#ffffff'
-    
+    // 如果有纹理贴图且不需要颜色混合，则不设置color
+    let finalColor = null
+    if (colorBlend || !textureInfo) {
+        finalColor = color || '#ffffff'
+    }
+
     // message.loading({ content: `正在生成材质...`, key: 'loadingmaterial', duration: 0 });
 
     let map = null
@@ -84,7 +89,7 @@ export async function createMaterialFromOptions(options) {
         metalness: metalness,    // 金属
         roughness: roughness,   // 粗糙度
         side: DoubleSide,
-        color: color,
+        color: finalColor, // 根据设置决定是否使用颜色
         emissive: null, // 发光色
         opacity: 1,
         transparent: true, // 设置该属性 才可以设置 opacity
