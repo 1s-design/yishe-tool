@@ -144,7 +144,7 @@ import { s1Confirm } from "@/common/message";
 import { message } from "ant-design-vue";
 import { useLoginStatusStore } from "@/store/stores/login";
 import { fontAutoplacementTags } from "@/components/design/components/tagsInput";
-import { getFontList } from "@/api";
+import { getFontList, deleteFontTemplate } from "@/api";
 
 const loginStore = useLoginStatusStore();
 
@@ -204,7 +204,7 @@ async function deleteItem(item) {
     content: "确认删除该字体？",
   });
 
-  await Api.deleteFile(item.id);
+  await deleteFontTemplate({ id: item.id });
   reset();
   await getList();
   message.success("删除成功");

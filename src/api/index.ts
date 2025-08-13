@@ -408,6 +408,11 @@ export const updateFontTemplate = (params) => new Promise(async (resolve, reject
   resolve(res)
 })
 
+export const deleteFontTemplate = (data) => new Promise(async (resolve, reject) => {
+  let res = await apiInstance.post('/api/font-template/delete', data)
+  resolve(res.data.data)
+})
+
 /* 
   获取商品模型列表
 */
