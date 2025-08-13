@@ -674,8 +674,8 @@ export class ModelController {
     public initSceneLight() {
         this.clearLights();
         
-        // 主光源 - 模拟自然日光，使用暖色调，适当降低亮度避免过曝
-        const mainLight = new DirectionalLight(0xfff8f0, 1.5);
+        // 主光源 - 使用纯白色，模拟自然日光，提高强度
+        const mainLight = new DirectionalLight(0xffffff, 1.4);
         mainLight.position.set(2, 3, 2);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 2048;
@@ -688,68 +688,44 @@ export class ModelController {
         mainLight.shadow.camera.bottom = -10;
         this.scene.add(mainLight);
         
-        // 填充光 - 模拟环境反射光，使用冷色调平衡，适当降低强度
-        const fillLight = new DirectionalLight(0xe8f4fd, 1.0);
+        // 填充光 - 使用纯白色，模拟环境反射光，提高强度
+        const fillLight = new DirectionalLight(0xffffff, 0.9);
         fillLight.position.set(-1, 2, -1);
         this.scene.add(fillLight);
         
-        // 环境光 - 模拟全局环境光照，使用中性白色，适当降低强度
-        const ambientLight = new AmbientLight(0xffffff, 0.6);
+        // 环境光 - 使用纯白色，提供基础照明，提高强度
+        const ambientLight = new AmbientLight(0xffffff, 0.7);
         this.scene.add(ambientLight);
         
-        // 顶部补光 - 模拟天空光，适当降低强度
-        const topLight = new DirectionalLight(0xffffff, 1.2);
+        // 顶部补光 - 使用纯白色，模拟天空光，提高强度
+        const topLight = new DirectionalLight(0xffffff, 1.1);
         topLight.position.set(0, 4, 0);
         this.scene.add(topLight);
         
-        // 前方补光 - 增强正面细节，适当降低强度
-        const frontLight = new DirectionalLight(0xffffff, 0.7);
+        // 前方补光 - 使用纯白色，增强正面细节，提高强度
+        const frontLight = new DirectionalLight(0xffffff, 0.6);
         frontLight.position.set(0, 1, 2);
         this.scene.add(frontLight);
         
-        // 侧光1 - 左侧补光，适当降低强度
-        const sideLight1 = new DirectionalLight(0xfff8f0, 0.8);
+        // 侧光1 - 使用纯白色，左侧补光，提高强度
+        const sideLight1 = new DirectionalLight(0xffffff, 0.7);
         sideLight1.position.set(3, 1, 0);
         this.scene.add(sideLight1);
         
-        // 侧光2 - 右侧补光，适当降低强度
-        const sideLight2 = new DirectionalLight(0xfff8f0, 0.8);
+        // 侧光2 - 使用纯白色，右侧补光，提高强度
+        const sideLight2 = new DirectionalLight(0xffffff, 0.7);
         sideLight2.position.set(-3, 1, 0);
         this.scene.add(sideLight2);
         
-        // 点光源 - 模拟局部高光，适当降低强度
-        const pointLight = new PointLight(0xffffff, 1.2, 15);
+        // 点光源 - 使用纯白色，模拟局部高光，提高强度
+        const pointLight = new PointLight(0xffffff, 1.0, 15);
         pointLight.position.set(0, 2, 3);
         this.scene.add(pointLight);
         
-        // 暖色调补光 - 模拟暖色环境光，适当降低强度
-        const warmLight = new PointLight(0xfff4e6, 0.4, 10);
-        warmLight.position.set(-2, 1, -2);
-        this.scene.add(warmLight);
-        
-        // 冷色调补光 - 平衡暖色光，适当降低强度
-        const coolLight = new PointLight(0xe8f4fd, 0.3, 8);
-        coolLight.position.set(2, 1, -2);
-        this.scene.add(coolLight);
-        
-        // 底部补光 - 减少阴影过重，适当降低强度
+        // 底部补光 - 使用纯白色，减少阴影过重，提高强度
         const bottomLight = new DirectionalLight(0xffffff, 0.3);
         bottomLight.position.set(0, -2, 0);
         this.scene.add(bottomLight);
-        
-        // 额外的前上方补光 - 增强正面亮度和色彩饱和度，适当降低强度
-        const frontTopLight = new DirectionalLight(0xffffff, 0.6);
-        frontTopLight.position.set(0, 3, 1.5);
-        this.scene.add(frontTopLight);
-        
-        // 额外的侧前方补光 - 增强侧面色彩表现，适当降低强度
-        const sideFrontLight1 = new DirectionalLight(0xfff8f0, 0.5);
-        sideFrontLight1.position.set(2, 1, 1);
-        this.scene.add(sideFrontLight1);
-        
-        const sideFrontLight2 = new DirectionalLight(0xfff8f0, 0.5);
-        sideFrontLight2.position.set(-2, 1, 1);
-        this.scene.add(sideFrontLight2);
         
         this.lights = {
             main: mainLight,
@@ -760,12 +736,7 @@ export class ModelController {
             side1: sideLight1,
             side2: sideLight2,
             point: pointLight,
-            warm: warmLight,
-            cool: coolLight,
-            bottom: bottomLight,
-            frontTop: frontTopLight,
-            sideFront1: sideFrontLight1,
-            sideFront2: sideFrontLight2
+            bottom: bottomLight
         };
     }
     
