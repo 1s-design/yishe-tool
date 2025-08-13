@@ -70,6 +70,9 @@ export async function createMaterialFromOptions(options) {
 
         console.log('服装材质加载url',textrue.url)
 
+        // 设置正确的颜色空间，与贴纸材质保持一致
+        texture.colorSpace = SRGBColorSpace;
+
         // 该段代码可以将纹理均匀的显示
         texture.wrapS = RepeatWrapping; // 设置水平重复
         texture.wrapT = RepeatWrapping; // 设置垂直重复
@@ -93,7 +96,12 @@ export async function createMaterialFromOptions(options) {
         emissive: null, // 发光色
         opacity: 1,
         transparent: true, // 设置该属性 才可以设置 opacity
-        envMapIntensity: 1.5  // 增强环境反射强度，让白色更纯
+        depthTest: true, // 启用深度测试，与贴纸材质保持一致
+        depthWrite: true, // 启用深度写入
+        polygonOffset: true, // 启用多边形偏移，与贴纸材质保持一致
+        polygonOffsetFactor: -1, // 多边形偏移因子
+        polygonOffsetUnits: 1, // 多边形偏移单位
+        envMapIntensity: 1.0  // 降低环境反射强度，让材质更自然
     });
 
     // message.destroy('loadingmaterial');
