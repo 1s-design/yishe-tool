@@ -1,7 +1,7 @@
 <template>
-  <div class="flex">
+  <div class="flex h-full">
     <div
-      style="width: 360px; height: 540px; padding: 1rem; row-gap: 1rem; overflow: auto"
+      style="width: 400px; height: 100%; padding: 1.5rem; row-gap: 1.5rem; overflow: auto; border-right: 1px solid #eee;"
       class="flex flex-col"
     >
       <div class="label">{{ activeFont.name }} 预览</div>
@@ -10,19 +10,20 @@
         class="flex items-center justify-center"
         style="
           width: 100%;
-          height: 240px;
+          height: 300px;
           background: rgba(115, 0, 255, 0.05);
           overflow: hidden;
+          border-radius: 8px;
         "
       >
-        <div ref="previewTextareaRef" contenteditable style="max-width: 300px">
+        <div ref="previewTextareaRef" contenteditable style="max-width: 350px">
           未选择字体
         </div>
       </div>
       <div class="label">文字预览大小</div>
       <a-slider id="test" v-model:value="previewFontSize" :max="100" :min="10" />
       <div class="label">描述</div>
-      <div>{{ activeFont.description }}</div>
+      <div class="description-text">{{ activeFont.description }}</div>
       <div class="label">标签</div>
       <div class="flex flex-wrap" style="gap: 1rem 0.5rem">
         <template v-for="t in activeFont.keywords?.split(',')">
@@ -30,8 +31,8 @@
         </template>
       </div>
     </div>
-    <div style="width: 720px">
-      <div style="padding: 1rem" class="flex items-center justify-between">
+    <div style="flex: 1; height: 100%; display: flex; flex-direction: column;">
+      <div style="padding: 1.5rem; border-bottom: 1px solid #eee;" class="flex items-center justify-between">
         <div>共 {{ total }} 条</div>
         <div style="flex: 1"></div>
         <el-button size="small" link :icon="TopRight" @click="goUpload">
@@ -41,28 +42,33 @@
           查看我的上传
         </el-button>
       </div>
-      <s1-scrollbar height="540px">
-        <div
-          v-infinite-scroll="getList"
-          :infinite-scroll-distance="150"
-          style="padding: 1rem"
-        >
-          <div v-for="item in list" class="item" @click="select(item)">
-            <div class="item-title flex items-center justify-between">
-              <span style="font-size: 1.5rem; color: #666"> {{ item.name }}</span>
-              <span style="font-size: 1.2rem; color: #999"> {{ item.createTime }} </span>
-              <div style="flex: 1"></div>
+      <div style="flex: 1; overflow: hidden;">
+        <s1-scrollbar height="100%">
+          <div
+            v-infinite-scroll="getList"
+            :infinite-scroll-distance="150"
+            style="padding: 1.5rem"
+          >
+            <div class="font-grid">
+              <div v-for="item in list" class="font-item" :class="{ 'font-item-selected': activeFont.id === item.id }" @click="select(item)">
+                <div class="font-item-image">
+                  <s1-image
+                    :src="item.thumbnail"
+                    fit="contain"
+                    style="width: 100%; height: 100%;"
+                  ></s1-image>
+                </div>
+                <div class="font-item-info">
+                  <div class="font-item-name">{{ item.name }}</div>
+                  <div class="font-item-time">{{ item.createTime }}</div>
+                </div>
+              </div>
             </div>
-            <s1-image
-              :src="item.thumbnail"
-              fit="contain"
-              style="width: auto; height: 48px"
-            ></s1-image>
-          </div>
 
-          <s1-loadingBottom v-if="loading"></s1-loadingBottom>
-        </div>
-      </s1-scrollbar>
+            <s1-loadingBottom v-if="loading"></s1-loadingBottom>
+          </div>
+        </s1-scrollbar>
+      </div>
     </div>
   </div>
 </template>
@@ -116,25 +122,90 @@ function goMine() {
 </script>
 
 <style lang="less" scoped>
-.item {
+.font-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.font-item {
   cursor: pointer;
-  padding: 2rem;
-  border-bottom: 1px solid #eee;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  row-gap: 1rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: #fff;
+  aspect-ratio: 1 / 1.4;
 
   &:hover {
-    background-color: #eee;
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    transform: translateY(-2px);
+  }
+
+  &.font-item-selected {
+    border-color: #007bff;
+    background: #f0f8ff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    
+    .font-item-name {
+      color: #007bff;
+      font-weight: 600;
+    }
+    
+    .font-item-image {
+      background: #e6f3ff;
+    }
   }
 }
 
-.item-title {
-  column-gap: 2rem;
+.font-item-image {
+  width: 100%;
+  height: 70%;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #eee;
+}
+
+.font-item-info {
+  padding: 0.75rem;
+  height: 30%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.font-item-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.font-item-time {
+  font-size: 0.8rem;
+  color: #999;
+  line-height: 1.2;
 }
 
 .label {
   font-size: 1.2rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.description-text {
+  color: #666;
+  line-height: 1.5;
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid #007bff;
 }
 </style>
