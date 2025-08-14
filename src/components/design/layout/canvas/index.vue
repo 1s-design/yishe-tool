@@ -137,7 +137,7 @@
     :centered="true"
     :destroyOnClose="true"
     width="540px"
-    title="保存该贴纸"
+    title="保存到图片素材库"
     okText="保存"
     cancelText="取消"
     @ok="doUpload"
