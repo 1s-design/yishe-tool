@@ -109,7 +109,7 @@
                 </div>
               </div>
               <a-alert
-                message="该预览仅用于本地查看字体效果，缩略图将由系统自动生成"
+                message="该图片会作为字体预览图，并且可以手动调整内容"
                 type="info"
               />
             </template>
@@ -209,7 +209,9 @@ import {
   imageAutoplacementTags,
 } from "@/components/design/components/tagsInput/index.ts";
 
-
+import { htmlToPngFile } from "@/common/transform";
+import {} from "@/components/design/utils/utils";
+import { toPng } from "html-to-image";
 import Utils from "@/common/utils";
 import { useLoginStatusStore } from "@/store/stores/login";
 import { filesize } from "filesize";
@@ -374,6 +376,7 @@ async function uploadSingleFile(file) {
   if (Utils.type.isImageName(file.name)) {
     const fileCos = await uploadToCOS({ file: file.raw });
 
+    debugger;
     const params = {
       name: file.customName,
       size: file.size,
@@ -390,7 +393,13 @@ async function uploadSingleFile(file) {
 
 
   if (Utils.type.isFontName(file.name)) {
-    /* 字体文件只上传到字体模板，不生成缩略图 */
+    /* 需要生成缩略图 */
+
+    const png = await htmlToPngFile(fileBarFontPreviewRef.value);
+
+    const thumbnailCos = await uploadToCOS({
+      file: png,
+    });
 
     const fileCos = await uploadToCOS({ file: file.raw });
 
@@ -399,6 +408,7 @@ async function uploadSingleFile(file) {
       name: file.customName || file.raw.name,
       size: file.size,
       keywords,
+      thumbnail: thumbnailCos.url,
       description: file.description,
       isPublic: file.isPublic,
       uploaderId: loginStore.userInfo.id,
