@@ -1,5 +1,5 @@
 <template>
-    <div id="basic-canvas-canvas-container" v-if="show">
+    <div id="basic-canvas-canvas-container" v-if="show" ref="panzoomContainerRef">
         <div ref="panzoomRef">
             <canvass></canvass>
         </div>
@@ -35,6 +35,8 @@ import {FolderOpenOutlined} from '@ant-design/icons-vue'
 
 const panzoomRef = ref()
 
+const panzoomContainerRef = ref()
+
 let canvasController = new CanvasController({
     max: 320
 });
@@ -54,10 +56,17 @@ watch(show, async (val) => {
     await Utils.sleep(33)
 
     if (val && panzoomRef.value) {
-        panzoom(panzoomRef.value, {
+        const pz = panzoom(panzoomRef.value, {
             smoothScroll: false,
-            maxZoom: 2,
-            minZoom: .5
+            maxZoom: 1,
+            minZoom: .01,
+            initialZoom: 1
+        })
+        
+        // 设置初始缩放后，立即居中画布
+        nextTick(() => {
+       
+            pz.centerOn(panzoomContainerRef.value)
         })
 
         // // 当缩放尺寸过小，会导致子元素不显示

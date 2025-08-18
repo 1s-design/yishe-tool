@@ -30,11 +30,11 @@ export function createDefaultCanvasChildcanvasStickerOptions() {
         type: 'canvas',
         width:{
             unit:'px',
-            value:500
+            value:1000
         },
         height:{
             unit:'px',
-            value:500
+            value:1000
         },
         undeletable: true, // 不可删除
         filter: createFilterDefaultOptions('px'),
