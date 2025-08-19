@@ -60,13 +60,11 @@ watch(show, async (val) => {
             smoothScroll: false,
             maxZoom: 1,
             minZoom: .01,
-            initialZoom: 1
         })
         
         // 设置初始缩放后，立即居中画布
         nextTick(() => {
-       
-            pz.centerOn(panzoomContainerRef.value)
+    
         })
 
         // // 当缩放尺寸过小，会导致子元素不显示

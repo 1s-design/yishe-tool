@@ -5,11 +5,17 @@
         <div class="flex flex-wrap" style="gap: 12px">
           <div
             v-for="item in builtInClothingColors"
-            :style="{ background: item.value }"
-            class="color-item"
-            :title="item.label"
+            :key="item.value"
+            class="color-item-wrapper"
             @click="currentModelController.state.material.color = item.value"
-          ></div>
+          >
+            <div
+              :style="{ background: item.value }"
+              class="color-item"
+              :title="item.label"
+            ></div>
+            <div class="color-label">{{ item.label }}</div>
+          </div>
         </div>
       </el-form-item>
 
@@ -86,18 +92,38 @@ import { builtInClothingColors } from "./index.ts";
   height: 100%;
 }
 
+.color-item-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
 .color-item {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px,
     rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
-  border-radius: 4px;
-  cursor: pointer;
+  border-radius: 3px;
+  margin: 4px 0 6px 0;
 
   &:hover {
     box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px,
       rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
-    transform: scale(1.1);
   }
+}
+
+.color-label {
+  font-size: 9px;
+  color: #999;
+  text-align: center;
+  line-height: 1.1;
+  max-width: 50px;
+  word-break: break-all;
 }
 </style>
