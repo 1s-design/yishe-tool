@@ -10,7 +10,7 @@ import { message } from "ant-design-vue";
 // 加载字体
 
 
-export async function fetchFontFace(info) {
+export async function fetchFontFace(info: FontInfo) {
 
     // var file
 
@@ -70,7 +70,14 @@ export async function fetchFontFace(info) {
     cacheFontFamilyLoadingMap[id] = false
 }
 
-export async function fetchFontFaceWithMessage(info) {
+interface FontInfo {
+  url: string;
+  id: string;
+  name: string;
+  size?: number;
+}
+
+export async function fetchFontFaceWithMessage(info: FontInfo) {
 
     const { url, id, name, size } = info;
     try {
