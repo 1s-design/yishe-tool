@@ -7,12 +7,24 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <a-modal v-model:open="showFontModal" title="字体库" width="100%" class="font-a-modal" @ok="handleOk" :footer="null" :centered="true" wrap-class-name="full-modal">
+  <a-modal 
+    v-model:open="showFontModal" 
+    title="字体库" 
+    width="100%" 
+    class="font-a-modal" 
+    @ok="handleOk" 
+    :footer="null" 
+    :centered="true" 
+    wrap-class-name="full-modal"
+    @afterOpen="onAfterOpen"
+    @afterClose="onAfterClose"
+  >
     <page></page>
   </a-modal>
 </template>
 <script setup>
 import { ref, onBeforeMount } from "vue";
+import { Modal } from "ant-design-vue";
 import { getFontListApi } from "@/api";
 import { showFontModal } from "../../store.ts";
 import { usePaging } from "@/hooks/data/paging.ts";
@@ -23,10 +35,19 @@ function handleOk(){
   
 }
 
+function onAfterOpen() {
+  console.log('Font modal opened successfully');
+}
+
+function onAfterClose() {
+  console.log('Font modal closed');
+}
+
 </script>
 <style lang="less">
 .font-a-modal {
   overflow:hidden;
+  z-index: 10000 !important;
 }
 
 .full-modal {
@@ -35,6 +56,7 @@ function handleOk(){
     top: 0;
     padding-bottom: 0;
     margin: 0;
+    z-index: 10000 !important;
   }
   .ant-modal-content {
     display: flex;
@@ -44,6 +66,9 @@ function handleOk(){
   .ant-modal-body {
     flex: 1;
     max-height: calc(100vh - 80px);
+  }
+  .ant-modal-mask {
+    z-index: 9999 !important;
   }
 }
 </style>

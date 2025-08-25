@@ -66,7 +66,7 @@
           </el-option>
         </template>
       </el-select>
-      <el-button size="small" @click="showFontModal = true"> 字体库 </el-button>
+      <el-button size="small" @click="openFontModal"> 字体库 </el-button>
       
       <!-- 缩略图Popover -->
       <el-popover
@@ -112,11 +112,10 @@ import { getFontListApi } from "@/api";
 import desimage from "@/components/image.vue";
 import Utils from "@/common/utils";
 import { fetchFontFaceWithMessage } from "./index.ts";
-import { showUpload } from "@/components/design/store";
+import { showUpload, showFontModal } from "@/components/design/store";
 import { GlobalConst } from "@/types/index.ts";
 import { useDebounceFn, useThrottleFn } from "@vueuse/core";
 import { TopRight, Loading } from "@element-plus/icons-vue";
-import { showFontModal } from "@/components/design/store";
 import { getFontList } from "@/api";
 
 interface FontItem {
@@ -153,6 +152,16 @@ const displayList = computed(() => {
 function emitUpload() {
   selectRef.value.toggleMenu(false);
   showUpload.value = true;
+}
+
+function openFontModal() {
+  try {
+    console.log('Opening font modal...');
+    showFontModal.value = true;
+    console.log('showFontModal value:', showFontModal.value);
+  } catch (error) {
+    console.error('Error opening font modal:', error);
+  }
 }
 
 // 显示缩略图
