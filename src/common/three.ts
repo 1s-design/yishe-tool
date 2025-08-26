@@ -47,11 +47,20 @@ function findMainMeshFromGltfAndMergeGeometries(gltf) {
             // 记录当前 geometry 的索引范围
             const count = geometry.index ? geometry.index.count : geometry.attributes.position.count;
             geometries.push(geometry);
-            materials.push(child.material);
             
-            // 保存原始材质信息
+            // 克隆材质以避免引用问题
+            let clonedMaterial;
+            if (Array.isArray(child.material)) {
+                clonedMaterial = child.material.map(mat => mat.clone());
+            } else {
+                clonedMaterial = child.material.clone();
+            }
+            
+            materials.push(clonedMaterial);
+            
+            // 保存原始材质信息，确保材质属性正确
             rawMaterials.push({
-                material: child.material,
+                material: clonedMaterial,
                 geometry: child.geometry,
                 matrixWorld: child.matrixWorld.clone(),
                 name: child.name || `mesh_${rawMaterials.length}`

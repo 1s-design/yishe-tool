@@ -590,9 +590,25 @@ export class ModelController {
 
         this.material = material
 
-
         if (this.mesh) {
-            this.mesh.material = this.useRawMaterial? this.rawMaterial : material
+            if (this.useRawMaterial && this.rawMaterial) {
+                // 提取原始材质数组，确保材质属性正确
+                const rawMaterials = this.rawMaterial.map(item => {
+                    if (item.material) {
+                        return item.material;
+                    }
+                    return null;
+                }).filter(Boolean); // 过滤掉无效的材质
+                
+                // 使用修复方法处理材质透明度问题
+                const fixedMaterials = this.fixMaterialTransparency(rawMaterials);
+                this.mesh.material = fixedMaterials;
+                
+                console.log('使用原始材质，已修复透明度问题:', fixedMaterials);
+            } else {
+                this.mesh.material = material;
+                console.log('使用自定义材质:', material);
+            }
         }
     }
 
@@ -781,9 +797,61 @@ export class ModelController {
 
 
     // 是否使用原始材质
-    public useRawMaterial = false
+    public useRawMaterial = true
     // 原始材质
     public rawMaterial = null
+    
+    /**
+     * 检查并修复材质的透明度问题
+     * @param materials 材质数组或单个材质
+     * @returns 修复后的材质
+     */
+    private fixMaterialTransparency(materials) {
+        if (!materials) return materials;
+        
+        if (Array.isArray(materials)) {
+            return materials.map(material => this.fixSingleMaterial(material));
+        } else {
+            return this.fixSingleMaterial(materials);
+        }
+    }
+    
+    /**
+     * 修复单个材质的透明度问题
+     * @param material 材质对象
+     * @returns 修复后的材质
+     */
+    private fixSingleMaterial(material) {
+        if (!material) return material;
+        
+        // 克隆材质以避免修改原始材质
+        const fixedMaterial = material.clone();
+        
+        // 确保材质不透明
+        if (fixedMaterial.transparent !== undefined) {
+            fixedMaterial.transparent = false;
+        }
+        if (fixedMaterial.opacity !== undefined) {
+            fixedMaterial.opacity = 1.0;
+        }
+        
+        // 确保材质可见
+        if (fixedMaterial.visible !== undefined) {
+            fixedMaterial.visible = true;
+        }
+        
+        // 设置默认的材质属性
+        if (fixedMaterial.side === undefined) {
+            fixedMaterial.side = 0; // FrontSide
+        }
+        
+        // 确保材质有正确的颜色
+        if (fixedMaterial.color === undefined) {
+            fixedMaterial.color = { r: 0.5, g: 0.5, b: 0.5 };
+        }
+        
+        return fixedMaterial;
+    }
     
     public async setMainModel(url) {
 
@@ -815,6 +883,24 @@ export class ModelController {
         
         // 输出原始材质信息到控制台（用于调试）
         console.log('原始材质信息已保存:', this.rawMaterial);
+        
+        // 检查原始材质的属性
+        if (this.rawMaterial && this.rawMaterial.length > 0) {
+            console.log('=== 原始材质详细信息 ===');
+            this.rawMaterial.forEach((item, index) => {
+                if (item.material) {
+                    console.log(`材质 ${index}:`, {
+                        name: item.name,
+                        transparent: item.material.transparent,
+                        opacity: item.material.opacity,
+                        visible: item.material.visible,
+                        side: item.material.side,
+                        type: item.material.type
+                    });
+                }
+            });
+            console.log('========================');
+        }
 
         // this.mesh = Utils.three.findMainMeshFromGltf(this.gltf);
 
@@ -1549,6 +1635,28 @@ export class ModelController {
         this.state.canvasBackground.color = color;
         this.state.canvasBackground.opacity = opacity;
         this.setBgColor(color, opacity);
+    }
+
+    /**
+     * 切换是否使用原始材质
+     * @param useRaw 是否使用原始材质
+     */
+    public toggleRawMaterial(useRaw: boolean) {
+        this.useRawMaterial = useRaw;
+        console.log(`切换到${useRaw ? '原始材质' : '自定义材质'}`);
+        
+        // 重新应用材质
+        if (this.mesh) {
+            this.setMaterial();
+        }
+    }
+    
+    /**
+     * 设置是否使用原始材质
+     * @param useRaw 是否使用原始材质
+     */
+    public setUseRawMaterial(useRaw: boolean) {
+        this.toggleRawMaterial(useRaw);
     }
 
 
