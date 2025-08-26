@@ -28,7 +28,7 @@ function findMainMeshFromGltf(gltf) {
 
 
 /**
- * @function 将gltf中的网格合并成一个并返回，保留原始材质信息
+ * @function 将gltf中的网格合并成一个并返回
 */
 
 function findMainMeshFromGltfAndMergeGeometries(gltf) {
@@ -37,7 +37,6 @@ function findMainMeshFromGltfAndMergeGeometries(gltf) {
     let materials = [];
     let groups = [];
     let indexOffset = 0;
-    let rawMaterials = []; // 保存原始材质信息
 
     gltf.scene.traverse((child) => {
         if (child.isMesh) {
@@ -48,15 +47,6 @@ function findMainMeshFromGltfAndMergeGeometries(gltf) {
             const count = geometry.index ? geometry.index.count : geometry.attributes.position.count;
             geometries.push(geometry);
             materials.push(child.material);
-            
-            // 保存原始材质信息
-            rawMaterials.push({
-                material: child.material,
-                geometry: child.geometry,
-                matrixWorld: child.matrixWorld.clone(),
-                name: child.name || `mesh_${rawMaterials.length}`
-            });
-            
             groups.push({
                 start: indexOffset,
                 count: count,
@@ -78,10 +68,7 @@ function findMainMeshFromGltfAndMergeGeometries(gltf) {
     const mergedMesh = new Mesh(merged, materials);
     gltf.scene = mergedMesh;
 
-    return { 
-        mergedMesh,
-        rawMaterials // 返回原始材质信息
-    };
+    return { mergedMesh };
 }
 
 
