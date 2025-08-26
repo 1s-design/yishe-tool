@@ -589,8 +589,10 @@ export class ModelController {
         let material = await createMaterialFromOptions(this.state.material)
 
         this.material = material
+
+
         if (this.mesh) {
-            this.mesh.material = material
+            this.mesh.material = this.useRawMaterial? this.rawMaterial : material
         }
     }
 
@@ -774,11 +776,15 @@ export class ModelController {
         this.removeDecals()
         this.material = null
         this.state.material.textureInfo = null
+        this.rawMaterial = null
     }
 
 
-
-    // 根据url 获取模型
+    // 是否使用原始材质
+    public useRawMaterial = false
+    // 原始材质
+    public rawMaterial = null
+    
     public async setMainModel(url) {
 
         // if(this.gltf){
@@ -803,6 +809,12 @@ export class ModelController {
         // 合并当前模型
         let mesher = Utils.three.findMainMeshFromGltfAndMergeGeometries(this.gltf);
         this.mesh = mesher.mergedMesh
+        
+        // 保存原始材质信息
+        this.rawMaterial = mesher.rawMaterials
+        
+        // 输出原始材质信息到控制台（用于调试）
+        console.log('原始材质信息已保存:', this.rawMaterial);
 
         // this.mesh = Utils.three.findMainMeshFromGltf(this.gltf);
 
@@ -1558,5 +1570,4 @@ export function controllerOpenModelAndReplaceStickers(modelId: string, materialI
 }) {
     return currentModelController.value.openModelAndReplaceStickers(modelId, materialId, options)
 }
-
 
