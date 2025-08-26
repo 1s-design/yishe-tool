@@ -2,7 +2,7 @@
   <div class="content flex flex-col">
     <el-form class="pt-8" label-width="84px" label-position="left" style="margin: 0 24px">
       <!-- 原始材质开关 -->
-      <el-form-item label="原始材质" class="raw-material-switch">
+      <el-form-item label="原始材质">
         <div class="switch-container">
           <el-switch
             v-model="useRawMaterial"
@@ -150,14 +150,23 @@ const isControllerAvailable = computed(() => {
 });
 
 // 监听控制器变化，同步状态
-watch(() => currentModelController.value?.useRawMaterial, (newValue) => {
+watch(() => currentModelController.value?.state?.useRawMaterial, (newValue) => {
+  console.log('=== 监听器触发 ===');
+  console.log('新的 useRawMaterial 值:', newValue);
+  console.log('当前 useRawMaterial.value:', useRawMaterial.value);
+  
   if (newValue !== undefined) {
     useRawMaterial.value = newValue;
+    console.log('已更新 useRawMaterial.value 为:', useRawMaterial.value);
   }
 }, { immediate: true });
 
 // 处理原始材质开关切换
 const handleRawMaterialToggle = async (value: boolean) => {
+  console.log('=== 开关切换事件触发 ===');
+  console.log('新值:', value);
+  console.log('当前控制器:', currentModelController.value);
+  
   if (!currentModelController.value) {
     message.error('模型控制器未初始化');
     return;
@@ -166,11 +175,16 @@ const handleRawMaterialToggle = async (value: boolean) => {
   try {
     isLoading.value = true;
     
-    // 更新控制器状态
+    console.log('调用 setUseRawMaterial 方法...');
+    // 使用正确的方法来切换材质模式
     currentModelController.value.setUseRawMaterial(value);
+    
+    console.log('setUseRawMaterial 调用完成');
     
     // 等待下一个 tick 确保状态更新
     await nextTick();
+    
+    console.log('状态更新后的 useRawMaterial:', currentModelController.value.state.useRawMaterial);
     
     // 显示提示信息
     if (value) {
@@ -214,7 +228,7 @@ const showRawMaterialDetails = () => {
 watch(() => currentModelController.value, (controller) => {
   if (controller) {
     // 同步初始状态
-    useRawMaterial.value = controller.useRawMaterial;
+    useRawMaterial.value = controller.state.useRawMaterial;
   }
 }, { immediate: true });
 </script>
@@ -260,90 +274,74 @@ watch(() => currentModelController.value, (controller) => {
   word-break: break-all;
 }
 
-.raw-material-switch {
-  .el-form-item__content {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+.switch-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.compact-switch {
+  .el-switch__core {
+    height: 16px;
+    min-width: 28px;
+    border-radius: 8px;
+  }
+  
+  .el-switch__button {
+    width: 12px;
+    height: 12px;
   }
 
-  .switch-container {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 1px;
-  }
-
-  .compact-switch {
-    .el-switch__core {
-      height: 16px;
-      min-width: 28px;
-      border-radius: 8px;
-    }
-    
-    .el-switch__button {
-      width: 12px;
-      height: 12px;
-    }
-
-    // 优化标签样式
-    .el-switch__label {
-      font-size: 8px;
-      color: #666;
-      font-weight: 400;
-      line-height: 1;
-      transition: color 0.3s ease;
-    }
-
-    .el-switch__label--left {
-      margin-right: 6px;
-    }
-
-    .el-switch__label--right {
-      margin-left: 6px;
-    }
-
-    // 激活状态的标签样式
-    .el-switch__label.is-active {
-      color: #409eff;
-      font-weight: 500;
-    }
-  }
-
-  .switch-description {
+  // 优化标签样式
+  .el-switch__label {
     font-size: 8px;
     color: #666;
-    line-height: 1.2;
-    margin-left: 50px; // 与开关标签对齐
+    font-weight: 400;
+    line-height: 1;
   }
 
-  .error-tip {
-    font-size: 8px;
-    color: #ef4444;
-    line-height: 1.2;
-    margin-left: 50px; // 与开关标签对齐
+  .el-switch__label--left {
+    margin-right: 4px;
   }
+
+  .el-switch__label--right {
+    margin-left: 4px;
+  }
+}
+
+.switch-description {
+  font-size: 8px;
+  color: #666;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.error-tip {
+  font-size: 8px;
+  color: #ef4444;
+  line-height: 1.2;
+  margin-top: 2px;
 }
 
 .material-info {
   .info-container {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
 
   .info-text {
     font-size: 9px;
     color: #666;
-    line-height: 1.3;
+    line-height: 1.2;
   }
 
   .detail-btn {
     align-self: flex-start;
     font-size: 9px;
-    height: 22px;
-    padding: 0 10px;
+    height: 20px;
+    padding: 0 8px;
   }
 }
 </style>

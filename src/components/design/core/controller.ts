@@ -103,6 +103,7 @@ export class ModelController {
             roughness: .7,   // 粗糙度
             textureRepeat: 2,
         },
+        useRawMaterial: true, // 是否使用原始材质
         // 画布背景色
         canvasBackground: {
             color: '#eee',
@@ -135,6 +136,15 @@ export class ModelController {
 
     public initialCameraPosition = new Vector3();
 
+    // 是否使用原始材质的 getter
+    public get useRawMaterial() {
+        return this.state.useRawMaterial;
+    }
+
+    // 是否使用原始材质的 setter
+    public set useRawMaterial(value: boolean) {
+        this.state.useRawMaterial = value;
+    }
 
     // 是否在模型上点击, 用于在点击事件中判断
     public get isMeshClicked() {
@@ -804,12 +814,11 @@ export class ModelController {
         this.removeDecals()
         this.material = null
         this.state.material.textureInfo = null
+        this.state.useRawMaterial = true; // 重置为默认的原始材质模式
         this.rawMaterial = null
     }
 
 
-    // 是否使用原始材质
-    public useRawMaterial = true
     // 原始材质
     public rawMaterial = null
     
@@ -1680,9 +1689,7 @@ export class ModelController {
         this.toggleRawMaterial(useRaw);
     }
 
-
 }
-
 
 export function controllerOpenModelById(modelId: string, options?: {
     showSuccessMessage?: boolean,
@@ -1699,4 +1706,3 @@ export function controllerOpenModelAndReplaceStickers(modelId: string, materialI
 }) {
     return currentModelController.value.openModelAndReplaceStickers(modelId, materialId, options)
 }
-
