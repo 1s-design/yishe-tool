@@ -1,89 +1,222 @@
 <template>
   <div class="content flex flex-col">
     <el-form class="pt-8" label-width="84px" label-position="left" style="margin: 0 24px">
-      <el-form-item label="服装颜色">
-        <div class="flex flex-wrap" style="gap: 12px">
-          <div
-            v-for="item in builtInClothingColors"
-            :key="item.value"
-            class="color-item-wrapper"
-            @click="currentModelController.state.material.color = item.value"
-          >
-            <div
-              :style="{ background: item.value }"
-              class="color-item"
-              :title="item.label"
-            ></div>
-            <div class="color-label">{{ item.label }}</div>
-          </div>
+      <!-- 原始材质开关 -->
+      <el-form-item label="原始材质" class="raw-material-switch">
+        <div class="switch-container">
+          <el-switch
+            v-model="useRawMaterial"
+            :loading="isLoading"
+            :disabled="!isControllerAvailable"
+            size="small"
+            class="compact-switch"
+            active-text="原始材质"
+            inactive-text="自定义材质"
+            @change="handleRawMaterialToggle"
+          />
+        </div>
+        <div class="switch-description">
+          {{ useRawMaterial ? '保持模型原始外观' : '可调整颜色、纹理等属性' }}
+        </div>
+        <div v-if="!isControllerAvailable" class="error-tip">
+          ⚠️ 模型控制器未初始化，请先加载模型
         </div>
       </el-form-item>
 
-      <el-form-item label="自定义颜色">
-        <el-color-picker v-model="currentModelController.state.material.color" />
-      </el-form-item>
-
-      <el-form-item label="材质纹理">
-        <template v-if="currentModelController.state.material.textureInfo">
-          <div>
-            <s1-img
-              style="background: #f7f7f7; width: 200px; height: 200px"
-              :src="currentModelController.state.material?.textureInfo?.url"
-            ></s1-img>
-            <el-button
-              style="margin-top: 12px"
-              @click="currentModelController.state.material.textureInfo = null"
-              type="danger"
-              plain
-              round
-              >移除当前纹理</el-button
+      <!-- 材质设置区域，仅在非原始材质模式下显示 -->
+      <template v-if="!useRawMaterial">
+        <el-form-item label="服装颜色">
+          <div class="flex flex-wrap" style="gap: 12px">
+            <div
+              v-for="item in builtInClothingColors"
+              :key="item.value"
+              class="color-item-wrapper"
+              @click="currentModelController.state.material.color = item.value"
             >
+              <div
+                :style="{ background: item.value }"
+                class="color-item"
+                :title="item.label"
+              ></div>
+              <div class="color-label">{{ item.label }}</div>
+            </div>
           </div>
-        </template>
-        <template v-else>
-          <el-button
-            @click="viewDisplayController.showMaterialModal = true"
-            type="primary"
-            round
-            >选择一个纹理</el-button
-          >
-        </template>
-      </el-form-item>
-      <el-form-item label="纹理密度">
-        <el-slider
-          :min="1"
-          :max="20"
-          :step="1"
-          v-model="currentModelController.state.material.textureRepeat"
-          size="small"
-        />
-      </el-form-item>
-      <el-form-item label="粗糙度">
-        <el-slider
-          :min="0"
-          :max="1"
-          :step="0.01"
-          v-model="currentModelController.state.material.roughness"
-          size="small"
-        />
-      </el-form-item>
+        </el-form-item>
 
-      <el-form-item label="金属感">
-        <el-slider
-          :min="0"
-          :max="1"
-          :step="0.01"
-          v-model="currentModelController.state.material.metailness"
-          size="small"
-        />
-      </el-form-item>
+        <el-form-item label="自定义颜色">
+          <el-color-picker v-model="currentModelController.state.material.color" />
+        </el-form-item>
+
+        <el-form-item label="材质纹理">
+          <template v-if="currentModelController.state.material.textureInfo">
+            <div>
+              <s1-img
+                style="background: #f7f7f7; width: 200px; height: 200px"
+                :src="currentModelController.state.material?.textureInfo?.url"
+              ></s1-img>
+              <el-button
+                style="margin-top: 12px"
+                @click="currentModelController.state.material.textureInfo = null"
+                type="danger"
+                plain
+                round
+                >移除当前纹理</el-button
+              >
+            </div>
+          </template>
+          <template v-else>
+            <el-button
+              @click="viewDisplayController.showMaterialModal = true"
+              type="primary"
+              round
+              >选择一个纹理</el-button
+            >
+          </template>
+        </el-form-item>
+        <el-form-item label="纹理密度">
+          <el-slider
+            :min="1"
+            :max="20"
+            :step="1"
+            v-model="currentModelController.state.material.textureRepeat"
+            size="small"
+          />
+        </el-form-item>
+        <el-form-item label="粗糙度">
+          <el-slider
+            :min="0"
+            :max="1"
+            :step="0.01"
+            v-model="currentModelController.state.material.roughness"
+            size="small"
+          />
+        </el-form-item>
+
+        <el-form-item label="金属感">
+          <el-slider
+            :min="0"
+            :max="1"
+            :step="0.01"
+            v-model="currentModelController.state.material.metailness"
+            size="small"
+          />
+        </el-form-item>
+      </template>
+
+      <!-- 原始材质信息显示 -->
+      <template v-if="useRawMaterial">
+        <el-form-item label="材质信息" class="material-info">
+          <div class="info-container">
+            <div class="info-text">
+              当前使用原始材质，共 {{ rawMaterialCount }} 个材质
+            </div>
+            <el-button
+              @click="showRawMaterialDetails"
+              type="info"
+              plain
+              size="mini"
+              round
+              class="detail-btn"
+            >
+              查看详情
+            </el-button>
+          </div>
+        </el-form-item>
+      </template>
     </el-form>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue';
 import { viewDisplayController, currentModelController } from "@/components/design/store";
 import { builtInClothingColors } from "./index.ts";
+import { message } from 'ant-design-vue';
+
+// 响应式的原始材质状态
+const useRawMaterial = ref(currentModelController.value?.useRawMaterial || false);
+
+// 加载状态
+const isLoading = ref(false);
+
+// 计算原始材质数量
+const rawMaterialCount = computed(() => {
+  return currentModelController.value?.rawMaterial?.length || 0;
+});
+
+// 检查控制器是否可用
+const isControllerAvailable = computed(() => {
+  return !!currentModelController.value;
+});
+
+// 监听控制器变化，同步状态
+watch(() => currentModelController.value?.useRawMaterial, (newValue) => {
+  if (newValue !== undefined) {
+    useRawMaterial.value = newValue;
+  }
+}, { immediate: true });
+
+// 处理原始材质开关切换
+const handleRawMaterialToggle = async (value: boolean) => {
+  if (!currentModelController.value) {
+    message.error('模型控制器未初始化');
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+    
+    // 更新控制器状态
+    currentModelController.value.setUseRawMaterial(value);
+    
+    // 等待下一个 tick 确保状态更新
+    await nextTick();
+    
+    // 显示提示信息
+    if (value) {
+      message.success('已切换到原始材质模式');
+    } else {
+      message.success('已切换到自定义材质模式');
+    }
+  } catch (error) {
+    console.error('切换材质模式失败:', error);
+    message.error('切换材质模式失败');
+    // 恢复开关状态
+    useRawMaterial.value = !value;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// 显示原始材质详情
+const showRawMaterialDetails = () => {
+  if (currentModelController.value?.rawMaterial) {
+    const details = currentModelController.value.rawMaterial.map((item, index) => ({
+      index: index + 1,
+      name: item.name || `材质${index + 1}`,
+      type: item.material?.type || '未知',
+      transparent: item.material?.transparent || false,
+      opacity: item.material?.opacity || 1,
+      visible: item.material?.visible !== false
+    }));
+    
+    console.log('=== 原始材质详情 ===');
+    console.table(details);
+    console.log('====================');
+    
+    message.info('材质详情已输出到控制台，请按 F12 查看');
+  } else {
+    message.warning('暂无原始材质信息');
+  }
+};
+
+// 监听控制器实例变化
+watch(() => currentModelController.value, (controller) => {
+  if (controller) {
+    // 同步初始状态
+    useRawMaterial.value = controller.useRawMaterial;
+  }
+}, { immediate: true });
 </script>
 
 <style scoped lang="less">
@@ -125,5 +258,92 @@ import { builtInClothingColors } from "./index.ts";
   line-height: 1.1;
   max-width: 50px;
   word-break: break-all;
+}
+
+.raw-material-switch {
+  .el-form-item__content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .switch-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 1px;
+  }
+
+  .compact-switch {
+    .el-switch__core {
+      height: 16px;
+      min-width: 28px;
+      border-radius: 8px;
+    }
+    
+    .el-switch__button {
+      width: 12px;
+      height: 12px;
+    }
+
+    // 优化标签样式
+    .el-switch__label {
+      font-size: 8px;
+      color: #666;
+      font-weight: 400;
+      line-height: 1;
+      transition: color 0.3s ease;
+    }
+
+    .el-switch__label--left {
+      margin-right: 6px;
+    }
+
+    .el-switch__label--right {
+      margin-left: 6px;
+    }
+
+    // 激活状态的标签样式
+    .el-switch__label.is-active {
+      color: #409eff;
+      font-weight: 500;
+    }
+  }
+
+  .switch-description {
+    font-size: 8px;
+    color: #666;
+    line-height: 1.2;
+    margin-left: 50px; // 与开关标签对齐
+  }
+
+  .error-tip {
+    font-size: 8px;
+    color: #ef4444;
+    line-height: 1.2;
+    margin-left: 50px; // 与开关标签对齐
+  }
+}
+
+.material-info {
+  .info-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .info-text {
+    font-size: 9px;
+    color: #666;
+    line-height: 1.3;
+  }
+
+  .detail-btn {
+    align-self: flex-start;
+    font-size: 9px;
+    height: 22px;
+    padding: 0 10px;
+  }
 }
 </style>

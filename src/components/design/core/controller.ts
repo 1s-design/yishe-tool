@@ -586,12 +586,17 @@ export class ModelController {
     // 当前使用的材质
     public material = null
     async setMaterial() {
+        console.log('=== 开始设置材质 ===');
+        console.log('当前 useRawMaterial 状态:', this.useRawMaterial);
+        
         let material = await createMaterialFromOptions(this.state.material)
-
         this.material = material
 
         if (this.mesh) {
             if (this.useRawMaterial && this.rawMaterial) {
+                console.log('使用原始材质模式');
+                console.log('原始材质数量:', this.rawMaterial.length);
+                
                 // 提取原始材质数组，确保材质属性正确
                 const rawMaterials = this.rawMaterial.map(item => {
                     if (item.material) {
@@ -600,16 +605,23 @@ export class ModelController {
                     return null;
                 }).filter(Boolean); // 过滤掉无效的材质
                 
+                console.log('有效原始材质数量:', rawMaterials.length);
+                
                 // 使用修复方法处理材质透明度问题
                 const fixedMaterials = this.fixMaterialTransparency(rawMaterials);
                 this.mesh.material = fixedMaterials;
                 
-                console.log('使用原始材质，已修复透明度问题:', fixedMaterials);
+                console.log('原始材质设置完成，已修复透明度问题:', fixedMaterials);
             } else {
+                console.log('使用自定义材质模式');
                 this.mesh.material = material;
-                console.log('使用自定义材质:', material);
+                console.log('自定义材质设置完成:', material);
             }
+        } else {
+            console.log('警告: 没有模型网格，无法设置材质');
         }
+        
+        console.log('=== 材质设置完成 ===');
     }
 
     // 设置背景颜色
@@ -854,7 +866,7 @@ export class ModelController {
     }
     
     public async setMainModel(url) {
-
+        
         // if(this.gltf){
         //     return message.info('当前控制台中存在模型，请先清理')
         // }
@@ -1642,13 +1654,22 @@ export class ModelController {
      * @param useRaw 是否使用原始材质
      */
     public toggleRawMaterial(useRaw: boolean) {
+        console.log(`=== 材质模式切换 ===`);
+        console.log(`从: ${this.useRawMaterial ? '原始材质' : '自定义材质'}`);
+        console.log(`到: ${useRaw ? '原始材质' : '自定义材质'}`);
+        
         this.useRawMaterial = useRaw;
-        console.log(`切换到${useRaw ? '原始材质' : '自定义材质'}`);
         
         // 重新应用材质
         if (this.mesh) {
+            console.log('重新应用材质...');
             this.setMaterial();
+            console.log('材质应用完成');
+        } else {
+            console.log('警告: 当前没有模型网格，无法应用材质');
         }
+        
+        console.log(`=== 材质模式切换完成 ===`);
     }
     
     /**
