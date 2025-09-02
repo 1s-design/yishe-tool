@@ -260,11 +260,17 @@ const handleRecordedVideo = async (blob: Blob) => {
     const cos = await uploadToCOS({ file });
 
     // 保存到草稿箱
-    await createDraft({
+    const draftPayload = {
       url: cos.url,
       name: "模型录制视频",
       updateTime: new Date(),
-    });
+      suffix: 'webm',
+      customModelId: null,
+    };
+    if (isEdit?.value && currentEditingModelInfo?.value?.id) {
+      draftPayload.customModelId = currentEditingModelInfo.value.id;
+    }
+    await createDraft(draftPayload);
 
     message.success("视频已保存到草稿箱");
   } catch (err) {
