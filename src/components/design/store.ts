@@ -460,7 +460,7 @@ export const useDesignStore = defineStore('_1s_design', () => {
         showThreeCanvas: useLocalStorage('_1s_showThreeCanvas', showThreeCanvas),
         showSticker: useLocalStorage('_1s_showSticker', showSticker),
         currentOperatingBaseModelInfo: useLocalStorage('_1s_currentOperatingBaseModelInfo', currentOperatingBaseModelInfo),
-        showCanvasLayout: useLocalStorage('_1s_showCanvasLayout', showCanvasLayout),
+        // showCanvasLayout: useLocalStorage('_1s_showCanvasLayout', showCanvasLayout), // 开启时可能有问题
         canvasStickerOptions: useLocalStorage('_1s_canvasStickerOptions', canvasStickerOptions),
         stickerQueryTags: useLocalStorage('_1s_stickerQueryTags', stickerQueryTags),
         currentOperatingCanvasChildId: useLocalStorage('currentOperatingCanvasChildId', currentOperatingCanvasChildId),
