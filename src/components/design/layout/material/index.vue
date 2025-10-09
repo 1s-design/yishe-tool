@@ -134,7 +134,8 @@ import { builtInClothingColors } from "./index.ts";
 import { message } from 'ant-design-vue';
 
 // 响应式的原始材质状态
-const useRawMaterial = ref(currentModelController.value?.useRawMaterial || false);
+// 默认使用自定义材质模式（false），只有在控制器明确设置为原始材质时才为true
+const useRawMaterial = ref(false);
 
 // 加载状态
 const isLoading = ref(false);
@@ -155,8 +156,9 @@ watch(() => currentModelController.value?.state?.useRawMaterial, (newValue) => {
   console.log('新的 useRawMaterial 值:', newValue);
   console.log('当前 useRawMaterial.value:', useRawMaterial.value);
   
-  if (newValue !== undefined) {
-    useRawMaterial.value = newValue;
+  // 只有在控制器状态明确设置为true时才同步，保持默认的false状态
+  if (newValue === true) {
+    useRawMaterial.value = true;
     console.log('已更新 useRawMaterial.value 为:', useRawMaterial.value);
   }
 }, { immediate: true });
@@ -227,8 +229,10 @@ const showRawMaterialDetails = () => {
 // 监听控制器实例变化
 watch(() => currentModelController.value, (controller) => {
   if (controller) {
-    // 同步初始状态
-    useRawMaterial.value = controller.state.useRawMaterial;
+    // 只有在控制器状态明确设置为true时才同步，保持默认的false状态
+    if (controller.state.useRawMaterial === true) {
+      useRawMaterial.value = true;
+    }
   }
 }, { immediate: true });
 </script>

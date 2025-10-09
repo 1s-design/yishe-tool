@@ -103,7 +103,7 @@ export class ModelController {
             roughness: .7,   // 粗糙度
             textureRepeat: 2,
         },
-        useRawMaterial: true, // 是否使用原始材质
+        useRawMaterial: false, // 是否使用原始材质，默认为自定义材质模式
         // 画布背景色
         canvasBackground: {
             color: '#eee',
@@ -814,7 +814,7 @@ export class ModelController {
         this.removeDecals()
         this.material = null
         this.state.material.textureInfo = null
-        this.state.useRawMaterial = true; // 重置为默认的原始材质模式
+        this.state.useRawMaterial = false; // 重置为默认的自定义材质模式
         this.rawMaterial = null
     }
 
