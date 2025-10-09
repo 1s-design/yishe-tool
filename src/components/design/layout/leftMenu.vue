@@ -3,7 +3,8 @@
     <el-tooltip :hide-after="0" content="创作资源" placement="right">
       <div
         class="menu-bar-item"
-        @click="viewDisplayController.showProject = !viewDisplayController.showProject"
+        :class="{ 'menu-bar-item-focus': menuState.showProject }"
+        @click="menuState.showProject = !menuState.showProject"
       >
         <div class="menu-bar-item-icon"><icon-project></icon-project></div>
         <span>创作资源</span>
@@ -12,8 +13,8 @@
     <el-tooltip :hide-after="0" content="工作台" placement="right">
       <div
         class="menu-bar-item"
-        :class="{ 'menu-bar-item-focus': showWorkspace }"
-        @click="showWorkspace = !showWorkspace"
+        :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.workspace }"
+        @click="setActiveMenu(menuItems.workspace)"
       >
         <div class="menu-bar-item-icon"><icon-workspace></icon-workspace></div>
         <span>工作台</span>
@@ -23,8 +24,8 @@
     <el-tooltip :hide-after="0" content="许多贴纸哦～" placement="right">
       <div
         class="menu-bar-item"
-        :class="{ 'menu-bar-item-focus': showSticker }"
-        @click="showSticker = !showSticker"
+        :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.sticker }"
+        @click="setActiveMenu(menuItems.sticker)"
       >
         <div class="menu-bar-item-icon"><icon-sticker></icon-sticker></div>
         <span> 贴纸资源 </span>
@@ -51,8 +52,8 @@
     <el-tooltip :hide-after="0" content="服装材质" placement="right">
       <div
         class="menu-bar-item"
-        :class="{ 'menu-bar-item-focus': viewDisplayController.showMaterialControl }"
-        @click="materialControlClick"
+        :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.material }"
+        @click="setActiveMenu(menuItems.material)"
       >
         <div class="menu-bar-item-icon">
           <s1-icon name="material"></s1-icon>
@@ -64,8 +65,8 @@
     <el-tooltip :hide-after="0" content="制作贴纸" placement="right">
       <div
         class="menu-bar-item"
-        :class="{ 'menu-bar-item-focus': showCanvasLayout }"
-        @click="showCanvasLayout = !showCanvasLayout"
+        :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.canvas }"
+        @click="setActiveMenu(menuItems.canvas)"
       >
         <div class="menu-bar-item-icon">
           <icon-canvas></icon-canvas>
@@ -75,7 +76,11 @@
     </el-tooltip>
 
     <el-tooltip :hide-after="0" content="服装装饰品" placement="right">
-      <div class="menu-bar-item" @click="showDecoration = !showDecoration">
+      <div 
+        class="menu-bar-item" 
+        :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.decoration }"
+        @click="setActiveMenu(menuItems.decoration)"
+      >
         <div class="menu-bar-item-icon">
           <icon-decoration></icon-decoration>
         </div>
@@ -84,7 +89,11 @@
     </el-tooltip>
 
     <el-tooltip :hide-after="0" content="字体" placement="right">
-      <div class="menu-bar-item" @click="showFontModal = true">
+      <div 
+        class="menu-bar-item" 
+        :class="{ 'menu-bar-item-focus': showFontModal }"
+        @click="handleSpecialMenuClick(menuItems.font)"
+      >
         <div class="menu-bar-item-icon"><icon-font></icon-font></div>
         <span>字体</span>
       </div>
@@ -93,8 +102,8 @@
     <el-tooltip :hide-after="0" content="辅助视频剪辑" placement="right">
       <div
         class="menu-bar-item"
-        :class="{ 'menu-bar-item-focus': viewDisplayController.showVideoClip }"
-        @click="videoClipClick"
+        :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.videoClip }"
+        @click="setActiveMenu(menuItems.videoClip)"
       >
         <div class="menu-bar-item-icon">
           <VideoCameraOutlined />
@@ -104,7 +113,11 @@
     </el-tooltip>
 
     <el-tooltip :hide-after="0" content="设置场景" placement="right">
-      <div class="menu-bar-item" @click="showSceneControl = !showSceneControl">
+      <div 
+        class="menu-bar-item" 
+        :class="{ 'menu-bar-item-focus': showSceneControl }"
+        @click="handleSpecialMenuClick(menuItems.scene)"
+      >
         <div class="menu-bar-item-icon"><icon-earth></icon-earth></div>
         <span>场景</span>
       </div>
@@ -155,18 +168,18 @@ import {
   showSceneControl,
   showImageSticker,
   showTextSticker,
-  showWorkspace,
   showCustomTextSticker,
   showFontModal,
-  showDecoration,
-  showSticker,
   showStamp,
   showCustomModel,
   showSvgCanvas,
-  showCanvasLayout,
   currentOperatingBaseModelInfo,
   viewDisplayController,
   clearLeftLayout,
+  menuState,
+  menuItems,
+  setActiveMenu,
+  clearAllMenus,
 } from "../store";
 
 import iconWorkspace from "@/icon/workspace.svg?component";
@@ -196,21 +209,17 @@ import { VideoCameraOutlined } from "@ant-design/icons-vue";
 
 import desimage from "@/components/image.vue";
 
-function materialControlClick() {
-  if (viewDisplayController.value.showMaterialControl) {
-    viewDisplayController.value.showMaterialControl = false;
-  } else {
-    clearLeftLayout();
-    viewDisplayController.value.showMaterialControl = true;
-  }
-}
-
-function videoClipClick() {
-  if (viewDisplayController.value.showVideoClip) {
-    viewDisplayController.value.showVideoClip = false;
-  } else {
-    clearLeftLayout();
-    viewDisplayController.value.showVideoClip = true;
+// 处理特殊菜单项的逻辑
+function handleSpecialMenuClick(menuKey) {
+  switch (menuKey) {
+    case menuItems.font:
+      showFontModal.value = true;
+      break;
+    case menuItems.scene:
+      showSceneControl.value = !showSceneControl.value;
+      break;
+    default:
+      setActiveMenu(menuKey);
   }
 }
 </script>

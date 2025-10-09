@@ -395,6 +395,44 @@ export const svgCanvasHeight = ref(100)
 export const svgCanvasSyncMainCanvas = ref(false)
 
 
+// 统一的菜单状态管理
+export const menuState = ref({
+    activeMenu: null as string | null, // 当前激活的菜单项
+    showProject: false, // 是否展示我的项目
+    showStickerModal: false, // 贴纸模态，主要用于交互操作
+})
+
+// 菜单项配置
+export const menuItems = {
+    workspace: 'workspace',
+    sticker: 'sticker', 
+    material: 'material',
+    videoClip: 'videoClip',
+    canvas: 'canvas',
+    decoration: 'decoration',
+    font: 'font',
+    scene: 'scene'
+} as const
+
+// 切换菜单状态
+export function setActiveMenu(menuKey: string | null) {
+    if (menuState.value.activeMenu === menuKey) {
+        // 如果点击的是当前激活的菜单，则关闭
+        menuState.value.activeMenu = null
+    } else {
+        // 否则激活新菜单
+        menuState.value.activeMenu = menuKey
+    }
+}
+
+// 清空所有菜单状态
+export function clearAllMenus() {
+    menuState.value.activeMenu = null
+    menuState.value.showProject = false
+    menuState.value.showStickerModal = false
+}
+
+// 兼容性：保持原有的viewDisplayController
 export const viewDisplayController = ref({
     showStickerModal: false, // 贴纸模态，主要用于交互操作
     showProject: false, // 是否展示我的项目

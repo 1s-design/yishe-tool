@@ -114,9 +114,9 @@
   <fontModal></fontModal>
 
   <diydialog
-    :show="viewDisplayController.showStickerModal"
+    :show="menuState.showStickerModal"
     title="贴纸"
-    @close="viewDisplayController.showStickerModal = false"
+    @close="menuState.showStickerModal = false"
     :animation="basicContainerAnimation"
   >
     <sticker-modal></sticker-modal>
@@ -148,7 +148,7 @@
 
   <a-modal
     title="创作资源"
-    v-model:open="viewDisplayController.showProject"
+    v-model:open="menuState.showProject"
     width="100%"
     :footer="null"
     wrap-class-name="full-modal"
@@ -190,7 +190,6 @@ import {
   showSceneControl,
   showImageSticker,
   showTextSticker,
-  showWorkspace,
   showDecalControl,
   isFirstPageLoading,
   showCustomTextSticker,
@@ -202,7 +201,6 @@ import {
   showLeftMenu,
   showBottomMenu,
   showSaveModel,
-  showSticker,
   showThreeCanvas,
   showBasicCanvas,
   useDesignStore,
@@ -211,10 +209,10 @@ import {
   screenshotInstance,
   showCustomModel,
   showSvgCanvas,
-  showCanvasLayout,
-  viewDisplayController,
   lastModifiedTime,
   currentCanvasBackground,
+  menuState,
+  menuItems,
 } from "../store";
 import leftMenu from "./leftMenu.vue";
 import diydialog from "../components/dialog.vue";
@@ -289,29 +287,25 @@ const basicContainerAnimation = ref({
 const basicCanvasRef = ref();
 
 const leftComponent = computed(() => {
-  if (showDecalControl.value) {
-    return decalControl;
-  }
-
-  if (showWorkspace.value) {
-    return workspace;
-  }
-
-  if (showCanvasLayout.value) {
-    return canvasLayout;
-  }
-
-  if (showSticker.value) {
-    sticker.name = "sticker";
-    return sticker;
-  }
-
-  if (viewDisplayController.value.showMaterialControl) {
-    return material;
-  }
-
-  if (viewDisplayController.value.showVideoClip) {
-    return videoClip;
+  // 使用新的统一菜单状态管理
+  const activeMenu = menuState.value.activeMenu;
+  
+  switch (activeMenu) {
+    case menuItems.workspace:
+      return workspace;
+    case menuItems.sticker:
+      sticker.name = "sticker";
+      return sticker;
+    case menuItems.material:
+      return material;
+    case menuItems.videoClip:
+      return videoClip;
+    case menuItems.canvas:
+      return canvasLayout;
+    case menuItems.decoration:
+      return decoration;
+    default:
+      return null;
   }
 });
 
