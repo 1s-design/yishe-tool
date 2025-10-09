@@ -101,22 +101,10 @@ export const showTextSticker = ref(false)
 
 // 是否展示工作台窗口
 export const showWorkspace = ref(false)
-watch(showWorkspace, (value) => {
-    if (value) {
-        clearLeftLayout()
-        showWorkspace.value = true
-    }
-})
 
 
 // 是否展示贴画控制弹窗
 export const showDecalControl = ref(false)
-watch(showDecalControl, (value) => {
-    if (value) {
-        clearLeftLayout()
-        showDecalControl.value = true
-    }
-})
 
 
 // 展示自定义模型
@@ -238,12 +226,6 @@ export const showFontModal = ref(false)
 
 // 是否展示贴纸
 export const showSticker = ref(false)
-watch(showSticker, async (value) => {
-    if (value) {
-        clearLeftLayout()
-        showSticker.value = true
-    }
-})
 
 
 // 是否展示已使用的贴纸列表
@@ -301,15 +283,6 @@ export function clearRightLayout() {
 
 // 展示自定义画布布局
 export const showCanvasLayout = ref(false);
-watch(showCanvasLayout, (value) => {
-    if (value) {
-        clearLeftLayout()
-        showCanvasLayout.value = true
-        // showBasicCanvas.value = true
-    } else {
-        // showBasicCanvas.value = false
-    }
-})
 
 
 
@@ -416,11 +389,14 @@ export const menuItems = {
 
 // 切换菜单状态
 export function setActiveMenu(menuKey: string | null) {
+    // 先清空所有旧的状态
+    clearLeftLayout()
+    
     if (menuState.value.activeMenu === menuKey) {
         // 如果点击的是当前激活的菜单，则关闭
         menuState.value.activeMenu = null
     } else {
-        // 否则激活新菜单
+        // 激活新菜单
         menuState.value.activeMenu = menuKey
     }
 }
