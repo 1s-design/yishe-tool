@@ -34,7 +34,7 @@
         <!-- 画布区域 -->
         <div style="flex: 1; position: relative; min-height: 0" class="threejs-canvas-container-container">
           <div 
-            v-show="showThreeCanvas && !showBasicCanvas"
+            v-show="showThreeCanvas && menuState.activeMenu !== menuItems.canvas"
             class="threejs-canvas-container" 
             ref="canvasContainerRef"
             :style="canvasContainerStyle"
@@ -65,7 +65,7 @@
           </div>
 
           <basic-canvas
-            v-show="showBasicCanvas"
+            v-show="menuState.activeMenu === menuItems.canvas"
             style="width: 100%; height: 100%; z-index: 3"
             ref="basicCanvasRef"
           ></basic-canvas>
@@ -202,7 +202,6 @@ import {
   showBottomMenu,
   showSaveModel,
   showThreeCanvas,
-  showBasicCanvas,
   useDesignStore,
   showUpload,
   showStamp,

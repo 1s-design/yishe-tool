@@ -266,6 +266,9 @@ export const showBottomMenu = ref(true)
 
 // 清空左侧布局
 export function clearLeftLayout() {
+    // 清空新的菜单状态
+    menuState.value.activeMenu = null
+    // 清空旧的状态变量
     showCanvasLayout.value = false
     showSticker.value = false
     showDecalControl.value = false
@@ -398,6 +401,19 @@ export function setActiveMenu(menuKey: string | null) {
     } else {
         // 激活新菜单
         menuState.value.activeMenu = menuKey
+        
+        // 同步旧的状态变量以保持兼容性
+        if (menuKey === menuItems.canvas) {
+            showCanvasLayout.value = true
+        } else if (menuKey === menuItems.sticker) {
+            showSticker.value = true
+        } else if (menuKey === menuItems.workspace) {
+            showWorkspace.value = true
+        } else if (menuKey === menuItems.material) {
+            viewDisplayController.value.showMaterialControl = true
+        } else if (menuKey === menuItems.videoClip) {
+            viewDisplayController.value.showVideoClip = true
+        }
     }
 }
 

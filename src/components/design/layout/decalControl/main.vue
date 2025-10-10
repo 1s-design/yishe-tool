@@ -260,6 +260,8 @@ import {
   showDecalControl,
   showDecalList,
   showCanvasLayout,
+  setActiveMenu,
+  menuItems,
 } from "../../store";
 import { Top, Bottom, Back, Right, RefreshRight, Search } from "@element-plus/icons-vue";
 import { canvasStickerOptions } from "../canvas";
@@ -280,7 +282,7 @@ const stickerSearchQueryParams = ref({
 
 function remove() {
   currentOperatingDecalController.value.remove();
-  showCanvasLayout.value = true;
+  setActiveMenu(menuItems.canvas);
 }
 
 function replace() {
@@ -362,7 +364,7 @@ function useCurrentSticker() {
   canvasStickerOptions.value =
     currentOperatingDecalControllerState.info.data ||
     currentOperatingDecalControllerState.info.meta.data;
-  showCanvasLayout.value = true;
+  setActiveMenu(menuItems.canvas);
 }
 
 const clothingPaintMethod = ref();

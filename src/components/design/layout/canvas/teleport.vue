@@ -28,7 +28,7 @@ import { computed, ref, onMounted, watch, nextTick } from 'vue'
 import { CanvasController, showMainCanvas, canvasStickerOptions } from '@/components/design/layout/canvas/index.tsx'
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 import { Delete, Plus, DeleteFilled, CircleCloseFilled, Link, CirclePlusFilled, FullScreen } from '@element-plus/icons-vue'
-import { showCanvasLayout } from '@/components/design/store.ts';
+import { showCanvasLayout, menuState, menuItems } from '@/components/design/store.ts';
 import panzoom from 'panzoom'
 import Utils from '@/common/utils'
 import {FolderOpenOutlined} from '@ant-design/icons-vue'
@@ -48,7 +48,7 @@ const loading = computed(() => {
 let canvass = canvasController.getRender();
 
 let show = computed(() => {
-    return showMainCanvas.value && showCanvasLayout.value
+    return showMainCanvas.value && menuState.value.activeMenu === menuItems.canvas
 })
 
 watch(show, async (val) => {
