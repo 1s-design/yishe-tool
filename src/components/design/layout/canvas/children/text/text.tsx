@@ -33,7 +33,7 @@ export const createDefaultCanvasChildTextOptions = () => {
         zIndex: 0,
         position: createPositionDefaultOptions(canvasUnit),
         fontSize: {
-            value: 24,
+            value: 160,
             unit: canvasUnit
         },
         textShadow: [],
