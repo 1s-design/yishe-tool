@@ -40,7 +40,7 @@ export const createDefaultCanvasChildTextOptions = () => {
         fontWeight: '500',
         lineHeight: 1,
         letterSpacing: 0,
-        textContent: '小李每天要开心！',
+        textContent: 'do something special',
         writingMode: 'htb',
         isRoundText: false,
         isMultipleLineOutExpand: false, // 当开启圆形文字并且多行时，是否想向部扩张

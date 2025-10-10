@@ -30,11 +30,11 @@ export function createDefaultCanvasChildcanvasStickerOptions() {
         type: 'canvas',
         width:{
             unit:'px',
-            value:1000
+            value:2000
         },
         height:{
             unit:'px',
-            value:1000
+            value:2000
         },
         undeletable: true, // 不可删除
         filter: createFilterDefaultOptions('px'),
@@ -78,7 +78,7 @@ export const Canvas = defineComponent({
             const pxWidth = formatSizeOptionToPixelValue(canvasChild.width)
             const pxHeight = formatSizeOptionToPixelValue(canvasChild.height)
 
-            const transformValue = (showMainCanvas.value) ? 1 : (props.maxDisplaySize / Math.max(pxWidth, pxHeight))
+            const transformValue = (showMainCanvas.value) ? .5 : (props.maxDisplaySize / Math.max(pxWidth, pxHeight))
 
             let pngBackground = createPngBackgroundStyle(transformValue)
 

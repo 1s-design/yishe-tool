@@ -194,8 +194,6 @@ async function setup() {
 
 import { createMobileApp } from '@/modules/mobile/main'
 
-console.log("%c 希望小李天天开心! %c", "background: pink;color:#fff;padding:2px 5px;border-radius: 5px;line-height: 16px;", "")
-
 if (Utils.isMobile) {
     createMobileApp()
 } else {

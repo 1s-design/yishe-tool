@@ -5,21 +5,35 @@
       class="flex flex-col"
     >
       <div class="label">{{ activeFont.name }} 预览</div>
+      <div class="preview-actions">
+        <el-button 
+          size="small" 
+          type="primary" 
+          :loading="uploadingThumbnail"
+          :disabled="!activeFont.id"
+          @click="uploadThumbnail"
+        >
+          更新缩略图
+        </el-button>
+      </div>
+      <div style="background: rgba(115, 0, 255, 0.05);">
       <div
+        ref="previewContainerRef"
         :style="{ fontSize: previewFontSize + 'px', fontFamily: `font_${activeFont.id}` }"
         class="flex items-center justify-center"
         style="
           width: 100%;
           height: 300px;
-          background: rgba(115, 0, 255, 0.05);
+    
           overflow: hidden;
           border-radius: 8px;
         "
       >
-        <div ref="previewTextareaRef" contenteditable style="max-width: 350px">
+        <div ref="previewTextareaRef" contenteditable style="max-width: 350px;text-align: center;">
           未选择字体
         </div>
       </div>
+    </div>
       <div class="label">文字预览大小</div>
       <a-slider id="test" v-model:value="previewFontSize" :max="100" :min="10" />
       <div class="label">描述</div>
@@ -86,8 +100,11 @@ import Utils from "@/common/utils";
 import { Paperclip, TopRight } from "@element-plus/icons-vue";
 
 import { fetchFontFaceWithMessage } from "@/components/design/layout/canvas/operate/fontFamily/index.ts";
-import { getFontList } from "@/api";
+import { getFontList, updateFontTemplate } from "@/api";
 import { canvasStickerOptions, currentOperatingCanvasChildId,currentOperatingCanvasChild } from '@/components/design/layout/canvas/index.tsx'
+import { htmlToPngFile } from "@/common/transform";
+import { uploadToCOS } from "@/api/cos";
+import { message } from "ant-design-vue";
 
 
 // 字体列表
@@ -103,6 +120,8 @@ const activeFont = ref({} as any);
 const previewFontSize = ref(36);
 
 const previewTextareaRef = ref();
+const previewContainerRef = ref();
+const uploadingThumbnail = ref(false);
 
 async function select(item) {
   activeFont.value = item;
@@ -118,6 +137,52 @@ function goUpload() {
 function goMine() {
   showFontModal.value = false;
   viewDisplayController.value.showProject = true;
+}
+
+async function uploadThumbnail() {
+  if (!activeFont.value.id) {
+    message.warning("请先选择一个字体");
+    return;
+  }
+
+  if (!previewContainerRef.value) {
+    message.error("预览容器未找到");
+    return;
+  }
+
+  try {
+    uploadingThumbnail.value = true;
+
+    // 将预览区域导出为图片
+    const pngFile = await htmlToPngFile(previewContainerRef.value, `${activeFont.value.name}_thumbnail`);
+
+    // 上传到COS
+    const thumbnailCos = await uploadToCOS({
+      file: pngFile,
+    });
+
+    // 更新字体记录
+    await updateFontTemplate({
+      id: activeFont.value.id,
+      thumbnail: thumbnailCos.url,
+    });
+
+    // 更新本地数据
+    activeFont.value.thumbnail = thumbnailCos.url;
+    
+    // 更新列表中的对应项
+    const listItem = list.value.find(item => item.id === activeFont.value.id);
+    if (listItem) {
+      listItem.thumbnail = thumbnailCos.url;
+    }
+
+    message.success("缩略图更新成功！");
+  } catch (error) {
+    console.error("上传缩略图失败:", error);
+    message.error("上传缩略图失败，请重试");
+  } finally {
+    uploadingThumbnail.value = false;
+  }
 }
 </script>
 
@@ -198,6 +263,12 @@ function goMine() {
   font-size: 1.2rem;
   font-weight: 500;
   color: #333;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
 }
 
 .description-text {
