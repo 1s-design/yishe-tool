@@ -714,8 +714,8 @@ export class ModelController {
     public initSceneLight() {
         this.clearLights();
         
-        // 主光源 - 使用纯白色，模拟自然日光，提高强度
-        const mainLight = new DirectionalLight(0xffffff, 1.4);
+        // 主光源 - 使用纯白色，模拟自然日光，进一步提高强度
+        const mainLight = new DirectionalLight(0xffffff, 1.8);
         mainLight.position.set(2, 3, 2);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 2048;
@@ -729,41 +729,41 @@ export class ModelController {
         this.scene.add(mainLight);
         
         // 填充光 - 使用纯白色，模拟环境反射光，提高强度
-        const fillLight = new DirectionalLight(0xffffff, 0.9);
+        const fillLight = new DirectionalLight(0xffffff, 1.2);
         fillLight.position.set(-1, 2, -1);
         this.scene.add(fillLight);
         
-        // 环境光 - 使用纯白色，提供基础照明，提高强度
-        const ambientLight = new AmbientLight(0xffffff, 0.7);
+        // 环境光 - 使用纯白色，提供基础照明，显著提高强度
+        const ambientLight = new AmbientLight(0xffffff, 1.0);
         this.scene.add(ambientLight);
         
         // 顶部补光 - 使用纯白色，模拟天空光，提高强度
-        const topLight = new DirectionalLight(0xffffff, 1.1);
+        const topLight = new DirectionalLight(0xffffff, 1.4);
         topLight.position.set(0, 4, 0);
         this.scene.add(topLight);
         
         // 前方补光 - 使用纯白色，增强正面细节，提高强度
-        const frontLight = new DirectionalLight(0xffffff, 0.6);
+        const frontLight = new DirectionalLight(0xffffff, 0.9);
         frontLight.position.set(0, 1, 2);
         this.scene.add(frontLight);
         
         // 侧光1 - 使用纯白色，左侧补光，提高强度
-        const sideLight1 = new DirectionalLight(0xffffff, 0.7);
+        const sideLight1 = new DirectionalLight(0xffffff, 1.0);
         sideLight1.position.set(3, 1, 0);
         this.scene.add(sideLight1);
         
         // 侧光2 - 使用纯白色，右侧补光，提高强度
-        const sideLight2 = new DirectionalLight(0xffffff, 0.7);
+        const sideLight2 = new DirectionalLight(0xffffff, 1.0);
         sideLight2.position.set(-3, 1, 0);
         this.scene.add(sideLight2);
         
         // 点光源 - 使用纯白色，模拟局部高光，提高强度
-        const pointLight = new PointLight(0xffffff, 1.0, 15);
+        const pointLight = new PointLight(0xffffff, 1.3, 15);
         pointLight.position.set(0, 2, 3);
         this.scene.add(pointLight);
         
         // 底部补光 - 使用纯白色，减少阴影过重，提高强度
-        const bottomLight = new DirectionalLight(0xffffff, 0.3);
+        const bottomLight = new DirectionalLight(0xffffff, 0.5);
         bottomLight.position.set(0, -2, 0);
         this.scene.add(bottomLight);
         
