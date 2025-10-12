@@ -309,6 +309,9 @@ const leftComponent = computed(() => {
 });
 
 const rightComponent = computed(() => {
+  if (showDecalControl.value) {
+    return decalControl;
+  }
   if (showDecalList.value) {
     return decalList;
   }
