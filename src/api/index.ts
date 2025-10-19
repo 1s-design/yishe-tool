@@ -78,9 +78,9 @@ export const login = (data) =>
   new Promise(async (resolve, reject) => {
     try {
       let res = await apiInstance.post(Url.LOGIN, data);
-      resolve(res.data);
+      resolve(res);
     } catch (e) {
-      reject()
+      reject(e)
     }
   });
 
@@ -88,8 +88,10 @@ export const login = (data) =>
 
 const updateUserInfo = (data) => apiInstance.post(Url.UPDATE_USER_INFO, data)
 
-const getUserInfo = async (data) => {
+const getUserInfo = async (data = {}) => {
+  console.log('🔑 getUserInfo API调用开始，参数:', data);
   const res = await apiInstance.post('/api/user/getUserInfo', data)
+  console.log('🔑 getUserInfo API调用完成，响应:', res);
 
   return res.data.data
 }

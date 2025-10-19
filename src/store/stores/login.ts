@@ -2,7 +2,7 @@
  * @Author: chan-max jackieontheway666@gmail.com
  * @Date: 2023-12-16 12:40:26
  * @LastEditors: chan-max jackieontheway666@gmail.com
- * @LastEditTime: 2025-07-10 08:00:40
+ * @LastEditTime: 2025-10-20 07:31:28
  * @FilePath: /1s/src/store/stores/login.ts
  * @Description: 
  * 
@@ -41,13 +41,20 @@ export const useLoginStatusStore = defineStore("login_status", () => {
 
   async function getUserInfo() {
     const loginStore = useLoginStatusStore()
+    // 增加延时确保token完全设置
+    console.log('🔑 getUserInfo开始，当前token:', loginStore.token);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log('🔑 延时500ms后开始调用API');
+    
     const _userInfo = await Api.getUserInfo()
     if (_userInfo) {
       userInfo.value = _userInfo
       loginStore.isAdmin = _userInfo.isAdmin
       isLogin.value = true
+      console.log('✅ getUserInfo成功:', _userInfo);
     } else {
       isLogin.value = false
+      console.log('❌ getUserInfo失败，没有获取到用户信息');
     }
   }
 

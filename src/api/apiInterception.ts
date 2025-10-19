@@ -2,7 +2,7 @@
  * @Author: chan-max jackieontheway666@gmail.com
  * @Date: 2023-12-16 12:40:25
  * @LastEditors: chan-max jackieontheway666@gmail.com
- * @LastEditTime: 2025-07-10 06:17:46
+ * @LastEditTime: 2025-10-20 07:34:01
  * @FilePath: /1s/src/api/apiInterception.ts
  * @Description: 
  * 
@@ -78,16 +78,41 @@ export const formDataFormatRequestInterceptor = (request) => {
 */
 export const tokenResponseInterceptor = (response) => {
   let loginStore = useLoginStatusStore();
+  
+  // 优先从响应头获取token
   if (response.headers.authorization) {
     loginStore.token = response.headers.authorization
+    console.log('🔑 从响应头获取token:', response.headers.authorization);
   }
+  // 如果响应头没有token，尝试从响应体获取
+  else if (response.data && response.data.data && response.data.data.token) {
+    loginStore.token = response.data.data.token
+    console.log('🔑 从响应体获取token:', response.data.data.token);
+  }
+  // 兼容旧的响应结构
+  else if (response.data && response.data.token) {
+    loginStore.token = response.data.token
+    console.log('🔑 从响应体获取token(旧结构):', response.data.token);
+  }
+  
   return response;
 }
 
 export const tokenRequestInterceptor = (request) => {
   let loginStore = useLoginStatusStore();
+  console.log('🔑 tokenRequestInterceptor被调用，当前token:', loginStore.token);
+  console.log('🔑 请求URL:', request.url);
+
   if (loginStore.token) {
     request.headers.authorization = `Bearer ${loginStore.token}`;
+    console.log('🔑 请求头设置token:', request.headers.authorization);
+    console.log('🔑 完整请求头:', request.headers);
+  } else {
+    console.log('❌ 没有找到token，store状态:', {
+      isLogin: loginStore.isLogin,
+      token: loginStore.token,
+      userInfo: loginStore.userInfo
+    });
   }
   return request
 }

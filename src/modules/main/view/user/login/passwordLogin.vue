@@ -141,8 +141,13 @@ async function submit(form) {
 
   try {
     loading.value = true;
-    let res = await login(toRaw(loginForm));
-    doLoginAction(res.data, isOnce.value);
+    // 修改字段名以匹配后端期望的username字段
+    const loginData = {
+      username: loginForm.account,
+      password: loginForm.password
+    };
+    let res = await login(loginData);
+    await doLoginAction(res.data, isOnce.value);
     message.success("登录成功!");
     if (showLoginFormModal.value) {
       showLoginFormModal.value = false;
@@ -153,6 +158,15 @@ async function submit(form) {
     loading.value = false;
   } catch (e) {
     loading.value = false;
+    console.error('登录失败:', e);
+    // 显示错误信息
+    if (e?.response?.data?.message) {
+      errMsg.value = e.response.data.message;
+    } else if (e?.message) {
+      errMsg.value = e.message;
+    } else {
+      errMsg.value = '登录失败，请检查账号密码';
+    }
   }
 }
 
