@@ -1,7 +1,7 @@
 <template>
   <div class="connection-status">
     <!-- 本地客户端状态 -->
-    <el-tooltip
+    <!-- <el-tooltip
       :content="isLocalConnected ? '本地客户端已启动' : '本地客户端未启动'"
       placement="bottom"
     >
@@ -14,7 +14,7 @@
           {{ isLocalConnected ? '客户端已启动' : '客户端未启动' }}
         </span>
       </div>
-    </el-tooltip>
+    </el-tooltip> -->
 
     <!-- 远程服务状态 -->
     <el-tooltip
@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 import { 
-  isLocalConnected, 
+  // isLocalConnected, 
   isRemoteConnected,
   isAdminConnected,
   startConnectionChecks,
