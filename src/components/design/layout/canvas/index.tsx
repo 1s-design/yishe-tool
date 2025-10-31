@@ -1,6 +1,9 @@
 import { ref, computed, shallowRef, nextTick, watch, defineAsyncComponent, defineComponent, shallowReactive } from 'vue'
-import { toPng, toJpeg, toBlob, toPixelData, toSvg, toCanvas,getFontEmbedCSS } from "html-to-image";
-import { htmlToPngFile, downloadByFile } from '@/common/transform'
+// OLD: html-to-image 相关导入（已注释，保留用于回溯）
+// import { toPng, toJpeg, toBlob, toPixelData, toSvg, toCanvas,getFontEmbedCSS } from "html-to-image";
+// NEW: 使用 @zumer/snapdom 替代
+import { snapdom } from "@zumer/snapdom";
+import { downloadByFile } from '@/common/transform'
 import { useDebounceFn } from '@vueuse/core'
 import { waitImage } from '@/common'
 import { createCanvasChildSvg } from './children/svg/svg.tsx'
@@ -290,8 +293,19 @@ export class CanvasController {
     loading = ref(false)
 
     async toPngFile() {
-        const file = await htmlToPngFile(this.el)
-        return file
+        // OLD: 使用 html-to-image (已注释，保留用于回溯)
+        // const file = await htmlToPngFile(this.el)
+        // return file
+        
+        // NEW: 使用 snapdom
+        const blob = await snapdom.toBlob(this.el, { 
+            type: 'png',
+            embedFonts: true, // 启用字体嵌入
+            placeholders: true, // 支持外部图片和CORS iframe的占位符
+            cache: 'auto', // 启用缓存以提高性能
+            fast: false // 关闭快速模式以确保所有资源加载完成
+        })
+        return new File([blob], 'canvas.png', { type: 'image/png' })
     }
 
     async downloadTrimmedPng() {
@@ -395,17 +409,12 @@ export class CanvasController {
             console.time('updateRenderingCanvas')
 
             try {
+                // OLD: 使用 html-to-image (已注释，保留用于回溯)
                 // this.base64 = await toPng(this.el)
-
-
                 // const fontEmbedCSS = await getFontEmbedCSS(this.el);
-
-                let _canvas = await toCanvas(this.el, {})
-
-                console.log('toCanvas')
-
+                // let _canvas = await toCanvas(this.el, {})
+                // console.log('toCanvas')
                 // let svg = await toSvg(this.el,{})
-
                 // let img = document.createElement('img')
                 // img.src = svg
                 // img.width = 100
@@ -414,14 +423,26 @@ export class CanvasController {
                 // img.style.top= '0'
                 // img.style.left= '0'
                 // document.body.appendChild(img)
-
                 // document.body.appendChild(_canvas)
+
+                // NEW: 使用 snapdom
+                // 配置选项以确保支持字体、外部图片等复杂功能
+                let _canvas = await snapdom.toCanvas(this.el, {
+                    embedFonts: true, // 启用字体嵌入（对应旧代码的 getFontEmbedCSS）
+                    placeholders: true, // 支持外部图片和CORS iframe的占位符
+                    cache: 'auto', // 启用缓存以提高性能
+                    fast: false, // 关闭快速模式以确保所有资源（字体、图片等）加载完成
+                    // useProxy: '', // 如需支持跨域图片，可配置代理URL
+                    // fallbackURL: (dims) => `https://placehold.co/${dims.width}x${dims.height}`, // 图片加载失败时的回退
+                })
+                console.log('snapdom.toCanvas')
 
                 this.base64 = _canvas.toDataURL('image/png')
 
                 let width = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.width))
                 let height = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.height))
 
+                // OLD: 使用 imageData 方式 (已注释，保留用于回溯)
                 // let _ctx = _canvas.getContext('2d')
                 // const imageData = _ctx.getImageData(0, 0, width, height);
                 // this.ctx.putImageData(imageData, 0, 0);

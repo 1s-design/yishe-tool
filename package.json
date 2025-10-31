@@ -38,6 +38,7 @@
     "@vueuse/components": "^9.13.0",
     "@vueuse/core": "^11.0.3",
     "@websitebeaver/vue-magnifier": "^1.1.0",
+    "@zumer/snapdom": "^1.9.14",
     "animate.css": "^4.1.1",
     "ant-design-vue": "4.x",
     "await-to-js": "^3.0.0",

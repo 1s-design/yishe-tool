@@ -211,7 +211,6 @@ import {
 
 import { htmlToPngFile } from "@/common/transform";
 import {} from "@/components/design/utils/utils";
-import { toPng } from "html-to-image";
 import Utils from "@/common/utils";
 import { useLoginStatusStore } from "@/store/stores/login";
 import { filesize } from "filesize";
