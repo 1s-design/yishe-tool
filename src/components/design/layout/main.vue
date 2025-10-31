@@ -65,7 +65,7 @@
           </div>
 
           <basic-canvas
-            v-show="menuState.activeMenu === menuItems.canvas"
+            v-show="showMainCanvas && menuState.activeMenu === menuItems.canvas"
             style="width: 100%; height: 100%; z-index: 3"
             ref="basicCanvasRef"
           ></basic-canvas>
@@ -243,6 +243,7 @@ import stamp from "./stamp/index.vue";
 import svgCanvas from "./svgCanvas/index.vue";
 import canvasLayout from "./canvas/index.vue";
 import basicCanvas from "./basic-canvas/index.vue";
+import { showMainCanvas } from "./canvas/index.tsx";
 import stickerModal from "./sticker/modal.vue";
 import { Modal } from "ant-design-vue";
 import Utils from "@/common/utils";
