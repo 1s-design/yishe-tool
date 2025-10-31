@@ -45,27 +45,48 @@ const loading = computed(() => {
 
 let canvass = canvasController.getRender();
 
+// 保存 panzoom 实例以便清理
+let panzoomInstance: any = null
+
+// 控制大画布的显示，只有在大画布显示且当前菜单是 canvas 时才显示
 let show = computed(() => {
-    return showMainCanvas.value && menuState.value.activeMenu === menuItems.canvas
+    // 必须同时满足：显示大画布 + 当前菜单是 canvas
+    const shouldShow = showMainCanvas.value && menuState.value.activeMenu === menuItems.canvas
+    return shouldShow
 })
 
 watch(show, async (val) => {
+    // 如果不显示，清理 panzoom 实例
+    if (!val) {
+        if (panzoomInstance) {
+            try {
+                panzoomInstance.dispose()
+            } catch (e) {
+                console.warn('Panzoom dispose error:', e)
+            }
+            panzoomInstance = null
+        }
+        return
+    }
 
+    // 显示时初始化 panzoom
     await Utils.sleep(333)
 
-    if (val && panzoomRef.value) {
-        const pz = panzoom(panzoomRef.value, {
+    if (panzoomRef.value) {
+        // 清理之前的实例（双重保险）
+        if (panzoomInstance) {
+            try {
+                panzoomInstance.dispose()
+            } catch (e) {
+                console.warn('Panzoom dispose error:', e)
+            }
+        }
+
+        panzoomInstance = panzoom(panzoomRef.value, {
             smoothScroll: false,
             maxZoom: 1,
             minZoom: .01,
         })
-        
-        // // 当缩放尺寸过小，会导致子元素不显示
-        // const panzoom = Panzoom(panzoomRef.value, {
-        //     maxScale: 5
-        // })
-        // panzoomRef.value.parentElement.addEventListener('wheel', panzoom.zoomWithWheel)
-
     }
 }, {
     immediate: true,
