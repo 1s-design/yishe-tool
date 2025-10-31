@@ -85,8 +85,19 @@
 
     <div class="flex" style="width: 100%; padding: 10px; column-gap: 10px">
       <div style="flex: 1"></div>
-      <el-button size="small" @click="genSticker" link>
-        {{ shouldUpdateCanvasSticker ? "点击更新贴纸" : "贴纸已更新" }}
+      <el-button 
+        size="small" 
+        @click="genSticker" 
+        link
+        :loading="isUpdatingSticker"
+        :disabled="isUpdatingSticker"
+      >
+        <template v-if="isUpdatingSticker">
+          正在更新贴纸...
+        </template>
+        <template v-else>
+          {{ shouldUpdateCanvasSticker ? "点击更新贴纸" : "贴纸已更新" }}
+        </template>
       </el-button>
     </div>
 
@@ -283,6 +294,10 @@ let canvasController = new CanvasController({
 
 const shouldUpdateCanvasSticker = computed(() => {
   return canvasController.shouldUpdateCanvasSticker.value;
+});
+
+const isUpdatingSticker = computed(() => {
+  return renderingLoading.value || canvasController.loading.value;
 });
 
 let canvass = canvasController.getRender();
