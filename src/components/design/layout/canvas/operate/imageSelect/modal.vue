@@ -60,10 +60,6 @@ const emits = defineEmits(["close"]);
     作为当前
 */
 function useAsCanvasImage(item) {
-  if (!["image", "texture".includes(item.type)]) {
-    throw "图片类型才能作为画布图片元素";
-  }
-
   currentOperatingCanvasChild.value.imageInfo = item;
 
   emits("close");

@@ -62,9 +62,6 @@ const loadingOptions = useLoadingOptions({});
     作为当前
 */
 function useAsCanvasImage(item) {
-  if (item.type != "image") {
-    throw "图片类型才能作为画布图片元素";
-  }
   if (currentOperatingCanvasChild.value.type != "image") {
     throw "当前操作的不是图片元素";
   }
