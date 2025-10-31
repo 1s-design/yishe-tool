@@ -1102,7 +1102,7 @@ export class ModelController {
     decalControllers: any = shallowReactive([]);
 
     // 进行贴图
-    async stickToMousePosition(info, cb) {
+    async stickToMousePosition(info, cb = null) {
         const decal = new DecalController(info)
         await decal.stickToMousePosition(cb)
     }

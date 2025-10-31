@@ -4,7 +4,7 @@ import { htmlToPngFile, downloadByFile } from '@/common/transform'
 import { useDebounceFn } from '@vueuse/core'
 import { waitImage } from '@/common'
 import { createCanvasChildSvg } from './children/svg/svg.tsx'
-import { initDraggableElement } from "@/components/design/utils/draggable";
+
 import { createCanvasChildText, createDefaultCanvasChildTextOptions } from './children/text/text.tsx'
 import { createCanvasChildBackground, createDefaultCanvasChildBackgroundOptions } from './children/background/index.tsx'
 import { createDefaultCanvasChildQrcodeOptions, createCanvasChildQrcode, } from './children/qrcode.tsx'
@@ -36,6 +36,7 @@ import { imageDataToFile } from '@/common/transform'
 import { defineCanvasChild } from './children/define.tsx';
 
 import { currentFocusingStickerId, ChildViewHelperComponent } from '@/components/design/layout/canvas/components/childViewHelper/index'
+
 
 import { PngIcoConverter } from "/public/lib/png2icojs"; // 导入库
 
@@ -439,12 +440,6 @@ export class CanvasController {
             } catch (e) {
                 throw Error('元素转换失败', e.message)
             }
-
-            // 定义可拖拽
-            if (!showMainCanvas.value) {
-                await Utils.sleep(99)
-                this.initDraggable()
-            }
         }
 
 
@@ -458,30 +453,6 @@ export class CanvasController {
         }
     }
 
-
-    /*
-        初始化拖拽
-    */
-    
-    initDraggable() {
-        let self = this
-
-        return
-
-        let base64 = this.base64
-        initDraggableElement(
-            this.el,
-            () => {
-                currentModelController.value.stickToMousePosition({
-                    isLocalResource: true,
-                    base64: currentCanvasControllerInstance.value.base64,
-                    data: Utils.clone(canvasStickerOptions.value), // 用来保存当且贴纸的所有信息
-                })
-            },
-
-            () => base64
-        )
-    }
 
     clearCanvas() {
         if (!this.canvasEl) {
