@@ -35,14 +35,19 @@
       class="flex"
       style="width: 100%; padding: 10px; padding-top: 20px; column-gap: 10px"
     >
-      <el-button plain link @click="showUploadModal = true">
+      <el-button 
+        plain 
+        link 
+        @click="handleUploadClick"
+        :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
+      >
         <CloudUploadOutlined style="font-size: 1.2em; margin-right: 4px" />
         上传
       </el-button>
 
-      <a-dropdown arrow placement="bottom">
+      <a-dropdown arrow placement="bottom" :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker">
         <div>
-          <el-button link plain>
+          <el-button link plain :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker">
             <LinkOutlined style="font-size: 1.2em; margin-right: 4px" />
             导出
           </el-button>
@@ -51,7 +56,7 @@
           <a-menu>
             <a-menu-item @click="exportPng"> 导出原始图 </a-menu-item>
             <a-menu-item @click="exportTrimmedPng"> 自动去除空白边框 </a-menu-item>
-            <a-menu-item @click="exportIco"> 导出ico </a-menu-item>
+            <!-- <a-menu-item @click="exportIco"> 导出ico </a-menu-item> -->
           </a-menu>
         </template>
       </a-dropdown>
@@ -83,9 +88,35 @@
       </div>
     </div>
 
-    <div class="flex" style="width: 100%; padding: 10px; column-gap: 10px">
+    <div class="flex items-center" style="width: 100%; padding: 10px; column-gap: 10px">
       <div style="flex: 1"></div>
+      <el-tooltip
+        v-if="shouldUpdateCanvasSticker && !isUpdatingSticker"
+        content="画布内容已更改，请先更新贴纸后再进行上传或导出操作"
+        placement="top"
+      >
+        <span>
+          <el-button 
+            size="small" 
+            @click="genSticker" 
+            link
+            :loading="isUpdatingSticker"
+            :disabled="isUpdatingSticker"
+          >
+            <template v-if="isUpdatingSticker">
+              正在更新贴纸...
+            </template>
+            <template v-else>
+              <el-icon v-if="shouldUpdateCanvasSticker" style="color: #f56c6c; font-size: 18px; margin-right: 4px">
+                <WarningFilled />
+              </el-icon>
+              {{ shouldUpdateCanvasSticker ? "点击更新贴纸" : "贴纸已更新" }}
+            </template>
+          </el-button>
+        </span>
+      </el-tooltip>
       <el-button 
+        v-else
         size="small" 
         @click="genSticker" 
         link
@@ -178,15 +209,6 @@
           autocompletePlacement="bottom"
         ></tagsInput>
       </el-form-item>
-      <el-form-item label="模版分类:">
-        <el-select v-model="editForm.group" clearable>
-          <el-option
-            v-for="item in officialStickerTemplateOptions"
-            :label="item.label"
-            :value="item.value"
-          ></el-option>
-        </el-select>
-      </el-form-item>
 
       <el-form-item label="自动去除白色边框:">
         <a-switch
@@ -235,6 +257,7 @@ import {
   Link,
   CirclePlusFilled,
   FullScreen,
+  WarningFilled,
 } from "@element-plus/icons-vue";
 import {
   StarOutlined,
@@ -260,8 +283,6 @@ import {
   currentFocusingStickerId,
   ChildViewHelperComponent,
 } from "@/components/design/layout/canvas/components/childViewHelper/index";
-
-import { officialStickerTemplateOptions } from "./officialTemplateModal";
 
 const loginStore = useLoginStatusStore();
 
@@ -302,12 +323,22 @@ const isUpdatingSticker = computed(() => {
 
 let canvass = canvasController.getRender();
 
+function checkAndUpdate() {
+  if (shouldUpdateCanvasSticker.value) {
+    message.warning("请先点击'更新贴纸'按钮更新画布内容");
+    return false;
+  }
+  return true;
+}
+
 function exportPng() {
+  if (!checkAndUpdate()) return;
   canvasController.downloadPng();
 }
 
 /* 导出去除多余空白的图片 */
 function exportTrimmedPng() {
+  if (!checkAndUpdate()) return;
   canvasController.downloadTrimmedPng();
 }
 
@@ -351,11 +382,22 @@ const editForm = ref({
   name: "",
   description: "",
   keywords: [],
-  group: "",
   autoTrim: true, // 默认开启自动去除白色边框
 });
 
+function handleUploadClick() {
+  if (shouldUpdateCanvasSticker.value) {
+    message.warning("请先点击'更新贴纸'按钮更新画布内容");
+    return;
+  }
+  showUploadModal.value = true;
+}
+
 async function doUpload() {
+  if (shouldUpdateCanvasSticker.value) {
+    message.warning("请先点击'更新贴纸'按钮更新画布内容");
+    return;
+  }
   submitLoading.value = true;
 
   try {

@@ -41,7 +41,7 @@ import { defineCanvasChild } from './children/define.tsx';
 import { currentFocusingStickerId, ChildViewHelperComponent } from '@/components/design/layout/canvas/components/childViewHelper/index'
 
 
-import { PngIcoConverter } from "/public/lib/png2icojs"; // 导入库
+// import { PngIcoConverter } from "/public/lib/png2icojs"; // 导入库
 
 
 
@@ -320,23 +320,23 @@ export class CanvasController {
         downloadByFile(imageDataToFile(imageData))
     }
 
-    async downloadIco() {
-        const imageData = this.ctx.getImageData(0, 0, this.canvasEl.width, this.canvasEl.height);
-        let file = imageDataToFile(imageData)
+    // async downloadIco() {
+    //     const imageData = this.ctx.getImageData(0, 0, this.canvasEl.width, this.canvasEl.height);
+    //     let file = imageDataToFile(imageData)
 
-        // 使用 PNG2ICOjs 转换为 ICO 格式
-        const converter = new PngIcoConverter();
-        const resultBlob = await converter.convertToBlobAsync([{ png: file }]);
+    //     // 使用 PNG2ICOjs 转换为 ICO 格式
+    //     const converter = new PngIcoConverter();
+    //     const resultBlob = await converter.convertToBlobAsync([{ png: file }]);
 
-        // 创建下载链接
-        const url = URL.createObjectURL(resultBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'favicon.ico';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
+    //     // 创建下载链接
+    //     const url = URL.createObjectURL(resultBlob);
+    //     const a = document.createElement('a');
+    //     a.href = url;
+    //     a.download = 'favicon.ico';
+    //     document.body.appendChild(a);
+    //     a.click();
+    //     document.body.removeChild(a);
+    // }
 
     canvasId = 'canvas-render-helper-el'
 

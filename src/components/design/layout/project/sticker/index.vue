@@ -160,15 +160,6 @@
           autocompletePlacement="right"
         ></tagsInput>
       </el-form-item>
-      <el-form-item label="模版分类:">
-        <el-select v-model="editForm.group" clearable>
-          <el-option
-            v-for="item in officialStickerTemplateOptions"
-            :label="item.label"
-            :value="item.value"
-          ></el-option>
-        </el-select>
-      </el-form-item>
       <!-- <el-form-item label="是否共享:">
         <a-switch
           v-model:checked="editForm.isPublic"
@@ -238,7 +229,6 @@ import Api from "@/api";
 import tagsInput from "@/components/design/components/tagsInput/tagsInput.vue";
 import { useStickerDetailModal } from "./stickerModal.ts";
 import { useLoginStatusStore } from "@/store/stores/login";
-import { officialStickerTemplateOptions } from "../../canvas/officialTemplateModal";
 
 const loginStore = useLoginStatusStore();
 
