@@ -518,12 +518,12 @@ export function createTransformString(options) {
     }
 
     let val = `
-    scale3d(${options.scaleX ?? 1}, ${options.scaleY ?? 1},  ${options.scaleZ ?? 1}) 
-    rotateX(${options.rotateX ?? 0}deg)
-    rotateY(${options.rotateY ?? 0}deg)
-    rotateZ(${options.rotateZ ?? 0}deg)
+    scale3d(${options?.scaleX ?? 1}, ${options?.scaleY ?? 1},  ${options?.scaleZ ?? 1}) 
+    rotateX(${options?.rotateX ?? 0}deg)
+    rotateY(${options?.rotateY ?? 0}deg)
+    rotateZ(${options?.rotateZ ?? 0}deg)
     translate3d(${formatToNativeSizeString(options.translateX)},${formatToNativeSizeString(options.translateY)},${formatToNativeSizeString(options.translateZ)})
-    skew(${options.skewX ?? 0}deg, ${options.skewY ?? 0}deg)
+    skew(${options?.skewX ?? 0}deg, ${options?.skewY ?? 0}deg)
     `
     return val
 }

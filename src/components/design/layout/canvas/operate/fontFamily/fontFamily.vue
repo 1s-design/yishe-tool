@@ -49,16 +49,16 @@
         
         <!-- 加载更多按钮 -->
         <template v-if="hasMore && !loading">
-          <el-option disabled>
+          <el-option :value="'__load_more__'" disabled>
             <div class="load-more" @click="loadMore">
-              <el-button type="text" size="small">加载更多...</el-button>
+              <el-button  link size="small">加载更多...</el-button>
             </div>
           </el-option>
         </template>
         
         <!-- 加载状态 -->
         <template v-if="loading">
-          <el-option disabled>
+          <el-option :value="'__loading__'" disabled>
             <div class="loading-state">
               <el-icon class="is-loading"><Loading /></el-icon>
               <span>加载中...</span>

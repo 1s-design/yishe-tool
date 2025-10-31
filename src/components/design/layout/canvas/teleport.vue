@@ -6,8 +6,6 @@
 
         <div class="top-menu-containter">
             <div class="top-menu">
-
-
                 <!-- <a-button type="primary" loading ghost size="small"/> -->
 
                 <div style="flex:1;"></div>
@@ -53,7 +51,7 @@ let show = computed(() => {
 
 watch(show, async (val) => {
 
-    await Utils.sleep(33)
+    await Utils.sleep(333)
 
     if (val && panzoomRef.value) {
         const pz = panzoom(panzoomRef.value, {
@@ -62,11 +60,6 @@ watch(show, async (val) => {
             minZoom: .01,
         })
         
-        // 设置初始缩放后，立即居中画布
-        nextTick(() => {
-    
-        })
-
         // // 当缩放尺寸过小，会导致子元素不显示
         // const panzoom = Panzoom(panzoomRef.value, {
         //     maxScale: 5
