@@ -5,117 +5,123 @@
     </template>
     <template #name> 个性字体 </template>
     <template #content>
-      <el-select
-        ref="selectRef"
-        v-model="model"
-        size="small"
-        placeholder="请选择"
-        filterable
-        clearable
-        remote
-        :remote-method="remoteMethod"
-        style="width: 120px"
-        :loading="loading"
-        @visible-change="handleVisibleChange"
+      <div class="font-selector-wrapper">
+        <el-button 
+          size="small" 
+          @click="openFontDialog"
+          class="font-select-button"
+        >
+          {{ model?.name || '请选择' }}
+        </el-button>
+        <!-- <el-button size="small" @click="openFontModal"> 字体库 </el-button> -->
+        <el-button 
+          v-if="model" 
+          size="small" 
+          link 
+          type="danger"
+          @click="clearFont"
+        >
+          清除
+        </el-button>
+      </div>
+      
+      <!-- 字体选择抽屉 -->
+      <el-drawer
+        v-model="dialogVisible"
+        title="选择字体"
+        :size="1200"
+        :modal="true"
+        :with-header="true"
+        :append-to-body="true"
+        :wrapper-closable="true"
+        direction="rtl"
+        @open="handleDialogOpened"
+        @close="handleDialogClosed"
       >
-        <template #label="{ label }">
-          {{ model?.name || '' }}
-        </template>
-
-        <template #empty>
-          <s1-empty v-if="!loading">
-            <template #description>
-              <p>无相关字体，尝试使用关键字或相关描述查找</p>
-            </template>
-            <el-button type="primary" size="small" plain round @click="emitUpload">
+        <div class="font-drawer-content">
+          <!-- 搜索框 -->
+          <div class="font-search-wrapper">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索字体名称或描述"
+              clearable
+              @input="handleSearchInput"
+              @clear="handleSearchClear"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button 
+              type="primary" 
+              size="small" 
+              plain 
+              round 
+              @click="emitUpload"
+              style="margin-left: 10px;"
+            >
               快速上传
             </el-button>
-          </s1-empty>
-        </template>
-        
-        <!-- 字体选项列表 -->
-        <template v-for="item in displayList" :key="item.id">
-          <el-option v-if="!item.hide" :label="item.name" :value="item">
-            <div 
-              class="font-option-text"
-              @mouseenter="(event) => showThumbnail(item, event)"
-              @mouseleave="hideThumbnail"
-            >
-              <span class="font-name-text">{{ item.name }}</span>
-              <span class="font-desc-text" v-if="item.description">{{ item.description }}</span>
+          </div>
+
+          <!-- 字体列表 -->
+          <div class="font-list-wrapper" v-loading="loading">
+            <div v-if="!loading && displayList.length === 0" class="font-empty">
+              <s1-empty>
+                <template #description>
+                  <p>无相关字体，尝试使用关键字或相关描述查找</p>
+                </template>
+              </s1-empty>
             </div>
-          </el-option>
-        </template>
-        
-        <!-- 加载更多按钮 -->
-        <template v-if="hasMore && !loading">
-          <el-option :value="'__load_more__'" disabled>
-            <div class="load-more" @click="loadMore">
-              <el-button  link size="small">加载更多...</el-button>
+            
+            <div v-else class="font-list-grid">
+              <div
+                v-for="item in displayList"
+                :key="item.id"
+                class="font-item"
+                :class="{ 'font-item-selected': model?.id === item.id }"
+                @click="selectFont(item)"
+              >
+                <div class="font-item-thumbnail" v-if="item.thumbnail">
+                  <desimage :src="item.thumbnail" class="font-thumbnail-img"></desimage>
+                </div>
+                <div class="font-item-info">
+                  <div class="font-item-name">{{ item.name }}</div>
+                  <div class="font-item-desc" v-if="item.description">{{ item.description }}</div>
+                </div>
+                <div class="font-item-check" v-if="model?.id === item.id">
+                  <el-icon><Check /></el-icon>
+                </div>
+              </div>
             </div>
-          </el-option>
-        </template>
-        
-        <!-- 加载状态 -->
-        <template v-if="loading">
-          <el-option :value="'__loading__'" disabled>
-            <div class="loading-state">
-              <el-icon class="is-loading"><Loading /></el-icon>
-              <span>加载中...</span>
-            </div>
-          </el-option>
-        </template>
-      </el-select>
-      <el-button size="small" @click="openFontModal"> 字体库 </el-button>
-      
-      <!-- 缩略图Popover -->
-      <el-popover
-        v-model:visible="thumbnailVisible"
-        :show-arrow="false"
-        placement="top"
-        :width="500"
-        trigger="manual"
-        popper-class="font-thumbnail-popover"
-        :teleported="true"
-        :transition="'el-fade-in-linear'"
-      >
-        <template #reference>
-          <div 
-            ref="popoverTrigger"
-            class="popover-trigger"
-            :style="{ 
-              position: 'fixed', 
-              left: popoverPosition.x + 'px', 
-              top: popoverPosition.y + 'px',
-              width: '1px',
-              height: '1px',
-              opacity: 0,
-              pointerEvents: 'none'
-            }"
-          ></div>
-        </template>
-                 <div class="thumbnail-content" v-if="currentThumbnail">
-           <desimage
-             :src="currentThumbnail.thumbnail"
-             class="font-thumbnail-preview"
-           ></desimage>
-         </div>
-      </el-popover>
+          </div>
+
+          <!-- 分页 -->
+          <div class="font-pagination-wrapper">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[12, 24, 48, 96]"
+              :total="total"
+              layout="total, sizes, prev, pager, next"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
+        </div>
+      </el-drawer>
     </template>
   </operate-form-item>
 </template>
 
 <script setup lang="ts">
 import icon from "@/components/design/assets/icon/font-family.svg?component";
-import { ref, onBeforeMount, watch, computed, nextTick, onUnmounted } from "vue";
-import { getFontListApi } from "@/api";
+import { ref, watch, computed } from "vue";
 import desimage from "@/components/image.vue";
-import Utils from "@/common/utils";
 import { fetchFontFaceWithMessage } from "./index.ts";
 import { showUpload, showFontModal } from "@/components/design/store";
-import { GlobalConst } from "@/types/index.ts";
-import { useDebounceFn, useThrottleFn } from "@vueuse/core";
-import { TopRight, Loading } from "@element-plus/icons-vue";
+import { useDebounceFn } from "@vueuse/core";
+import { Loading, Search, Check } from "@element-plus/icons-vue";
 import { getFontList } from "@/api";
 
 interface FontItem {
@@ -128,29 +134,21 @@ interface FontItem {
 }
 
 const model = defineModel<FontItem | null>({ default: null });
-const selectRef = ref();
+const dialogVisible = ref(false);
 const list = ref<FontItem[]>([]);
 const loading = ref(false);
 const currentPage = ref(1);
-const pageSize = ref(20);
+const pageSize = ref(12);
 const total = ref(0);
 const searchKeyword = ref('');
-const hasMore = ref(true);
-
-// Popover相关状态
-const thumbnailVisible = ref(false);
-const currentThumbnail = ref<FontItem | null>(null);
-const popoverTrigger = ref();
-const popoverPosition = ref({ x: 0, y: 0 });
-const showThumbnailTimer = ref<NodeJS.Timeout | null>(null);
 
 // 计算显示的列表（当前页的数据）
 const displayList = computed(() => {
-  return list.value;
+  return list.value.filter(item => !item.hide);
 });
 
 function emitUpload() {
-  selectRef.value.toggleMenu(false);
+  dialogVisible.value = false;
   showUpload.value = true;
 }
 
@@ -164,100 +162,31 @@ function openFontModal() {
   }
 }
 
-// 显示缩略图
-function showThumbnail(item: FontItem, event: MouseEvent) {
-  if (!item.thumbnail) return;
-  
-  // 清除之前的定时器
-  if (showThumbnailTimer.value) {
-    clearTimeout(showThumbnailTimer.value);
-  }
-  
-  // 延迟显示，避免快速移动时频繁显示/隐藏
-  showThumbnailTimer.value = setTimeout(() => {
-    currentThumbnail.value = item;
-    
-    // 获取下拉框的位置信息
-    const selectDropdown = document.querySelector('.el-select-dropdown');
-    const dropdownRect = selectDropdown?.getBoundingClientRect();
-    
-    // 固定在下拉框上方
-    const popoverWidth = 500;
-    const popoverHeight = 220;
-    const margin = 20;
-    
-    let x, y;
-    
-    if (dropdownRect) {
-      // 水平居中对齐下拉框
-      x = dropdownRect.left + (dropdownRect.width / 2) - (popoverWidth / 2);
-      // 显示在下拉框上方
-      y = dropdownRect.top - popoverHeight - margin;
-      
-      // 如果上方空间不够，显示在下拉框下方
-      if (y < margin) {
-        y = dropdownRect.bottom + margin;
-      }
-      
-      // 确保不超出左右边界
-      if (x < margin) {
-        x = margin;
-      } else if (x + popoverWidth > window.innerWidth - margin) {
-        x = window.innerWidth - popoverWidth - margin;
-      }
-    } else {
-      // 如果没有找到下拉框，使用鼠标位置
-      x = event.clientX - popoverWidth / 2;
-      y = event.clientY - popoverHeight - margin;
-      
-      // 检查左边界
-      if (x < margin) {
-        x = margin;
-      }
-      
-      // 检查右边界
-      if (x + popoverWidth > window.innerWidth - margin) {
-        x = window.innerWidth - popoverWidth - margin;
-      }
-      
-      // 检查上边界
-      if (y < margin) {
-        y = event.clientY + margin;
-      }
-    }
-    
-    // 确保不超出边界
-    x = Math.max(margin, x);
-    y = Math.max(margin, y);
-    
-    popoverPosition.value = { x, y };
-    
-    nextTick(() => {
-      thumbnailVisible.value = true;
-    });
-  }, 200); // 200ms延迟
+function openFontDialog() {
+  dialogVisible.value = true;
 }
 
-// 隐藏缩略图
-const hideThumbnail = useThrottleFn(() => {
-  // 清除定时器
-  if (showThumbnailTimer.value) {
-    clearTimeout(showThumbnailTimer.value);
-    showThumbnailTimer.value = null;
-  }
-  
-  thumbnailVisible.value = false;
-  currentThumbnail.value = null;
-}, 100);
+function clearFont() {
+  model.value = null;
+}
 
-async function fetchFontList(params = {}, isLoadMore = false) {
-  if (isLoadMore) {
-    loading.value = true;
-  } else {
-    loading.value = true;
-    currentPage.value = 1;
-    list.value = [];
+function selectFont(item: FontItem) {
+  model.value = item;
+  dialogVisible.value = false;
+}
+
+function handleDialogOpened() {
+  if (list.value.length === 0) {
+    fetchFontList();
   }
+}
+
+function handleDialogClosed() {
+  // 弹窗关闭时的清理工作（如果需要）
+}
+
+async function fetchFontList(params = {}) {
+  loading.value = true;
   
   try {
     const res = await getFontList({
@@ -266,68 +195,55 @@ async function fetchFontList(params = {}, isLoadMore = false) {
       pageSize: pageSize.value,
     });
     
-    if (isLoadMore) {
-      // 加载更多时追加数据
-      list.value = [...list.value, ...(res.list || [])];
-    } else {
-      // 搜索或首次加载时替换数据
-      list.value = res.list || [];
-    }
-    
+    list.value = res.list || [];
     total.value = res.total || 0;
-    hasMore.value = (list.value.length < total.value);
     
   } catch (error) {
     console.error('获取字体列表失败:', error);
-    if (!isLoadMore) {
-      list.value = [];
-    }
+    list.value = [];
+    total.value = 0;
   } finally {
     loading.value = false;
   }
 }
 
-// 加载更多
-async function loadMore() {
-  if (loading.value || !hasMore.value) return;
-  
-  currentPage.value++;
-  await fetchFontList({
+// 分页大小变化
+function handleSizeChange(size: number) {
+  pageSize.value = size;
+  currentPage.value = 1;
+  fetchFontList({
     match: searchKeyword.value,
-  }, true);
+  });
 }
 
-// 处理下拉框显示/隐藏
-function handleVisibleChange(visible: boolean) {
-  if (visible && list.value.length === 0) {
-    // 当下拉框打开且没有数据时，重新加载
-    fetchFontList();
-  }
-  
-  // 关闭下拉框时隐藏缩略图
-  if (!visible) {
-    hideThumbnail();
-  }
+// 页码变化
+function handleCurrentChange(page: number) {
+  currentPage.value = page;
+  fetchFontList({
+    match: searchKeyword.value,
+  });
 }
 
-const remoteMethod = useDebounceFn(function (val) {
+// 搜索输入
+const handleSearchInput = useDebounceFn(function (val: string) {
   searchKeyword.value = val;
+  currentPage.value = 1;
   fetchFontList({
     match: val,
   });
 }, 333);
 
-// 初始化加载
-onBeforeMount(() => {
+// 清除搜索
+function handleSearchClear() {
+  searchKeyword.value = '';
+  currentPage.value = 1;
   fetchFontList();
-});
+}
 
-// 组件卸载时清理定时器
-onUnmounted(() => {
-  if (showThumbnailTimer.value) {
-    clearTimeout(showThumbnailTimer.value);
-  }
-});
+// 初始化时不加载，等弹窗打开时再加载
+// onBeforeMount(() => {
+//   fetchFontList();
+// });
 
 /**
  * */
@@ -357,106 +273,158 @@ watch(
 </script>
 
 <style scoped>
-.font-option-text {
+.font-selector-wrapper {
   display: flex;
-  flex-direction: column;
-  padding: 8px 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  align-items: center;
+  gap: 8px;
 }
 
-.font-option-text:hover {
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  padding: 8px 4px;
-  margin: 0 -4px;
+.font-select-button {
+  max-width: 200px;
 }
 
-.font-name-text {
-  font-weight: 500;
-  color: #303133;
-  margin-bottom: 2px;
+.font-display-name {
+  flex: 1;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-right: 8px;
 }
 
-.font-desc-text {
+.font-select-icon {
+  flex-shrink: 0;
+}
+
+.font-drawer-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+}
+
+.font-search-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.font-search-wrapper .el-input {
+  flex: 1;
+}
+
+.font-list-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px;
+  min-height: 0;
+}
+
+.font-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+}
+
+.font-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 4px;
+}
+
+.font-item {
+  position: relative;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.font-item:hover {
+  border-color: #409eff;
+  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.font-item-selected {
+  border-color: #409eff;
+  background: #ecf5ff;
+}
+
+.font-item-thumbnail {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f5f7fa;
+}
+
+.font-thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.font-item-info {
+  flex: 1;
+  min-height: 40px;
+}
+
+.font-item-name {
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.font-item-desc {
   font-size: 12px;
   color: #909399;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
 }
 
-.load-more {
-  text-align: center;
-  padding: 8px 0;
-}
-
-.loading-state {
+.font-item-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background: #409eff;
+  color: #fff;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 0;
-  color: #909399;
-  font-size: 14px;
+  font-size: 12px;
 }
 
-.loading-state .el-icon {
-  margin-right: 8px;
-}
-
-.popover-trigger {
-  position: absolute;
-  z-index: -1;
-}
-
-.thumbnail-content {
+.font-pagination-wrapper {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
-}
-
-.font-thumbnail-preview {
-  width: 480px !important;
-  height: 200px !important;
-  border-radius: 10px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-
-
-/* 调整下拉框宽度 */
-:deep(.el-select-dropdown) {
-  min-width: 200px !important;
-}
-
-:deep(.el-select-dropdown__item) {
-  padding: 0 12px;
-}
-
-/* Popover样式 */
-:deep(.font-thumbnail-popover) {
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e4e7ed;
-  backdrop-filter: blur(8px);
-  background: rgba(255, 255, 255, 0.95);
-  z-index: 9999 !important;
-  pointer-events: none;
-}
-
-:deep(.font-thumbnail-popover .el-popover__body) {
-  pointer-events: none;
-}
-
-:deep(.font-thumbnail-popover .el-popover__title) {
-  display: none;
-}
-
-:deep(.font-thumbnail-popover .el-popover__arrow) {
-  display: none;
+  justify-content: flex-end;
+  padding: 12px;
+  border-top: 1px solid #e4e7ed;
+  flex-shrink: 0;
+  width: 100%;
+  background: #fff;
 }
 </style>
