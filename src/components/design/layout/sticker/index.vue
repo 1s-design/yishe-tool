@@ -1,9 +1,9 @@
 <template>
   <div class="container">
     <div class="menu">
-      <div class="flex justify-between w-full ">
+      <div class="flex justify-between w-full">
         <div style="flex: 1"></div>
-        <el-button @click="refresh" link type="primary"> 刷新 </el-button>
+        <el-button @click="refresh" link type="primary">刷新</el-button>
       </div>
       <div class="search">
         <el-input v-model="stickerSearchQueryParams.searchText" placeholder="寻找贴纸">
@@ -19,82 +19,89 @@
           </template>
         </el-input>
       </div>
-      <tags @change="tagChange"></tags>
     </div>
-    <RecycleScroller
-      class="scroll-list"
-      v-if="list.length"
-      :items="list"
-      @scroll-end="scrollEnd"
-      :item-size="180"
-      :itemSecondarySize="170"
-      :gridItems="2"
-      key-field="id"
-      v-slot="{ item, index }"
-    >
-      <div class="item">
-        <s1-image
-          padding="10%"
-          :src="item.url"
-          class="image"
-          :meta="item"
-          :showSize="true"
-          @load="imgLoad"
-        >
-        </s1-image>
-        <sticker-popover :stickerInfo="item">
-          <div class="bar">
-            <div class="title text-ellipsis">{{ item.name || "......" }}</div>
-            <el-icon>
-              <ArrowRight />
-            </el-icon>
-          </div>
-        </sticker-popover>
+    <div class="scroll-list" :class="{ 'loading-wave': loading }">
+      <div v-if="!loading && list.length === 0" class="empty">
+        暂无数据
       </div>
-    </RecycleScroller>
-    <s1-paging-bottom
-      :loading="loading"
-      :isEmpty="isEmpty"
-      :isLastPage="isLastPage"
-    ></s1-paging-bottom>
+      <div v-else class="list-grid">
+        <div v-for="item in list" :key="item.id" class="item">
+          <div class="image-wrapper">
+            <s1-image
+              :src="item.url"
+              class="image"
+              :meta="item"
+              :showSize="true"
+              @load="imgLoad"
+            >
+            </s1-image>
+          </div>
+          <sticker-popover :stickerInfo="item">
+            <div class="bar">
+              <div class="title text-ellipsis">{{ item.name || "......" }}</div>
+              <el-icon>
+                <ArrowRight />
+              </el-icon>
+            </div>
+          </sticker-popover>
+        </div>
+      </div>
+    </div>
+    <div class="pagination-wrapper" v-if="total > 0">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 30, 50]"
+        :total="total"
+        layout="prev, pager, next"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        small
+      />
+    </div>
   </div>
 </template>
 <script setup lang="tsx">
-import { ref, onBeforeMount, watch } from "vue";
-import { Search, ArrowRightBold, Operation, ArrowRight } from "@element-plus/icons-vue";
+import { ref, watch } from "vue";
+import { Search, Operation, ArrowRight } from "@element-plus/icons-vue";
 import { getStickerList } from "@/api";
-import { usePaging } from "@/hooks/data/paging.ts";
-import desimage from "@/components/image.vue";
 import stickerPopover from "./stickerPopover.vue";
 import { currentModelController } from "@/components/design/store";
 import { initDraggableElement } from "@/components/design/utils/draggable";
-import { imgToFile, createImgObjectURL, imgToBase64 } from "@/common/transform/index";
-import tags from "./tags.vue";
-import { stickerQueryParams } from "./index.tsx";
-import { loadingBottom } from "@/components/loading/index.tsx";
-import Utils from "@/common/utils";
+
 const stickerSearchQueryParams = ref({
   searchText: "",
 });
 
-// 列表展示几列
-const column = ref(2);
+const list = ref([]);
+const loading = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(20);
+const total = ref(0);
 
-function tagChange() {
-  reset();
+function refresh() {
+  currentPage.value = 1;
   getList();
 }
 
-function refresh() {
-  reset();
+function handleSizeChange(size: number) {
+  pageSize.value = size;
+  currentPage.value = 1;
+  getList();
+}
+
+function handleCurrentChange(page: number) {
+  currentPage.value = page;
   getList();
 }
 
 function imgLoad(el, meta) {
-  const img = el;
-
+  // 如果 el 是 s1-image 组件，需要找到内部的 img 元素
+  const img = el.tagName === 'IMG' ? el : el.querySelector('img') || el;
+  if (!img) return;
+  
   initDraggableElement(img, async () => {
-    let info = img.meta;
+    let info = img.meta || meta;
     currentModelController.value.stickToMousePosition({
       img: img,
       type: "image",
@@ -106,37 +113,34 @@ function imgLoad(el, meta) {
   });
 }
 
-function scrollEnd() {
-  getList();
+async function getList() {
+  loading.value = true;
+  try {
+    const res = await getStickerList({
+      match: [stickerSearchQueryParams.value.searchText].filter(Boolean),
+      currentPage: currentPage.value,
+      pageSize: pageSize.value,
+    });
+    list.value = res.list || [];
+    total.value = res.total || 0;
+  } catch (error) {
+    console.error("获取贴纸列表失败:", error);
+    list.value = [];
+    total.value = 0;
+  } finally {
+    loading.value = false;
+  }
 }
 
-const {
-  list,
-  getList,
-  loading,
-  reset,
-  firstLoading,
-  subsequentLoading,
-  isEmpty,
-  isLastPage,
-} = usePaging((params) => {
-  return getStickerList({
-    match: [stickerSearchQueryParams.value.searchText].filter(Boolean),
-    ...params,
-
-    pageSize: 20,
-    ...stickerQueryParams.value,
-  });
-});
-
 watch([() => stickerSearchQueryParams.value.searchText], () => {
-  reset();
+  currentPage.value = 1;
   getList();
 });
+
+// 初始化加载
+getList();
 </script>
 <style lang="less" scoped>
-@item-width: 40px;
-
 .container {
   width: 360px;
   height: 100%;
@@ -159,44 +163,103 @@ watch([() => stickerSearchQueryParams.value.searchText], () => {
 }
 
 .scroll-list {
-  height: 100%;
+  flex: 1;
   width: 100%;
   padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  box-sizing: border-box;
+  position: relative;
+  background: #fff;
+  transition: background 0.3s;
+}
+
+.scroll-list.loading-wave {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #e0e0e0 25%,
+    #f0f0f0 50%,
+    #e0e0e0 75%,
+    #f0f0f0 100%
+  );
+  background-size: 200% 100%;
+  animation: wave-bg 2s ease-in-out infinite;
+}
+
+@keyframes wave-bg {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .item {
-  width: auto;
-  height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
-  padding: 0px;
+  justify-content: flex-start;
+  padding: 0;
   row-gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.image-wrapper {
+  width: 100%;
+  max-width: 100%;
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #efefef;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.image-wrapper :deep(.s1-image) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-wrapper :deep(img) {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 4px;
+  display: block;
 }
 
 .image {
-  width: 160px !important;
-  height: 120px !important;
-  background-color: #efefef;
-  border-radius: 4px;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
-.title {
-  width: 100%;
-  text-align: left;
-}
-
-.list {
-  width: 100%;
-  flex: 1;
-  padding: 1em;
-  // 用于显示loading
-  // min-height: 240px;
-  // min-width: 100px;
-}
 
 .bar {
   width: 100%;
@@ -207,6 +270,8 @@ watch([() => stickerSearchQueryParams.value.searchText], () => {
   justify-content: space-between;
   align-items: center;
   column-gap: 1em;
+  box-sizing: border-box;
+  flex-shrink: 0;
 
   &:hover {
     color: #000;
@@ -216,11 +281,53 @@ watch([() => stickerSearchQueryParams.value.searchText], () => {
   .el-icon {
     height: 1em;
     line-height: 1em;
+    flex-shrink: 0;
+  }
+  
+  .title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
-</style>
-<style>
-.vue-recycle-scroller.direction-vertical:not(.page-mode) {
-  overflow-y: overlay;
+
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 40px 0;
 }
+
+.pagination-wrapper {
+  padding: 8px 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid #eee;
+  
+  :deep(.el-pagination) {
+    justify-content: center;
+    
+    .el-pagination__sizes,
+    .el-pagination__total {
+      display: none;
+    }
+    
+    .btn-prev,
+    .btn-next {
+      margin: 0 4px;
+    }
+    
+    .el-pager {
+      li {
+        min-width: 28px;
+        height: 28px;
+        line-height: 28px;
+        font-size: 12px;
+      }
+    }
+  }
+}
+
 </style>
