@@ -2,14 +2,12 @@
   <div class="container flex flex-col items-center">
     <div
       ref="canvasContainerRef"
-      @mousemove="mousemove"
       v-if="!showMainCanvas"
       v-loading="renderingLoading"
       v-bind="loadingOptions"
       class="canvas-container"
     >
       <canvass></canvass>
-      <drag-tip v-if="showDragTip"></drag-tip>
       <div class="canvas-container-bottom-menu">
         <div style="flex: 1"></div>
         <el-tooltip
@@ -269,8 +267,6 @@ import {
 } from "@ant-design/icons-vue";
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 import addPopover from "./addPopover.vue";
-import dragTip from "./dragTip.vue";
-import { useElementHover, useDebounceFn } from "@vueuse/core";
 import Api from "@/api";
 import { message } from "ant-design-vue";
 import { useLoginStatusStore } from "@/store/stores/login";
@@ -287,25 +283,6 @@ import {
 const loginStore = useLoginStatusStore();
 
 const canvasContainerRef = ref();
-
-const showDragTip = computed(() => {
-  return isHovered.value && !mouseMovedRecent.value;
-});
-
-const isHovered = useElementHover(canvasContainerRef, {
-  delayEnter: 0,
-});
-
-// 鼠标最近是否移动
-const mouseMovedRecent = ref(false);
-const mouseMoveTimer = ref();
-const mousemove = function () {
-  mouseMovedRecent.value = true;
-  clearTimeout(mouseMoveTimer.value);
-  mouseMoveTimer.value = setTimeout(() => {
-    mouseMovedRecent.value = false;
-  }, 3000);
-};
 
 const loadingOptions = useLoadingOptions({});
 
@@ -342,9 +319,6 @@ function exportTrimmedPng() {
   canvasController.downloadTrimmedPng();
 }
 
-function exportIco() {
-  canvasController.downloadIco();
-}
 
 function remove(id) {
   removeCavnasChild(id);
