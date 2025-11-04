@@ -20,33 +20,28 @@
           <div class="editor-sidebar">
             <div class="sidebar-section">
               <div class="section-title">图片操作</div>
-              <div class="tool-item" @click="handleCrop" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">✂️</div>
-                <span class="tool-label">裁剪</span>
-              </div>
-              <div class="tool-item" @click="handleRotate" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">🔄</div>
-                <span class="tool-label">旋转</span>
-              </div>
-              <div class="tool-item" @click="handleFlipH" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">↔️</div>
-                <span class="tool-label">水平翻转</span>
-              </div>
-              <div class="tool-item" @click="handleFlipV" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">↕️</div>
-                <span class="tool-label">垂直翻转</span>
-              </div>
-              <div class="tool-item" @click="handleZoomIn" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">🔍+</div>
-                <span class="tool-label">放大</span>
-              </div>
-              <div class="tool-item" @click="handleZoomOut" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">🔍-</div>
-                <span class="tool-label">缩小</span>
-              </div>
-              <div class="tool-item" @click="handleFitToCanvas" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">📐</div>
-                <span class="tool-label">适应画布</span>
+              <div class="tool-grid">
+                <div class="tool-item" @click="handleCrop" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">裁剪</span>
+                </div>
+                <div class="tool-item" @click="handleRotate" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">旋转</span>
+                </div>
+                <div class="tool-item" @click="handleFlipH" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">水平翻转</span>
+                </div>
+                <div class="tool-item" @click="handleFlipV" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">垂直翻转</span>
+                </div>
+                <div class="tool-item" @click="handleZoomIn" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">放大</span>
+                </div>
+                <div class="tool-item" @click="handleZoomOut" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">缩小</span>
+                </div>
+                <div class="tool-item" @click="handleFitToCanvas" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">适应画布</span>
+                </div>
               </div>
             </div>
 
@@ -54,29 +49,25 @@
 
             <div class="sidebar-section">
               <div class="section-title">添加元素</div>
-              <div class="tool-item" @click="handleAddText" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">📝</div>
-                <span class="tool-label">添加文字</span>
-              </div>
-              <div class="tool-item" @click="handleAddRect" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">▭</div>
-                <span class="tool-label">矩形</span>
-              </div>
-              <div class="tool-item" @click="handleAddCircle" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">⭕</div>
-                <span class="tool-label">圆形</span>
-              </div>
-              <div class="tool-item" @click="handleAddLine" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">─</div>
-                <span class="tool-label">线条</span>
-              </div>
-              <div class="tool-item" @click="handleAddArrow" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">➜</div>
-                <span class="tool-label">箭头</span>
-              </div>
-              <div class="tool-item" @click="handleToggleDraw" :class="{ disabled: !fabricCanvas, active: isDrawingMode }">
-                <div class="tool-icon">✏️</div>
-                <span class="tool-label">画笔</span>
+              <div class="tool-grid">
+                <div class="tool-item" @click="handleAddText" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">文字</span>
+                </div>
+                <div class="tool-item" @click="handleAddRect" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">矩形</span>
+                </div>
+                <div class="tool-item" @click="handleAddCircle" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">圆形</span>
+                </div>
+                <div class="tool-item" @click="handleAddLine" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">线条</span>
+                </div>
+                <div class="tool-item" @click="handleAddArrow" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">箭头</span>
+                </div>
+                <div class="tool-item" @click="handleToggleDraw" :class="{ disabled: !fabricCanvas, active: isDrawingMode }">
+                  <span class="tool-label">画笔</span>
+                </div>
               </div>
             </div>
 
@@ -84,25 +75,69 @@
 
             <div class="sidebar-section">
               <div class="section-title">滤镜效果</div>
-              <div class="tool-item" @click="handleBrightness" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">☀️</div>
-                <span class="tool-label">亮度</span>
+              <div class="filter-item" v-if="fabricCanvas">
+                <div class="filter-label-row">
+                  <span class="filter-label">亮度</span>
+                  <el-input-number
+                    v-model="filterValues.brightness"
+                    :min="-100"
+                    :max="100"
+                    :step="1"
+                    size="small"
+                    controls-position="right"
+                    style="width: 80px"
+                    @change="applyBrightness"
+                  />
+                </div>
               </div>
-              <div class="tool-item" @click="handleContrast" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">⚡</div>
-                <span class="tool-label">对比度</span>
+              <div class="filter-item" v-if="fabricCanvas">
+                <div class="filter-label-row">
+                  <span class="filter-label">对比度</span>
+                  <el-input-number
+                    v-model="filterValues.contrast"
+                    :min="-100"
+                    :max="100"
+                    :step="1"
+                    size="small"
+                    controls-position="right"
+                    style="width: 80px"
+                    @change="applyContrast"
+                  />
+                </div>
               </div>
-              <div class="tool-item" @click="handleSaturation" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">🎨</div>
-                <span class="tool-label">饱和度</span>
+              <div class="filter-item" v-if="fabricCanvas">
+                <div class="filter-label-row">
+                  <span class="filter-label">饱和度</span>
+                  <el-input-number
+                    v-model="filterValues.saturation"
+                    :min="-100"
+                    :max="100"
+                    :step="1"
+                    size="small"
+                    controls-position="right"
+                    style="width: 80px"
+                    @change="applySaturation"
+                  />
+                </div>
+              </div>
+              <div class="filter-item" v-if="fabricCanvas">
+                <div class="filter-label-row">
+                  <span class="filter-label">模糊</span>
+                  <el-input-number
+                    v-model="filterValues.blur"
+                    :min="0"
+                    :max="10"
+                    :step="0.1"
+                    :precision="1"
+                    size="small"
+                    controls-position="right"
+                    style="width: 80px"
+                    @change="applyBlur"
+                  />
+                </div>
               </div>
               <div class="tool-item" @click="handleGrayscale" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">⚫</div>
                 <span class="tool-label">灰度</span>
-              </div>
-              <div class="tool-item" @click="handleBlur" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">💫</div>
-                <span class="tool-label">模糊</span>
               </div>
             </div>
 
@@ -110,42 +145,38 @@
 
             <div class="sidebar-section">
               <div class="section-title">对象操作</div>
-              <div class="tool-item" @click="handleDeleteObject" :class="{ disabled: !hasActiveObject }">
-                <div class="tool-icon">🗑️</div>
-                <span class="tool-label">删除</span>
-              </div>
-              <div class="tool-item" @click="handleCopyObject" :class="{ disabled: !hasActiveObject }">
-                <div class="tool-icon">📋</div>
-                <span class="tool-label">复制</span>
-              </div>
-              <div class="tool-item" @click="handlePasteObject" :class="{ disabled: !copiedObject }">
-                <div class="tool-icon">📄</div>
-                <span class="tool-label">粘贴</span>
-              </div>
-              <div class="tool-item" @click="handleBringToFront" :class="{ disabled: !hasActiveObject }">
-                <div class="tool-icon">⬆️</div>
-                <span class="tool-label">置顶</span>
-              </div>
-              <div class="tool-item" @click="handleSendToBack" :class="{ disabled: !hasActiveObject }">
-                <div class="tool-icon">⬇️</div>
-                <span class="tool-label">置底</span>
+              <div class="tool-grid">
+                <div class="tool-item" @click="handleDeleteObject" :class="{ disabled: !hasActiveObject }">
+                  <span class="tool-label">删除</span>
+                </div>
+                <div class="tool-item" @click="handleCopyObject" :class="{ disabled: !hasActiveObject }">
+                  <span class="tool-label">复制</span>
+                </div>
+                <div class="tool-item" @click="handlePasteObject" :class="{ disabled: !copiedObject }">
+                  <span class="tool-label">粘贴</span>
+                </div>
+                <div class="tool-item" @click="handleBringToFront" :class="{ disabled: !hasActiveObject }">
+                  <span class="tool-label">置顶</span>
+                </div>
+                <div class="tool-item" @click="handleSendToBack" :class="{ disabled: !hasActiveObject }">
+                  <span class="tool-label">置底</span>
+                </div>
               </div>
             </div>
 
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
-              <div class="tool-item" @click="handleUndo" :class="{ disabled: !canUndo }">
-                <div class="tool-icon">↶</div>
-                <span class="tool-label">撤销</span>
-              </div>
-              <div class="tool-item" @click="handleRedo" :class="{ disabled: !canRedo }">
-                <div class="tool-icon">↷</div>
-                <span class="tool-label">重做</span>
-              </div>
-              <div class="tool-item" @click="handleReset" :class="{ disabled: !fabricCanvas }">
-                <div class="tool-icon">↺</div>
-                <span class="tool-label">重置</span>
+              <div class="tool-grid">
+                <div class="tool-item" @click="handleUndo" :class="{ disabled: !canUndo }">
+                  <span class="tool-label">撤销</span>
+                </div>
+                <div class="tool-item" @click="handleRedo" :class="{ disabled: !canRedo }">
+                  <span class="tool-label">重做</span>
+                </div>
+                <div class="tool-item" @click="handleReset" :class="{ disabled: !fabricCanvas }">
+                  <span class="tool-label">重置</span>
+                </div>
               </div>
             </div>
 
@@ -153,15 +184,12 @@
 
             <div class="sidebar-section">
               <div class="tool-item" @click="handleChangeImage">
-                <div class="tool-icon">🖼️</div>
                 <span class="tool-label">更换图片</span>
               </div>
               <div class="tool-item" @click="handleExport">
-                <div class="tool-icon">💾</div>
                 <span class="tool-label">导出图片</span>
               </div>
               <div class="tool-item primary" @click.stop="handleUpload" :class="{ loading: uploading }">
-                <div class="tool-icon">☁️</div>
                 <span class="tool-label">上传到图片库</span>
               </div>
             </div>
@@ -275,6 +303,14 @@ const imageLoading = ref(false)
 const isDrawingMode = ref(false)
 const hasActiveObject = ref(false)
 const copiedObject = ref(null)
+
+// 滤镜值
+const filterValues = ref({
+  brightness: 0,
+  contrast: 0,
+  saturation: 0,
+  blur: 0
+})
 
 // 窗口 resize 监听器
 let resizeHandler = null
@@ -424,18 +460,23 @@ function initFabricCanvas(imageWidth, imageHeight) {
     // 监听对象选中状态变化
     fabricCanvas.value.on('selection:created', () => {
       hasActiveObject.value = true
+      syncFilterValues()
     })
     fabricCanvas.value.on('selection:updated', () => {
       hasActiveObject.value = true
+      syncFilterValues()
     })
     fabricCanvas.value.on('selection:cleared', () => {
       hasActiveObject.value = false
+      resetFilterValues()
     })
     fabricCanvas.value.on('object:selected', () => {
       hasActiveObject.value = true
+      syncFilterValues()
     })
     fabricCanvas.value.on('object:deselected', () => {
       hasActiveObject.value = false
+      resetFilterValues()
     })
 
     // 移除旧的 resize 监听器（如果存在）
@@ -1015,76 +1056,122 @@ function handleToggleDraw() {
 }
 
 // ========== 滤镜效果 ==========
-// 亮度调整
-function handleBrightness() {
+// 同步滤镜值（从选中的对象读取）
+function syncFilterValues() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (!activeObject || activeObject.type !== 'image' || !activeObject.filters) {
+    resetFilterValues()
+    return
+  }
+  
+  // 读取亮度
+  const brightnessFilter = activeObject.filters.find(f => f.type === 'Brightness')
+  filterValues.value.brightness = brightnessFilter ? Math.round(brightnessFilter.brightness * 100) : 0
+  
+  // 读取对比度
+  const contrastFilter = activeObject.filters.find(f => f.type === 'Contrast')
+  filterValues.value.contrast = contrastFilter ? Math.round(contrastFilter.contrast * 100) : 0
+  
+  // 读取饱和度
+  const saturationFilter = activeObject.filters.find(f => f.type === 'Saturation')
+  filterValues.value.saturation = saturationFilter ? Math.round(saturationFilter.saturation * 100) : 0
+  
+  // 读取模糊
+  const blurFilter = activeObject.filters.find(f => f.type === 'Blur')
+  filterValues.value.blur = blurFilter ? Math.round(blurFilter.blur * 10) / 10 : 0
+}
+
+// 重置滤镜值
+function resetFilterValues() {
+  filterValues.value = {
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    blur: 0
+  }
+}
+
+// 应用亮度
+function applyBrightness(value) {
   if (!fabricCanvas.value) return
   
   const activeObject = fabricCanvas.value.getActiveObject()
   if (!activeObject || activeObject.type !== 'image') {
-    message.warning('请先选择图片对象')
     return
   }
   
-  const brightness = prompt('请输入亮度值 (-100 到 100):', '10')
-  if (brightness === null) return
+  // 移除旧的亮度滤镜
+  activeObject.filters = activeObject.filters.filter(f => f.type !== 'Brightness')
   
-  const value = parseInt(brightness)
-  if (isNaN(value) || value < -100 || value > 100) {
-    message.error('亮度值必须在 -100 到 100 之间')
-    return
+  if (value !== 0) {
+    activeObject.filters.push(new fabric.filters.Brightness({ brightness: value / 100 }))
   }
   
-  activeObject.filters.push(new fabric.filters.Brightness({ brightness: value / 100 }))
   activeObject.applyFilters()
   fabricCanvas.value.renderAll()
   saveHistory()
 }
 
-// 对比度调整
-function handleContrast() {
+// 应用对比度
+function applyContrast(value) {
   if (!fabricCanvas.value) return
   
   const activeObject = fabricCanvas.value.getActiveObject()
   if (!activeObject || activeObject.type !== 'image') {
-    message.warning('请先选择图片对象')
     return
   }
   
-  const contrast = prompt('请输入对比度值 (-100 到 100):', '10')
-  if (contrast === null) return
+  // 移除旧的对比度滤镜
+  activeObject.filters = activeObject.filters.filter(f => f.type !== 'Contrast')
   
-  const value = parseInt(contrast)
-  if (isNaN(value) || value < -100 || value > 100) {
-    message.error('对比度值必须在 -100 到 100 之间')
-    return
+  if (value !== 0) {
+    activeObject.filters.push(new fabric.filters.Contrast({ contrast: value / 100 }))
   }
   
-  activeObject.filters.push(new fabric.filters.Contrast({ contrast: value / 100 }))
   activeObject.applyFilters()
   fabricCanvas.value.renderAll()
   saveHistory()
 }
 
-// 饱和度调整
-function handleSaturation() {
+// 应用饱和度
+function applySaturation(value) {
   if (!fabricCanvas.value) return
   
   const activeObject = fabricCanvas.value.getActiveObject()
   if (!activeObject || activeObject.type !== 'image') {
-    message.warning('请先选择图片对象')
     return
   }
   
-  const saturation = prompt('请输入饱和度值 (-100 到 100):', '10')
-  if (saturation === null) return
+  // 移除旧的饱和度滤镜
+  activeObject.filters = activeObject.filters.filter(f => f.type !== 'Saturation')
   
-  const value = parseInt(saturation)
-  if (isNaN(value) || value < -100 || value > 100) {
-    message.error('饱和度值必须在 -100 到 100 之间')
+  if (value !== 0) {
+    activeObject.filters.push(new fabric.filters.Saturation({ saturation: value / 100 }))
+  }
+  
+  activeObject.applyFilters()
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// 应用模糊
+function applyBlur(value) {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (!activeObject || activeObject.type !== 'image') {
     return
   }
   
-  activeObject.filters.push(new fabric.filters.Saturation({ saturation: value / 100 }))
+  // 移除旧的模糊滤镜
+  activeObject.filters = activeObject.filters.filter(f => f.type !== 'Blur')
+  
+  if (value > 0) {
+    activeObject.filters.push(new fabric.filters.Blur({ blur: value }))
+  }
+  
   activeObject.applyFilters()
   fabricCanvas.value.renderAll()
   saveHistory()
@@ -1100,33 +1187,17 @@ function handleGrayscale() {
     return
   }
   
-  activeObject.filters.push(new fabric.filters.Grayscale())
-  activeObject.applyFilters()
-  fabricCanvas.value.renderAll()
-  saveHistory()
-  message.success('已应用灰度效果')
-}
-
-// 模糊效果
-function handleBlur() {
-  if (!fabricCanvas.value) return
+  // 检查是否已有灰度滤镜
+  const hasGrayscale = activeObject.filters.some(f => f.type === 'Grayscale')
   
-  const activeObject = fabricCanvas.value.getActiveObject()
-  if (!activeObject || activeObject.type !== 'image') {
-    message.warning('请先选择图片对象')
-    return
+  if (hasGrayscale) {
+    // 移除灰度滤镜
+    activeObject.filters = activeObject.filters.filter(f => f.type !== 'Grayscale')
+  } else {
+    // 添加灰度滤镜
+    activeObject.filters.push(new fabric.filters.Grayscale())
   }
   
-  const blur = prompt('请输入模糊值 (0 到 10):', '1')
-  if (blur === null) return
-  
-  const value = parseFloat(blur)
-  if (isNaN(value) || value < 0 || value > 10) {
-    message.error('模糊值必须在 0 到 10 之间')
-    return
-  }
-  
-  activeObject.filters.push(new fabric.filters.Blur({ blur: value }))
   activeObject.applyFilters()
   fabricCanvas.value.renderAll()
   saveHistory()
@@ -1706,12 +1777,12 @@ onUnmounted(() => {
 }
 
 .editor-sidebar {
-  width: 300px;
+  width: 360px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #e5e5e5;
   background: #fafafa;
-  padding: 8px 6px;
+  padding: 12px 10px;
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -1719,60 +1790,83 @@ onUnmounted(() => {
 .sidebar-section {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
 .section-title {
   font-size: 11px;
-  color: #999;
+  color: #666;
   padding: 8px 10px 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .sidebar-divider {
   height: 1px;
   background: #e5e5e5;
-  margin: 6px 0;
+  margin: 8px 0;
   flex-shrink: 0;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  padding: 0 4px;
 }
 
 .tool-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  border-radius: 4px;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: all 0.15s ease;
   user-select: none;
-  min-height: 32px;
+  min-height: 36px;
+  background: #fff;
+  border: 1px solid transparent;
   
   &:hover:not(.disabled) {
-    background: #f0f0f0;
+    background: #f5f5f5;
+    border-color: #e0e0e0;
   }
   
   &:active:not(.disabled) {
-    background: #e8e8e8;
+    background: #eeeeee;
   }
   
   &.disabled {
-    opacity: 0.35;
+    opacity: 0.4;
     cursor: not-allowed;
+    background: #fafafa;
+  }
+  
+  &.active {
+    background: #6900ff;
+    border-color: #6900ff;
+    
+    .tool-label {
+      color: #fff;
+    }
   }
   
   &.primary {
     background: #6900ff;
     color: #fff;
-    margin-top: 2px;
+    border-color: #6900ff;
     
     &:hover:not(.disabled) {
       background: #5a00e6;
+      border-color: #5a00e6;
     }
     
     &:active:not(.disabled) {
       background: #4d00cc;
+      border-color: #4d00cc;
     }
     
     .tool-label {
@@ -1785,33 +1879,35 @@ onUnmounted(() => {
     opacity: 0.7;
     cursor: wait;
   }
-  
-  &.active {
-    background: #e8e8ff;
-    
-    .tool-icon,
-    .tool-label {
-      color: #6900ff;
-    }
-  }
-}
-
-.tool-icon {
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-  line-height: 1;
 }
 
 .tool-label {
-  font-size: 12px;
+  font-size: 13px;
   color: #333;
   font-weight: 400;
   line-height: 1.4;
+}
+
+.filter-item {
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.filter-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.filter-label {
+  font-size: 13px;
+  color: #333;
+  font-weight: 400;
+  flex: 1;
 }
 
 .editor-canvas-area {
