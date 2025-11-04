@@ -19,6 +19,7 @@
           <!-- 左侧工具栏 -->
           <div class="editor-sidebar">
             <div class="sidebar-section">
+              <div class="section-title">图片操作</div>
               <div class="tool-item" @click="handleCrop" :class="{ disabled: !fabricCanvas }">
                 <div class="tool-icon">✂️</div>
                 <span class="tool-label">裁剪</span>
@@ -34,6 +35,100 @@
               <div class="tool-item" @click="handleFlipV" :class="{ disabled: !fabricCanvas }">
                 <div class="tool-icon">↕️</div>
                 <span class="tool-label">垂直翻转</span>
+              </div>
+              <div class="tool-item" @click="handleZoomIn" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">🔍+</div>
+                <span class="tool-label">放大</span>
+              </div>
+              <div class="tool-item" @click="handleZoomOut" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">🔍-</div>
+                <span class="tool-label">缩小</span>
+              </div>
+              <div class="tool-item" @click="handleFitToCanvas" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">📐</div>
+                <span class="tool-label">适应画布</span>
+              </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+              <div class="section-title">添加元素</div>
+              <div class="tool-item" @click="handleAddText" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">📝</div>
+                <span class="tool-label">添加文字</span>
+              </div>
+              <div class="tool-item" @click="handleAddRect" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">▭</div>
+                <span class="tool-label">矩形</span>
+              </div>
+              <div class="tool-item" @click="handleAddCircle" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">⭕</div>
+                <span class="tool-label">圆形</span>
+              </div>
+              <div class="tool-item" @click="handleAddLine" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">─</div>
+                <span class="tool-label">线条</span>
+              </div>
+              <div class="tool-item" @click="handleAddArrow" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">➜</div>
+                <span class="tool-label">箭头</span>
+              </div>
+              <div class="tool-item" @click="handleToggleDraw" :class="{ disabled: !fabricCanvas, active: isDrawingMode }">
+                <div class="tool-icon">✏️</div>
+                <span class="tool-label">画笔</span>
+              </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+              <div class="section-title">滤镜效果</div>
+              <div class="tool-item" @click="handleBrightness" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">☀️</div>
+                <span class="tool-label">亮度</span>
+              </div>
+              <div class="tool-item" @click="handleContrast" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">⚡</div>
+                <span class="tool-label">对比度</span>
+              </div>
+              <div class="tool-item" @click="handleSaturation" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">🎨</div>
+                <span class="tool-label">饱和度</span>
+              </div>
+              <div class="tool-item" @click="handleGrayscale" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">⚫</div>
+                <span class="tool-label">灰度</span>
+              </div>
+              <div class="tool-item" @click="handleBlur" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">💫</div>
+                <span class="tool-label">模糊</span>
+              </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+              <div class="section-title">对象操作</div>
+              <div class="tool-item" @click="handleDeleteObject" :class="{ disabled: !hasActiveObject }">
+                <div class="tool-icon">🗑️</div>
+                <span class="tool-label">删除</span>
+              </div>
+              <div class="tool-item" @click="handleCopyObject" :class="{ disabled: !hasActiveObject }">
+                <div class="tool-icon">📋</div>
+                <span class="tool-label">复制</span>
+              </div>
+              <div class="tool-item" @click="handlePasteObject" :class="{ disabled: !copiedObject }">
+                <div class="tool-icon">📄</div>
+                <span class="tool-label">粘贴</span>
+              </div>
+              <div class="tool-item" @click="handleBringToFront" :class="{ disabled: !hasActiveObject }">
+                <div class="tool-icon">⬆️</div>
+                <span class="tool-label">置顶</span>
+              </div>
+              <div class="tool-item" @click="handleSendToBack" :class="{ disabled: !hasActiveObject }">
+                <div class="tool-icon">⬇️</div>
+                <span class="tool-label">置底</span>
               </div>
             </div>
 
@@ -177,9 +272,13 @@ const showUploadModal = ref(false)
 const showSelectModal = ref(false)
 const submitLoading = ref(false)
 const imageLoading = ref(false)
+const isDrawingMode = ref(false)
+const hasActiveObject = ref(false)
+const copiedObject = ref(null)
 
 // 窗口 resize 监听器
 let resizeHandler = null
+let resizeTimer = null
 
 // 历史记录
 const history = ref([])
@@ -321,30 +420,47 @@ function initFabricCanvas(imageWidth, imageHeight) {
     fabricCanvas.value.on('object:modified', saveHistory)
     fabricCanvas.value.on('object:added', saveHistory)
     fabricCanvas.value.on('object:removed', saveHistory)
+    
+    // 监听对象选中状态变化
+    fabricCanvas.value.on('selection:created', () => {
+      hasActiveObject.value = true
+    })
+    fabricCanvas.value.on('selection:updated', () => {
+      hasActiveObject.value = true
+    })
+    fabricCanvas.value.on('selection:cleared', () => {
+      hasActiveObject.value = false
+    })
+    fabricCanvas.value.on('object:selected', () => {
+      hasActiveObject.value = true
+    })
+    fabricCanvas.value.on('object:deselected', () => {
+      hasActiveObject.value = false
+    })
 
     // 移除旧的 resize 监听器（如果存在）
     if (resizeHandler) {
       window.removeEventListener('resize', resizeHandler)
     }
 
-    // 监听窗口大小变化，重新调整画布尺寸
+    // 监听窗口大小变化，自动重置画布和图片
     resizeHandler = () => {
-      if (fabricCanvas.value && container) {
-        const newRect = container.getBoundingClientRect()
-        const padding = 40
-        const availableWidth = newRect.width - padding
-        const availableHeight = newRect.height - padding
-        const image = fabricCanvas.value.getObjects()[0]
-        if (image && originalImageSize.value.width && originalImageSize.value.height) {
-          const scale = Math.min(availableWidth / originalImageSize.value.width, availableHeight / originalImageSize.value.height, 1)
-          const newWidth = Math.floor(originalImageSize.value.width * scale)
-          const newHeight = Math.floor(originalImageSize.value.height * scale)
-          fabricCanvas.value.setDimensions({ width: newWidth, height: newHeight })
-          fabricCanvas.value.renderAll()
-        } else {
-          fabricCanvas.value.setDimensions({ width: availableWidth, height: availableHeight })
-          fabricCanvas.value.renderAll()
+      if (fabricCanvas.value && container && selectedImage.value) {
+        // 清除之前的定时器，使用防抖避免频繁触发
+        if (resizeTimer) {
+          clearTimeout(resizeTimer)
         }
+        
+        // 延迟执行，确保屏幕变化完全结束后再触发重置
+        // 延时触发，保证在屏幕尺寸变化稳定后再执行重置
+        resizeTimer = setTimeout(() => {
+          // 确保在屏幕变化完成后才执行重置
+          // 和点击重置按钮效果完全一样
+          if (fabricCanvas.value && selectedImage.value) {
+            handleReset()
+          }
+          resizeTimer = null
+        }, 500) // 500ms 延时，确保屏幕变化完全结束
       }
     }
 
@@ -711,6 +827,379 @@ function handleFlipV() {
   }
 }
 
+// ========== 缩放操作 ==========
+// 放大
+function handleZoomIn() {
+  if (!fabricCanvas.value) return
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (activeObject) {
+    const scale = (activeObject.scaleX || 1) * 1.1
+    activeObject.set({
+      scaleX: scale,
+      scaleY: scale
+    })
+    fabricCanvas.value.renderAll()
+    saveHistory()
+  } else {
+    message.info('请先选择要放大的对象')
+  }
+}
+
+// 缩小
+function handleZoomOut() {
+  if (!fabricCanvas.value) return
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (activeObject) {
+    const scale = (activeObject.scaleX || 1) * 0.9
+    activeObject.set({
+      scaleX: scale,
+      scaleY: scale
+    })
+    fabricCanvas.value.renderAll()
+    saveHistory()
+  } else {
+    message.info('请先选择要缩小的对象')
+  }
+}
+
+// 适应画布
+function handleFitToCanvas() {
+  if (!fabricCanvas.value) return
+  const objects = fabricCanvas.value.getObjects()
+  if (objects.length === 0) {
+    message.info('画布上没有对象')
+    return
+  }
+  
+  const image = objects[0]
+  if (image && originalImageSize.value.width && originalImageSize.value.height) {
+    const canvasWidth = fabricCanvas.value.width
+    const canvasHeight = fabricCanvas.value.height
+    const scale = Math.min(canvasWidth / originalImageSize.value.width, canvasHeight / originalImageSize.value.height, 1)
+    
+    image.set({
+      scaleX: scale / (image.width / originalImageSize.value.width),
+      scaleY: scale / (image.height / originalImageSize.value.height),
+      left: canvasWidth / 2,
+      top: canvasHeight / 2,
+      originX: 'center',
+      originY: 'center'
+    })
+    fabricCanvas.value.renderAll()
+    saveHistory()
+  }
+}
+
+// ========== 添加元素 ==========
+// 添加文字
+function handleAddText() {
+  if (!fabricCanvas.value) return
+  
+  const text = new fabric.Textbox('双击编辑文字', {
+    left: fabricCanvas.value.width / 2,
+    top: fabricCanvas.value.height / 2,
+    width: 200,
+    fontSize: 20,
+    fontFamily: 'Arial',
+    fill: '#000000',
+    textAlign: 'center',
+    originX: 'center',
+    originY: 'center'
+  })
+  
+  fabricCanvas.value.add(text)
+  fabricCanvas.value.setActiveObject(text)
+  fabricCanvas.value.renderAll()
+  saveHistory()
+  message.success('已添加文字，双击可编辑')
+}
+
+// 添加矩形
+function handleAddRect() {
+  if (!fabricCanvas.value) return
+  
+  const rect = new fabric.Rect({
+    left: fabricCanvas.value.width / 2,
+    top: fabricCanvas.value.height / 2,
+    width: 100,
+    height: 100,
+    fill: '#ff0000',
+    stroke: '#000000',
+    strokeWidth: 2,
+    originX: 'center',
+    originY: 'center'
+  })
+  
+  fabricCanvas.value.add(rect)
+  fabricCanvas.value.setActiveObject(rect)
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// 添加圆形
+function handleAddCircle() {
+  if (!fabricCanvas.value) return
+  
+  const circle = new fabric.Circle({
+    left: fabricCanvas.value.width / 2,
+    top: fabricCanvas.value.height / 2,
+    radius: 50,
+    fill: '#00ff00',
+    stroke: '#000000',
+    strokeWidth: 2,
+    originX: 'center',
+    originY: 'center'
+  })
+  
+  fabricCanvas.value.add(circle)
+  fabricCanvas.value.setActiveObject(circle)
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// 添加线条
+function handleAddLine() {
+  if (!fabricCanvas.value) return
+  
+  const line = new fabric.Line([50, 50, 150, 150], {
+    left: fabricCanvas.value.width / 2 - 100,
+    top: fabricCanvas.value.height / 2 - 100,
+    stroke: '#0000ff',
+    strokeWidth: 2,
+    originX: 'center',
+    originY: 'center'
+  })
+  
+  fabricCanvas.value.add(line)
+  fabricCanvas.value.setActiveObject(line)
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// 添加箭头
+function handleAddArrow() {
+  if (!fabricCanvas.value) return
+  
+  const arrow = new fabric.Path('M 0 0 L 100 0 L 90 -10 M 100 0 L 90 10', {
+    left: fabricCanvas.value.width / 2,
+    top: fabricCanvas.value.height / 2,
+    fill: '',
+    stroke: '#ff6600',
+    strokeWidth: 3,
+    originX: 'center',
+    originY: 'center'
+  })
+  
+  fabricCanvas.value.add(arrow)
+  fabricCanvas.value.setActiveObject(arrow)
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// 切换画笔模式
+function handleToggleDraw() {
+  if (!fabricCanvas.value) return
+  
+  isDrawingMode.value = !isDrawingMode.value
+  fabricCanvas.value.isDrawingMode = isDrawingMode.value
+  
+  if (isDrawingMode.value) {
+    fabricCanvas.value.freeDrawingBrush.width = 5
+    fabricCanvas.value.freeDrawingBrush.color = '#000000'
+    message.info('画笔模式已开启，在画布上绘制即可')
+  } else {
+    message.info('画笔模式已关闭')
+  }
+  
+  fabricCanvas.value.renderAll()
+}
+
+// ========== 滤镜效果 ==========
+// 亮度调整
+function handleBrightness() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (!activeObject || activeObject.type !== 'image') {
+    message.warning('请先选择图片对象')
+    return
+  }
+  
+  const brightness = prompt('请输入亮度值 (-100 到 100):', '10')
+  if (brightness === null) return
+  
+  const value = parseInt(brightness)
+  if (isNaN(value) || value < -100 || value > 100) {
+    message.error('亮度值必须在 -100 到 100 之间')
+    return
+  }
+  
+  activeObject.filters.push(new fabric.filters.Brightness({ brightness: value / 100 }))
+  activeObject.applyFilters()
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// 对比度调整
+function handleContrast() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (!activeObject || activeObject.type !== 'image') {
+    message.warning('请先选择图片对象')
+    return
+  }
+  
+  const contrast = prompt('请输入对比度值 (-100 到 100):', '10')
+  if (contrast === null) return
+  
+  const value = parseInt(contrast)
+  if (isNaN(value) || value < -100 || value > 100) {
+    message.error('对比度值必须在 -100 到 100 之间')
+    return
+  }
+  
+  activeObject.filters.push(new fabric.filters.Contrast({ contrast: value / 100 }))
+  activeObject.applyFilters()
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// 饱和度调整
+function handleSaturation() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (!activeObject || activeObject.type !== 'image') {
+    message.warning('请先选择图片对象')
+    return
+  }
+  
+  const saturation = prompt('请输入饱和度值 (-100 到 100):', '10')
+  if (saturation === null) return
+  
+  const value = parseInt(saturation)
+  if (isNaN(value) || value < -100 || value > 100) {
+    message.error('饱和度值必须在 -100 到 100 之间')
+    return
+  }
+  
+  activeObject.filters.push(new fabric.filters.Saturation({ saturation: value / 100 }))
+  activeObject.applyFilters()
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// 灰度效果
+function handleGrayscale() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (!activeObject || activeObject.type !== 'image') {
+    message.warning('请先选择图片对象')
+    return
+  }
+  
+  activeObject.filters.push(new fabric.filters.Grayscale())
+  activeObject.applyFilters()
+  fabricCanvas.value.renderAll()
+  saveHistory()
+  message.success('已应用灰度效果')
+}
+
+// 模糊效果
+function handleBlur() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (!activeObject || activeObject.type !== 'image') {
+    message.warning('请先选择图片对象')
+    return
+  }
+  
+  const blur = prompt('请输入模糊值 (0 到 10):', '1')
+  if (blur === null) return
+  
+  const value = parseFloat(blur)
+  if (isNaN(value) || value < 0 || value > 10) {
+    message.error('模糊值必须在 0 到 10 之间')
+    return
+  }
+  
+  activeObject.filters.push(new fabric.filters.Blur({ blur: value }))
+  activeObject.applyFilters()
+  fabricCanvas.value.renderAll()
+  saveHistory()
+}
+
+// ========== 对象操作 ==========
+// 删除对象
+function handleDeleteObject() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (activeObject) {
+    fabricCanvas.value.remove(activeObject)
+    fabricCanvas.value.renderAll()
+    saveHistory()
+    hasActiveObject.value = false
+  }
+}
+
+// 复制对象
+function handleCopyObject() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (activeObject) {
+    activeObject.clone((cloned) => {
+      copiedObject.value = cloned
+      message.success('已复制对象')
+    })
+  }
+}
+
+// 粘贴对象
+function handlePasteObject() {
+  if (!fabricCanvas.value || !copiedObject.value) return
+  
+  copiedObject.value.clone((cloned) => {
+    cloned.set({
+      left: cloned.left + 20,
+      top: cloned.top + 20
+    })
+    fabricCanvas.value.add(cloned)
+    fabricCanvas.value.setActiveObject(cloned)
+    fabricCanvas.value.renderAll()
+    saveHistory()
+    message.success('已粘贴对象')
+  })
+}
+
+// 置顶
+function handleBringToFront() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (activeObject) {
+    fabricCanvas.value.bringToFront(activeObject)
+    fabricCanvas.value.renderAll()
+    saveHistory()
+  }
+}
+
+// 置底
+function handleSendToBack() {
+  if (!fabricCanvas.value) return
+  
+  const activeObject = fabricCanvas.value.getActiveObject()
+  if (activeObject) {
+    fabricCanvas.value.sendToBack(activeObject)
+    fabricCanvas.value.renderAll()
+    saveHistory()
+  }
+}
+
 // 更换图片
 function handleChangeImage() {
   selectedImage.value = null
@@ -1063,6 +1552,49 @@ onMounted(() => {
   nextTick(() => {
     initFabricCanvas()
   })
+  
+  // 添加键盘快捷键支持
+  const handleKeyDown = (e) => {
+    // Delete 或 Backspace 删除对象
+    if ((e.key === 'Delete' || e.key === 'Backspace') && hasActiveObject.value && fabricCanvas.value) {
+      e.preventDefault()
+      handleDeleteObject()
+    }
+    
+    // Ctrl/Cmd + C 复制
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c' && hasActiveObject.value && fabricCanvas.value) {
+      e.preventDefault()
+      handleCopyObject()
+    }
+    
+    // Ctrl/Cmd + V 粘贴
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v' && copiedObject.value && fabricCanvas.value) {
+      e.preventDefault()
+      handlePasteObject()
+    }
+    
+    // Ctrl/Cmd + Z 撤销
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && canUndo.value && fabricCanvas.value) {
+      e.preventDefault()
+      handleUndo()
+    }
+    
+    // Ctrl/Cmd + Shift + Z 或 Ctrl/Cmd + Y 重做
+    if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') || 
+        ((e.ctrlKey || e.metaKey) && e.key === 'y' && canRedo.value && fabricCanvas.value)) {
+      e.preventDefault()
+      handleRedo()
+    }
+  }
+  
+  window.addEventListener('keydown', handleKeyDown)
+  
+  // 保存键盘监听器引用以便卸载时移除
+  const keydownHandlerRef = handleKeyDown
+  
+  onUnmounted(() => {
+    window.removeEventListener('keydown', keydownHandlerRef)
+  })
 })
 
 onUnmounted(() => {
@@ -1070,6 +1602,12 @@ onUnmounted(() => {
   if (resizeHandler) {
     window.removeEventListener('resize', resizeHandler)
     resizeHandler = null
+  }
+  
+  // 清除 resize 定时器
+  if (resizeTimer) {
+    clearTimeout(resizeTimer)
+    resizeTimer = null
   }
   
   // 销毁画布
@@ -1184,6 +1722,15 @@ onUnmounted(() => {
   gap: 1px;
 }
 
+.section-title {
+  font-size: 11px;
+  color: #999;
+  padding: 8px 10px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
 .sidebar-divider {
   height: 1px;
   background: #e5e5e5;
@@ -1237,6 +1784,15 @@ onUnmounted(() => {
   &.loading {
     opacity: 0.7;
     cursor: wait;
+  }
+  
+  &.active {
+    background: #e8e8ff;
+    
+    .tool-icon,
+    .tool-label {
+      color: #6900ff;
+    }
   }
 }
 
