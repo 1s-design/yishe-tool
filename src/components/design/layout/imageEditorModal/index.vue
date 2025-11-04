@@ -2,18 +2,18 @@
   <Transition name="image-editor-modal">
     <div v-if="isOpen" class="image-editor-modal-overlay" @click.self="handleClose">
       <div class="image-editor-modal-container">
-        <div class="image-editor-modal-header">
-          <span class="image-editor-modal-title">图片编辑</span>
-          <el-button 
-            text 
-            type="primary" 
-            @click="handleClose"
-            class="image-editor-modal-close-btn"
-          >
-            <el-icon><Close></Close></el-icon>
-          </el-button>
-        </div>
         <div class="image-editor-modal-body">
+          <div class="image-editor-close-btn-wrapper">
+            <el-button 
+              text 
+              type="primary" 
+              @click="handleClose"
+              class="image-editor-close-btn"
+              circle
+            >
+              <el-icon><Close></Close></el-icon>
+            </el-button>
+          </div>
           <KeepAlive>
             <imageEditor v-if="isOpen"></imageEditor>
           </KeepAlive>
@@ -83,28 +83,6 @@ if (typeof window !== 'undefined') {
   overflow: hidden;
 }
 
-.image-editor-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-  flex-shrink: 0;
-  background: #ffffff;
-  z-index: 1;
-}
-
-.image-editor-modal-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.85);
-}
-
-.image-editor-modal-close-btn {
-  margin-left: auto;
-}
-
 .image-editor-modal-body {
   flex: 1;
   width: 100%;
@@ -113,6 +91,20 @@ if (typeof window !== 'undefined') {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  position: relative;
+}
+
+.image-editor-close-btn-wrapper {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+}
+
+.image-editor-close-btn {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 // 动画效果

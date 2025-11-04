@@ -13,7 +13,7 @@
       </el-input>
     </div>
     
-    <div class="sticker-list" :class="{ 'loading-wave': loading }">
+    <div class="sticker-list" v-loading="loading" element-loading-text="加载中...">
       <div v-if="!loading && list.length === 0" class="empty">
         暂无数据
       </div>
@@ -124,32 +124,7 @@ getList()
   padding: 10px;
   min-height: 0;
   background: #fff;
-  transition: background 0.3s;
-}
-
-.sticker-list.loading-wave {
-  background: linear-gradient(
-    90deg,
-    #ffffff 0%,
-    #f5f5f5 25%,
-    #ffffff 50%,
-    #f5f5f5 75%,
-    #ffffff 100%
-  );
-  background-size: 200% 100%;
-  animation: wave-bg 2s ease-in-out infinite;
-}
-
-@keyframes wave-bg {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  position: relative;
 }
 
 .list-grid {

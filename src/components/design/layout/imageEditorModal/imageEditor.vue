@@ -16,48 +16,75 @@
         </div>
 
         <div v-else class="editor-workspace">
-          <!-- Fabric.js 画布容器 -->
-          <div class="fabric-canvas-wrapper">
-            <canvas ref="fabricCanvasRef" class="fabric-canvas"></canvas>
-            <!-- Loading 遮罩 -->
-            <div v-if="imageLoading" class="image-loading-overlay">
-              <div class="loading-content">
-                <el-icon class="is-loading" :size="32">
-                  <Loading />
-                </el-icon>
-                <p>正在加载图片...</p>
+          <!-- 左侧工具栏 -->
+          <div class="editor-sidebar">
+            <div class="sidebar-section">
+              <div class="tool-item" @click="handleCrop" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">✂️</div>
+                <span class="tool-label">裁剪</span>
+              </div>
+              <div class="tool-item" @click="handleRotate" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">🔄</div>
+                <span class="tool-label">旋转</span>
+              </div>
+              <div class="tool-item" @click="handleFlipH" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">↔️</div>
+                <span class="tool-label">水平翻转</span>
+              </div>
+              <div class="tool-item" @click="handleFlipV" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">↕️</div>
+                <span class="tool-label">垂直翻转</span>
+              </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+              <div class="tool-item" @click="handleUndo" :class="{ disabled: !canUndo }">
+                <div class="tool-icon">↶</div>
+                <span class="tool-label">撤销</span>
+              </div>
+              <div class="tool-item" @click="handleRedo" :class="{ disabled: !canRedo }">
+                <div class="tool-icon">↷</div>
+                <span class="tool-label">重做</span>
+              </div>
+              <div class="tool-item" @click="handleReset" :class="{ disabled: !fabricCanvas }">
+                <div class="tool-icon">↺</div>
+                <span class="tool-label">重置</span>
+              </div>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+              <div class="tool-item" @click="handleChangeImage">
+                <div class="tool-icon">🖼️</div>
+                <span class="tool-label">更换图片</span>
+              </div>
+              <div class="tool-item" @click="handleExport">
+                <div class="tool-icon">💾</div>
+                <span class="tool-label">导出图片</span>
+              </div>
+              <div class="tool-item primary" @click.stop="handleUpload" :class="{ loading: uploading }">
+                <div class="tool-icon">☁️</div>
+                <span class="tool-label">上传到图片库</span>
               </div>
             </div>
           </div>
 
-          <!-- 工具栏 -->
-          <div class="editor-toolbar">
-            <div class="toolbar-section">
-              <el-button-group>
-                <el-button @click="handleCrop" :disabled="!fabricCanvas">裁剪</el-button>
-                <el-button @click="handleRotate" :disabled="!fabricCanvas">旋转</el-button>
-                <el-button @click="handleFlipH" :disabled="!fabricCanvas">水平翻转</el-button>
-                <el-button @click="handleFlipV" :disabled="!fabricCanvas">垂直翻转</el-button>
-              </el-button-group>
-            </div>
-
-            <div class="toolbar-section">
-              <el-button-group>
-                <el-button @click="handleUndo" :disabled="!canUndo">撤销</el-button>
-                <el-button @click="handleRedo" :disabled="!canRedo">重做</el-button>
-                <el-button @click="handleReset" :disabled="!fabricCanvas">重置</el-button>
-              </el-button-group>
-            </div>
-
-            <div class="toolbar-section">
-              <el-button @click="handleChangeImage">更换图片</el-button>
-            </div>
-
-            <div class="toolbar-spacer"></div>
-
-            <div class="toolbar-section">
-              <el-button @click="handleExport">导出图片</el-button>
-              <el-button type="primary" @click="handleUpload" :loading="uploading">上传到图片库</el-button>
+          <!-- 右侧画布区域 -->
+          <div class="editor-canvas-area">
+            <div class="fabric-canvas-wrapper">
+              <canvas ref="fabricCanvasRef" class="fabric-canvas"></canvas>
+              <!-- Loading 遮罩 -->
+              <div v-if="imageLoading" class="image-loading-overlay">
+                <div class="loading-content">
+                  <el-icon class="is-loading" :size="32">
+                    <Loading />
+                  </el-icon>
+                  <p>正在加载图片...</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -72,7 +99,7 @@
       :footer="null"
       :z-index="10001"
       :centered="true"
-      :body-style="{ padding: '16px', maxHeight: 'calc(100vh - 200px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }"
+      :body-style="{ padding: '16px', height: '600px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }"
       @cancel="showSelectModal = false"
       class="select-image-modal"
     >
@@ -88,6 +115,8 @@
       v-model:open="showUploadModal"
       title="保存到图片素材库"
       :confirmLoading="submitLoading"
+      :z-index="10002"
+      :centered="true"
       @ok="doUpload"
       @cancel="showUploadModal = false"
     >
@@ -110,13 +139,6 @@
             autocompletePlacement="bottom"
           ></tagsInput>
         </el-form-item>
-        <el-form-item label="自动去除白色边框:">
-          <a-switch
-            v-model:checked="uploadForm.autoTrim"
-            checked-children="是"
-            un-checked-children="否"
-          />
-        </el-form-item>
       </el-form>
     </a-modal>
   </div>
@@ -126,6 +148,13 @@
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { Picture, Loading } from '@element-plus/icons-vue'
 import { message } from 'ant-design-vue'
+
+// 配置 message 的 z-index，确保显示在弹窗之上
+message.config({
+  top: '100px',
+  duration: 3,
+  maxCount: 3,
+})
 import Api from '@/api'
 import { useLoginStatusStore } from '@/store/stores/login'
 import { downloadByFile } from '@/common/transform'
@@ -149,6 +178,9 @@ const showSelectModal = ref(false)
 const submitLoading = ref(false)
 const imageLoading = ref(false)
 
+// 窗口 resize 监听器
+let resizeHandler = null
+
 // 历史记录
 const history = ref([])
 const historyIndex = ref(-1)
@@ -156,8 +188,7 @@ const historyIndex = ref(-1)
 const uploadForm = ref({
   name: '',
   description: '',
-  keywords: [],
-  autoTrim: true
+  keywords: []
 })
 
 // 保存原始图片尺寸（用于导出时保持高分辨率）
@@ -230,10 +261,10 @@ function calculateCanvasSize(imageWidth, imageHeight) {
     }
   }
 
-  // 获取容器的可用尺寸
+  // 获取容器的可用尺寸（使用整个右侧区域）
   const containerRect = container.getBoundingClientRect()
-  const maxWidth = containerRect.width - 40 // 留一些边距
-  const maxHeight = containerRect.height - 100 // 考虑工具栏等占用的空间
+  const maxWidth = containerRect.width // 使用整个宽度
+  const maxHeight = containerRect.height // 使用整个高度
 
   // 计算缩放比例，确保图片能完整显示
   const scale = Math.min(maxWidth / imageWidth, maxHeight / imageHeight, 1)
@@ -245,7 +276,7 @@ function calculateCanvasSize(imageWidth, imageHeight) {
   }
 }
 
-// 初始化 Fabric.js 画布（根据屏幕尺寸自适应）
+// 初始化 Fabric.js 画布（使用整个右侧区域）
 function initFabricCanvas(imageWidth, imageHeight) {
   if (!fabricCanvasRef.value) {
     return
@@ -257,13 +288,32 @@ function initFabricCanvas(imageWidth, imageHeight) {
       fabricCanvas.value.dispose()
     }
 
-    // 计算适合屏幕的画布尺寸
-    const { width, height } = calculateCanvasSize(imageWidth, imageHeight)
+    // 获取容器尺寸（直接使用整个右侧区域）
+    const container = fabricCanvasRef.value.parentElement
+    if (!container) {
+      console.error('画布容器不存在')
+      return
+    }
 
-    // 使用计算后的尺寸初始化画布
+    const containerRect = container.getBoundingClientRect()
+    // 留出边距（上下左右各 20px）
+    const padding = 40
+    const availableWidth = containerRect.width - padding
+    const availableHeight = containerRect.height - padding
+    let canvasWidth = availableWidth
+    let canvasHeight = availableHeight
+
+    // 如果有图片尺寸，计算适合的缩放比例，确保图片完整显示在可用区域内
+    if (imageWidth && imageHeight) {
+      const scale = Math.min(availableWidth / imageWidth, availableHeight / imageHeight, 1)
+      canvasWidth = Math.floor(imageWidth * scale)
+      canvasHeight = Math.floor(imageHeight * scale)
+    }
+
+    // 使用计算后的尺寸初始化画布（填满整个右侧区域）
     fabricCanvas.value = new fabric.Canvas(fabricCanvasRef.value, {
-      width: width,
-      height: height,
+      width: canvasWidth,
+      height: canvasHeight,
       backgroundColor: '#ffffff'
     })
 
@@ -271,6 +321,34 @@ function initFabricCanvas(imageWidth, imageHeight) {
     fabricCanvas.value.on('object:modified', saveHistory)
     fabricCanvas.value.on('object:added', saveHistory)
     fabricCanvas.value.on('object:removed', saveHistory)
+
+    // 移除旧的 resize 监听器（如果存在）
+    if (resizeHandler) {
+      window.removeEventListener('resize', resizeHandler)
+    }
+
+    // 监听窗口大小变化，重新调整画布尺寸
+    resizeHandler = () => {
+      if (fabricCanvas.value && container) {
+        const newRect = container.getBoundingClientRect()
+        const padding = 40
+        const availableWidth = newRect.width - padding
+        const availableHeight = newRect.height - padding
+        const image = fabricCanvas.value.getObjects()[0]
+        if (image && originalImageSize.value.width && originalImageSize.value.height) {
+          const scale = Math.min(availableWidth / originalImageSize.value.width, availableHeight / originalImageSize.value.height, 1)
+          const newWidth = Math.floor(originalImageSize.value.width * scale)
+          const newHeight = Math.floor(originalImageSize.value.height * scale)
+          fabricCanvas.value.setDimensions({ width: newWidth, height: newHeight })
+          fabricCanvas.value.renderAll()
+        } else {
+          fabricCanvas.value.setDimensions({ width: availableWidth, height: availableHeight })
+          fabricCanvas.value.renderAll()
+        }
+      }
+    }
+
+    window.addEventListener('resize', resizeHandler)
   } catch (e) {
     console.error('Fabric.js 初始化失败:', e)
     message.error('画布初始化失败')
@@ -811,75 +889,173 @@ function handleUpload() {
   showUploadModal.value = true
 }
 
-// 执行上传
+// 执行上传（使用与导出相同的逻辑）
 async function doUpload() {
-  if (!fabricCanvas.value) return
+  if (!fabricCanvas.value) {
+    message.error('画布未初始化，无法上传')
+    return
+  }
   
   submitLoading.value = true
 
   try {
-    // 获取画布数据
-    const dataURL = fabricCanvas.value.toDataURL({
+    // 获取画布上的所有对象
+    const objects = fabricCanvas.value.getObjects()
+    if (objects.length === 0) {
+      message.error('画布上没有图片，无法上传')
+      submitLoading.value = false
+      return
+    }
+
+    // 获取所有对象的精确边界框（只计算画布内可见的部分）
+    const canvas = fabricCanvas.value
+    const boundingBox = fabricCanvas.value.getObjects().reduce((bounds, obj) => {
+      const objBounds = obj.getBoundingRect()
+      
+      // 只计算画布内可见的部分
+      const visibleLeft = Math.max(0, objBounds.left)
+      const visibleTop = Math.max(0, objBounds.top)
+      const visibleRight = Math.min(canvas.width, objBounds.left + objBounds.width)
+      const visibleBottom = Math.min(canvas.height, objBounds.top + objBounds.height)
+      
+      // 只计算可见区域的边界
+      if (visibleRight > visibleLeft && visibleBottom > visibleTop) {
+        return {
+          minX: Math.min(bounds.minX, visibleLeft),
+          minY: Math.min(bounds.minY, visibleTop),
+          maxX: Math.max(bounds.maxX, visibleRight),
+          maxY: Math.max(bounds.maxY, visibleBottom)
+        }
+      }
+      
+      return bounds
+    }, {
+      minX: Infinity,
+      minY: Infinity,
+      maxX: -Infinity,
+      maxY: -Infinity
+    })
+
+    // 如果边界框无效，使用整个画布
+    if (boundingBox.minX === Infinity) {
+      boundingBox.minX = 0
+      boundingBox.minY = 0
+      boundingBox.maxX = canvas.width
+      boundingBox.maxY = canvas.height
+    }
+
+    // 计算图片的实际内容尺寸（不包含任何边距，只包含画布内可见部分）
+    const contentWidth = Math.ceil(boundingBox.maxX - boundingBox.minX)
+    const contentHeight = Math.ceil(boundingBox.maxY - boundingBox.minY)
+
+    if (contentWidth <= 0 || contentHeight <= 0) {
+      message.error('图片尺寸无效，无法上传')
+      submitLoading.value = false
+      return
+    }
+
+    // 获取第一个对象（图片）
+    const firstObject = objects[0]
+    
+    // 使用保存的原始图片尺寸
+    const originalWidth = originalImageSize.value.width || firstObject.width
+    const originalHeight = originalImageSize.value.height || firstObject.height
+
+    // 计算当前显示尺寸（考虑缩放）
+    const currentDisplayWidth = firstObject.width * firstObject.scaleX
+    const currentDisplayHeight = firstObject.height * firstObject.scaleY
+
+    // 计算缩放比例：使用原始尺寸和当前显示尺寸的比值来计算 multiplier
+    const scaleRatio = Math.max(1, Math.min(originalWidth / currentDisplayWidth, originalHeight / currentDisplayHeight))
+
+    // 导出尺寸 = 内容尺寸 * 缩放比例（保持高分辨率）
+    const exportWidth = Math.ceil(contentWidth * scaleRatio)
+    const exportHeight = Math.ceil(contentHeight * scaleRatio)
+
+    // 使用高分辨率导出整个画布
+    const canvasDataURL = fabricCanvas.value.toDataURL({
       format: 'png',
       quality: 1,
-      multiplier: 1
+      multiplier: scaleRatio
     })
-    
-    // 转换为 Blob 和 File
-    const blob = await fetch(dataURL).then(res => res.blob())
-    let file = new File([blob], 'edited-image.png', { type: 'image/png' })
 
-    // 如果开启了自动去除白色边框
-    if (uploadForm.value.autoTrim) {
-      // 创建临时 canvas 来获取 ImageData
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      const img = new Image()
-      
-      await new Promise((resolve, reject) => {
-        img.onload = () => {
-          canvas.width = img.width
-          canvas.height = img.height
-          ctx.drawImage(img, 0, 0)
+    // 创建临时画布，只包含图片内容，不添加任何边距
+    const tempCanvas = document.createElement('canvas')
+    tempCanvas.width = exportWidth
+    tempCanvas.height = exportHeight
+    const tempCtx = tempCanvas.getContext('2d')
+
+    // 加载画布图片
+    const img = new Image()
+    await new Promise((resolve, reject) => {
+      img.onload = () => {
+        try {
+          // 计算裁剪区域（考虑 multiplier）
+          const sourceX = Math.floor(boundingBox.minX * scaleRatio)
+          const sourceY = Math.floor(boundingBox.minY * scaleRatio)
+          const sourceWidth = Math.ceil(contentWidth * scaleRatio)
+          const sourceHeight = Math.ceil(contentHeight * scaleRatio)
+
+          // 直接裁剪绘制，不添加任何背景色或边距
+          tempCtx.drawImage(
+            img,
+            sourceX, sourceY, sourceWidth, sourceHeight,
+            0, 0, exportWidth, exportHeight
+          )
           resolve()
+        } catch (err) {
+          reject(new Error('图片处理失败: ' + (err.message || err)))
         }
-        img.onerror = reject
-        img.src = dataURL
-      })
-      
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const trimmed = Utils.trimImageData(imageData)
-      file = imageDataToFile(trimmed)
-    }
+      }
+      img.onerror = (err) => {
+        reject(new Error('图片加载失败，无法上传'))
+      }
+      img.src = canvasDataURL
+    })
+
+    // 导出裁剪后的图片（只包含实际内容，无空白）
+    const finalDataURL = tempCanvas.toDataURL('image/png', 1)
+    const blob = await fetch(finalDataURL).then(res => res.blob())
+    const file = new File([blob], 'edited-image.png', { type: 'image/png' })
 
     // 获取文件后缀
     const suffix = file.name.split('.').pop() || 'png'
 
     // 上传文件到COS
-    const cos = await Api.uploadToCOS({
-      file: file,
-    })
+    let cos
+    try {
+      cos = await Api.uploadToCOS({
+        file: file,
+      })
+    } catch (err) {
+      throw new Error('上传到COS失败: ' + (err.message || err))
+    }
 
     // 保存到素材库
-    await Api.createSticker({
-      url: cos.url,
-      suffix: suffix,
-      name: uploadForm.value.name,
-      description: uploadForm.value.description,
-      keywords: Array.isArray(uploadForm.value.keywords) 
-        ? uploadForm.value.keywords.map(k => String(k || '')).filter(k => k).join(",")
-        : String(uploadForm.value.keywords || ''),
-      isCustom: true,
-      uploaderId: loginStore.isLogin ? loginStore.userInfo.id : null,
-    })
+    try {
+      await Api.createSticker({
+        url: cos.url,
+        suffix: suffix,
+        name: uploadForm.value.name,
+        description: uploadForm.value.description,
+        keywords: Array.isArray(uploadForm.value.keywords) 
+          ? uploadForm.value.keywords.map(k => String(k || '')).filter(k => k).join(",")
+          : String(uploadForm.value.keywords || ''),
+        isCustom: true,
+        uploaderId: loginStore.isLogin ? loginStore.userInfo.id : null,
+      })
+    } catch (err) {
+      throw new Error('保存到素材库失败: ' + (err.message || err))
+    }
     
-    message.success("保存成功")
+    message.success("上传成功")
     submitLoading.value = false
     showUploadModal.value = false
   } catch (e) {
-    console.error('保存失败:', e)
+    console.error('上传失败:', e)
     submitLoading.value = false
-    message.error("保存失败: " + (e.message || e))
+    const errorMessage = e?.message || e?.response?.data?.message || e?.toString() || '未知错误'
+    message.error("上传失败: " + errorMessage)
   }
 }
 
@@ -890,6 +1066,13 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // 移除 resize 监听器
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+    resizeHandler = null
+  }
+  
+  // 销毁画布
   if (fabricCanvas.value) {
     fabricCanvas.value.dispose()
   }
@@ -980,8 +1163,109 @@ onUnmounted(() => {
 .editor-workspace {
   flex: 1;
   display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.editor-sidebar {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e5e5e5;
+  background: #fafafa;
+  padding: 8px 6px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: #e5e5e5;
+  margin: 6px 0;
+  flex-shrink: 0;
+}
+
+.tool-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  user-select: none;
+  min-height: 32px;
+  
+  &:hover:not(.disabled) {
+    background: #f0f0f0;
+  }
+  
+  &:active:not(.disabled) {
+    background: #e8e8e8;
+  }
+  
+  &.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  
+  &.primary {
+    background: #6900ff;
+    color: #fff;
+    margin-top: 2px;
+    
+    &:hover:not(.disabled) {
+      background: #5a00e6;
+    }
+    
+    &:active:not(.disabled) {
+      background: #4d00cc;
+    }
+    
+    .tool-label {
+      color: #fff;
+      font-weight: 500;
+    }
+  }
+  
+  &.loading {
+    opacity: 0.7;
+    cursor: wait;
+  }
+}
+
+.tool-icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tool-label {
+  font-size: 12px;
+  color: #333;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.editor-canvas-area {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .fabric-canvas-wrapper {
@@ -993,6 +1277,8 @@ onUnmounted(() => {
   padding: 20px;
   overflow: auto;
   min-height: 0;
+  width: 100%;
+  height: 100%;
   position: relative;
 }
 
@@ -1040,26 +1326,22 @@ onUnmounted(() => {
   border: 1px solid #ddd;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   background: #fff;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
 }
 
-.editor-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 24px;
-  border-top: 1px solid #f0f0f0;
-  background: #fff;
-  flex-shrink: 0;
+/* 确保 Ant Design Vue message 显示在弹窗之上 */
+:deep(.ant-message) {
+  z-index: 10003 !important;
 }
 
-.toolbar-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+:deep(.ant-message-notice) {
+  z-index: 10003 !important;
 }
 
-.toolbar-spacer {
-  flex: 1;
+:deep(.ant-message-notice-content) {
+  z-index: 10003 !important;
 }
 </style>
 
