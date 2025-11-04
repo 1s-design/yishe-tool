@@ -1,8 +1,6 @@
 import { ref, computed, shallowRef, nextTick, watch, defineAsyncComponent, defineComponent, shallowReactive } from 'vue'
-// OLD: html-to-image 相关导入（已注释，保留用于回溯）
-// import { toPng, toJpeg, toBlob, toPixelData, toSvg, toCanvas,getFontEmbedCSS } from "html-to-image";
-// NEW: 使用 @zumer/snapdom 替代
-import { snapdom } from "@zumer/snapdom";
+// 使用 html-to-image
+import { toPng, toJpeg, toBlob, toPixelData, toSvg, toCanvas, getFontEmbedCSS } from "html-to-image";
 import { downloadByFile } from '@/common/transform'
 import { useDebounceFn } from '@vueuse/core'
 import { waitImage } from '@/common'
@@ -293,19 +291,72 @@ export class CanvasController {
     loading = ref(false)
 
     async toPngFile() {
-        // OLD: 使用 html-to-image (已注释，保留用于回溯)
-        // const file = await htmlToPngFile(this.el)
-        // return file
+        // 等待字体加载完成
+        await this.waitForFontsLoaded()
         
-        // NEW: 使用 snapdom
-        const blob = await snapdom.toBlob(this.el, { 
-            type: 'png',
-            embedFonts: true, // 启用字体嵌入
-            placeholders: true, // 支持外部图片和CORS iframe的占位符
-            cache: 'auto', // 启用缓存以提高性能
-            fast: false // 关闭快速模式以确保所有资源加载完成
+        // 使用 html-to-image
+        const blob = await toBlob(this.el, {
+            quality: 1,
+            pixelRatio: 1,
+            backgroundColor: null,
+            fontEmbedCSS: await getFontEmbedCSS(this.el)
         })
+        
         return new File([blob], 'canvas.png', { type: 'image/png' })
+    }
+    
+    // 等待所有字体加载完成
+    async waitForFontsLoaded() {
+        // 等待 document.fonts API 加载完成
+        if (document.fonts && document.fonts.ready) {
+            try {
+                await document.fonts.ready
+            } catch (e) {
+                console.warn('Font loading check failed:', e)
+            }
+        }
+        
+        // 检查所有使用的字体是否已加载
+        const fontElements = this.el?.querySelectorAll('[style*="font-family"]') || []
+        const fontPromises: Promise<void>[] = []
+        
+        fontElements.forEach((el: HTMLElement) => {
+            const computedStyle = window.getComputedStyle(el)
+            const fontFamily = computedStyle.fontFamily
+            
+            // 检查是否是自定义字体（以 font_ 开头）
+            if (fontFamily && fontFamily.includes('font_')) {
+                // 提取字体名称
+                const fontName = fontFamily.match(/font_\d+/)?.[0]
+                if (fontName && document.fonts) {
+                    // 检查字体是否已加载
+                    const fontCheck = document.fonts.check(`12px ${fontName}`)
+                    if (!fontCheck) {
+                        // 如果字体未加载，等待它加载
+                        const fontPromise = new Promise<void>((resolve) => {
+                            let attempts = 0
+                            const maxAttempts = 50 // 最多等待5秒
+                            const checkInterval = setInterval(() => {
+                                attempts++
+                                if (document.fonts.check(`12px ${fontName}`) || attempts >= maxAttempts) {
+                                    clearInterval(checkInterval)
+                                    resolve()
+                                }
+                            }, 100)
+                        })
+                        fontPromises.push(fontPromise)
+                    }
+                }
+            }
+        })
+        
+        // 等待所有字体加载完成
+        if (fontPromises.length > 0) {
+            await Promise.all(fontPromises)
+        }
+        
+        // 额外等待一段时间确保字体完全应用
+        await new Promise(resolve => setTimeout(resolve, 200))
     }
 
     async downloadTrimmedPng() {
@@ -409,33 +460,21 @@ export class CanvasController {
             console.time('updateRenderingCanvas')
 
             try {
-                // OLD: 使用 html-to-image (已注释，保留用于回溯)
-                // this.base64 = await toPng(this.el)
-                // const fontEmbedCSS = await getFontEmbedCSS(this.el);
-                // let _canvas = await toCanvas(this.el, {})
-                // console.log('toCanvas')
-                // let svg = await toSvg(this.el,{})
-                // let img = document.createElement('img')
-                // img.src = svg
-                // img.width = 100
-                // img.height = 100 
-                // img.style.position= 'fixed'
-                // img.style.top= '0'
-                // img.style.left= '0'
-                // document.body.appendChild(img)
-                // document.body.appendChild(_canvas)
+                // 等待字体加载完成
+                await this.waitForFontsLoaded()
 
-                // NEW: 使用 snapdom
-                // 配置选项以确保支持字体、外部图片等复杂功能
-                let _canvas = await snapdom.toCanvas(this.el, {
-                    embedFonts: true, // 启用字体嵌入（对应旧代码的 getFontEmbedCSS）
-                    placeholders: true, // 支持外部图片和CORS iframe的占位符
-                    cache: 'auto', // 启用缓存以提高性能
-                    fast: false, // 关闭快速模式以确保所有资源（字体、图片等）加载完成
-                    // useProxy: '', // 如需支持跨域图片，可配置代理URL
-                    // fallbackURL: (dims) => `https://placehold.co/${dims.width}x${dims.height}`, // 图片加载失败时的回退
+                // 使用 html-to-image
+                // 获取字体嵌入 CSS
+                const fontEmbedCSS = await getFontEmbedCSS(this.el)
+                
+                // 转换为 canvas
+                let _canvas = await toCanvas(this.el, {
+                    quality: 1,
+                    pixelRatio: 1,
+                    backgroundColor: null,
+                    fontEmbedCSS: fontEmbedCSS
                 })
-                console.log('snapdom.toCanvas')
+                console.log('html-to-image toCanvas')
 
                 this.base64 = _canvas.toDataURL('image/png')
 
