@@ -75,6 +75,17 @@
       </div>
     </el-tooltip>
 
+    <el-tooltip :hide-after="0" content="图片编辑" placement="right">
+      <div 
+        class="menu-bar-item" 
+        :class="{ 'menu-bar-item-focus': showImageEditorModal }"
+        @click="handleSpecialMenuClick(menuItems.imageEditor)"
+      >
+        <div class="menu-bar-item-icon"><icon-image-editor></icon-image-editor></div>
+        <span>图片编辑</span>
+      </div>
+    </el-tooltip>
+
     <el-tooltip :hide-after="0" content="字体" placement="right">
       <div 
         class="menu-bar-item" 
@@ -169,6 +180,7 @@ import {
   showCustomTextSticker,
   showFontModal,
   showFrameModal,
+  showImageEditorModal,
   showStamp,
   showCustomModel,
   showSvgCanvas,
@@ -199,6 +211,7 @@ import iconBadge from "@/components/design/assets/icon/badge.svg?component";
 import iconSetting from "@/icon/setting.svg?component";
 import iconFont from "@/icon/font.svg?component";
 import iconFrame from "@/components/design/assets/icon/frame.svg?component";
+import iconImageEditor from "@/icon/photo.svg?component"; // 使用 photo 图标作为图片编辑图标
 import iconDecoration from "@/icon/design/decoration.svg?component";
 import iconCustomModel from "@/components/design/assets/icon/custom-model.svg?component";
 import iconSvgCanvas from "@/components/design/assets/icon/svg-canvas.svg?component";
@@ -220,6 +233,9 @@ function handleSpecialMenuClick(menuKey) {
       break;
     case menuItems.frame:
       showFrameModal.value = !showFrameModal.value;
+      break;
+    case menuItems.imageEditor:
+      showImageEditorModal.value = !showImageEditorModal.value;
       break;
     default:
       setActiveMenu(menuKey);

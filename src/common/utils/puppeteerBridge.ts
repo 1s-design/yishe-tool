@@ -32,14 +32,15 @@ class PuppeteerBridge {
   private consoleLogs: string[] = [];
 
   constructor() {
-    this.initConsoleCapture();
+    // this.initConsoleCapture();
     this.exposeToWindow();
     
     // 验证挂载是否成功
     setTimeout(() => {
       if ((window as any).puppeteerBridge === this) {
         console.log('✅ PuppeteerBridge 成功挂载到 window.puppeteerBridge');
-        console.log('可用方法:', Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor'));
+        const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
+        console.log('可用方法:', methods.join(', '));
       } else {
         console.warn('⚠️ PuppeteerBridge 挂载可能有问题，尝试重新挂载');
         this.exposeToWindow();

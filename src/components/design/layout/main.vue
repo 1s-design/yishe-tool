@@ -113,6 +113,7 @@
 
   <fontModal></fontModal>
   <frameModal></frameModal>
+  <imageEditorModal></imageEditorModal>
 
   <diydialog
     :show="menuState.showStickerModal"
@@ -195,6 +196,7 @@ import {
   isFirstPageLoading,
   showCustomTextSticker,
   showFontModal,
+  showImageEditorModal,
   showModelInfo,
   showDecalList,
   showHeader,
@@ -228,6 +230,7 @@ import customTextSticker from "./customTextSticker/index.vue";
 import fontUpload from "./fontUpload/index.vue";
 import fontModal from "./font/index.vue";
 import frameModal from "./frameModal/index.vue";
+import imageEditorModal from "./imageEditorModal/index.vue";
 import subHeaderMenu from "./subHeaderMenu/index.vue";
 import modelInfo from "./modelInfo/index.vue";
 import decalList from "./decalList/index.vue";
@@ -379,6 +382,34 @@ onMounted(async () => {
 
   // 页面挂载后初始化 designToolReceiver
   initDesignToolReceiver();
+
+  // 初始化时根据 showThreeCanvas 状态设置渲染
+  if (!showThreeCanvas.value && modelController.isMounted) {
+    modelController.stopRender();
+  }
+});
+
+// 监听 showThreeCanvas 变化，控制渲染循环以节省性能
+watch(showThreeCanvas, (isVisible) => {
+  // 等待模型控制器初始化完成后再执行
+  if (!modelController || !modelController.renderer) {
+    return;
+  }
+  
+  // 使用 nextTick 确保在渲染完成后执行
+  nextTick(() => {
+    if (!modelController.isMounted) {
+      return;
+    }
+    
+    if (isVisible) {
+      // 恢复渲染循环
+      modelController.startRender();
+    } else {
+      // 停止渲染循环以节省性能
+      modelController.stopRender();
+    }
+  });
 });
 
 initAction();

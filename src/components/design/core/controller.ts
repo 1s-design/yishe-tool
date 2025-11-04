@@ -431,8 +431,17 @@ export class ModelController {
     // 记录已渲染的帧数
     public frameCount = 0;
 
+    // 渲染循环的 ID
+    private animationFrameId: number | null = null;
+
+    // 是否启用渲染循环
+    private isRenderingEnabled = true;
+
     private execRender() {
-        requestAnimationFrame(this.execRender.bind(this));
+        // 只有在启用渲染时才继续循环
+        if (this.isRenderingEnabled) {
+            this.animationFrameId = requestAnimationFrame(this.execRender.bind(this));
+        }
 
         // 记录渲染帧数
         this.frameCount++;
@@ -450,6 +459,29 @@ export class ModelController {
 
         this.renderer.render(this.scene, this.camera);
 
+    }
+
+    // 停止渲染循环（节省性能）
+    public stopRender() {
+        this.isRenderingEnabled = false;
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+    }
+
+    // 恢复渲染循环
+    public startRender() {
+        if (!this.isRenderingEnabled) {
+            this.isRenderingEnabled = true;
+            // 重新启动渲染循环
+            this.execRender();
+        }
+    }
+
+    // 检查渲染是否启用
+    public get renderingEnabled() {
+        return this.isRenderingEnabled;
     }
 
     public isMounted = false;

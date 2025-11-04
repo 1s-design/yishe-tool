@@ -40,6 +40,17 @@
         <span>{{ isAutomationRunning ? '关闭自动化' : '开启自动化' }}</span>
       </el-button>
 
+      <el-button 
+        @click="showThreeCanvas = !showThreeCanvas" 
+        round 
+        text 
+        class="action-btn" 
+        :icon="showThreeCanvas ? View : Hide"
+        :title="showThreeCanvas ? '隐藏3D画布' : '显示3D画布'"
+      >
+        <span>{{ showThreeCanvas ? '隐藏3D' : '显示3D' }}</span>
+      </el-button>
+
       <el-switch
         v-model="isDarkMode"
         inline-prompt
@@ -76,10 +87,11 @@ import {
   isEdit,
   currentEditingModelId,
   exitEditMode,
+  showThreeCanvas,
 } from "../store";
 
 import { openFileModal } from "@/components/design/layout/upload/index.tsx";
-import { Share, UploadFilled, Close, VideoPlay, Download } from "@element-plus/icons-vue";
+import { Share, UploadFilled, Close, VideoPlay, Download, View, Hide } from "@element-plus/icons-vue";
 import userAvatar from "@/components/user/userAvatar.vue";
 import headerMenuDropdown from "./headerMenuDropdown/index.vue";
 import { onShortcutTrigger } from "../shortcut/index";
