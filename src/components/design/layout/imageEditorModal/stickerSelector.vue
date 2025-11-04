@@ -110,6 +110,7 @@ getList()
   height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .search-wrapper {
@@ -153,8 +154,8 @@ getList()
 
 .list-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
 }
 
 .sticker-item {
@@ -205,10 +206,13 @@ getList()
 }
 
 .pagination-wrapper {
-  padding: 8px 10px;
+  padding: 16px 10px;
   border-top: 1px solid #eee;
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
+  background: #fff;
+  margin-top: auto;
 }
 </style>
 

@@ -41,7 +41,7 @@
           >
             <div
               id="threejs-canvas"
-              style="width: 100%; height: 100%"
+              style="width: 100%"
               ref="mountContainer"
               :style="{ background: currentCanvasBackground?.backgroundCss }"
             ></div>
@@ -456,9 +456,14 @@ async function initAction() {
 
 #threejs-canvas {
   position: absolute;
-  top: 0;
+  top: 20px;
   left: 0;
+  right: 0;
+  bottom: 20px;
   z-index: 1;
+  border: 2px solid rgba(105, 0, 255, 0.4);
+  box-shadow: 0 0 20px rgba(105, 0, 255, 0.25);
+  border-radius: 4px;
 }
 
 #basics-canvas {
@@ -510,5 +515,14 @@ async function initAction() {
     linear-gradient(90deg, rgba(200, 200, 200, 0.3) 1px, transparent 1px);
   background-size: 20px 20px;
   background-color: #f8f8f8;
+}
+
+.threejs-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  box-sizing: border-box;
 }
 </style>
