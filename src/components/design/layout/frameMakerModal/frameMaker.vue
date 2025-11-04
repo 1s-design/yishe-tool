@@ -1,9 +1,9 @@
 <template>
-  <div class="frame-editor">
-    <div class="frame-editor-layout">
-      <!-- 编辑区域 -->
-      <div class="editor-main">
-        <div v-if="!selectedImage" class="editor-placeholder">
+  <div class="frame-maker">
+    <div class="frame-maker-layout">
+      <!-- 制作区域 -->
+      <div class="maker-main">
+        <div v-if="!selectedImage" class="maker-placeholder">
           <div class="placeholder-content">
             <el-icon :size="64" color="#ccc">
               <Picture></Picture>
@@ -15,9 +15,9 @@
           </div>
         </div>
 
-        <div v-else class="editor-workspace">
+        <div v-else class="maker-workspace">
           <!-- 左侧工具栏 -->
-          <div class="editor-sidebar">
+          <div class="maker-sidebar">
             <div class="sidebar-divider"></div>
 
             <div class="sidebar-section">
@@ -54,7 +54,7 @@
           </div>
 
           <!-- 右侧操作区域 -->
-          <div class="editor-canvas-area">
+          <div class="maker-canvas-area">
             <div class="canvas-wrapper">
               <div class="preview-container">
                 <img 
@@ -133,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { Picture, Loading } from '@element-plus/icons-vue'
 import { message } from 'ant-design-vue'
 
@@ -396,21 +396,21 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.frame-editor {
+.frame-maker {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.frame-editor-layout {
+.frame-maker-layout {
   display: flex;
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
 
-.editor-main {
+.maker-main {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -419,7 +419,7 @@ onMounted(() => {
   height: 100%;
 }
 
-.editor-placeholder {
+.maker-placeholder {
   flex: 1;
   display: flex;
   align-items: center;
@@ -438,14 +438,14 @@ onMounted(() => {
   }
 }
 
-.editor-workspace {
+.maker-workspace {
   flex: 1;
   display: flex;
   flex-direction: row;
   overflow: hidden;
 }
 
-.editor-sidebar {
+.maker-sidebar {
   width: 300px;
   display: flex;
   flex-direction: column;
@@ -545,7 +545,7 @@ onMounted(() => {
   line-height: 1.4;
 }
 
-.editor-canvas-area {
+.maker-canvas-area {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -663,3 +663,4 @@ onMounted(() => {
   z-index: 10003 !important;
 }
 </style>
+

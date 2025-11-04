@@ -1,21 +1,21 @@
 <template>
-  <Transition name="frame-modal">
-    <div v-if="isOpen" class="frame-modal-overlay" @click.self="handleClose">
-      <div class="frame-modal-container">
-        <div class="frame-modal-body">
-          <div class="frame-editor-close-btn-wrapper">
+  <Transition name="frame-maker-modal">
+    <div v-if="isOpen" class="frame-maker-modal-overlay" @click.self="handleClose">
+      <div class="frame-maker-modal-container">
+        <div class="frame-maker-modal-body">
+          <div class="frame-maker-close-btn-wrapper">
             <el-button 
               text 
               type="primary" 
               @click="handleClose"
-              class="frame-editor-close-btn"
+              class="frame-maker-close-btn"
               circle
             >
               <el-icon><Close></Close></el-icon>
             </el-button>
           </div>
           <KeepAlive>
-            <frameEditor v-if="isOpen" />
+            <frameMaker v-if="isOpen"></frameMaker>
           </KeepAlive>
         </div>
       </div>
@@ -24,40 +24,41 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed, onUnmounted } from 'vue'
 import { Close } from '@element-plus/icons-vue'
-import { showFrameModal } from '../../store'
-import frameEditor from './frameEditor.vue'
+import { showFrameMakerModal } from '../../store'
+import frameMaker from './frameMaker.vue'
 
 const isOpen = computed({
-  get: () => showFrameModal.value,
+  get: () => showFrameMakerModal.value,
   set: (val) => {
-    showFrameModal.value = val
+    showFrameMakerModal.value = val
   }
 })
 
 function handleClose() {
-  showFrameModal.value = false
+  showFrameMakerModal.value = false
 }
 
 // 监听 ESC 键关闭
-watch(isOpen, (newVal) => {
-  if (newVal) {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') {
-        handleClose()
-      }
-    }
-    document.addEventListener('keydown', handleEsc)
-    return () => {
-      document.removeEventListener('keydown', handleEsc)
-    }
+const handleKeyDown = (e) => {
+  if (e.key === 'Escape' && isOpen.value) {
+    handleClose()
   }
-})
+}
+
+if (typeof window !== 'undefined') {
+  document.addEventListener('keydown', handleKeyDown)
+  
+  // 组件卸载时移除监听器
+  onUnmounted(() => {
+    document.removeEventListener('keydown', handleKeyDown)
+  })
+}
 </script>
 
 <style lang="less" scoped>
-.frame-modal-overlay {
+.frame-maker-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -73,7 +74,7 @@ watch(isOpen, (newVal) => {
   overflow: hidden;
 }
 
-.frame-modal-container {
+.frame-maker-modal-container {
   width: 100%;
   height: 100%;
   background: #ffffff;
@@ -82,7 +83,7 @@ watch(isOpen, (newVal) => {
   overflow: hidden;
 }
 
-.frame-modal-body {
+.frame-maker-modal-body {
   flex: 1;
   width: 100%;
   height: 100%;
@@ -93,42 +94,42 @@ watch(isOpen, (newVal) => {
   position: relative;
 }
 
-.frame-editor-close-btn-wrapper {
+.frame-maker-close-btn-wrapper {
   position: absolute;
   top: 16px;
   right: 16px;
   z-index: 100;
 }
 
-.frame-editor-close-btn {
+.frame-maker-close-btn {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 // 动画效果
-.frame-modal-enter-active,
-.frame-modal-leave-active {
+.frame-maker-modal-enter-active,
+.frame-maker-modal-leave-active {
   transition: opacity 0.3s ease;
 }
 
-.frame-modal-enter-active .frame-modal-container,
-.frame-modal-leave-active .frame-modal-container {
+.frame-maker-modal-enter-active .frame-maker-modal-container,
+.frame-maker-modal-leave-active .frame-maker-modal-container {
   transition: transform 0.3s ease;
 }
 
-.frame-modal-enter-from {
+.frame-maker-modal-enter-from {
   opacity: 0;
   
-  .frame-modal-container {
+  .frame-maker-modal-container {
     transform: scale(0.95);
   }
 }
 
-.frame-modal-leave-to {
+.frame-maker-modal-leave-to {
   opacity: 0;
   
-  .frame-modal-container {
+  .frame-maker-modal-container {
     transform: scale(0.95);
   }
 }
