@@ -92,6 +92,7 @@ export const currentOperatingBaseModelInfo = ref({} as any)
 
 // 是否展示场景控制弹窗
 export const showSceneControl = ref(false)
+export const showFrameModal = ref(false) // 制作画框弹窗
 
 // 是否展示图片贴图的弹窗
 export const showImageSticker = ref(false)
@@ -387,7 +388,8 @@ export const menuItems = {
     canvas: 'canvas',
     decoration: 'decoration',
     font: 'font',
-    scene: 'scene'
+    scene: 'scene',
+    frame: 'frame' // 制作画框
 } as const
 
 // 切换菜单状态

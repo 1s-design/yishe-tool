@@ -75,19 +75,6 @@
       </div>
     </el-tooltip>
 
-    <el-tooltip :hide-after="0" content="服装装饰品" placement="right">
-      <div 
-        class="menu-bar-item" 
-        :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.decoration }"
-        @click="setActiveMenu(menuItems.decoration)"
-      >
-        <div class="menu-bar-item-icon">
-          <icon-decoration></icon-decoration>
-        </div>
-        <span>饰品</span>
-      </div>
-    </el-tooltip>
-
     <el-tooltip :hide-after="0" content="字体" placement="right">
       <div 
         class="menu-bar-item" 
@@ -120,6 +107,17 @@
       >
         <div class="menu-bar-item-icon"><icon-earth></icon-earth></div>
         <span>场景</span>
+      </div>
+    </el-tooltip>
+
+    <el-tooltip :hide-after="0" content="制作画框" placement="right">
+      <div 
+        class="menu-bar-item" 
+        :class="{ 'menu-bar-item-focus': showFrameModal }"
+        @click="handleSpecialMenuClick(menuItems.frame)"
+      >
+        <div class="menu-bar-item-icon"><icon-frame></icon-frame></div>
+        <span>制作画框</span>
       </div>
     </el-tooltip>
 
@@ -170,6 +168,7 @@ import {
   showTextSticker,
   showCustomTextSticker,
   showFontModal,
+  showFrameModal,
   showStamp,
   showCustomModel,
   showSvgCanvas,
@@ -199,6 +198,7 @@ import iconQrcode from "@/components/design/assets/icon/qrcode.svg?component";
 import iconBadge from "@/components/design/assets/icon/badge.svg?component";
 import iconSetting from "@/icon/setting.svg?component";
 import iconFont from "@/icon/font.svg?component";
+import iconFrame from "@/components/design/assets/icon/frame.svg?component";
 import iconDecoration from "@/icon/design/decoration.svg?component";
 import iconCustomModel from "@/components/design/assets/icon/custom-model.svg?component";
 import iconSvgCanvas from "@/components/design/assets/icon/svg-canvas.svg?component";
@@ -217,6 +217,9 @@ function handleSpecialMenuClick(menuKey) {
       break;
     case menuItems.scene:
       showSceneControl.value = !showSceneControl.value;
+      break;
+    case menuItems.frame:
+      showFrameModal.value = !showFrameModal.value;
       break;
     default:
       setActiveMenu(menuKey);

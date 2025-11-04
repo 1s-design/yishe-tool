@@ -112,6 +112,7 @@
   </el-drawer>
 
   <fontModal></fontModal>
+  <frameModal></frameModal>
 
   <diydialog
     :show="menuState.showStickerModal"
@@ -226,6 +227,7 @@ import imageUpload from "./imageUpload/index.vue";
 import customTextSticker from "./customTextSticker/index.vue";
 import fontUpload from "./fontUpload/index.vue";
 import fontModal from "./font/index.vue";
+import frameModal from "./frameModal/index.vue";
 import subHeaderMenu from "./subHeaderMenu/index.vue";
 import modelInfo from "./modelInfo/index.vue";
 import decalList from "./decalList/index.vue";

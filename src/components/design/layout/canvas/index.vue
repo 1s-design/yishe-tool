@@ -100,14 +100,12 @@
             link
             :loading="isUpdatingSticker"
             :disabled="isUpdatingSticker"
+            :class="{ 'update-required': shouldUpdateCanvasSticker }"
           >
             <template v-if="isUpdatingSticker">
               正在更新贴纸...
             </template>
             <template v-else>
-              <el-icon v-if="shouldUpdateCanvasSticker" style="color: #f56c6c; font-size: 18px; margin-right: 4px">
-                <WarningFilled />
-              </el-icon>
               {{ shouldUpdateCanvasSticker ? "点击更新贴纸" : "贴纸已更新" }}
             </template>
           </el-button>
@@ -120,6 +118,7 @@
         link
         :loading="isUpdatingSticker"
         :disabled="isUpdatingSticker"
+        :class="{ 'update-required': shouldUpdateCanvasSticker }"
       >
         <template v-if="isUpdatingSticker">
           正在更新贴纸...
@@ -517,5 +516,16 @@ function genSticker() {
 
 .label {
   line-height: 22px;
+}
+
+// 需要更新贴纸时的样式
+:deep(.update-required) {
+  color: #f56c6c !important;
+  font-weight: bold !important;
+  
+  &:hover {
+    color: #f56c6c !important;
+    opacity: 0.8;
+  }
 }
 </style>

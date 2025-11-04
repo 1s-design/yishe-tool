@@ -178,11 +178,11 @@ getList();
 .scroll-list.loading-wave {
   background: linear-gradient(
     90deg,
-    #f0f0f0 0%,
-    #e0e0e0 25%,
-    #f0f0f0 50%,
-    #e0e0e0 75%,
-    #f0f0f0 100%
+    #ffffff 0%,
+    #f5f5f5 25%,
+    #ffffff 50%,
+    #f5f5f5 75%,
+    #ffffff 100%
   );
   background-size: 200% 100%;
   animation: wave-bg 2s ease-in-out infinite;

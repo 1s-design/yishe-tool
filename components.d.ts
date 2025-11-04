@@ -58,6 +58,8 @@ declare module 'vue' {
     FontUpload: typeof import('./src/components/design/layout/fontUpload/index.vue')['default']
     FontWeight: typeof import('./src/components/design/layout/canvas/operate/fontWeight.vue')['default']
     Format: typeof import('./src/components/design/layout/canvas/operate/barcode/format.vue')['default']
+    FrameEditor: typeof import('./src/components/design/layout/frameModal/frameEditor.vue')['default']
+    FrameModal: typeof import('./src/components/design/layout/frameModal/index.vue')['default']
     GltfViewer: typeof import('./src/components/model/gltfViewer/index.vue')['default']
     Grayscale: typeof import('./src/components/design/layout/canvas/operate/filter/grayscale.vue')['default']
     Grid: typeof import('./src/components/design/components/grid.vue')['default']
