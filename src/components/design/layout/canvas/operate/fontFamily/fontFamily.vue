@@ -17,7 +17,7 @@
         <el-button 
           v-if="model" 
           size="small" 
-          link 
+           
           type="danger"
           @click="clearFont"
         >
@@ -88,6 +88,11 @@
                 <div class="font-item-info">
                   <div class="font-item-name">{{ item.name }}</div>
                   <div class="font-item-desc" v-if="item.description">{{ item.description }}</div>
+                  <div class="font-item-family" @click.stop="copyFontFamily(item.id)">
+                    <span class="font-family-label">FontFamily:</span>
+                    <span class="font-family-value">{{ `font_${item.id}` }}</span>
+                    <el-icon class="font-family-copy-icon"><DocumentCopy /></el-icon>
+                  </div>
                 </div>
                 <div class="font-item-check" v-if="model?.id === item.id">
                   <el-icon><Check /></el-icon>
@@ -121,8 +126,9 @@ import desimage from "@/components/image.vue";
 import { fetchFontFaceWithMessage } from "./index.ts";
 import { showUpload, showFontModal } from "@/components/design/store";
 import { useDebounceFn } from "@vueuse/core";
-import { Loading, Search, Check } from "@element-plus/icons-vue";
+import { Loading, Search, Check, DocumentCopy } from "@element-plus/icons-vue";
 import { getFontList } from "@/api";
+import { ElMessage } from "element-plus";
 
 interface FontItem {
   id: string;
@@ -173,6 +179,30 @@ function clearFont() {
 function selectFont(item: FontItem) {
   model.value = item;
   dialogVisible.value = false;
+}
+
+// 复制 FontFamily ID
+async function copyFontFamily(fontId: string) {
+  const fontFamilyId = `font_${fontId}`;
+  try {
+    await navigator.clipboard.writeText(fontFamilyId);
+    ElMessage.success('FontFamily ID 已复制到剪贴板');
+  } catch (error) {
+    // 降级方案
+    const textarea = document.createElement('textarea');
+    textarea.value = fontFamilyId;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      ElMessage.success('FontFamily ID 已复制到剪贴板');
+    } catch (e) {
+      ElMessage.error('复制失败，请手动复制');
+    }
+    document.body.removeChild(textarea);
+  }
 }
 
 function handleDialogOpened() {
@@ -275,8 +305,7 @@ watch(
 <style scoped>
 .font-selector-wrapper {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
 }
 
 .font-select-button {
@@ -401,6 +430,49 @@ watch(
   line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.font-item-family {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.font-item-family:hover {
+  background: #e4e7ed;
+}
+
+.font-family-label {
+  color: #606266;
+  font-weight: 500;
+}
+
+.font-family-value {
+  color: #409eff;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.font-family-copy-icon {
+  color: #909399;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.font-item-family:hover .font-family-copy-icon {
+  color: #409eff;
 }
 
 .font-item-check {

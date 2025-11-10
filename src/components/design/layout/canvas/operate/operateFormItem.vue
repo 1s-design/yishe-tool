@@ -2,7 +2,7 @@
  * @Author: chan-max jackieontheway666@gmail.com
  * @Date: 2023-12-16 12:40:25
  * @LastEditors: chan-max jackieontheway666@gmail.com
- * @LastEditTime: 2023-12-16 15:16:47
+ * @LastEditTime: 2025-11-11 06:59:14
  * @FilePath: /1s/src/components/design/layout/customTextSticker/operateFormItem.vue
  * @Description: 
  * 
@@ -37,7 +37,7 @@ const props = defineProps({
 <style lang="less">
 .operate-form-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   column-gap: 16px;
   min-height: 40px;
