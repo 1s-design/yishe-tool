@@ -112,9 +112,7 @@
   </el-drawer>
 
   <fontModal></fontModal>
-  <frameModal></frameModal>
   <imageEditorModal></imageEditorModal>
-  <frameMakerModal></frameMakerModal>
 
   <diydialog
     :show="menuState.showStickerModal"
@@ -198,7 +196,6 @@ import {
   showCustomTextSticker,
   showFontModal,
   showImageEditorModal,
-  showFrameMakerModal,
   showModelInfo,
   showDecalList,
   showHeader,
@@ -231,9 +228,7 @@ import imageUpload from "./imageUpload/index.vue";
 import customTextSticker from "./customTextSticker/index.vue";
 import fontUpload from "./fontUpload/index.vue";
 import fontModal from "./font/index.vue";
-import frameModal from "./frameModal/index.vue";
 import imageEditorModal from "./imageEditorModal/index.vue";
-import frameMakerModal from "./frameMakerModal/index.vue";
 import subHeaderMenu from "./subHeaderMenu/index.vue";
 import modelInfo from "./modelInfo/index.vue";
 import decalList from "./decalList/index.vue";

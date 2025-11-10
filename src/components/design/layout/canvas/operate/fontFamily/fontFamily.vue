@@ -79,7 +79,10 @@
                 v-for="item in displayList"
                 :key="item.id"
                 class="font-item"
-                :class="{ 'font-item-selected': model?.id === item.id }"
+                :class="{ 
+                  'font-item-selected': model?.id === item.id,
+                  'font-item-loaded': isFontLoaded(item.id)
+                }"
                 @click="selectFont(item)"
               >
                 <div class="font-item-thumbnail" v-if="item.thumbnail">
@@ -94,7 +97,34 @@
                     <el-icon class="font-family-copy-icon"><DocumentCopy /></el-icon>
                   </div>
                 </div>
+                <div class="font-item-actions" @click.stop>
+                  <el-button
+                    v-if="!isFontLoaded(item.id)"
+                    size="small"
+                    type="primary"
+                    plain
+                    @click="loadFontToCanvas(item)"
+                    class="font-load-btn"
+                  >
+                    <el-icon><Download /></el-icon>
+                    <span>加载到画布</span>
+                  </el-button>
+                  <el-button
+                    v-else
+                    size="small"
+                    type="success"
+                    plain
+                    disabled
+                    class="font-loaded-btn"
+                  >
+                    <el-icon><Check /></el-icon>
+                    <span>已加载</span>
+                  </el-button>
+                </div>
                 <div class="font-item-check" v-if="model?.id === item.id">
+                  <el-icon><Check /></el-icon>
+                </div>
+                <div class="font-item-loaded-badge" v-if="isFontLoaded(item.id) && model?.id !== item.id">
                   <el-icon><Check /></el-icon>
                 </div>
               </div>
@@ -124,11 +154,11 @@ import icon from "@/components/design/assets/icon/font-family.svg?component";
 import { ref, watch, computed } from "vue";
 import desimage from "@/components/image.vue";
 import { fetchFontFaceWithMessage } from "./index.ts";
-import { showUpload, showFontModal } from "@/components/design/store";
+import { showUpload, showFontModal, cacheFontFamily } from "@/components/design/store";
 import { useDebounceFn } from "@vueuse/core";
-import { Loading, Search, Check, DocumentCopy } from "@element-plus/icons-vue";
+import { Loading, Search, Check, DocumentCopy, Download } from "@element-plus/icons-vue";
 import { getFontList } from "@/api";
-import { ElMessage } from "element-plus";
+import { message } from "ant-design-vue";
 
 interface FontItem {
   id: string;
@@ -181,12 +211,38 @@ function selectFont(item: FontItem) {
   dialogVisible.value = false;
 }
 
+// 检查字体是否已加载（响应式）
+function isFontLoaded(fontId: string): boolean {
+  // 访问 cacheFontFamily.value 让 Vue 追踪依赖
+  const cache = cacheFontFamily.value;
+  return !!cache[fontId];
+}
+
+// 加载字体到画布（不应用）
+async function loadFontToCanvas(item: FontItem) {
+  if (isFontLoaded(item.id)) {
+    message.info('字体已加载到画布');
+    return;
+  }
+  
+  try {
+    await fetchFontFaceWithMessage({
+      url: item.url || '',
+      id: item.id,
+      name: item.name
+    });
+    message.success(`字体 "${item.name}" 已加载到画布，可通过 FontFamily ID "${`font_${item.id}`}" 使用`);
+  } catch (error) {
+    message.error(`字体 "${item.name}" 加载失败`);
+  }
+}
+
 // 复制 FontFamily ID
 async function copyFontFamily(fontId: string) {
   const fontFamilyId = `font_${fontId}`;
   try {
     await navigator.clipboard.writeText(fontFamilyId);
-    ElMessage.success('FontFamily ID 已复制到剪贴板');
+    message.success('FontFamily ID 已复制到剪贴板');
   } catch (error) {
     // 降级方案
     const textarea = document.createElement('textarea');
@@ -197,9 +253,9 @@ async function copyFontFamily(fontId: string) {
     textarea.select();
     try {
       document.execCommand('copy');
-      ElMessage.success('FontFamily ID 已复制到剪贴板');
+      message.success('FontFamily ID 已复制到剪贴板');
     } catch (e) {
-      ElMessage.error('复制失败，请手动复制');
+      message.error('复制失败，请手动复制');
     }
     document.body.removeChild(textarea);
   }
@@ -390,6 +446,10 @@ watch(
   background: #ecf5ff;
 }
 
+.font-item-loaded {
+  border-left: 3px solid #67c23a;
+}
+
 .font-item-thumbnail {
   width: 100%;
   height: 120px;
@@ -488,6 +548,42 @@ watch(
   align-items: center;
   justify-content: center;
   font-size: 12px;
+  z-index: 2;
+}
+
+.font-item-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.font-load-btn,
+.font-loaded-btn {
+  width: 100%;
+  font-size: 12px;
+  padding: 6px 8px;
+}
+
+.font-load-btn .el-icon,
+.font-loaded-btn .el-icon {
+  margin-right: 4px;
+}
+
+.font-item-loaded-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 20px;
+  height: 20px;
+  background: #67c23a;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .font-pagination-wrapper {

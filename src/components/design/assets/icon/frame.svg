@@ -1,9 +1,0 @@
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- 画框外框 -->
-  <rect x="1" y="1" width="14" height="14" stroke="currentColor" stroke-width="1.5" fill="none"/>
-  <!-- 画框内框 -->
-  <rect x="3" y="3" width="10" height="10" stroke="currentColor" stroke-width="1" fill="none"/>
-  <!-- 画框装饰角 -->
-  <path d="M1 1 L4 4 M12 1 L15 4 M1 15 L4 12 M15 15 L12 12" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
-</svg>
-
