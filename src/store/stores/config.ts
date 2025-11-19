@@ -12,45 +12,12 @@ import { defineStore } from "pinia"
 import { ref } from 'vue'
 import Api from '@/api'
 
-// 解码函数（使用Base64）
-const decryptConfig = (encodedConfig: any) => {
-  const decrypted = {}
-  
-  console.log('开始解码配置:', encodedConfig)
-  
-  for (const [key, value] of Object.entries(encodedConfig)) {
-    if (typeof value === 'string') {
-      try {
-        // 使用Base64解码
-        const decoded = atob(value)
-        decrypted[key] = decoded
-        console.log(`解码成功 ${key}:`, decoded)
-      } catch (error) {
-        console.error(`解码失败 ${key}:`, error)
-        // 如果解码失败，可能是未编码的值
-        decrypted[key] = value
-      }
-    } else {
-      decrypted[key] = value
-    }
-  }
-  
-  console.log('解码后的配置:', decrypted)
-  return decrypted
-}
-
 export async function initConfigStoreBasicConfig() {
     const configStore = useConfigStore()
     console.log('开始获取基础配置...')
+    // getBasicConfig 已经在 API 层解密了，直接使用即可
     const config = await Api.getBasicConfig()
-    console.log('获取到的原始配置:', config)
-    
-    // 解码COS配置
-    if (config.cos) {
-        console.log('开始解码COS配置...')
-        config.cos = decryptConfig(config.cos)
-        console.log('解码后的COS配置:', config.cos)
-    }
+    console.log('获取到的配置:', config)
     
     configStore.$patch(config)
     console.log('配置已更新到store')

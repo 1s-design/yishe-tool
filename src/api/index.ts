@@ -1,6 +1,7 @@
 import { apiInstance, source } from "./apiInstance";
 import { deleteCOSFile, downloadCOSFile, uploadToCOS } from "./cos";
 import { Url } from "./url";
+import * as CryptoJS from 'crypto-js';
 export { uploadToCOS, deleteCOSFile, downloadCOSFile } from './cos'
 
 interface FetchFileOptions {
@@ -217,9 +218,52 @@ export const getFontById = (id: string) => new Promise(async (resolve, reject) =
 
 
 
+// 解密函数（使用 AES-256-CBC）
+const decryptConfig = (encryptedString: string) => {
+  const SECRET_KEY = '1s';
+  
+  try {
+    console.log('开始解密配置...')
+    
+    // 使用 AES-256-CBC 解密
+    const decrypted = CryptoJS.AES.decrypt(encryptedString, SECRET_KEY, {
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    });
+    
+    // 转换为字符串
+    const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
+    
+    if (!decryptedString) {
+      throw new Error('解密失败：返回结果为空');
+    }
+    
+    // 解析 JSON 对象
+    const config = JSON.parse(decryptedString);
+    
+    console.log('解密后的COS配置:', config)
+    return config;
+  } catch (error) {
+    console.error('解密配置失败:', error)
+    throw new Error(`解密配置失败: ${error.message}`)
+  }
+}
+
 export const getBasicConfig = () => new Promise(async (resolve, reject) => {
+  try {
   const res = await apiInstance.post(Url.GET_BASIC_CONFIG)
-  resolve(res.data.data)
+    console.log('获取到的加密配置:', res.data.data)
+    
+    // 解密配置（后端直接返回加密字符串，经过拦截器后 res.data.data 就是字符串）
+    const decryptedCos = decryptConfig(res.data.data)
+    
+    // 返回解密后的配置对象
+    resolve({
+      cos: decryptedCos
+    })
+  } catch (error) {
+    reject(error)
+  }
 })
 
 
