@@ -2,7 +2,7 @@
  * @Author: chan-max jackieontheway666@gmail.com
  * @Date: 2023-12-27 19:20:45
  * @LastEditors: chan-max jackieontheway666@gmail.com
- * @LastEditTime: 2025-07-14 07:07:39
+ * @LastEditTime: 2025-12-14 08:07:29
  * @FilePath: /1s/src/components/design/layout/headerMenu.vue
  * @Description: 
  * 
@@ -32,9 +32,9 @@
     <connection-status />
 
     <div class="header-actions flex items-center gap-2 shrink-0">
-      <el-button @click="showUpload = true" round text :icon="UploadFilled" class="action-btn">
+      <!-- <el-button @click="showUpload = true" round text :icon="UploadFilled" class="action-btn">
         素材上传
-      </el-button>
+      </el-button> -->
 
       <el-button @click="toggleAutomation" round text class="action-btn" :icon="isAutomationRunning ? 'Close' : 'VideoPlay'">
         <span>{{ isAutomationRunning ? '关闭自动化' : '开启自动化' }}</span>
