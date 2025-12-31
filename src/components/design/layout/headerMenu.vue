@@ -36,20 +36,17 @@
         素材上传
       </el-button>
 
-      <el-button @click="toggleAutomation" round text class="action-btn" :icon="isAutomationRunning ? 'Close' : 'VideoPlay'">
-        <span>{{ isAutomationRunning ? '关闭自动化' : '开启自动化' }}</span>
-      </el-button>
-
-      <el-button 
-        @click="showThreeCanvas = !showThreeCanvas" 
-        round 
-        text 
-        class="action-btn" 
-        :icon="showThreeCanvas ? View : Hide"
-        :title="showThreeCanvas ? '隐藏3D画布' : '显示3D画布'"
-      >
-        <span>{{ showThreeCanvas ? '隐藏3D' : '显示3D' }}</span>
-      </el-button>
+      <el-tooltip :content="showThreeCanvas ? '点击关闭3D画布' : '点击开启3D画布'" placement="bottom">
+        <el-switch
+          v-model="showThreeCanvas"
+          inline-prompt
+          active-text="3D"
+          inactive-text="3D"
+          :active-icon="View"
+          :inactive-icon="Hide"
+          class="three-canvas-switch"
+        />
+      </el-tooltip>
 
       <el-switch
         v-model="isDarkMode"
@@ -91,7 +88,7 @@ import {
 } from "../store";
 
 import { openFileModal } from "@/components/design/layout/upload/index.tsx";
-import { Share, UploadFilled, Close, VideoPlay, Download, View, Hide } from "@element-plus/icons-vue";
+import { Share, UploadFilled, Download, View, Hide } from "@element-plus/icons-vue";
 import userAvatar from "@/components/user/userAvatar.vue";
 import headerMenuDropdown from "./headerMenuDropdown/index.vue";
 import { onShortcutTrigger } from "../shortcut/index";
@@ -110,8 +107,6 @@ import { useFileDialog } from "@vueuse/core";
 import { openLoginDialog } from "@/modules/main/view/user/login/index.tsx";
 import Utils from "@/common/utils";
 import { localFileListResource } from "@/components/design/store";
-import { isAutomationRunning, automationDescription } from "@/store/stores/app";
-import { startAutomation, stopAutomation } from "@/common/utils/automation";
 import connectionStatus from "@/components/connectionStatus.vue";
 
 const router = useRouter();
@@ -143,14 +138,6 @@ function openUplaodModal(file) {
 
 //
 function remove(file) {}
-
-function toggleAutomation() {
-  if (isAutomationRunning.value) {
-    stopAutomation();
-  } else {
-    startAutomation('手动开启的自动化操作');
-  }
-}
 
 function confirmExitEditMode() {
   ElMessageBox.confirm(
@@ -222,6 +209,10 @@ function confirmExitEditMode() {
     flex-shrink: 0;
   }
   
+  .three-canvas-switch {
+    flex-shrink: 0;
+  }
+  
   .save-btn {
     flex-shrink: 0;
   }
@@ -273,7 +264,8 @@ function confirmExitEditMode() {
       font-size: 11px;
     }
     
-    .theme-switch {
+    .theme-switch,
+    .three-canvas-switch {
       transform: scale(0.9);
     }
   }
@@ -324,7 +316,8 @@ function confirmExitEditMode() {
       height: 28px;
     }
     
-    .theme-switch {
+    .theme-switch,
+    .three-canvas-switch {
       transform: scale(0.8);
     }
   }

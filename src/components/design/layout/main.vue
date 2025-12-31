@@ -34,7 +34,7 @@
         <!-- 画布区域 -->
         <div style="flex: 1; position: relative; min-height: 0" class="threejs-canvas-container-container">
           <div 
-            v-show="showThreeCanvas && menuState.activeMenu !== menuItems.canvas"
+            v-show="shouldShowThreeCanvas"
             class="threejs-canvas-container" 
             ref="canvasContainerRef"
             :style="canvasContainerStyle"
@@ -381,14 +381,19 @@ onMounted(async () => {
   // 页面挂载后初始化 designToolReceiver
   initDesignToolReceiver();
 
-  // 初始化时根据 showThreeCanvas 状态设置渲染
-  if (!showThreeCanvas.value && modelController.isMounted) {
+  // 初始化时根据 shouldShowThreeCanvas 状态设置渲染
+  if (!shouldShowThreeCanvas.value && modelController.isMounted) {
     modelController.stopRender();
   }
 });
 
-// 监听 showThreeCanvas 变化，控制渲染循环以节省性能
-watch(showThreeCanvas, (isVisible) => {
+// 计算是否应该显示和运行 Three.js 画布
+const shouldShowThreeCanvas = computed(() => {
+  return showThreeCanvas.value && menuState.value.activeMenu !== menuItems.canvas;
+});
+
+// 控制 Three.js 渲染的函数
+function updateThreeCanvasRenderState() {
   // 等待模型控制器初始化完成后再执行
   if (!modelController || !modelController.renderer) {
     return;
@@ -400,7 +405,9 @@ watch(showThreeCanvas, (isVisible) => {
       return;
     }
     
-    if (isVisible) {
+    const shouldRender = shouldShowThreeCanvas.value;
+    
+    if (shouldRender) {
       // 恢复渲染循环
       modelController.startRender();
     } else {
@@ -408,6 +415,16 @@ watch(showThreeCanvas, (isVisible) => {
       modelController.stopRender();
     }
   });
+}
+
+// 监听 showThreeCanvas 变化，控制渲染循环以节省性能
+watch(showThreeCanvas, () => {
+  updateThreeCanvasRenderState();
+});
+
+// 监听菜单切换，当切换到贴纸画布时停止 Three.js 渲染
+watch(() => menuState.value.activeMenu, () => {
+  updateThreeCanvasRenderState();
 });
 
 initAction();

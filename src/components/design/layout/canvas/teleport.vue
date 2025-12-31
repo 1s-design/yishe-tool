@@ -82,6 +82,7 @@ watch(show, async (val) => {
             }
         }
 
+        // 初始化 panzoom（用于拖拽和缩放）
         panzoomInstance = panzoom(panzoomRef.value, {
             smoothScroll: false,
             maxZoom: 1,

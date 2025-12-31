@@ -438,10 +438,13 @@ export class ModelController {
     private isRenderingEnabled = true;
 
     private execRender() {
-        // 只有在启用渲染时才继续循环
-        if (this.isRenderingEnabled) {
-            this.animationFrameId = requestAnimationFrame(this.execRender.bind(this));
+        // 如果渲染已禁用，直接返回
+        if (!this.isRenderingEnabled) {
+            return;
         }
+        
+        // 只有在启用渲染时才继续循环
+        this.animationFrameId = requestAnimationFrame(this.execRender.bind(this));
 
         // 记录渲染帧数
         this.frameCount++;
@@ -455,7 +458,10 @@ export class ModelController {
             // this.background.position.copy(this.camera.position)
         }
 
-        this.controller?.update();
+        // 只有当控制器启用时才更新（在 stopRender 时会禁用控制器）
+        if (this.controller?.enabled) {
+            this.controller.update();
+        }
 
         this.renderer.render(this.scene, this.camera);
 
@@ -468,12 +474,33 @@ export class ModelController {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
+        
+        // 禁用 OrbitControls 以节省性能
+        if (this.controller) {
+            this.controller.enabled = false;
+        }
+        
+        // 暂停 ResizeObserver 监听
+        if (this.resizeObserver && this.canvasContainer) {
+            this.resizeObserver.unobserve(this.canvasContainer);
+        }
     }
 
     // 恢复渲染循环
     public startRender() {
         if (!this.isRenderingEnabled) {
             this.isRenderingEnabled = true;
+            
+            // 重新启用 OrbitControls
+            if (this.controller) {
+                this.controller.enabled = true;
+            }
+            
+            // 恢复 ResizeObserver 监听
+            if (this.resizeObserver && this.canvasContainer) {
+                this.resizeObserver.observe(this.canvasContainer);
+            }
+            
             // 重新启动渲染循环
             this.execRender();
         }
