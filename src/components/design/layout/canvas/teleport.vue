@@ -86,7 +86,7 @@ watch(show, async (val) => {
         panzoomInstance = panzoom(panzoomRef.value, {
             smoothScroll: false,
             maxZoom: 1,
-            minZoom: .01,
+            minZoom: .1,
         })
     }
 }, {

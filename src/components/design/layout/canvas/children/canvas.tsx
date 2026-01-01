@@ -78,7 +78,7 @@ export const Canvas = defineComponent({
             const pxWidth = formatSizeOptionToPixelValue(canvasChild.width)
             const pxHeight = formatSizeOptionToPixelValue(canvasChild.height)
 
-            const transformValue = (showMainCanvas.value) ? .5 : (props.maxDisplaySize / Math.max(pxWidth, pxHeight))
+            const transformValue = (showMainCanvas.value) ? 1 : (props.maxDisplaySize / Math.max(pxWidth, pxHeight))
 
             let pngBackground = createPngBackgroundStyle(transformValue)
 
