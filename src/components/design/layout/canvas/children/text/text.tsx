@@ -69,6 +69,8 @@ export const createDefaultCanvasChildTextOptions = () => {
         filter: createFilterDefaultOptions(canvasUnit),
         // 是否使用繁体字
         isTraditionalChinese: false,
+        // 文字对齐方式
+        textAlign: 'left',
         containerEl: null,
         targetComputedWidth: 0,
         targetComputedHeight: 0,
@@ -154,6 +156,7 @@ export const Text = defineComponent({
                 // 用于显示换行
                 whiteSpace: 'pre-wrap',
                 textWrap: 'nowrap',
+                textAlign: props.options.textAlign || 'left',
                 zIndex: props.options.zIndex,
                 ..._style,
             }

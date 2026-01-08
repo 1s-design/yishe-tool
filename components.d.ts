@@ -149,6 +149,7 @@ declare module 'vue' {
     TagsInput: typeof import('./src/components/design/components/tagsInput/tagsInput.vue')['default']
     Teleport: typeof import('./src/components/design/layout/canvas/teleport.vue')['default']
     Text: typeof import('./src/components/design/layout/canvas/operateLayout/text.vue')['default']
+    TextAlign: typeof import('./src/components/design/layout/canvas/operate/textAlign.vue')['default']
     TextContent: typeof import('./src/components/design/layout/canvas/operate/textContent.vue')['default']
     TextDesigner: typeof import('./src/components/design/components/textDesigner/index.vue')['default']
     TextShadow: typeof import('./src/components/design/layout/canvas/operate/text-shadow/index.vue')['default']

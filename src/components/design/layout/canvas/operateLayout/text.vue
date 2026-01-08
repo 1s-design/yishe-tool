@@ -41,6 +41,9 @@
       <operateItemWritingMode v-model="currentOperatingCanvasChild.writingMode">
       </operateItemWritingMode>
 
+      <operateItemTextAlign v-model="currentOperatingCanvasChild.textAlign">
+      </operateItemTextAlign>
+
       <operateItemTextStroke
         v-model:width="currentOperatingCanvasChild.textStrokeWidth"
         v-model:color="currentOperatingCanvasChild.textStrokeColor"
@@ -132,6 +135,7 @@ import operateItemFontFamily from "@/components/design/layout/canvas/operate/fon
 import operateItemLineHeight from "@/components/design/layout/canvas/operate/lineHeight.vue";
 import operateItemLetterSpacing from "@/components/design/layout/canvas/operate/letterSpacing.vue";
 import operateItemWritingMode from "@/components/design/layout/canvas/operate/writingMode.vue";
+import operateItemTextAlign from "@/components/design/layout/canvas/operate/textAlign.vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemPosition from "@/components/design/layout/canvas/operate/position/position.vue";
 import operateItemZindex from "@/components/design/layout/canvas/operate/zIndex.vue";
