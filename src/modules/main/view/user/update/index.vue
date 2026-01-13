@@ -207,7 +207,12 @@ async function submit() {
   loading.value = true;
   // 选择了新头像
   if (avatarFile.value) {
-    let { url } = await Api.uploadToCOS({ file: avatarFile.value });
+    const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous'
+    let { url } = await Api.uploadToCOS({ 
+      file: avatarFile.value,
+      category: 'user-avatar',
+      account: userAccount
+    });
     form.value.avatar = url;
   }
 

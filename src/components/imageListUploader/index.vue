@@ -71,11 +71,26 @@ watch(fileList, () => {
 /**
  * @method 同步上传操作 ,包括新增的和删除的
  */
-async function upload() {
+async function upload(category?: string, entityId?: string | number) {
+  // 获取用户账号
+  let userAccount = 'anonymous'
+  try {
+    const { getLocalUserInfo } = await import('@/store/stores/loginAction')
+    const userInfo = getLocalUserInfo()
+    userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+  } catch (e) {
+    console.warn('无法获取用户信息:', e)
+  }
+
   await Promise.all(
     uploadList.value.map((u) => {
       return new Promise(async (resolve, reject) => {
-        let cos = await Api.uploadToCOS({ file: u.raw });
+        let cos = await Api.uploadToCOS({ 
+          file: u.raw,
+          category: category || 'manual', // 默认使用 manual，调用方可以传入
+          account: userAccount,
+          entityId: entityId
+        });
         u.url = cos.url;
         u.key = cos.key;
         resolve(void 0);

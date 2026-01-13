@@ -231,11 +231,28 @@ async function handleOk() {
 
   confirmLoading.value = true;
 
+  // 获取用户账号
+  let userAccount = 'anonymous'
+  try {
+    const { getLocalUserInfo } = await import('@/store/stores/loginAction')
+    const userInfo = getLocalUserInfo()
+    userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+  } catch (e) {
+    console.warn('无法获取用户信息:', e)
+  }
+
   if (modalType.value == "create") {
-    let { url } = await Api.uploadToCOS({ file: form.value.file.raw });
+    let { url } = await Api.uploadToCOS({ 
+      file: form.value.file.raw,
+      category: 'product-model',
+      account: userAccount
+    });
 
     let cos = await Api.uploadToCOS({
       file: baseViewerRef.value.getScreenShotFile(),
+      category: 'product-model',
+      account: userAccount,
+      isThumbnail: true
     });
 
     await Api.createProductModel({
@@ -251,6 +268,10 @@ async function handleOk() {
   } else if (modalType.value == "update") {
     let cos = await Api.uploadToCOS({
       file: baseViewerRef.value.getScreenShotFile(),
+      category: 'product-model',
+      account: userAccount,
+      entityId: form.value.id, // 编辑时使用模型 ID
+      isThumbnail: true
     });
 
     // 删除旧的缩略图

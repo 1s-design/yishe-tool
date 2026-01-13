@@ -41,8 +41,23 @@ export function saveScreenshot() {
 
     // saveAs(file, `screenshot_${new Date().getTime()}.png`);
 
+    // 获取用户账号
+    let userAccount = 'anonymous'
+    try {
+      const { getLocalUserInfo } = await import('@/store/stores/loginAction')
+      const userInfo = getLocalUserInfo()
+      userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+    } catch (e) {
+      console.warn('无法获取用户信息:', e)
+    }
+
     // 上传到 COS 并保存到草稿箱
-    uploadToCOS({ file }).then(cos => {
+    uploadToCOS({ 
+      file,
+      category: 'design-draft',
+      account: userAccount,
+      entityId: isEdit.value && currentEditingModelId.value ? currentEditingModelId.value : undefined
+    }).then(cos => {
         createDraft({
             url: cos.url,
             name: '模型截图',

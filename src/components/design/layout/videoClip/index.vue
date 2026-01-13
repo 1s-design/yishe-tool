@@ -256,8 +256,23 @@ const handleRecordedVideo = async (blob: Blob) => {
       type: "video/webm",
     });
 
+    // 获取用户账号
+    let userAccount = 'anonymous'
+    try {
+      const { getLocalUserInfo } = await import('@/store/stores/loginAction')
+      const userInfo = getLocalUserInfo()
+      userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+    } catch (e) {
+      console.warn('无法获取用户信息:', e)
+    }
+
     // 上传到 COS
-    const cos = await uploadToCOS({ file });
+    const cos = await uploadToCOS({ 
+      file,
+      category: 'design-draft',
+      account: userAccount,
+      entityId: isEdit?.value && currentEditingModelInfo?.value?.id ? currentEditingModelInfo.value.id : undefined
+    });
 
     // 保存到草稿箱
     const draftPayload = {
@@ -318,8 +333,23 @@ const handleSaveToDraft = async () => {
         type: "image/png",
       });
 
+      // 获取用户账号
+      let userAccount = 'anonymous'
+      try {
+        const { getLocalUserInfo } = await import('@/store/stores/loginAction')
+        const userInfo = getLocalUserInfo()
+        userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+      } catch (e) {
+        console.warn('无法获取用户信息:', e)
+      }
+
       // 上传到 COS
-      const cos = await uploadToCOS({ file });
+      const cos = await uploadToCOS({ 
+        file,
+        category: 'design-draft',
+        account: userAccount,
+        entityId: isEdit?.value && currentEditingModelInfo?.value?.id ? currentEditingModelInfo.value.id : undefined
+      });
 
       // 保存到草稿箱
       const draftPayload = {

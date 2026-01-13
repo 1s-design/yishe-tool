@@ -203,7 +203,21 @@ export class DesignToolReceiver {
                       const base64Data = image.base64.split(",")[1];
                       const byteArray = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
                       const file = new File([byteArray], `多角度图片_${image.label}.png`, { type: "image/png" });
-                      const cos = await uploadToCOS({ file });
+                      // 获取用户账号
+                      let userAccount = 'anonymous'
+                      try {
+                        const { getLocalUserInfo } = await import('@/store/stores/loginAction')
+                        const userInfo = getLocalUserInfo()
+                        userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+                      } catch (e) {
+                        console.warn('无法获取用户信息:', e)
+                      }
+                      const cos = await uploadToCOS({ 
+                        file,
+                        category: 'product-model',
+                        account: userAccount,
+                        entityId: savedModel.id // 使用保存后的模型 ID
+                      });
                       const draftPayload = {
                         url: cos.url,
                         name: `多角度图片_${image.label}`,
