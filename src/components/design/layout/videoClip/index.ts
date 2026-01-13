@@ -47,8 +47,26 @@ const handleRecordedVideo = async (blob: Blob, animationName?: string) => {
     const fileName = `录制视频${animationSuffix}_${timestamp}.webm`;
     const file = new File([blob], fileName, { type: 'video/webm' });
     
+    // 获取用户账号
+    let userAccount = 'anonymous'
+    try {
+      const LOGIN_FLAG = "1s_login"
+      const userInfoStr = localStorage.getItem(LOGIN_FLAG) || sessionStorage.getItem(LOGIN_FLAG)
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr)
+        userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+      }
+    } catch (e) {
+      console.warn('无法获取用户信息:', e)
+    }
+    
     // 上传到 COS
-    const cos = await uploadToCOS({ file });
+    const cos = await uploadToCOS({ 
+      file,
+      category: 'design-draft',
+      account: userAccount,
+      entityId: isEdit.value && currentEditingModelId.value ? currentEditingModelId.value : undefined
+    });
     
     // 保存到草稿箱，名称也包含动画信息
     const draftName = animationName ? `模型录制视频_${animationName}` : '模型录制视频';

@@ -59,9 +59,12 @@ export async function uploadToCOS({
         if (!userAccount) {
             try {
                 // 从 localStorage 获取用户信息
-                const { getLocalUserInfo } = await import('@/store/stores/loginAction')
-                const userInfo = getLocalUserInfo()
-                userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+                const LOGIN_FLAG = "1s_login"
+                const userInfoStr = localStorage.getItem(LOGIN_FLAG) || sessionStorage.getItem(LOGIN_FLAG)
+                if (userInfoStr) {
+                    const userInfo = JSON.parse(userInfoStr)
+                    userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+                }
             } catch (e) {
                 console.warn('无法从 localStorage 获取用户信息:', e)
             }
@@ -72,6 +75,10 @@ export async function uploadToCOS({
         
         // 清理账号名称
         userAccount = userAccount.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase().substring(0, 50)
+        // 确保 userAccount 不为空
+        if (!userAccount || userAccount.trim() === '') {
+            userAccount = 'anonymous'
+        }
         
         // 生成日期字符串
         const now = new Date()
@@ -123,8 +130,17 @@ export async function uploadToCOS({
             url: `https://${res.Location}`,
             key: finalKey
         }
-    } catch (e) {
-        throw e
+    } catch (e: any) {
+        console.error('文件上传失败:', e)
+        const errorMessage = e?.message || e?.toString() || '未知错误'
+        console.error('错误详情:', {
+            message: errorMessage,
+            stack: e?.stack,
+            code: e?.code,
+            statusCode: e?.statusCode,
+            requestId: e?.requestId
+        })
+        throw new Error(`COS上传失败: ${errorMessage}`)
     }
 }
 
