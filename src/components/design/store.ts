@@ -22,7 +22,7 @@ export const lastestScreenshot = computed(() => {
     return screenshots.value[screenshots.value.length - 1]
 })
 
-export function saveScreenshot() {
+export async function saveScreenshot() {
     const base64 = currentModelController.value.getScreenshotBase64();
     screenshotInstance.value.execScreenshot(base64);
 

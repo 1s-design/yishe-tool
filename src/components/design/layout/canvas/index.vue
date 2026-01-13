@@ -398,9 +398,11 @@ async function doUpload() {
     // 获取文件后缀
     const suffix = file.name.split('.').pop() || 'png';
 
-    // 上传文件到COS
+    // 上传文件到COS，路径包含当前用户账号
     const cos = await Api.uploadToCOS({
       file: file,
+      category: 'sticker',
+      account: loginStore?.userInfo?.account || loginStore?.userInfo?.name || undefined,
     });
 
     // 直接保存到素材

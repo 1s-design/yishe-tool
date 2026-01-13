@@ -1581,11 +1581,13 @@ async function doUpload() {
     // 获取文件后缀
     const suffix = file.name.split('.').pop() || 'png'
 
-    // 上传文件到COS
+    // 上传文件到COS，路径包含当前用户账号
     let cos
     try {
       cos = await Api.uploadToCOS({
         file: file,
+        category: 'sticker',
+        account: loginStore?.userInfo?.account || loginStore?.userInfo?.name || undefined,
       })
     } catch (err) {
       throw new Error('上传到COS失败: ' + (err.message || err))
