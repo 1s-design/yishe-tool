@@ -33,7 +33,7 @@ import Utils from '@/common/utils'
 
 import { currentModelController } from '@/components/design/store'
 
-import { imageDataToFile } from '@/common/transform'
+import { imageDataToFile, canvasToFile } from '@/common/transform'
 import { defineCanvasChild } from './children/define.tsx';
 
 import { currentFocusingStickerId, ChildViewHelperComponent } from '@/components/design/layout/canvas/components/childViewHelper/index'
@@ -293,7 +293,7 @@ export class CanvasController {
     async toPngFile() {
         // 等待字体加载完成
         await this.waitForFontsLoaded()
-        
+
         // 使用 html-to-image
         const blob = await toBlob(this.el, {
             quality: 1,
@@ -301,10 +301,10 @@ export class CanvasController {
             backgroundColor: null,
             fontEmbedCSS: await getFontEmbedCSS(this.el)
         })
-        
+
         return new File([blob], 'canvas.png', { type: 'image/png' })
     }
-    
+
     // 等待所有字体加载完成
     async waitForFontsLoaded() {
         // 等待 document.fonts API 加载完成
@@ -315,15 +315,15 @@ export class CanvasController {
                 console.warn('Font loading check failed:', e)
             }
         }
-        
+
         // 检查所有使用的字体是否已加载
         const fontElements = this.el?.querySelectorAll('[style*="font-family"]') || []
         const fontPromises: Promise<void>[] = []
-        
+
         fontElements.forEach((el: HTMLElement) => {
             const computedStyle = window.getComputedStyle(el)
             const fontFamily = computedStyle.fontFamily
-            
+
             // 检查是否是自定义字体（以 font_ 开头）
             if (fontFamily && fontFamily.includes('font_')) {
                 // 提取字体名称
@@ -349,26 +349,24 @@ export class CanvasController {
                 }
             }
         })
-        
+
         // 等待所有字体加载完成
         if (fontPromises.length > 0) {
             await Promise.all(fontPromises)
         }
-        
+
         // 额外等待一段时间确保字体完全应用
         await new Promise(resolve => setTimeout(resolve, 200))
     }
 
     async downloadTrimmedPng() {
-        const imageData = this.ctx.getImageData(0, 0, this.canvasEl.width, this.canvasEl.height);
-        const trimmed = Utils.trimImageData(imageData)
-        downloadByFile(imageDataToFile(trimmed))
+        const trimmedCanvas = Utils.trimCanvas(this.canvasEl);
+        downloadByFile(await canvasToFile(trimmedCanvas));
     }
 
     async downloadPng() {
         await this.activeUpdateRenderingCanvas()
-        const imageData = this.ctx.getImageData(0, 0, this.canvasEl.width, this.canvasEl.height);
-        downloadByFile(imageDataToFile(imageData))
+        downloadByFile(await canvasToFile(this.canvasEl))
     }
 
     // async downloadIco() {
@@ -444,7 +442,7 @@ export class CanvasController {
         // await this.updateRenderingCanvasJob()
     }
 
-    debouncedUpdateJob = useDebounceFn(this.updateRenderingCanvasJob.bind(this),11)
+    debouncedUpdateJob = useDebounceFn(this.updateRenderingCanvasJob.bind(this), 11)
 
     async updateRenderingCanvasJob() {
 
@@ -466,7 +464,7 @@ export class CanvasController {
                 // 使用 html-to-image
                 // 获取字体嵌入 CSS
                 const fontEmbedCSS = await getFontEmbedCSS(this.el)
-                
+
                 // 转换为 canvas
                 let _canvas = await toCanvas(this.el, {
                     quality: 1,
@@ -490,7 +488,7 @@ export class CanvasController {
 
                 this.ctx.drawImage(_canvas, 0, 0, _canvas.width, _canvas.height, 0, 0, width, height);
 
-            
+
                 this.loading.value = false
                 renderingLoading.value = false
 

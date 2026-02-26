@@ -57,7 +57,13 @@ export function formatUrl(url, options: UrlOptions = {
 */
 function trimImageData(imageData): ImageData {
     const { width, height, data } = imageData;
+
+    if (!width || !height || width <= 0 || height <= 0) {
+        return imageData;
+    }
+
     let minX = width, minY = height, maxX = 0, maxY = 0;
+    let hasContent = false;
 
     // 查找边界
     for (let y = 0; y < height; y++) {
@@ -70,8 +76,13 @@ function trimImageData(imageData): ImageData {
                 minY = Math.min(minY, y);
                 maxX = Math.max(maxX, x);
                 maxY = Math.max(maxY, y);
+                hasContent = true;
             }
         }
+    }
+
+    if (!hasContent) {
+        return new ImageData(1, 1);
     }
 
     // 计算新的尺寸
@@ -136,6 +147,74 @@ import three from './three.ts'
 import { Format } from './format.ts'
 
 class Utils {
+
+    // 获取非透明部分的边界
+    findImageDataBounds(imageData: ImageData) {
+        const { width, height, data } = imageData;
+        if (!width || !height || width <= 0 || height <= 0) {
+            return null;
+        }
+
+        let minX = width, minY = height, maxX = 0, maxY = 0;
+        let hasContent = false;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const index = (y * width + x) * 4;
+                const alpha = data[index + 3];
+
+                if (alpha !== 0) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                    hasContent = true;
+                }
+            }
+        }
+
+        if (!hasContent) {
+            return null;
+        }
+
+        return { minX, minY, maxX, maxY, width: maxX - minX + 1, height: maxY - minY + 1 };
+    }
+
+    // 更加高效和内存友好的裁切方式
+    trimCanvas(canvas: HTMLCanvasElement): HTMLCanvasElement {
+        if (!canvas || canvas.width <= 0 || canvas.height <= 0) {
+            return canvas;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return canvas;
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const bounds = this.findImageDataBounds(imageData);
+
+        if (!bounds) {
+            // 如果是空的，返回 1x1 透明画布
+            const emptyCanvas = document.createElement('canvas');
+            emptyCanvas.width = 1;
+            emptyCanvas.height = 1;
+            return emptyCanvas;
+        }
+
+        const trimmedCanvas = document.createElement('canvas');
+        trimmedCanvas.width = bounds.width;
+        trimmedCanvas.height = bounds.height;
+        const trimmedCtx = trimmedCanvas.getContext('2d');
+
+        if (trimmedCtx) {
+            trimmedCtx.drawImage(
+                canvas,
+                bounds.minX, bounds.minY, bounds.width, bounds.height,
+                0, 0, bounds.width, bounds.height
+            );
+        }
+
+        return trimmedCanvas;
+    }
 
     constructor() {
 

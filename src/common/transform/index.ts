@@ -135,6 +135,14 @@ export async function htmlToPngFile(html, name = '') {
 
 
 
+export const canvasToFile = (canvas: HTMLCanvasElement, name = 'canvas.png'): Promise<File> => {
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+            resolve(new File([blob], name, { type: 'image/png' }));
+        }, 'image/png');
+    });
+}
+
 export const imageDataToFile = (imageData) => {
     const canvas = document.createElement('canvas');
     canvas.width = imageData.width;
@@ -174,6 +182,8 @@ class Transform {
     transformSvgPathToPngDataUrl = transformSvgPathToPngDataUrl
 
     imageDataToFile = imageDataToFile
+
+    canvasToFile = canvasToFile
 }
 
 

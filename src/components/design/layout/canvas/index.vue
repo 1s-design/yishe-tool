@@ -272,7 +272,7 @@ import { useLoginStatusStore } from "@/store/stores/login";
 import tagsInput from "@/components/design/components/tagsInput/tagsInput.vue";
 import { stickerAutoplacementTags } from "@/components/design/components/tagsInput/index.ts";
 import Utils from "@/common/utils";
-import { imageDataToFile } from '@/common/transform';
+import { imageDataToFile, canvasToFile } from '@/common/transform';
 import officialTemplateModal from "./officialTemplateModal/index.vue";
 import {
   currentFocusingStickerId,
@@ -382,17 +382,28 @@ async function doUpload() {
       await new Promise(resolve => setTimeout(resolve, 50));
     }
     
+    // 检查画布尺寸是否合法
+    const canvasWidth = canvasController.canvasEl.width;
+    const canvasHeight = canvasController.canvasEl.height;
+    
+    if (canvasWidth <= 0 || canvasHeight <= 0) {
+      throw new Error("无效的画布尺寸");
+    }
+
+    // 针对超大尺寸进行安全提示 (例如超过 16384 像素)
+    if (canvasWidth > 16384 || canvasHeight > 16384) {
+      console.warn("当前画布尺寸极大，可能会导致处理时间过长或内存不足。");
+    }
+
     // 根据是否去除白色边框来决定使用哪个方法获取文件
     let file;
     if (editForm.value.autoTrim) {
-      // 使用去除白色边框的方法
-      const imageData = canvasController.ctx.getImageData(0, 0, canvasController.canvasEl.width, canvasController.canvasEl.height);
-      const trimmed = Utils.trimImageData(imageData);
-      file = imageDataToFile(trimmed);
+      // 使用更加内存友好的裁切方式，避免大量的 ImageData 内存申请和遍历
+      const trimmedCanvas = Utils.trimCanvas(canvasController.canvasEl);
+      file = await canvasToFile(trimmedCanvas);
     } else {
-      // 使用原始方法
-      const imageData = canvasController.ctx.getImageData(0, 0, canvasController.canvasEl.width, canvasController.canvasEl.height);
-      file = imageDataToFile(imageData);
+      // 直接将原始画布转为文件
+      file = await canvasToFile(canvasController.canvasEl);
     }
 
     // 获取文件后缀
