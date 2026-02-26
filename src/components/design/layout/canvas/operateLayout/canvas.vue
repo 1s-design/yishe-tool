@@ -5,6 +5,8 @@
         v-model:height="currentOperatingCanvasChild.height">
       </operateItemAbsoluteSize>
 
+      <operateCanvasSizePresets @select="handlePresetSelect"></operateCanvasSizePresets>
+
       <!-- 不再支持画布单位选择，默认全部使用px -->
       
       <!-- <operateItemAbsoluteUnitSelect @change="absoluteUnitChange" label="画布尺寸单位" v-model="canvasStickerOptions.unit">
@@ -37,6 +39,7 @@
 <script setup lang='ts'>
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
 import operateAspectRatio from '@/components/design/layout/canvas/operate/aspectRatio.vue';
+import operateCanvasSizePresets from '@/components/design/layout/canvas/operate/size/canvasSizePresets.vue';
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";
 import operateItemFontSize from "@/components/design/layout/canvas/operate/fontSize.vue";
@@ -106,6 +109,13 @@ function aspectRatioChange(asepctRatio) {
   canvasChild.height.value =  Number((canvasChild.width.value / asepctRatio).toFixed(2))
 }
 
+function handlePresetSelect(preset: { width: number, height: number }) {
+  let canvasChild = canvasStickerOptions.value.children.find((item: any) => item.type == 'canvas');
+  if (canvasChild) {
+    canvasChild.width.value = preset.width;
+    canvasChild.height.value = preset.height;
+  }
+}
 
 </script>
     

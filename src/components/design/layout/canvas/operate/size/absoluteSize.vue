@@ -5,33 +5,32 @@
         </template>
         <template #name> {{ label }} </template>
         <template #content>
-            <span style="font-size:1rem"> 宽 </span>
-            <el-input style="width: 80px" size="small" v-model="width.value" step="10"  placeholder="宽" type="number">
-                <template #suffix>
-                    <span class="text-[1rem]">  
-                        {{ canvasStickerOptions.unit }}
-                    </span>
-                </template>
-            </el-input>
-            <span style="font-size:1rem"> 高 </span>
-            <el-input style="width: 80px" size="small" v-model="height.value" step="10"  placeholder="高" type="number">
-                <template #suffix>
-                    <span class="text-[1rem]">  
-                        {{ canvasStickerOptions.unit }}
-                    </span>
-                </template>
-            </el-input>
+            <div class="size-inputs-wrapper">
+                <div class="input-group">
+                    <span class="label-text">宽</span>
+                    <el-input class="size-input" size="small" v-model.number="width.value" step="10" placeholder="宽" type="number">
+                        <template #suffix>
+                            <span class="unit-text">{{ canvasStickerOptions.unit }}</span>
+                        </template>
+                    </el-input>
+                </div>
+                
+                <div class="input-group" style="margin-left: 12px;">
+                    <span class="label-text">高</span>
+                    <el-input class="size-input" size="small" v-model.number="height.value" step="10" placeholder="高" type="number">
+                        <template #suffix>
+                            <span class="unit-text">{{ canvasStickerOptions.unit }}</span>
+                        </template>
+                    </el-input>
+                </div>
+            </div>
         </template>
     </operate-form-item>
 </template>
 
 <script setup lang="ts">
 import icon from "@/components/design/assets/icon/size.svg?component";
-import { ref, watch, computed } from "vue";
-import { Setting } from "@element-plus/icons-vue";
-import {canvasStickerOptions} from '@/components/design/layout/canvas/index.tsx'
-
-// 只给画布子元素使用
+import { canvasStickerOptions } from '@/components/design/layout/canvas/index.tsx'
 
 const props = defineProps({
     label: {
@@ -39,58 +38,35 @@ const props = defineProps({
     }
 });
 
-const width = defineModel("width", {});
-const height = defineModel("height", {});
-
-const unit = defineModel("unit", {
-    default: 'px'
-});
-
-const aspectRatio = defineModel("aspectRatio", {});
-
-
-
-// 保留两位小数
-function toFixed0(val): any {
-    return parseFloat(val).toFixed(3);
-}
-
-
-function selectAsepctRatio(val) {
-    aspectRatio.value = val
-    height.value = toFixed0(width.value / val)
-}
-
-function updateAspectRatio() {
-    aspectRatio.value = toFixed0(width.value / height.value);
-}
-
-const aspectRatioOptions = ref([
-    {
-        label: "等宽高(1 : 1)",
-        value: "1",
-    },
-    {
-        label: "16 : 9",
-        value: 16 / 9,
-    },
-    {
-        label: "黄金比(1.618 : 1)",
-        value: 1.618 / 1,
-    },
-    {
-        label: "银比例(1 : √2)",
-        value: 1 / Math.sqrt(2),
-    },
-    {
-        label: "4 : 3",
-        value: 4 / 3,
-    },
-    {
-        label: "16 : 9",
-        value: 16 / 9,
-    },
-]);
+const width = defineModel<any>("width", { default: { value: 0 } });
+const height = defineModel<any>("height", { default: { value: 0 } });
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.size-inputs-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    .label-text {
+        font-size: 12px;
+        color: #999;
+    }
+}
+
+.size-input {
+    width: 90px;
+}
+
+.unit-text {
+    font-size: 10px;
+    color: #ccc;
+}
+</style>
+
+

@@ -9,67 +9,161 @@
  * Copyright (c) 2023 by 1s, All Rights Reserved. 
 -->
 <template>
-  <div class="home">
-    <div class="simple-content">
-      <a-button 
-        type="primary" 
-        size="large" 
-        @click="goToDesign"
-        class="start-button"
+  <div class="launcher-portal">
+    <div class="launcher-grid">
+      <div 
+        v-for="item in modules" 
+        :key="item.path"
+        class="launcher-tile"
+        @click="router.push(item.path)"
       >
-        开始设计
-      </a-button>
+        <div class="tile-content" :style="{ '--hover-color': item.color }">
+          <div class="tile-icon">
+            <component :is="item.icon" />
+          </div>
+          <div class="tile-label">{{ item.title }}</div>
+        </div>
+      </div>
+      
+      <!-- Future tiles can be added here -->
+      <div class="launcher-tile pending">
+        <div class="tile-content">
+          <div class="tile-icon">
+            <PlusOutlined />
+          </div>
+          <div class="tile-label">更多</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="launcher-footer">
+      1S.DESIGN
     </div>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { 
+  PlusOutlined,
+  SkinOutlined
+} from '@ant-design/icons-vue'
 
 const router = useRouter()
 
-// 跳转到设计页面
-const goToDesign = () => {
-  router.push('/design')
-}
+const modules = [
+  {
+    title: '设计室',
+    path: '/design',
+    icon: SkinOutlined,
+    color: '#6366f1'
+  }
+]
 </script>
 
 <style scoped lang="less">
-.home {
-  min-height: 100vh;
+.launcher-portal {
+  width: 100vw;
+  height: 100vh;
+  background-color: #111;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.1) 0%, transparent 40%);
   display: flex;
-  width: 100%;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.simple-content {
-  text-align: center;
+.launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 140px));
+  gap: 40px;
+  max-width: 90vw;
+  justify-content: center;
+}
+
+.launcher-tile {
+  width: 140px;
+  height: 160px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   
-  .start-button {
-    height: 44px;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: 22px;
-    padding: 0 32px;
-    background: linear-gradient(135deg, #adb5bd 0%, #868e96 100%);
-    border: none;
-    color: white;
+  &:hover {
+    transform: scale(1.1);
+    
+    .tile-content {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--hover-color, #fff);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      
+      .tile-icon {
+        color: var(--hover-color, #fff);
+      }
+      
+      .tile-label {
+        color: #fff;
+        opacity: 1;
+      }
+    }
+  }
+  
+  &.pending {
+    cursor: default;
+    opacity: 0.3;
+    &:hover { transform: none; }
+  }
+}
+
+.tile-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 28px;
+  transition: all 0.3s ease;
+  
+  .tile-icon {
+    font-size: 40px;
+    color: #eee;
+    margin-bottom: 16px;
     transition: all 0.3s ease;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    box-shadow: 0 8px 25px rgba(173, 181, 189, 0.3);
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 35px rgba(173, 181, 189, 0.4);
-      background: linear-gradient(135deg, #9ca3af 0%, #6c757d 100%);
-    }
-    
-    &:active {
-      transform: translateY(0);
-      box-shadow: 0 4px 15px rgba(173, 181, 189, 0.3);
-    }
+  }
+  
+  .tile-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #999;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+  }
+}
+
+.launcher-footer {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 4px;
+}
+
+@media (max-width: 600px) {
+  .launcher-grid {
+    grid-template-columns: repeat(2, 140px);
+    gap: 20px;
   }
 }
 </style>
+
+
+
+
