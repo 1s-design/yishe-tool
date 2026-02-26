@@ -171,7 +171,7 @@ watch(show, async (val) => {
     left: 0;
     right: 0;
     top: 0;
-    z-index: 100;
+    z-index: 10;
 }
 
 .top-menu {

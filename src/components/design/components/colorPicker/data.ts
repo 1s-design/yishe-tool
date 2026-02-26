@@ -185,12 +185,17 @@ export const colorLibrary: ColorCategory[] = [
             { name: 'Green 800', color: '#2e7d32', type: 'pure' }, { name: 'Green 900', color: '#1b5e20', type: 'pure' },
             { name: 'Orange 50', color: '#fff3e0', type: 'pure' }, { name: 'Orange 500', color: '#ff9800', type: 'pure' },
             { name: 'Purple 500', color: '#9c27b0', type: 'pure' }, { name: 'Amber 500', color: '#ffc107', type: 'pure' },
-            { name: 'Cyan 500', color: '#00bcd4', type: 'pure' }, { name: 'Grey 500', color: '#9e9e9e', type: 'pure' }
+            { name: 'Cyan 500', color: '#00bcd4', type: 'pure' }, { name: 'Grey 500', color: '#9e9e9e', type: 'pure' },
+            { name: 'Deep Purple 500', color: '#673ab7', type: 'pure' }, { name: 'Indigo 500', color: '#3f51b5', type: 'pure' },
+            { name: 'Light Blue 500', color: '#03a9f4', type: 'pure' }, { name: 'Teal 500', color: '#009688', type: 'pure' },
+            { name: 'Lime 500', color: '#cddc39', type: 'pure' }, { name: 'Yellow 500', color: '#ffeb3b', type: 'pure' }
         ]
     },
     {
         name: '经典 Pantone',
         items: [
+            { name: 'Peach Fuzz (2024)', color: '#FFBE98', type: 'pure', description: '柔和桃，温暖而宁静' },
+            { name: 'Viva Magenta (2023)', color: '#BB2649', type: 'pure', description: '非凡洋红，充满活力' },
             { name: 'Very Peri (2022)', color: '#6667AB', type: 'pure' },
             { name: 'Ultimate Gray (2021)', color: '#939597', type: 'pure' },
             { name: 'Illuminating (2021)', color: '#F5DF4D', type: 'pure' },
@@ -204,6 +209,137 @@ export const colorLibrary: ColorCategory[] = [
             { name: 'Radiant Orchid (2014)', color: '#b163a3', type: 'pure' },
             { name: 'Emerald (2013)', color: '#009473', type: 'pure' },
             { name: 'Tangerine Tango (2012)', color: '#dd4124', type: 'pure' }
+        ]
+    },
+    {
+        name: '幻彩 & 极光 (Aurora & Neon)',
+        items: [
+            { name: 'Neon Purple', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', type: 'gradient', description: '高饱和霓虹紫，充满赛博感' },
+            { name: 'Cyber Blue', color: 'linear-gradient(135deg, #2af598 0%, #08aeea 100%)', type: 'gradient', description: '青翠赛博蓝' },
+            { name: 'Aurora Green', color: 'linear-gradient(to right, #00c6ff, #0072ff)', type: 'gradient', description: '极光之森' },
+            { name: 'Electric Violet', color: 'linear-gradient(to right, #833ab4, #fd1d1d, #fcb045)', type: 'gradient', description: '电子紫罗兰' },
+            { name: 'JShine', color: 'linear-gradient(to right, #12c2e9, #c471ed, #f64f59)', type: 'gradient', description: '晨曦霞光' },
+            { name: 'Miami Night', color: 'linear-gradient(135deg, #ff00cc 0%, #3333ff 100%)', type: 'gradient', description: '迈阿密之夜' },
+            { name: 'Royal Garden', color: 'linear-gradient(to right, #ed6ea0 0%, #ec8c69 100%)', type: 'gradient' },
+            { name: 'Hidden Jaguar', color: 'linear-gradient(to top, #0fd850 0%, #f9f047 100%)', type: 'gradient' }
+        ]
+    },
+    {
+        name: '径向 & 锥形 (Special Shapes)',
+        items: [
+            { name: 'Soft Sphere', color: 'radial-gradient(circle at center, #ff9a9e 0%, #fecfef 100%)', type: 'gradient', description: '中心向外散发的柔光' },
+            { name: 'Blue Pearl', color: 'radial-gradient(circle at 30% 30%, #a1c4fd 0%, #c2e9fb 100%)', type: 'gradient', description: '珍珠般的圆润质感' },
+            { name: 'Golden Sun', color: 'conic-gradient(from 180deg at 50% 50%, #f6d365, #fda085, #f6d365)', type: 'gradient', description: '金色阳光螺旋' },
+            { name: 'Rainbow Wheel', color: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)', type: 'gradient', description: '标准色轮' },
+            { name: 'Modern Arctic', color: 'radial-gradient(circle at 50% 120%, rgba(255,255,255,0.5), rgba(255,255,255,0) 70%), linear-gradient(to bottom, #74ebd5, #acb6e5)', type: 'gradient', description: '北极光的余晖' }
+        ]
+    },
+    {
+        name: '背景纹理与图案 (CSS Patterns)',
+        items: [
+            { name: 'Blueprint Grid', color: 'linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), #003366', type: 'gradient', description: '蓝图网格纹理' },
+            { name: 'Honeycomb', color: 'radial-gradient(circle at 100% 50%, transparent 20%, #222 21%, #222 34%, transparent 35%, transparent), radial-gradient(circle at 0% 50%, transparent 20%, #222 21%, #222 34%, transparent 35%, transparent), #333', type: 'gradient', description: '蜂巢几何纹理' },
+            { name: 'Japanese Wave (Seigaiha)', color: 'radial-gradient(circle at 50% 100%, rgba(255,255,255,0.1) 20%, transparent 20%), #2c3e50', type: 'gradient', description: '日式青海波纹 (简化版)' },
+            { name: 'Polka Dots Soft', color: 'radial-gradient(#ddd 15%, transparent 16%), radial-gradient(#ddd 15%, transparent 16%), #fff', type: 'gradient', description: '经典清新波点' },
+            { name: 'Diagonal Stripes', color: 'repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 10px, #ffffff 10px, #ffffff 20px)', type: 'gradient' },
+            { name: 'Paper Fiber', color: 'linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px), #fffef0', type: 'gradient', description: '纸质纤维感' },
+            { name: 'Circuit Board', color: 'linear-gradient(90deg, #111 2px, transparent 2px), linear-gradient(#111 2px, transparent 2px), #1a1a1a', type: 'gradient', description: '电路板风格网格' }
+        ]
+    },
+    {
+        name: '顶级 UI 特效 (Premium CSS)',
+        items: [
+            { name: 'Holographic Foil', color: 'linear-gradient(135deg, #ff0080 0%, #ff8c00 20%, #40e0d0 40%, #8a2be2 60%, #ff0080 80%, #ff8c00 100%)', type: 'gradient', description: '全息箔质感，丰富的色彩流动' },
+            { name: 'Cosmic Nebula', color: 'radial-gradient(circle at 20% 30%, #4e54c8 0%, transparent 40%), radial-gradient(circle at 80% 70%, #8f94fb 0%, transparent 40%), radial-gradient(circle at 50% 50%, #111 0%, #000 100%)', type: 'gradient', description: '宇宙星云，多层次径向叠加' },
+            { name: 'Soft Velvet Red', color: 'radial-gradient(circle at top left, #ff5f6d, #ffc371)', type: 'gradient', description: '丝绒红，极具触感的柔和渐变' },
+            { name: 'Cyberpunk Grid', color: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)), #222', type: 'gradient', description: '赛博格网格纹理' },
+            { name: 'Carbon Fiber', color: 'linear-gradient(45deg, #222 25%, transparent 25%), linear-gradient(-45deg, #222 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #222 75%), linear-gradient(-45deg, transparent 75%, #222 75%), #111', type: 'gradient', description: '碳纤维质感背景' },
+            { name: 'Iridescent Light', color: 'linear-gradient(217deg, rgba(255,0,0,.8), rgba(255,0,0,0) 70.71%), linear-gradient(127deg, rgba(0,255,0,.8), rgba(0,255,0,0) 70.71%), linear-gradient(336deg, rgba(0,0,255,.8), rgba(0,0,255,0) 70.71%)', type: 'gradient', description: '红绿蓝三原色弥散叠加' },
+            { name: 'Golden Silk', color: 'linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c)', type: 'gradient', description: '金丝绸缎质感' },
+            { name: 'Midnight Aurora', color: 'linear-gradient(to bottom, #020111 60%, #20202c 100%), radial-gradient(at 0% 100%, #327ad5 0, transparent 50%), radial-gradient(at 100% 100%, #1d79c7 0, transparent 50%)', type: 'gradient' },
+            { name: 'Frosted Emerald', color: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)', type: 'gradient', description: '磨砂翡翠绿' },
+            { name: 'Web3 Violet', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', type: 'gradient' },
+            { name: 'Deep Space Mesh', color: 'radial-gradient(at 80% 20%, hsla(242, 78%, 60%, 1) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(333, 80%, 56%, 1) 0px, transparent 50%), radial-gradient(at 40% 80%, hsla(189, 71%, 48%, 1) 0px, transparent 50%)', type: 'gradient' },
+            { name: 'Vintage Paper', color: 'linear-gradient(30deg, #f39c12 12%, transparent 12.5%, transparent 87%, #f39c12 87.5%, #f39c12), linear-gradient(150deg, #f39c12 12%, transparent 12.5%, transparent 87%, #f39c12 87.5%, #f39c12), linear-gradient(30deg, #f39c12 12%, transparent 12.5%, transparent 87%, #f39c12 87.5%, #f39c12), linear-gradient(150deg, #f39c12 12%, transparent 12.5%, transparent 87%, #f39c12 87.5%, #f39c12), linear-gradient(60deg, #e67e22 25%, transparent 25.5%, transparent 75%, #e67e22 75.5%, #e67e22), linear-gradient(60deg, #e67e22 25%, transparent 25.5%, transparent 75%, #e67e22 75.5%, #e67e22), #d35400', type: 'gradient', description: '复古几何包装纸纹理' },
+            { name: 'Modern Dark Glass', color: 'linear-gradient(rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%), #121212', type: 'gradient' },
+            { name: 'Retro Sunset', color: 'repeating-linear-gradient(transparent, transparent 2px, #f43f5e 2px, #f43f5e 4px), linear-gradient(#fbbf24, #f43f5e)', type: 'gradient', description: '80年代复古落日条纹' }
+        ]
+    },
+    {
+        name: '和风色彩 (Japanese Colors)',
+        items: [
+            { name: '桜色 (Sakura)', color: '#fef4f4', type: 'pure', description: '樱花色，极浅的粉红' },
+            { name: '抚子 (Nadeshiko)', color: '#eebbcb', type: 'pure', description: '抚子色，如秋牡丹般温婉' },
+            { name: '瑠璃 (Ruri)', color: '#2a5caa', type: 'pure', description: '深邃高贵的宝石蓝色' },
+            { name: '萌葱 (Moegi)', color: '#006e54', type: 'pure', description: '萌芽的葱色，充满生命力' },
+            { name: '京緋 (Kyo-hi)', color: '#c3272b', type: 'pure', description: '京都风格的绯红色' },
+            { name: '若草 (Wakakusa)', color: '#abc03d', type: 'pure', description: '初春嫩草之色' },
+            { name: '藤 (Fuji)', color: '#bbbcde', type: 'pure', description: '紫藤花色，优雅从容' },
+            { name: '山吹 (Yamabuki)', color: '#ffb61e', type: 'pure', description: '棣棠花色，明艳的黄橙' }
+        ]
+    },
+    {
+        name: '现代色彩空间 (OKLCH)',
+        items: [
+            { name: 'OKLCH Rainbow', color: 'linear-gradient(to right, oklch(60% 0.3 0), oklch(60% 0.3 120), oklch(60% 0.3 240), oklch(60% 0.3 360))', type: 'gradient', description: '基于 OKLCH 的等亮度彩虹渐变，视觉极其和谐' },
+            { name: 'Soft OKLCH Blue', color: 'oklch(70% 0.1 250)', type: 'pure', description: '现代浏览器推荐的 OKLCH 柔和蓝' },
+            { name: 'Vibrant Magenta', color: 'oklch(65% 0.3 330)', type: 'pure', description: '极高饱和度的现代洋红' },
+            { name: 'Deep Sea OKLCH', color: 'linear-gradient(to bottom, oklch(40% 0.2 240), oklch(20% 0.1 260))', type: 'gradient' },
+            { name: 'Sunset Glow', color: 'linear-gradient(to right, oklch(75% 0.15 40), oklch(70% 0.2 20), oklch(60% 0.25 340))', type: 'gradient' }
+        ]
+    },
+    {
+        name: '高级特殊渐变 (Advanced)',
+        items: [
+            { name: 'Mesh Aurora', color: 'radial-gradient(at 0% 0%, oklch(80% 0.1 150) 0%, transparent 50%), radial-gradient(at 100% 0%, oklch(80% 0.1 300) 0%, transparent 50%), radial-gradient(at 50% 100%, oklch(70% 0.2 200) 0%, transparent 50%), #f0f0f0', type: 'gradient', description: '多重径向拼接出的弥散光质感' },
+            { name: 'Conic Metal', color: 'conic-gradient(from 45deg, #ddd, #999, #ddd, #999, #ddd)', type: 'gradient', description: '锥形渐变模拟金属反光' },
+            { name: 'Polka Dots', color: 'radial-gradient(#333 10%, transparent 11%), transparent', type: 'gradient', description: '利用径向渐变实现的波点纹理' },
+            { name: 'Stripes', color: 'repeating-linear-gradient(45deg, #ccc, #ccc 10px, #eee 10px, #eee 20px)', type: 'gradient', description: '重复线条纹理' },
+            { name: 'Cyber Ring', color: 'conic-gradient(from 0deg at 50% 50%, oklch(60% 0.3 0) 0%, oklch(60% 0.3 180) 50%, oklch(60% 0.3 360) 100%)', type: 'gradient' }
+        ]
+    },
+    {
+        name: '多重复杂渐变 (Complex)',
+        items: [
+            { name: 'Deep Space', color: 'linear-gradient(to bottom, #000000, #434343 50%, #000000)', type: 'gradient', description: '深邃空间感' },
+            { name: 'Rainbow Soft', color: 'linear-gradient(to right, #ff9a9e 0%, #fecfef 20%, #fbc2eb 40%, #a18cd1 60%, #8fd3f4 80%, #84fab0 100%)', type: 'gradient', description: '七彩柔和过渡' },
+            { name: 'Metal Chrome', color: 'linear-gradient(to bottom, #d5d4d0 0%, #d5d4d0 1%, #eeeeec 31%, #efeeec 75%, #e9e9e7 100%)', type: 'gradient', description: '金属铬质感' },
+            { name: 'Glassy Texture', color: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)', type: 'gradient', description: '毛玻璃质感底色' },
+            { name: 'Vibrant Mesh', color: 'linear-gradient(45deg, #ff9a9e 0%, #fad0c4 25%, #ffecd2 50%, #fcb69f 75%, #ff8177 100%)', type: 'gradient', description: '多层色彩堆叠' }
+        ]
+    },
+    {
+        name: '复古油画 (Vintage Oil)',
+        items: [
+            { name: '梵高星空', color: '#1a2a6c', type: 'pure', description: '深邃夜空的普鲁士蓝' },
+            { name: '向日葵黄', color: '#f1c40f', type: 'pure', description: '明亮饱满的土黄' },
+            { name: '莫奈花园', color: '#48c6ef', type: 'pure', description: '清透的睡莲池色' },
+            { name: '复古玫瑰', color: '#9d2933', type: 'pure', description: '干枯玫瑰的暗红色' },
+            { name: '古典金箔', color: '#bf953f', type: 'pure', description: '斑驳质感的金色' },
+            { name: '文艺复兴', color: '#6d4c41', type: 'pure', description: '古典画作的赭石基调' }
+        ]
+    },
+    {
+        name: '极简中性 (Minimal Neutrals)',
+        items: [
+            { name: 'Warm Grey', color: '#8d8d8d', type: 'pure' },
+            { name: 'Cool Grey', color: '#656565', type: 'pure' },
+            { name: 'Desert Sand', color: '#edc9af', type: 'pure' },
+            { name: 'Bone White', color: '#f9f6ee', type: 'pure' },
+            { name: 'Charcoal', color: '#36454f', type: 'pure' },
+            { name: 'Greige', color: '#b0abb0', type: 'pure' },
+            { name: 'Taupe', color: '#483c32', type: 'pure' }
+        ]
+    },
+    {
+        name: '马卡龙 (Macaron Pastel)',
+        items: [
+            { name: 'Mint Candy', color: '#b2f7ef', type: 'pure' },
+            { name: 'Lemon Soda', color: '#efffb8', type: 'pure' },
+            { name: 'Strawberry Milk', color: '#f7d1cd', type: 'pure' },
+            { name: 'Lavender Ice', color: '#e2afff', type: 'pure' },
+            { name: 'Peach Cream', color: '#ffcb77', type: 'pure' },
+            { name: 'Blueberry Pie', color: '#7bdff2', type: 'pure' }
         ]
     },
     {
