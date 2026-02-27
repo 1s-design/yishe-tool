@@ -68,7 +68,6 @@ import AutomationOverlay from '@/components/automationOverlay.vue'
 import { useConfigStore, initConfigStoreBasicConfig } from '@/store/stores/config.ts';
 import { useLoginStatusStore, initLoginStoreUserInfo } from '@/store/stores/login';
 import to from 'await-to-js';
-import { initDesignToolReceiver } from '@/utils/designToolReceiver'
 import { setupSingleTabManager } from '@/utils/singleTabManager'
 
 // 检查并处理 URL 参数中的 token
@@ -183,12 +182,7 @@ async function setup() {
   app.mount('#app')
 
 
-  if (window.opener) {
-    // 初始化设计工具接收器
-    setTimeout(() => {
-      initDesignToolReceiver()
-    }, 1000);
-  }
+
 
 }
 

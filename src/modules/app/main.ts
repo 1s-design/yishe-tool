@@ -49,7 +49,7 @@ import "tailwindcss/tailwind.css"
 
 import { ConfigProvider } from 'vant';
 import 'vant/lib/index.css';
-import {toastController} from "@ionic/vue";
+import { toastController } from "@ionic/vue";
 
 import { createPinia } from 'pinia'
 
@@ -63,10 +63,10 @@ if (import.meta.env.DEV) {
 
 export const defaultResponseInterceptors = async (response) => {
   if (response?.data?.code === 401) {
-      // logout
-      throw new Error()
+    // logout
+    throw new Error()
   } else if (response.data.code == 0) {
-      return response
+    return response
   } else {
     const toast = await toastController.create({
       duration: 1000,
@@ -99,7 +99,7 @@ app.use(IonicVue, {
   // animated: false, // 不设置该值会存在右滑返回时的错误动画
   swipeGesture: false,
   swipeBackEnabled: false,
-  backButtonText:'',
+  backButtonText: '',
   // scrollAssist: false,
 });
 
@@ -113,17 +113,11 @@ import { getBasicConfig } from '@/api';
 defineCustomElements(window);
 
 import { useConfigStore } from '@/store/stores/config.ts';
-
-import { initWebsocket } from './helper/websocket';
-
-
-
 router.isReady().then(async () => {
   // 将登录信息同步到本地
   const configStore = useConfigStore()
-  const config =  await getBasicConfig()
+  const config = await getBasicConfig()
   configStore.$patch(config)
-  initWebsocket()
   app.mount('#app');
 });
 

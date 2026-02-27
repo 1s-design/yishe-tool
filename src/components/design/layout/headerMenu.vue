@@ -28,9 +28,8 @@
 
     <a-button size="small" type="text"> 快速指南 </a-button>
 
-    <!-- 连接状态显示 -->
-    <connection-status />
-
+    <!-- 连接状态显示 (已移除) -->
+    
     <div class="header-actions flex items-center gap-2 shrink-0">
       <!-- <el-button @click="showUpload = true" round text :icon="UploadFilled" class="action-btn">
         素材上传
@@ -107,7 +106,6 @@ import { useFileDialog } from "@vueuse/core";
 import { openLoginDialog } from "@/modules/main/view/user/login/index.tsx";
 import Utils from "@/common/utils";
 import { localFileListResource } from "@/components/design/store";
-import connectionStatus from "@/components/connectionStatus.vue";
 
 const router = useRouter();
 

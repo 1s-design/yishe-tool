@@ -240,7 +240,6 @@ import qrcode from "./qrcode/index.vue";
 import customModel from "./customModel/index.vue";
 import { DirectionalLight, AmbientLight, PointLight } from "three";
 import { DecalGeometry } from "three/examples/jsm/geometries/DecalGeometry";
-import { initWebsocket } from "../utils/websocket.ts";
 import upload from "./upload/index.vue";
 import stamp from "./stamp/index.vue";
 import svgCanvas from "./svgCanvas/index.vue";
@@ -271,7 +270,6 @@ import material from "@/components/design/layout/material/index.vue";
 import autocreateModal from "./autocreate/modal.vue";
 import videoClip from "./videoClip/index.vue";
 import { useEventBus } from "@vueuse/core";
-import { initDesignToolReceiver } from "@/utils/designToolReceiver";
 
 const { component: stickerDetailModal } = useStickerDetailModal();
 const { component: customModelDetailModal } = useCustomModelDetailModal();
@@ -378,8 +376,6 @@ onMounted(async () => {
   const designPageLoadedBus = useEventBus("design-page-loaded");
   designPageLoadedBus.emit();
 
-  // 页面挂载后初始化 designToolReceiver
-  initDesignToolReceiver();
 
   // 初始化时根据 shouldShowThreeCanvas 状态设置渲染
   if (!shouldShowThreeCanvas.value && modelController.isMounted) {
