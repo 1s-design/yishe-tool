@@ -22,7 +22,9 @@ export const openLoginDialog = async () => {
         return
     }
 
-    showLoginFormModal.value = true
+    import("@/modules/main/router").then((module) => {
+        module.default.push({ name: 'Login' });
+    });
 }
 
 

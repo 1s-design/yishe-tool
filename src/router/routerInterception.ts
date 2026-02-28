@@ -3,8 +3,12 @@ import { useLoginStatusStore } from "@/store/stores/login";
 
 export const blockLoginPage = (router) => {
   router.beforeEach((to, from, next) => {
-    if (to.name === "Login" && isLogin()) {
+    const loginStatusStore = useLoginStatusStore();
+    const loggedIn = loginStatusStore.isLogin || !!loginStatusStore.token;
+    if (to.name === "Login" && loggedIn) {
       next({ name: "Home" });
+    } else if (!loggedIn && to.name !== "Login" && to.name !== "Signup") {
+      next({ name: "Login" });
     } else {
       next();
     }
