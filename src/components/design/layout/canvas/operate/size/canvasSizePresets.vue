@@ -85,18 +85,18 @@ const sizeGroups: SizeGroup[] = [
         ]
     },
     {
-        label: '标准纸张与印刷 (300 PPI)',
+        label: '标准纸张与印刷 (300 PPI，最大边 5000px)',
         options: [
-            { label: 'A0 (国际通版)', width: 9933, height: 14043, description: '超大海报/展板' },
-            { label: 'A1 (国际通版)', width: 7016, height: 9933, description: '大型海报' },
-            { label: 'A2 (国际通版)', width: 4961, height: 7016, description: '中型海报/挂历' },
-            { label: 'A3 (国际通版)', width: 3508, height: 4961, description: '小图海报/画册' },
+            { label: 'A0 (国际通版)', width: 3541, height: 5000, description: '超大海报/展板' },
+            { label: 'A1 (国际通版)', width: 3532, height: 5000, description: '大型海报' },
+            { label: 'A2 (国际通版)', width: 3534, height: 5000, description: '中型海报/挂历' },
+            { label: 'A3 (国际通版)', width: 3534, height: 5000, description: '小图海报/画册' },
             { label: 'A4 (国际通版)', width: 2480, height: 3508, description: '传单/文档标准' },
             { label: 'A5 (国际通版)', width: 1748, height: 2480, description: '小折页/手写本' },
             { label: 'A6 (国际通版)', width: 1240, height: 1748, description: '明信片/口袋本' },
             { label: 'US Letter (北美常用)', width: 2550, height: 3300, description: '8.5x11英寸 信纸' },
             { label: 'US Legal (北美常用)', width: 2550, height: 4200, description: '8.5x14英寸 法律' },
-            { label: 'US Tabloid (北美常用)', width: 3300, height: 5100, description: '11x17英寸 报纸' },
+            { label: 'US Tabloid (北美常用)', width: 3235, height: 5000, description: '11x17英寸 报纸' },
             { label: '中国标准名片', width: 1063, height: 638, description: '横版名片 90x54mm' },
             { label: '竖版名片 (中国)', width: 638, height: 1063, description: '54x90mm' },
             { label: '欧美标准名片 (US)', width: 1050, height: 600, description: '3.5×2英寸' },
@@ -136,25 +136,25 @@ const sizeGroups: SizeGroup[] = [
         ]
     },
     {
-        label: '广告与户外展板',
+        label: '广告与户外展板 (最大边 5000px)',
         options: [
-            { label: '易拉宝 (国内常用)', width: 9449, height: 23622, description: '80x200cm (推荐下调DPI)' },
-            { label: 'X展架 (常规)', width: 7087, height: 18898, description: '60x160cm' },
-            { label: '横幅/条幅 (3米)', width: 35433, height: 8268, description: '3x0.7m (需下调DPI导出)' },
+            { label: '易拉宝 (国内常用)', width: 2002, height: 5000, description: '80x200cm (推荐下调DPI)' },
+            { label: 'X展架 (常规)', width: 1875, height: 5000, description: '60x160cm' },
+            { label: '横幅/条幅 (3米)', width: 5000, height: 1166, description: '3x0.7m (需下调DPI导出)' },
             { label: '桌面台卡 (A5)', width: 1748, height: 2480, description: '收款/提示牌' },
         ]
     },
     {
-        label: '定制周边: 服饰箱包 (300 PPI)',
+        label: '定制周边: 服饰箱包 (300 PPI，最大边 5000px)',
         options: [
-            { label: 'T恤印花区 (超大满印)', width: 4800, height: 6000, description: '16x20英寸' },
+            { label: 'T恤印花区 (超大满印)', width: 4000, height: 5000, description: '16x20英寸' },
             { label: 'T恤印花区 (常规前胸)', width: 3543, height: 4724, description: '约12x16英寸 (300x400mm)' },
             { label: '卫衣/套头衫正面', width: 4200, height: 4200, description: '14x14英寸方图' },
             { label: '左胸小Logo', width: 1200, height: 1200, description: '4x4英寸 刺绣/小标' },
             { label: '袖子印花', width: 1050, height: 4500, description: '3.5x15英寸 侧面袖标' },
             { label: '环保袋/托特包 (全图)', width: 4134, height: 4724, description: '单肩包约35x40cm' },
             { label: '鸭舌帽/棒球帽 (前幅)', width: 1500, height: 600, description: '贴布/刺绣面 5x2英寸' },
-            { label: '紧身裤/瑜伽裤 (满印)', width: 9000, height: 12000, description: '裤腿大尺寸满版包裹' },
+            { label: '紧身裤/瑜伽裤 (满印)', width: 3750, height: 5000, description: '裤腿大尺寸满版包裹' },
         ]
     },
     {
@@ -169,17 +169,17 @@ const sizeGroups: SizeGroup[] = [
         ]
     },
     {
-        label: '定制周边: 家居桌搭与3C (300/150 PPI)',
+        label: '定制周边: 家居桌搭与3C (300/150 PPI，最大边 5000px)',
         options: [
-            { label: '电竞鼠标垫 (超大 XL)', width: 10630, height: 4724, description: '900x400mm 满印' },
-            { label: '电竞鼠标垫 (加长 L)', width: 9449, height: 3543, description: '800x300mm 满印' },
+            { label: '电竞鼠标垫 (超大 XL)', width: 5000, height: 2224, description: '900x400mm 满印' },
+            { label: '电竞鼠标垫 (加长 L)', width: 5000, height: 1875, description: '800x300mm 满印' },
             { label: '常规办公鼠标垫', width: 2835, height: 2362, description: '240x200mm' },
             { label: '圆形鼠标垫', width: 2362, height: 2362, description: '直径200mm' },
             { label: '手机壳背板 (苹果/安卓)', width: 1050, height: 1950, description: '兼容所有机型含初延' },
-            { label: '挂毯/背景布 (大)', width: 12000, height: 9000, description: '80x60英寸 150ppi' },
-            { label: '挂毯/背景布 (中)', width: 9000, height: 7500, description: '60x50英寸 150ppi' },
-            { label: '方形抱枕/靠枕', width: 5400, height: 5400, description: '18x18英寸' },
-            { label: '法兰绒毛毯', width: 7500, height: 9000, description: '50x60英寸 150ppi' },
+            { label: '挂毯/背景布 (大)', width: 5000, height: 3750, description: '80x60英寸 150ppi' },
+            { label: '挂毯/背景布 (中)', width: 5000, height: 4167, description: '60x50英寸 150ppi' },
+            { label: '方形抱枕/靠枕', width: 4629, height: 4629, description: '18x18英寸' },
+            { label: '法兰绒毛毯', width: 4167, height: 5000, description: '50x60英寸 150ppi' },
             { label: '方形贴纸套件', width: 1200, height: 1800, description: '4x6英寸 不干胶板' },
         ]
     },
