@@ -46,7 +46,6 @@ import {
     ZoomIn, 
     ZoomOut 
 } from '@element-plus/icons-vue'
-import { menuState, menuItems } from '@/components/design/store.ts';
 import panzoom from 'panzoom'
 import Utils from '@/common/utils'
 
@@ -66,9 +65,9 @@ let canvass = canvasController.getRender();
 // 保存 panzoom 实例以便清理
 let panzoomInstance: any = null
 
-// 控制大画布的显示，只有在大画布显示且当前菜单是 canvas 时才显示
+// 控制大画布的显示。Three.js 已停用后，主贴纸画布不再跟随左侧菜单切换隐藏。
 let show = computed(() => {
-    return showMainCanvas.value && menuState.value.activeMenu === menuItems.canvas
+    return showMainCanvas.value
 })
 
 function resetPanzoom() {

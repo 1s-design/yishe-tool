@@ -20,6 +20,7 @@
       </template>
       <template #right>
         <van-button
+          v-if="isDesign3DEnabled"
           size="small"
           icon="share-o"
           icon-position="right"
@@ -30,9 +31,20 @@
       </template>
     </van-nav-bar>
 
-    <div style="flex: 1" class="three-canvas" ref="threeCanvasRef"></div>
+    <div
+      style="flex: 1"
+      :class="isDesign3DEnabled ? 'three-canvas' : 'design-disabled-panel'"
+      ref="threeCanvasRef"
+    >
+      <template v-if="!isDesign3DEnabled">
+        <div class="design-disabled-panel__title">3D 设计功能已暂时停用</div>
+        <div class="design-disabled-panel__desc">
+          当前移动端先关闭服装模型预览与相关操作，避免无用渲染影响体验和性能。
+        </div>
+      </template>
+    </div>
 
-    <van-action-bar style="padding: 4px 12px" class="action-bar">
+    <van-action-bar v-if="isDesign3DEnabled" style="padding: 4px 12px" class="action-bar">
       <van-action-bar-icon
         @click="showProductPopup = true"
         :dot="!currentOperatingBaseModelInfo"
@@ -72,29 +84,23 @@
         @click="showDecalPopup = true"
         :badge="currentModelController?.decalControllers.length"
       />
-
-      <!-- <van-action-bar-button color="#be99ff" type="warning" text="加入购物车" />
-      <van-action-bar-button color="#7232dd" type="danger" text="立即购买" /> -->
     </van-action-bar>
   </div>
-  <productPopup></productPopup>
-  <stickerPopup></stickerPopup>
-  <stickerDetailPopup></stickerDetailPopup>
-  <materialPopup></materialPopup>
-  <materialDetailPopup></materialDetailPopup>
-  <uploadPopup></uploadPopup>
-  <decalPopup></decalPopup>
-  <uploadImagePopup></uploadImagePopup>
-  <decalFloatingBubble></decalFloatingBubble>
-  <colorPopup></colorPopup>
+  <productPopup v-if="isDesign3DEnabled"></productPopup>
+  <stickerPopup v-if="isDesign3DEnabled"></stickerPopup>
+  <stickerDetailPopup v-if="isDesign3DEnabled"></stickerDetailPopup>
+  <materialPopup v-if="isDesign3DEnabled"></materialPopup>
+  <materialDetailPopup v-if="isDesign3DEnabled"></materialDetailPopup>
+  <uploadPopup v-if="isDesign3DEnabled"></uploadPopup>
+  <decalPopup v-if="isDesign3DEnabled"></decalPopup>
+  <uploadImagePopup v-if="isDesign3DEnabled"></uploadImagePopup>
+  <decalFloatingBubble v-if="isDesign3DEnabled"></decalFloatingBubble>
+  <colorPopup v-if="isDesign3DEnabled"></colorPopup>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import {
-  ModelController,
-  createModelController,
-} from "@/components/design/core/controller";
+import { createModelController } from "@/components/design/core/controller";
 import { meta } from "./meta.ts";
 import {
   showProductPopup,
@@ -117,21 +123,25 @@ import uploadPopup from "./uploadPopup.vue";
 import decalPopup from "./decalPopup.vue";
 import decalFloatingBubble from "./decalFloatingBubble.vue";
 import colorPopup from "./colorPopup.vue";
-
-import { currentModelController } from "@/components/design/store";
-import { currentOperatingBaseModelInfo } from "@/components/design/store";
+import { currentModelController, currentOperatingBaseModelInfo } from "@/components/design/store";
 import { useRouter, useRoute } from "vue-router";
 import { showDialog, showToast } from "vant";
 import avatar from "@/modules/mobile/components/avatar.vue";
 import Utils from "@/common/utils";
 import { useLoginStatusStore } from "@/store/stores/login";
+import { DESIGN_3D_ENABLED } from "@/components/design/featureFlags";
 
 let router = useRouter();
 let route = useRoute();
 const loginStore = useLoginStatusStore();
 const threeCanvasRef = ref();
+const isDesign3DEnabled = DESIGN_3D_ENABLED;
 
 onMounted(() => {
+  if (!isDesign3DEnabled) {
+    return;
+  }
+
   if (Utils.three.isSupport) {
     const modelController = createModelController({
       meta,
@@ -161,7 +171,6 @@ function save() {
   showUploadPopup.value = true;
 }
 
-// 去上传
 function toUpload() {
   if (!loginStore.userInfo?.id) {
     showToast("请先登录后在上传");
@@ -180,9 +189,6 @@ function login() {
   });
 }
 
-/**
- * @methiod 点击创建贴纸
- */
 function createSticker() {
   showDialog({
     title: "提示",
@@ -200,6 +206,33 @@ function createSticker() {
   height: calc(100vh - var(--van-action-bar-height));
   position: fixed;
   top: 0;
+}
+
+.design-disabled-panel {
+  width: 100vw;
+  height: calc(100vh - 46px);
+  position: fixed;
+  top: 46px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  background: linear-gradient(180deg, #fafafa 0%, #f1f1f1 100%);
+  text-align: center;
+}
+
+.design-disabled-panel__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+}
+
+.design-disabled-panel__desc {
+  max-width: 320px;
+  line-height: 1.7;
+  color: #666;
 }
 
 .layout {

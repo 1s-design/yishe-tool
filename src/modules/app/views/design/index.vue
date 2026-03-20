@@ -4,9 +4,9 @@
  * @LastEditors: chan-max jackieontheway666@gmail.com
  * @LastEditTime: 2024-02-05 16:38:46
  * @FilePath: /1s/src/modules/app/views/workspace/index.vue
- * @Description: 
- * 
- * Copyright (c) 2024 by 1s, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2024 by 1s, All Rights Reserved.
 -->
 <template>
   <ion-page>
@@ -22,12 +22,19 @@
     </ion-header>
     <ion-content>
       <div
+        v-if="isDesign3DEnabled"
         style="width: 100%; height: 100%"
         class="three-canvas"
         ref="threeCanvasRef"
       ></div>
+      <div v-else class="design-disabled-panel">
+        <div class="design-disabled-panel__title">3D 设计功能已暂时停用</div>
+        <div class="design-disabled-panel__desc">
+          当前页面先关闭模型渲染与贴花操作，避免继续影响性能和页面行为。
+        </div>
+      </div>
     </ion-content>
-    <ion-footer>
+    <ion-footer v-if="isDesign3DEnabled">
       <ion-toolbar>
         <div class="toolbar">
           <ion-button fill="clear" size="small" @click="showSelectModel = true">
@@ -65,9 +72,9 @@
         </div>
       </ion-toolbar>
     </ion-footer>
-    <select-model></select-model>
-    <sticker></sticker>
-    <workspace></workspace>
+    <select-model v-if="isDesign3DEnabled"></select-model>
+    <sticker v-if="isDesign3DEnabled"></sticker>
+    <workspace v-if="isDesign3DEnabled"></workspace>
   </ion-page>
 </template>
 
@@ -101,8 +108,10 @@ import iconHistory from "@/modules/app/assets/icon/history.svg?url";
 import iconPaper from "@/modules/app/assets/icon/paper.svg?url";
 import iconSetting from "@/modules/app/assets/icon/setting.svg?url";
 import iconShare from "@/modules/app/assets/icon/share.svg?url";
+import { DESIGN_3D_ENABLED } from "@/components/design/featureFlags";
 
 const router = useIonRouter();
+const isDesign3DEnabled = DESIGN_3D_ENABLED;
 
 function quit() {
   router.push({
@@ -113,6 +122,10 @@ function quit() {
 const threeCanvasRef = ref();
 
 onMounted(() => {
+  if (!isDesign3DEnabled) {
+    return;
+  }
+
   const modelController = new ModelController();
   modelController.meta = meta;
   modelController.mode = "mb";
@@ -141,5 +154,30 @@ onBeforeMount(async () => {});
   ion-icon {
     font-size: 20px;
   }
+}
+
+.design-disabled-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  background: linear-gradient(180deg, #fafafa 0%, #f1f1f1 100%);
+  text-align: center;
+}
+
+.design-disabled-panel__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+}
+
+.design-disabled-panel__desc {
+  max-width: 320px;
+  line-height: 1.7;
+  color: #666;
 }
 </style>

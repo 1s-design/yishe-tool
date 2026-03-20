@@ -351,7 +351,7 @@ export const showBasicCanvas = computed(() => {
 /*
  是否展示3d画布
 */
-export const showThreeCanvas = ref(true)
+export const showThreeCanvas = ref(DESIGN_3D_ENABLED)
 
 
 /*
@@ -470,6 +470,7 @@ import { canvasStickerOptions, currentOperatingCanvasChildId } from '@/component
 import { stickerQueryTags, stickerQueryParams } from "@/components/design/layout/sticker/index.tsx";
 import { showMainCanvas } from "@/components/design/layout/canvas/index.tsx";
 import { ModelController } from "./core/controller";
+import { DESIGN_3D_ENABLED } from "./featureFlags";
 
 
 // 当前仓库的名字
@@ -541,4 +542,5 @@ export function exitEditMode() {
 
 // 角度选择全局状态
 export const selectedAngles = ref<string[]>([]);
+
 

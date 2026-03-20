@@ -10,7 +10,8 @@
         <span>创作资源</span>
       </div>
     </el-tooltip>
-    <el-tooltip :hide-after="0" content="工作台" placement="right">
+
+    <el-tooltip v-if="isDesign3DEnabled" :hide-after="0" content="工作台" placement="right">
       <div
         class="menu-bar-item"
         :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.workspace }"
@@ -28,10 +29,11 @@
         @click="setActiveMenu(menuItems.sticker)"
       >
         <div class="menu-bar-item-icon"><icon-sticker></icon-sticker></div>
-        <span> 贴纸资源 </span>
+        <span>贴纸资源</span>
       </div>
     </el-tooltip>
-    <el-tooltip :hide-after="0" content="选择模型" placement="right">
+
+    <el-tooltip v-if="isDesign3DEnabled" :hide-after="0" content="选择模型" placement="right">
       <div
         class="menu-bar-item"
         :class="{ 'menu-bar-item-focus': showBaseModelSelect }"
@@ -45,11 +47,11 @@
         <div v-else class="menu-bar-item-icon">
           <icon-shirt></icon-shirt>
         </div>
-        <span> {{ currentOperatingBaseModelInfo?.id ? "切换模型" : "选择模型" }} </span>
+        <span>{{ currentOperatingBaseModelInfo?.id ? "切换模型" : "选择模型" }}</span>
       </div>
     </el-tooltip>
 
-    <el-tooltip :hide-after="0" content="服装材质" placement="right">
+    <el-tooltip v-if="isDesign3DEnabled" :hide-after="0" content="服装材质" placement="right">
       <div
         class="menu-bar-item"
         :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.material }"
@@ -76,8 +78,8 @@
     </el-tooltip>
 
     <el-tooltip :hide-after="0" content="图片编辑" placement="right">
-      <div 
-        class="menu-bar-item" 
+      <div
+        class="menu-bar-item"
         :class="{ 'menu-bar-item-focus': showImageEditorModal }"
         @click="handleSpecialMenuClick(menuItems.imageEditor)"
       >
@@ -87,8 +89,8 @@
     </el-tooltip>
 
     <el-tooltip :hide-after="0" content="字体" placement="right">
-      <div 
-        class="menu-bar-item" 
+      <div
+        class="menu-bar-item"
         :class="{ 'menu-bar-item-focus': showFontModal }"
         @click="handleSpecialMenuClick(menuItems.font)"
       >
@@ -97,7 +99,7 @@
       </div>
     </el-tooltip>
 
-    <el-tooltip :hide-after="0" content="辅助视频剪辑" placement="right">
+    <el-tooltip v-if="isDesign3DEnabled" :hide-after="0" content="辅助视频剪辑" placement="right">
       <div
         class="menu-bar-item"
         :class="{ 'menu-bar-item-focus': menuState.activeMenu === menuItems.videoClip }"
@@ -106,13 +108,13 @@
         <div class="menu-bar-item-icon">
           <VideoCameraOutlined />
         </div>
-        <span> 图像导出 </span>
+        <span>图像导出</span>
       </div>
     </el-tooltip>
 
-    <el-tooltip :hide-after="0" content="设置场景" placement="right">
-      <div 
-        class="menu-bar-item" 
+    <el-tooltip v-if="isDesign3DEnabled" :hide-after="0" content="设置场景" placement="right">
+      <div
+        class="menu-bar-item"
         :class="{ 'menu-bar-item-focus': showSceneControl }"
         @click="handleSpecialMenuClick(menuItems.scene)"
       >
@@ -120,41 +122,6 @@
         <span>场景</span>
       </div>
     </el-tooltip>
-
-    <!-- 
-    <el-tooltip :hide-after="0" content="喷图" placement="right">
-      <div class="menu-bar-item">
-        <div class="menu-bar-item-icon"><icon-brush></icon-brush></div>
-        <span>喷漆</span>
-      </div>
-    </el-tooltip>
-    <el-tooltip :hide-after="0" content="尺寸测量工具" placement="right">
-      <div class="menu-bar-item">
-        <div class="menu-bar-item-icon"><icon-ruler></icon-ruler></div>
-        <span>测量</span>
-      </div>
-    </el-tooltip>
- 
-    <el-tooltip :hide-after="0" content="灯光调整" placement="right">
-      <div class="menu-bar-item">
-        <div class="menu-bar-item-icon"><icon-light></icon-light></div>
-        <span>灯光</span>
-      </div>
-    </el-tooltip>
-    <el-tooltip :hide-after="0" content="预览模型" placement="right">
-      <div class="menu-bar-item">
-        <div class="menu-bar-item-icon"><icon-eye></icon-eye></div>
-        <span>预览</span>
-      </div>
-    </el-tooltip>
-    <div style="flex: 1"></div>
-
-    <el-tooltip :hide-after="0" content="系统设置" placement="right">
-      <div class="menu-bar-item">
-        <div class="menu-bar-item-icon"><icon-setting></icon-setting></div>
-        <span>设置</span>
-      </div>
-    </el-tooltip> -->
   </div>
 </template>
 <script setup>
@@ -198,7 +165,7 @@ import iconQrcode from "@/components/design/assets/icon/qrcode.svg?component";
 import iconBadge from "@/components/design/assets/icon/badge.svg?component";
 import iconSetting from "@/icon/setting.svg?component";
 import iconFont from "@/icon/font.svg?component";
-import iconImageEditor from "@/icon/photo.svg?component"; // 使用 photo 图标作为图片编辑图标
+import iconImageEditor from "@/icon/photo.svg?component";
 import iconDecoration from "@/icon/design/decoration.svg?component";
 import iconCustomModel from "@/components/design/assets/icon/custom-model.svg?component";
 import iconSvgCanvas from "@/components/design/assets/icon/svg-canvas.svg?component";
@@ -206,10 +173,11 @@ import iconCanvas from "@/components/design/assets/icon/canvas.svg?component";
 import iconProject from "@/components/design/assets/icon/project.svg?component";
 import Utils from "@/common/utils";
 import { VideoCameraOutlined } from "@ant-design/icons-vue";
-
 import desimage from "@/components/image.vue";
+import { DESIGN_3D_ENABLED } from "../featureFlags";
 
-// 处理特殊菜单项的逻辑
+const isDesign3DEnabled = DESIGN_3D_ENABLED;
+
 function handleSpecialMenuClick(menuKey) {
   switch (menuKey) {
     case menuItems.font:
@@ -236,7 +204,6 @@ function handleSpecialMenuClick(menuKey) {
   border-radius: 2px;
   row-gap: 4px;
   overflow: auto;
-  // direction: rtl;
   background: var(--1s-left-menu-background-color);
   padding: 16px 0;
   box-sizing: border-box;
@@ -246,17 +213,14 @@ function handleSpecialMenuClick(menuKey) {
   width: 64px;
   height: 64px;
   display: flex;
-  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   flex-shrink: 0;
   color: #222;
-
   border-bottom-right-radius: 18px;
   border-top-right-radius: 18px;
-
 
   .menu-bar-item-icon {
     flex-shrink: 0;
@@ -279,7 +243,7 @@ function handleSpecialMenuClick(menuKey) {
     color: #666;
     line-height: 16px;
   }
-  
+
   &:hover {
     background: #eee;
   }

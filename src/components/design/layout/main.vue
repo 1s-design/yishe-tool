@@ -33,9 +33,10 @@
 
         <!-- 画布区域 -->
         <div style="flex: 1; position: relative; min-height: 0" class="threejs-canvas-container-container">
-          <div 
+          <div
+            v-if="isDesign3DEnabled"
             v-show="shouldShowThreeCanvas"
-            class="threejs-canvas-container" 
+            class="threejs-canvas-container"
             ref="canvasContainerRef"
             :style="canvasContainerStyle"
           >
@@ -45,11 +46,11 @@
               ref="mountContainer"
               :style="{ background: currentCanvasBackground?.backgroundCss }"
             ></div>
-            
+
             <!-- 比例选择菜单 -->
             <div class="aspect-ratio-selector">
-              <el-select 
-                v-model="selectedAspectRatio" 
+              <el-select
+                v-model="selectedAspectRatio"
                 size="small"
                 style=" font-size: 12px; width: 100%;"
                 @change="updateAspectRatio"
@@ -65,7 +66,7 @@
           </div>
 
           <basic-canvas
-            v-show="showMainCanvas && menuState.activeMenu === menuItems.canvas"
+            v-show="showMainCanvas"
             style="width: 100%; height: 100%; z-index: 3"
             ref="basicCanvasRef"
           ></basic-canvas>
@@ -270,6 +271,7 @@ import material from "@/components/design/layout/material/index.vue";
 import autocreateModal from "./autocreate/modal.vue";
 import videoClip from "./videoClip/index.vue";
 import { useEventBus } from "@vueuse/core";
+import { DESIGN_3D_ENABLED } from "../featureFlags";
 
 const { component: stickerDetailModal } = useStickerDetailModal();
 const { component: customModelDetailModal } = useCustomModelDetailModal();
@@ -278,6 +280,7 @@ const router = useRouter();
 const loginStore = useLoginStatusStore();
 
 const des = useDesignStore();
+const isDesign3DEnabled = DESIGN_3D_ENABLED;
 
 const basicContainerAnimation = ref({
   "enter-active-class": "animate__animated animate__bounceIn",
@@ -366,10 +369,15 @@ const canvasContainerStyle = computed(() => {
 
 isFirstPageLoading.value = true;
 
-const modelController = new ModelController();
+// 3D 逻辑先保留但不初始化，后续恢复时只需重新打开 DESIGN_3D_ENABLED。
+const modelController = isDesign3DEnabled ? new ModelController() : null;
 
 onMounted(async () => {
-  modelController.render(mountContainer.value);
+  if (isDesign3DEnabled && modelController) {
+    modelController.render(mountContainer.value);
+  } else {
+    menuState.value.activeMenu = menuItems.canvas;
+  }
   await Utils.sleep(1200);
   isFirstPageLoading.value = false;
   // 抛出页面加载完成事件
@@ -378,7 +386,7 @@ onMounted(async () => {
 
 
   // 初始化时根据 shouldShowThreeCanvas 状态设置渲染
-  if (!shouldShowThreeCanvas.value && modelController.isMounted) {
+  if (isDesign3DEnabled && modelController && !shouldShowThreeCanvas.value && modelController.isMounted) {
     modelController.stopRender();
   }
 });
@@ -390,6 +398,10 @@ const shouldShowThreeCanvas = computed(() => {
 
 // 控制 Three.js 渲染的函数
 function updateThreeCanvasRenderState() {
+  if (!isDesign3DEnabled) {
+    return;
+  }
+
   // 等待模型控制器初始化完成后再执行
   if (!modelController || !modelController.renderer) {
     return;
@@ -528,6 +540,7 @@ async function initAction() {
   background-color: #f8f8f8;
 }
 
+
 .threejs-canvas-container {
   position: relative;
   width: 100%;
@@ -537,3 +550,11 @@ async function initAction() {
   box-sizing: border-box;
 }
 </style>
+
+
+
+
+
+
+
+

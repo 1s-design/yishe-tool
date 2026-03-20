@@ -24,11 +24,8 @@ import { ref, computed, toRaw } from "vue";
 
 import { SearchOutlined } from "@ant-design/icons-vue";
 
-import tabBaseModel from './baseModel/index.vue'
 import tabSticker from "./sticker/index.vue";
 import tabFont from "./font/index.vue";
-import tabCustomModel from './customModel/index.vue'
-import tabDraft from './draft/index.vue'
 import tabSentence from './sentence/index.vue'
 import { useLocalStorage } from "@vueuse/core";
 
@@ -45,21 +42,7 @@ enum UserOwnSourceType {
 
 const activeKey = useLocalStorage('_1s_projectActiveTab', UserOwnSourceType.STICKER);
 
-const activeComponent = computed(() => {
-  return toRaw(tabs.value.find((item) => item.key == activeKey.value).component);
-});
-
 const tabs = ref([
-  {
-    label: "草稿",
-    key: UserOwnSourceType.DRAFT,
-    component: tabDraft,
-  },
-  {
-    label: "基础模型",
-    key: "baseModel",
-    component: tabBaseModel,
-  },
   {
     label: "贴纸",
     key: "sticker",
@@ -71,16 +54,20 @@ const tabs = ref([
     component: tabFont,
   },
   {
-    label: "设计模型",
-    key: "customModel",
-    component: tabCustomModel,
-  },
-  {
     label: "句子",
     key: "sentence",
     component: tabSentence,
   },
 ]);
+
+if (!tabs.value.some((item) => item.key === activeKey.value)) {
+  activeKey.value = UserOwnSourceType.STICKER;
+}
+
+const activeComponent = computed(() => {
+  const currentTab = tabs.value.find((item) => item.key == activeKey.value) || tabs.value[0];
+  return toRaw(currentTab.component);
+});
 
 </script>
 <style lang="less" scoped>
