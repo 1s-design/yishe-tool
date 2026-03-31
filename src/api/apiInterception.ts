@@ -15,6 +15,85 @@ import { doLogout } from "@/store/stores/loginAction";
 import { useRouter } from "vue-router";
 import { openLoginDialog, showLoginFormModal } from '@/modules/main/view/user/login/index.tsx'
 
+const ownershipExcludedKeywords = ['/login', '/signup', '/page', '/list', '/delete', '/logout']
+const ownershipWriteKeywords = [
+  '/create',
+  '/update',
+  '/api/sticker-psd-set',
+  '/api/publish-config',
+  '/api/product',
+  '/api/product-model',
+  '/api/sticker',
+  '/api/psd-template',
+  '/api/font-template',
+  '/api/custom-model',
+  '/api/clip-material',
+  '/api/draft',
+  '/api/crawler/material/add',
+  '/api/crawler/material/update',
+  '/api/ai/tti-record',
+  '/api/ai/tts-record',
+  '/api/ai/tts/custom-voice',
+  '/api/remotion-video-record',
+  '/api/common-url',
+  '/api/design-request'
+]
+const ownershipLegacyKeywords = [
+  '/api/sticker',
+  '/api/psd-template',
+  '/api/font-template',
+  '/api/custom-model',
+  '/api/clip-material',
+  '/api/draft',
+  '/api/sticker-psd-set',
+  '/api/crawler/material'
+]
+
+function isPlainObject(value) {
+  return Object.prototype.toString.call(value) === '[object Object]';
+}
+
+function shouldInjectOwnership(url = '', method = '') {
+  const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+  const upperMethod = String(method).toUpperCase();
+  if (!['POST', 'PUT', 'PATCH'].includes(upperMethod)) {
+    return false;
+  }
+  if (ownershipExcludedKeywords.some((keyword) => normalizedUrl.includes(keyword))) {
+    return false;
+  }
+  return ownershipWriteKeywords.some((keyword) => normalizedUrl.includes(keyword));
+}
+
+function shouldInjectUploaderId(url = '') {
+  const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+  return ownershipLegacyKeywords.some((keyword) => normalizedUrl.includes(keyword));
+}
+
+function appendOwnership(payload, userId, includeUploaderId) {
+  if (payload instanceof FormData) {
+    if (!payload.get('userId')) {
+      payload.append('userId', userId);
+    }
+    if (includeUploaderId && !payload.get('uploaderId')) {
+      payload.append('uploaderId', userId);
+    }
+    return payload;
+  }
+
+  if (!isPlainObject(payload)) {
+    return payload;
+  }
+
+  if (payload.userId === undefined || payload.userId === null || payload.userId === '') {
+    payload.userId = userId;
+  }
+  if (includeUploaderId && (payload.uploaderId === undefined || payload.uploaderId === null || payload.uploaderId === '')) {
+    payload.uploaderId = userId;
+  }
+  return payload;
+}
+
 function ensureFormData(obj) {
   if (obj instanceof FormData) {
     return obj;
@@ -102,6 +181,15 @@ export const tokenRequestInterceptor = (request) => {
   let loginStore = useLoginStatusStore();
   console.log('🔑 tokenRequestInterceptor被调用，当前token:', loginStore.token);
   console.log('🔑 请求URL:', request.url);
+
+  const currentUserId = loginStore.userInfo?.id ? String(loginStore.userInfo.id) : '';
+  if (currentUserId && shouldInjectOwnership(request.url, request.method)) {
+    request.data = appendOwnership(
+      request.data,
+      currentUserId,
+      shouldInjectUploaderId(request.url)
+    );
+  }
 
   if (loginStore.token) {
     request.headers.authorization = `Bearer ${loginStore.token}`;
