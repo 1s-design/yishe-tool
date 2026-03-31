@@ -37,7 +37,7 @@ export async function saveCustomModel(form) {
             modelInfo,
             selectedAngles: form.selectedAngles || [],
         },
-        uploaderId: loginStore.userInfo?.id,
+        userId: loginStore.userInfo?.id,
     };
 
     const data = await createCustomModelApi(params);
@@ -72,7 +72,7 @@ export async function updateCustomModelWithUpload(form) {
             modelInfo,
             selectedAngles: form.selectedAngles || [],
         },
-        uploaderId: loginStore.userInfo?.id,
+        userId: loginStore.userInfo?.id,
     };
 
     await updateCustomModel(params);

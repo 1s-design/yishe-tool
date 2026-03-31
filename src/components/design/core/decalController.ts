@@ -565,7 +565,7 @@ export class DecalController {
   //     type: 'composition',
   //     meta: { data: this.info.data },
   //     updateTime: new Date(),
-  //     uploaderId: loginStore.isLogin ? loginStore.userInfo.id : null
+  //     userId: loginStore.isLogin ? loginStore.userInfo.id : null
   //   })
   //   this.state.isDraft = true
   //   this.state.isLocalResource = false
@@ -650,5 +650,4 @@ export class DecalController {
     };
   }
 }
-
 

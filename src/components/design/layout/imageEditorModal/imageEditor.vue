@@ -1604,7 +1604,7 @@ async function doUpload() {
           ? uploadForm.value.keywords.map(k => String(k || '')).filter(k => k).join(",")
           : String(uploadForm.value.keywords || ''),
         isCustom: true,
-        uploaderId: loginStore.isLogin ? loginStore.userInfo.id : null,
+        userId: loginStore.isLogin ? loginStore.userInfo.id : null,
       })
     } catch (err) {
       throw new Error('保存到素材库失败: ' + (err.message || err))
@@ -1998,4 +1998,3 @@ onUnmounted(() => {
   z-index: 10003 !important;
 }
 </style>
-

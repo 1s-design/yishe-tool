@@ -38,17 +38,6 @@ const ownershipWriteKeywords = [
   '/api/common-url',
   '/api/design-request'
 ]
-const ownershipLegacyKeywords = [
-  '/api/sticker',
-  '/api/psd-template',
-  '/api/font-template',
-  '/api/custom-model',
-  '/api/clip-material',
-  '/api/draft',
-  '/api/sticker-psd-set',
-  '/api/crawler/material'
-]
-
 function isPlainObject(value) {
   return Object.prototype.toString.call(value) === '[object Object]';
 }
@@ -65,18 +54,10 @@ function shouldInjectOwnership(url = '', method = '') {
   return ownershipWriteKeywords.some((keyword) => normalizedUrl.includes(keyword));
 }
 
-function shouldInjectUploaderId(url = '') {
-  const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
-  return ownershipLegacyKeywords.some((keyword) => normalizedUrl.includes(keyword));
-}
-
-function appendOwnership(payload, userId, includeUploaderId) {
+function appendOwnership(payload, userId) {
   if (payload instanceof FormData) {
     if (!payload.get('userId')) {
       payload.append('userId', userId);
-    }
-    if (includeUploaderId && !payload.get('uploaderId')) {
-      payload.append('uploaderId', userId);
     }
     return payload;
   }
@@ -87,9 +68,6 @@ function appendOwnership(payload, userId, includeUploaderId) {
 
   if (payload.userId === undefined || payload.userId === null || payload.userId === '') {
     payload.userId = userId;
-  }
-  if (includeUploaderId && (payload.uploaderId === undefined || payload.uploaderId === null || payload.uploaderId === '')) {
-    payload.uploaderId = userId;
   }
   return payload;
 }
@@ -184,11 +162,7 @@ export const tokenRequestInterceptor = (request) => {
 
   const currentUserId = loginStore.userInfo?.id ? String(loginStore.userInfo.id) : '';
   if (currentUserId && shouldInjectOwnership(request.url, request.method)) {
-    request.data = appendOwnership(
-      request.data,
-      currentUserId,
-      shouldInjectUploaderId(request.url)
-    );
+    request.data = appendOwnership(request.data, currentUserId);
   }
 
   if (loginStore.token) {

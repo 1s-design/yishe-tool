@@ -388,7 +388,7 @@ async function uploadSingleFile(file) {
       description: file.description,
       isPublic: file.isPublic,
       isTexture:file.isTexture,
-      uploaderId: loginStore.userInfo.id,
+      userId: loginStore.userInfo.id,
       suffix // 图片类型后缀
     };
     await createSticker(params);
@@ -425,7 +425,7 @@ async function uploadSingleFile(file) {
       thumbnail: thumbnailCos.url,
       description: file.description,
       isPublic: file.isPublic,
-      uploaderId: loginStore.userInfo.id,
+      userId: loginStore.userInfo.id,
       type: file.name.split(".").pop(),
       suffix // 字体类型后缀
     };
@@ -463,7 +463,7 @@ async function uploadSingleFile(file) {
       thumbnail: thumbnailCos.url,
       description: file.description,
       isPublic: file.isPublic,
-      uploaderId: loginStore.userInfo.id,
+      userId: loginStore.userInfo.id,
       suffix // 模型类型后缀
     };
 
@@ -486,7 +486,7 @@ async function uploadSingleFile(file) {
       thumbnail: null,
       description: file.description,
       isPublic: file.isPublic,
-      uploaderId: loginStore.userInfo.id,
+      userId: loginStore.userInfo.id,
       type: file.name.split(".").pop(),
       suffix // PSD文件后缀
     };

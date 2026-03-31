@@ -426,7 +426,7 @@ async function doUpload() {
       meta: {
         data: canvasStickerOptions.value,
       },
-      uploaderId: loginStore.isLogin ? loginStore.userInfo.id : null,
+      userId: loginStore.isLogin ? loginStore.userInfo.id : null,
     });
     message.success("保存成功");
 
