@@ -6,21 +6,6 @@
     <template #name> 模板库 </template>
     <template #content>
       <div class="html-template-library__trigger">
-        <div class="html-template-library__meta">
-          <div class="html-template-library__meta-label">
-            {{ activeTemplateName ? "当前模板" : "模板状态" }}
-          </div>
-          <div class="html-template-library__meta-name">
-            {{ activeTemplateName || "未应用模板" }}
-          </div>
-          <div class="html-template-library__meta-desc">
-            {{
-              activeTemplateName
-                ? "已应用模板。你可以重新选择模板，也可以继续手动编辑 HTML。"
-                : "选择模板后会自动填充 HTML 和默认变量。"
-            }}
-          </div>
-        </div>
         <el-button size="small" type="primary" plain @click="openDialog">打开模板库</el-button>
       </div>
     </template>
@@ -158,8 +143,6 @@ const dialogVisible = ref(false);
 const loading = ref(false);
 const searchKeyword = ref("");
 const templateList = ref<HtmlTemplateDefinition[]>([]);
-
-const activeTemplateName = computed(() => model.value?.htmlTemplateMeta?.name || "");
 
 const filteredTemplates = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase();
@@ -316,50 +299,8 @@ async function saveCurrentAsTemplate() {
 .html-template-library__trigger {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-end;
   width: 100%;
-}
-
-.html-template-library__meta {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-  text-align: left;
-}
-
-.html-template-library__meta-label {
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #94a3b8;
-}
-
-.html-template-library__meta-name {
-  margin-top: 4px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.html-template-library__meta-desc {
-  margin-top: 4px;
-  max-width: 360px;
-  font-size: 10px;
-  line-height: 1.5;
-  color: #8a8f98;
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .html-template-library__layout {

@@ -107,6 +107,7 @@ import { computed, nextTick, onBeforeUnmount, ref, shallowRef, watch } from "vue
 import {
   detachHtmlTemplateFromTarget,
   hasHtmlMagicVariables,
+  syncHtmlTemplateFieldsFromContent,
 } from "@/components/design/layout/canvas/htmlTemplate/runtime.ts";
 import type { HtmlTemplateFieldDefinition } from "@/components/design/layout/canvas/htmlTemplate/types";
 
@@ -430,9 +431,14 @@ function handleSave() {
 
   if (hasChanged && props.templateTarget) {
     const preserveBindings = hasHtmlMagicVariables(nextValue);
-    detachHtmlTemplateFromTarget(props.templateTarget, {
-      preserveBindings,
-    });
+    if (preserveBindings) {
+      const inferredFields = syncHtmlTemplateFieldsFromContent(props.templateTarget, nextValue);
+      detachHtmlTemplateFromTarget(props.templateTarget, {
+        preserveBindings: inferredFields.length > 0,
+      });
+    } else {
+      detachHtmlTemplateFromTarget(props.templateTarget);
+    }
   }
 
   dialogVisible.value = false;

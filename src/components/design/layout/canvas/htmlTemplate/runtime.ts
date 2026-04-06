@@ -1,7 +1,12 @@
 import { canvasStickerOptionsOnlyChild } from "../index.tsx";
 import { formatToNativeSizeString } from "../helper.tsx";
 import { fetchFontFace } from "../operate/fontFamily/index.ts";
-import type { HtmlTemplateDefinition, HtmlTemplateFieldDefinition, HtmlTemplateMeta } from "./types";
+import type {
+  HtmlTemplateDefinition,
+  HtmlTemplateFieldDefinition,
+  HtmlTemplateFieldType,
+  HtmlTemplateMeta,
+} from "./types";
 
 function clone<T>(value: T): T {
   if (typeof structuredClone === "function") {
@@ -146,6 +151,153 @@ export function applyHtmlTemplateToTarget(target: any, template: HtmlTemplateDef
 
 export function hasHtmlMagicVariables(templateText = "") {
   return /\{\{\s*[^}]+?\s*\}\}/.test(String(templateText || ""));
+}
+
+function extractHtmlMagicVariablePaths(templateText = "") {
+  return Array.from(
+    new Set(
+      [...String(templateText || "").matchAll(/\{\{\s*([^}]+?)\s*\}\}/g)]
+        .map((item) => String(item[1] || "").trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function isSystemMagicVariablePath(path = "") {
+  return path.startsWith("canvas.") || path.startsWith("element.");
+}
+
+function inferHtmlTemplateFieldType(path = ""): HtmlTemplateFieldType | null {
+  if (path.startsWith("text.")) {
+    return "text";
+  }
+
+  if (path.startsWith("number.")) {
+    return "number";
+  }
+
+  if (path.startsWith("color.")) {
+    return "color";
+  }
+
+  if (path.startsWith("image.")) {
+    return "image";
+  }
+
+  if (path.startsWith("font.")) {
+    return "font";
+  }
+
+  return null;
+}
+
+function normalizeHtmlTemplateFieldKey(path: string, type: HtmlTemplateFieldType) {
+  switch (type) {
+    case "color":
+      return path.replace(/\.css$/i, "");
+    case "image":
+      return path.replace(/\.(url|src|name)$/i, "");
+    case "font":
+      return path.replace(/\.(family|name)$/i, "");
+    default:
+      return path;
+  }
+}
+
+function humanizeHtmlTemplateFieldKey(key = "") {
+  const leafKey = key.split(".").pop() || key;
+  return leafKey
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function createInferredHtmlTemplateFieldLabel(key: string, type: HtmlTemplateFieldType) {
+  const typeLabelMap: Record<HtmlTemplateFieldType, string> = {
+    text: "文本",
+    textarea: "多行文本",
+    number: "数值",
+    color: "颜色",
+    image: "图片",
+    font: "字体",
+  };
+
+  return `${typeLabelMap[type]} ${humanizeHtmlTemplateFieldKey(key)}`;
+}
+
+function createInferredHtmlTemplateFieldDescription(key: string, type: HtmlTemplateFieldType) {
+  const variableTokenMap: Record<HtmlTemplateFieldType, string> = {
+    text: `{{${key}}}`,
+    textarea: `{{${key}}}`,
+    number: `{{${key}}}`,
+    color: `{{${key}}}`,
+    image: `{{${key}.url}}`,
+    font: `{{${key}.family}}`,
+  };
+
+  return `从 HTML 中自动识别，变量名 ${variableTokenMap[type]}`;
+}
+
+export function inferHtmlTemplateFieldsFromContent(
+  templateText = "",
+  existingFields: HtmlTemplateFieldDefinition[] = []
+) {
+  const existingFieldMap = new Map(existingFields.map((field) => [field.key, field]));
+  const fieldKeySet = new Set<string>();
+  const nextFields: HtmlTemplateFieldDefinition[] = [];
+
+  extractHtmlMagicVariablePaths(templateText).forEach((path) => {
+    if (isSystemMagicVariablePath(path)) {
+      return;
+    }
+
+    const type = inferHtmlTemplateFieldType(path);
+    if (!type) {
+      return;
+    }
+
+    const key = normalizeHtmlTemplateFieldKey(path, type);
+    if (!key || fieldKeySet.has(key)) {
+      return;
+    }
+
+    fieldKeySet.add(key);
+
+    const existingField = existingFieldMap.get(key);
+    if (existingField) {
+      nextFields.push(clone(existingField));
+      return;
+    }
+
+    nextFields.push({
+      key,
+      type,
+      label: createInferredHtmlTemplateFieldLabel(key, type),
+      description: createInferredHtmlTemplateFieldDescription(key, type),
+    });
+  });
+
+  return nextFields;
+}
+
+export function syncHtmlTemplateFieldsFromContent(target: any, templateText = "") {
+  ensureHtmlTemplateOptions(target);
+
+  const inferredFields = inferHtmlTemplateFieldsFromContent(
+    templateText,
+    target.htmlTemplateFields || []
+  );
+
+  target.htmlTemplateFields = inferredFields;
+  target.htmlTemplateDefaultBindings = normalizeHtmlTemplateBindings(
+    inferredFields,
+    target.htmlTemplateDefaultBindings || target.htmlBindings || {}
+  );
+  target.htmlBindings = normalizeHtmlTemplateBindings(
+    inferredFields,
+    target.htmlBindings || target.htmlTemplateDefaultBindings || {}
+  );
+
+  return inferredFields;
 }
 
 export function detachHtmlTemplateFromTarget(
