@@ -3,10 +3,60 @@ name: Deploy to Tencent Cloud
 on:
   push:
     branches: ["main"]
+    paths:
+      - "package.json"
   workflow_dispatch:
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.version-check.outputs.version_changed }}
+      current_version: ${{ steps.version-check.outputs.current_version }}
+      previous_version: ${{ steps.version-check.outputs.previous_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check package.json version change
+        id: version-check
+        shell: bash
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "previous_version=manual" >> "$GITHUB_OUTPUT"
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Manual workflow dispatch detected, continue deploy."
+            exit 0
+          fi
+
+          BEFORE_SHA="${{ github.event.before }}"
+
+          if [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "previous_version=unknown" >> "$GITHUB_OUTPUT"
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            echo "No previous commit SHA available, continue deploy."
+            exit 0
+          fi
+
+          PREVIOUS_VERSION=$(git show "${BEFORE_SHA}:package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+          echo "previous_version=$PREVIOUS_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Version changed: $PREVIOUS_VERSION -> $CURRENT_VERSION"
+          else
+            echo "version_changed=false" >> "$GITHUB_OUTPUT"
+            echo "package.json changed but version stayed at $CURRENT_VERSION, skip deploy."
+          fi
+
   build-and-deploy:
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -71,7 +121,7 @@ jobs:
             const message = {
               msg_type: "text",
               content: {
-                text: `${emoji} 部署${status === 'success' ? '成功' : '失败'}通知\n\n项目: ${{ github.repository }}\n分支: ${{ github.ref }}\n提交者: ${{ github.actor }}\n提交信息: ${{ github.event.head_commit.message }}\n部署时间: ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n状态: ${status === 'success' ? '✅ 成功' : '❌ 失败'}`
+                text: `${emoji} 部署${status === 'success' ? '成功' : '失败'}通知\n\n项目: ${{ github.repository }}\n分支: ${{ github.ref }}\n提交者: ${{ github.actor }}\n提交信息: ${{ github.event.head_commit.message }}\n版本变更: ${{ needs.check-version.outputs.previous_version }} -> ${{ needs.check-version.outputs.current_version }}\n部署时间: ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n状态: ${status === 'success' ? '✅ 成功' : '❌ 失败'}`
               }
             };
             
