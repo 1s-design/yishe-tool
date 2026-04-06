@@ -26,9 +26,55 @@
     <div class="html-editor-dialog__layout">
       <div class="html-editor-dialog__toolbar">
         <div class="html-editor-dialog__hint">
-          支持直接输入 HTML，也可以在代码里内联 <code>&lt;style&gt;</code>。
+          支持直接输入 HTML，也可以在代码里内联 <code>&lt;style&gt;</code>，并使用
+          <code v-pre>{{text.title}}</code> 这类魔术变量。
         </div>
         <div class="html-editor-dialog__meta">{{ draftSummary }}</div>
+      </div>
+
+      <div class="html-editor-dialog__variables">
+        <div class="html-editor-dialog__variables-header">
+          <div class="html-editor-dialog__variables-title">可用魔术变量</div>
+          <div class="html-editor-dialog__variables-tip">
+            系统变量始终可用；模板变量会随当前模板变化。
+          </div>
+        </div>
+
+        <div class="html-editor-dialog__variable-section">
+          <div class="html-editor-dialog__variable-section-name">系统变量</div>
+          <div class="html-editor-dialog__variable-list">
+            <div
+              v-for="item in systemMagicVariableItems"
+              :key="item.token"
+              class="html-editor-dialog__variable-item"
+            >
+              <code>{{ item.token }}</code>
+              <span>{{ item.description }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="html-editor-dialog__variable-section">
+          <div class="html-editor-dialog__variable-section-name">
+            当前模板变量
+            <span v-if="templateMagicVariableItems.length">
+              · {{ templateMagicVariableItems.length }} 项
+            </span>
+          </div>
+          <div v-if="templateMagicVariableItems.length" class="html-editor-dialog__variable-list">
+            <div
+              v-for="item in templateMagicVariableItems"
+              :key="item.token"
+              class="html-editor-dialog__variable-item"
+            >
+              <code>{{ item.token }}</code>
+              <span>{{ item.description }}</span>
+            </div>
+          </div>
+          <div v-else class="html-editor-dialog__variable-empty">
+            当前没有模板变量。你可以直接写纯 HTML / CSS，或先从模板库选择带变量的模板。
+          </div>
+        </div>
       </div>
 
       <div v-if="editorError" class="html-editor-dialog__error">
@@ -43,7 +89,9 @@
 
     <template #footer>
       <div class="html-editor-dialog__footer">
-        <div class="html-editor-dialog__footer-tip">当前元素仅保留一个 HTML 输入源，保存后会同步更新画布。</div>
+        <div class="html-editor-dialog__footer-tip">
+          当前元素只维护一份 HTML 源码；模板库和变量绑定最终都会编译到这里并同步预览。
+        </div>
         <div class="html-editor-dialog__footer-actions">
           <el-button @click="handleCancel">取消</el-button>
           <el-button type="primary" @click="handleSave">保存</el-button>
@@ -56,6 +104,11 @@
 <script setup lang="ts">
 import icon from "@/components/design/assets/icon/text-content.svg?component";
 import { computed, nextTick, onBeforeUnmount, ref, shallowRef, watch } from "vue";
+import {
+  detachHtmlTemplateFromTarget,
+  hasHtmlMagicVariables,
+} from "@/components/design/layout/canvas/htmlTemplate/runtime.ts";
+import type { HtmlTemplateFieldDefinition } from "@/components/design/layout/canvas/htmlTemplate/types";
 
 declare global {
   interface Window {
@@ -180,6 +233,10 @@ const props = defineProps({
   placeholder: {
     default: "请输入",
   },
+  templateTarget: {
+    type: Object,
+    default: null,
+  },
 });
 
 const dialogVisible = ref(false);
@@ -193,6 +250,83 @@ const draftSummary = computed(() => {
   const value = String(draftValue.value ?? "");
   return `${value.split(/\r?\n/).length} 行 · ${value.length} 字符`;
 });
+
+const systemMagicVariableItems = [
+  { token: "{{canvas.width}}", description: "画布宽度数值" },
+  { token: "{{canvas.height}}", description: "画布高度数值" },
+  { token: "{{canvas.widthUnit}}", description: "画布宽度单位" },
+  { token: "{{canvas.heightUnit}}", description: "画布高度单位" },
+  { token: "{{canvas.widthCss}}", description: "画布宽度 CSS 值" },
+  { token: "{{canvas.heightCss}}", description: "画布高度 CSS 值" },
+  { token: "{{element.id}}", description: "当前元素 id" },
+  { token: "{{element.zIndex}}", description: "当前元素层级" },
+];
+
+const templateMagicVariableItems = computed(() => {
+  const fields = Array.isArray(props.templateTarget?.htmlTemplateFields)
+    ? (props.templateTarget?.htmlTemplateFields as HtmlTemplateFieldDefinition[])
+    : [];
+
+  return fields.flatMap((field) => createMagicVariableItemsForField(field));
+});
+
+function createMagicVariableItemsForField(field: HtmlTemplateFieldDefinition) {
+  switch (field.type) {
+    case "color":
+      return [
+        {
+          token: `{{${field.key}}}`,
+          description: `${field.label}，直接输出颜色值`,
+        },
+        {
+          token: `{{${field.key}.css}}`,
+          description: `${field.label}，颜色 CSS 别名`,
+        },
+      ];
+    case "image":
+      return [
+        {
+          token: `{{${field.key}.url}}`,
+          description: `${field.label}，图片地址`,
+        },
+        {
+          token: `{{${field.key}.src}}`,
+          description: `${field.label}，图片地址别名`,
+        },
+        {
+          token: `{{${field.key}.name}}`,
+          description: `${field.label}，图片名称`,
+        },
+      ];
+    case "font":
+      return [
+        {
+          token: `{{${field.key}.family}}`,
+          description: `${field.label}，渲染后的字体 family`,
+        },
+        {
+          token: `{{${field.key}.name}}`,
+          description: `${field.label}，字体名称`,
+        },
+      ];
+    case "number":
+      return [
+        {
+          token: `{{${field.key}}}`,
+          description: `${field.label}，数值变量`,
+        },
+      ];
+    case "textarea":
+    case "text":
+    default:
+      return [
+        {
+          token: `{{${field.key}}}`,
+          description: `${field.label}，文本变量`,
+        },
+      ];
+  }
+}
 
 function refreshEditor() {
   nextTick(() => {
@@ -288,7 +422,19 @@ function handleCancel() {
 }
 
 function handleSave() {
-  model.value = draftValue.value;
+  const nextValue = String(draftValue.value ?? "");
+  const previousValue = String(model.value ?? "");
+  const hasChanged = nextValue !== previousValue;
+
+  model.value = nextValue;
+
+  if (hasChanged && props.templateTarget) {
+    const preserveBindings = hasHtmlMagicVariables(nextValue);
+    detachHtmlTemplateFromTarget(props.templateTarget, {
+      preserveBindings,
+    });
+  }
+
   dialogVisible.value = false;
 }
 
@@ -296,6 +442,10 @@ function clearContent() {
   model.value = "";
   draftValue.value = "";
   syncEditorValue("");
+
+  if (props.templateTarget) {
+    detachHtmlTemplateFromTarget(props.templateTarget);
+  }
 }
 
 watch(dialogVisible, (visible) => {
@@ -373,6 +523,91 @@ onBeforeUnmount(() => {
 .html-editor-dialog__meta {
   font-size: 12px;
   color: var(--el-text-color-secondary);
+}
+
+.html-editor-dialog__variables {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.html-editor-dialog__variables-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.html-editor-dialog__variables-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.html-editor-dialog__variables-tip {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.html-editor-dialog__variable-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.html-editor-dialog__variable-section-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.html-editor-dialog__variable-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px;
+  max-height: 160px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.html-editor-dialog__variable-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.86);
+  background: #f8fafc;
+}
+
+.html-editor-dialog__variable-item code {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--el-color-primary);
+  font-size: 12px;
+}
+
+.html-editor-dialog__variable-item span {
+  font-size: 11px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.html-editor-dialog__variable-empty {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #64748b;
 }
 
 .html-editor-dialog__error {
@@ -515,6 +750,16 @@ onBeforeUnmount(() => {
   .html-editor-dialog__footer {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .html-editor-dialog__variables-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .html-editor-dialog__variable-list {
+    grid-template-columns: 1fr;
+    max-height: 180px;
   }
 
   .html-editor-dialog__footer-actions {

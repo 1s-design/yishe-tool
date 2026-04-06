@@ -111,7 +111,6 @@ import icon from "@/components/design/assets/icon/background-image.svg?component
 import { Search, Check } from "@element-plus/icons-vue";
 import { useDebounceFn } from "@vueuse/core";
 import { getStickerList } from "@/api";
-import { currentOperatingCanvasChild } from "@/components/design/layout/canvas/index";
 
 interface ImageItem {
   id: string;
@@ -151,7 +150,6 @@ function remove() {
 
 function selectImage(item: ImageItem) {  
   model.value = item;
-  currentOperatingCanvasChild.value.imageInfo = item;
   dialogVisible.value = false;
 }
 

@@ -3,7 +3,7 @@
     <template #icon>
       <icon></icon>
     </template>
-    <template #name> 个性字体 </template>
+    <template #name> {{ label }} </template>
     <template #content>
       <div class="font-selector-wrapper">
         <el-button 
@@ -170,6 +170,11 @@ interface FontItem {
 }
 
 const model = defineModel<FontItem | null>({ default: null });
+const props = defineProps({
+  label: {
+    default: "个性字体",
+  },
+});
 const dialogVisible = ref(false);
 const list = ref<FontItem[]>([]);
 const loading = ref(false);

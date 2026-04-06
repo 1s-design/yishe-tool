@@ -33,6 +33,15 @@
       ></operateItemFilterGroup>
     </el-collapse-item>
 
+    <el-collapse-item name="5">
+      <template #title>
+        <div class="title">印花增强</div>
+      </template>
+      <operateItemImagePrintGroup
+        v-model="currentOperatingCanvasChild"
+      ></operateItemImagePrintGroup>
+    </el-collapse-item>
+
     <operateItemClipPath
       v-model="currentOperatingCanvasChild.clipPath"
     ></operateItemClipPath>
@@ -73,6 +82,7 @@ import operateItemFilterGroup from "@/components/design/layout/canvas/operate/fi
 import operateItemObjectFit from "@/components/design/layout/canvas/operate/objectFit.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
 import operateItemClipPath from "@/components/design/layout/canvas/operate/clipPath/index.vue";
+import operateItemImagePrintGroup from "@/components/design/layout/canvas/operate/imagePrint/group.vue";
 
 import { updateCanvasStickerOptionsUnit } from "../helper";
 

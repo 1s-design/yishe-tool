@@ -1,10 +1,17 @@
 import { canvasStickerOptions, canvasStickerOptionsOnlyChild, currentCanvasControllerInstance, updateRenderingCanvas } from "../index.tsx"
 import { getPositionInfoFromOptions, formatToNativeSizeString, createFilterFromOptions, createTransformString } from '../helper.tsx'
-import { computed, defineComponent, onUpdated, ref } from "vue"
+import { computed, defineComponent, onUpdated, ref, watch } from "vue"
 import { createFilterDefaultOptions, createPositionDefaultOptions, createTransformDefaultOptions } from "./defaultOptions.tsx"
 import Utils from '@/common/utils'
 import { onCanvasChildSetup, onBeforeReturnRender } from "./commonHooks.ts"
 import { asyncComputed } from '@vueuse/core'
+import {
+    createImagePatternStyle,
+    createImagePrintDefaultOptions,
+    createImagePrintFilter,
+    ensureImagePrintEffectOptions,
+    ImageFillMode,
+} from "./imagePrint.ts"
 export const createDefaultCanvasChildImageOptions = () => {
 
     const canvasUnit = canvasStickerOptionsOnlyChild.value.width.unit
@@ -24,6 +31,7 @@ export const createDefaultCanvasChildImageOptions = () => {
         imageInfo: null,
         objectFit: 'contain',
         filter: createFilterDefaultOptions(canvasUnit),
+        printEffect: createImagePrintDefaultOptions(canvasUnit),
         zIndex: 0,
     }
 }
@@ -82,6 +90,13 @@ export const Image = defineComponent({
 
         let loading = ref(true)
 
+        watch(imgUrl, (nextUrl) => {
+            loadError.value = false
+            loading.value = Boolean(nextUrl)
+        }, {
+            immediate: true
+        })
+
         function onLoad() {
             loadError.value = false
             loading.value = false
@@ -96,6 +111,7 @@ export const Image = defineComponent({
 
 
         return () => {
+            const printEffect = ensureImagePrintEffectOptions(props.options)
 
             const {
                 containerStyle: _containerStyle,
@@ -119,10 +135,16 @@ export const Image = defineComponent({
                 width: formatToNativeSizeString(props.options.width),
                 height: formatToNativeSizeString(props.options.height),
                 objectFit: props.options.objectFit,
-                filter: createFilterFromOptions(props.options.filter),
+                filter: [
+                    createFilterFromOptions(props.options.filter),
+                    createImagePrintFilter(printEffect),
+                ].filter(Boolean).join(' '),
                 zIndex: props.options.zIndex,
                 ..._style,
             }
+
+            const usePatternMode = printEffect.fillMode === ImageFillMode.TILE
+            const patternStyle = createImagePatternStyle(printEffect, imgUrl.value)
 
 
             const imgDiaplay = computed(() => {
@@ -143,12 +165,16 @@ export const Image = defineComponent({
                 {!imgUrl.value && '未选择图片'}
                 {(imgUrl.value && loading.value) && '图片加载中...'}
                 {loadError.value && '图片加载失败'}
-                {<img ref={targetElRef} onLoad={onLoad} onError={onError} src={imgUrl.value} style={{ ...style, display: imgDiaplay.value }}></img>}
+                {usePatternMode && imgUrl.value &&
+                    <img onLoad={onLoad} onError={onError} src={imgUrl.value} style={{ display: 'none' }}></img>
+                }
+                {!usePatternMode && <img ref={targetElRef} onLoad={onLoad} onError={onError} src={imgUrl.value} style={{ ...style, display: imgDiaplay.value }}></img>}
+                {(usePatternMode && imgUrl.value && !loading.value && !loadError.value) &&
+                    <div ref={targetElRef} style={{ ...style, ...(patternStyle || {}) }}></div>
+                }
             </div>
         }
     }
 })
-
-
 
 

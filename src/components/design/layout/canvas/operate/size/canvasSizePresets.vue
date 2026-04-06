@@ -23,7 +23,27 @@
         class="size-presets-dialog"
     >
         <div class="preset-container">
-            <div v-for="group in sizeGroups" :key="group.label" class="preset-group">
+            <div class="preset-search">
+                <el-input
+                    v-model="searchKeyword"
+                    placeholder="搜索商品、用途或尺寸，例如：鼠标垫 / 杯子 / 900x400"
+                    clearable
+                    class="preset-search-input"
+                >
+                    <template #prefix>
+                        <el-icon><Search /></el-icon>
+                    </template>
+                </el-input>
+                <div class="preset-search-meta">
+                    共 {{ matchedPresetCount }} 个结果
+                </div>
+            </div>
+
+            <div v-if="filteredSizeGroups.length === 0" class="preset-empty">
+                没有找到匹配的尺寸，试试搜索商品名称、用途或具体规格。
+            </div>
+
+            <div v-for="group in filteredSizeGroups" :key="group.label" class="preset-group">
                 <div class="group-title">{{ group.label }}</div>
                 <div class="preset-items">
                     <div 
@@ -40,6 +60,9 @@
                             <div class="preset-size">
                                 {{ item.width }} x {{ item.height }}
                             </div>
+                            <div class="preset-ratio">
+                                比例 {{ formatDisplayRatio(item) }}
+                            </div>
                             <div class="preset-desc" v-if="item.description">{{ item.description }}</div>
                         </div>
                     </div>
@@ -50,13 +73,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Setting } from "@element-plus/icons-vue";
+import { computed, ref } from 'vue';
+import { Search, Setting } from "@element-plus/icons-vue";
 import operateFormItem from "../operateFormItem.vue";
 
 const emit = defineEmits(['select']);
 
 const dialogVisible = ref(false);
+const searchKeyword = ref('');
 
 interface SizeOption {
     label: string;
@@ -171,9 +195,16 @@ const sizeGroups: SizeGroup[] = [
     {
         label: '定制周边: 家居桌搭与3C (300/150 PPI，最大边 5000px)',
         options: [
+            { label: '迷你鼠标垫', width: 2598, height: 2126, description: '220x180mm 小尺寸办公垫' },
+            { label: '标准鼠标垫', width: 2717, height: 2244, description: '230x190mm 常规通用款' },
             { label: '电竞鼠标垫 (超大 XL)', width: 5000, height: 2224, description: '900x400mm 满印' },
             { label: '电竞鼠标垫 (加长 L)', width: 5000, height: 1875, description: '800x300mm 满印' },
             { label: '常规办公鼠标垫', width: 2835, height: 2362, description: '240x200mm' },
+            { label: '大号游戏鼠标垫', width: 3543, height: 2953, description: '300x250mm 游戏/办公两用' },
+            { label: '游戏鼠标垫 (M)', width: 4134, height: 2953, description: '350x250mm 常见游戏规格' },
+            { label: '桌垫鼠标垫 (700x300)', width: 5000, height: 2143, description: '键盘+鼠标一体桌垫' },
+            { label: '电竞桌垫 (XXL)', width: 5000, height: 2500, description: '1000x500mm 超大桌面垫' },
+            { label: '电竞桌垫 (超宽)', width: 5000, height: 2292, description: '1200x550mm 展示/直播桌垫' },
             { label: '圆形鼠标垫', width: 2362, height: 2362, description: '直径200mm' },
             { label: '手机壳背板 (苹果/安卓)', width: 1050, height: 1950, description: '兼容所有机型含初延' },
             { label: '挂毯/背景布 (大)', width: 5000, height: 3750, description: '80x60英寸 150ppi' },
@@ -215,6 +246,59 @@ const sizeGroups: SizeGroup[] = [
     }
 ];
 
+const filteredSizeGroups = computed(() => {
+    const keyword = searchKeyword.value.trim().toLowerCase();
+
+    if (!keyword) {
+        return sizeGroups;
+    }
+
+    return sizeGroups
+        .map((group) => {
+            const groupMatched = group.label.toLowerCase().includes(keyword);
+            const options = group.options.filter((item) => {
+                const searchableText = [
+                    item.label,
+                    item.description,
+                    `${item.width}x${item.height}`,
+                    `${item.width} x ${item.height}`,
+                    `${item.width}/${item.height}`,
+                    formatDisplayRatio(item)
+                ]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase();
+
+                return groupMatched || searchableText.includes(keyword);
+            });
+
+            return {
+                ...group,
+                options
+            };
+        })
+        .filter((group) => group.options.length > 0);
+});
+
+const matchedPresetCount = computed(() => {
+    return filteredSizeGroups.value.reduce((count, group) => count + group.options.length, 0);
+});
+
+function formatDisplayRatio(item: SizeOption) {
+    const width = Number(item.width || 0);
+    const height = Number(item.height || 0);
+
+    if (!width || !height) {
+        return '1.00 : 1.00';
+    }
+
+    if (width >= height) {
+        return `${(width / height).toFixed(2)} : 1.00`;
+    }
+
+    return `1.00 : ${(height / width).toFixed(2)}`;
+}
+
 function getRatioStyle(item: SizeOption) {
     const ratio = item.width / item.height;
     // Base size limit for the preview box (smaller size for flat design)
@@ -251,6 +335,36 @@ function handleSelect(item: SizeOption) {
     height: calc(100vh - 120px);
     overflow-y: auto;
     padding: 0 20px 40px;
+}
+
+.preset-search {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0 16px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+}
+
+.preset-search-input {
+    max-width: 420px;
+}
+
+.preset-search-meta {
+    font-size: 12px;
+    color: #909399;
+    white-space: nowrap;
+}
+
+.preset-empty {
+    padding: 48px 0;
+    text-align: center;
+    font-size: 13px;
+    color: #909399;
 }
 
 /* 隐藏滚动条但保留功能 */
@@ -333,9 +447,32 @@ function handleSelect(item: SizeOption) {
     color: #909399;
 }
 
+.preset-ratio {
+    font-size: 11px;
+    color: #606266;
+    margin-top: 2px;
+}
+
 .preset-desc {
     font-size: 11px;
     color: #c0c4cc;
     margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .preset-search {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .preset-search-input {
+        max-width: none;
+        width: 100%;
+    }
+
+    .preset-search-meta {
+        width: 100%;
+        text-align: left;
+    }
 }
 </style>

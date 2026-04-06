@@ -491,8 +491,17 @@ export function parseTextShadowOptionsToCSS(textShadowOption) {
 
 export function createFilterFromOptions(options) {
 
-    let url = (options.filterUrl.isCompositeFilter ?
-        `url(#${options.filterUrl?.filterChildren.map((item) => item.filterId).join('-')})` : `url(#${options.filterUrl?.filterId})`)
+    if (!options) {
+        return ''
+    }
+
+    let url = ''
+
+    if (options.filterUrl?.isCompositeFilter && options.filterUrl?.filterChildren?.length) {
+        url = `url(#${options.filterUrl?.filterChildren.map((item) => item.filterId).join('-')})`
+    } else if (options.filterUrl?.filterId) {
+        url = `url(#${options.filterUrl.filterId})`
+    }
 
 
     return [
