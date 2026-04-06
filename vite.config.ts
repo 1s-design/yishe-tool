@@ -9,21 +9,17 @@
  * Copyright (c) 2023 by 1s, All Rights Reserved. 
  */
 
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 import alias from "@rollup/plugin-alias";
 import { resolve } from 'path'
 import tailwindcss from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
-import svgSprites from 'rollup-plugin-svg-sprites'
-import { basename } from 'path';
 import Components from 'unplugin-vue-components/vite';
 import { VantResolver } from '@vant/auto-import-resolver';
 // 移动端扫码进入项目
 import { qrcode } from 'vite-plugin-qrcode';
-// 开发环境使用 https 
-import basicSsl from '@vitejs/plugin-basic-ssl'
 // 编译文件支持旧游览器
 import legacy from '@vitejs/plugin-legacy';
 // import AntdvResolver from 'antdv-component-resolver'
@@ -31,32 +27,14 @@ import svgLoader from 'vite-svg-loader'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from "unplugin-auto-import/vite";
 
-import { viteObfuscateFile } from 'vite-plugin-obfuscator'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 
-export default defineConfig((config: any) => {
-
-  const isApp = config.mode === 'app'
-  const isServer = config.mode === 'server'
-
-
-
-  const baseBuild = {
+export default defineConfig(() => {
+  const build = {
     outDir: 'www',
     assetsDir: './',
     rollupOptions: {
-      input: {
-        mobile: resolve(__dirname, 'mobile.html'),
-        index: resolve(__dirname, 'index.html'),
-      },
-    }
-  }
-
-  const appBuild = {
-    outDir: 'app',
-    assetsDir: './',
-    rollupOptions: {
-      input: resolve(__dirname, 'app.html'),
+      input: resolve(__dirname, 'index.html'),
     }
   }
 
@@ -90,8 +68,8 @@ export default defineConfig((config: any) => {
         symbolId: 'icon-[name]',
       })
     ],
-    base: isApp ? './' : '/', // 普通路径与app路径处理方式不同
-    build: isApp ? appBuild : baseBuild,
+    base: '/',
+    build,
     css: {
       postcss: {
         plugins: [

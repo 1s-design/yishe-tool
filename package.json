@@ -11,7 +11,6 @@
     "docs:dev": "vitepress dev docs --port 1520",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "build:app": "vite build --mode app",
     "serve": "node serverbundle.js",
     "serve:dev": "node --watch server --ext [ts,json,js] --exec nodemon ./server.js",
     "dev": "concurrently \"vite --host 0.0.0.0\"",

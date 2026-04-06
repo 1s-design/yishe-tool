@@ -54,7 +54,6 @@ import 'vxe-pc-ui/lib/style.css'
 
 import VxeUITable from 'vxe-table'
 import 'vxe-table/lib/style.css'
-import Utils from '@/common/utils'
 
 // 引入注册组件
 import 'virtual:svg-icons-register'
@@ -211,15 +210,7 @@ async function setup() {
 
 
 }
-
-import { createMobileApp } from '@/modules/mobile/main'
-
-if (Utils.isMobile) {
-  createMobileApp()
-} else {
-  setup()
-}
-
+setup()
 
 
 
