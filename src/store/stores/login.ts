@@ -16,13 +16,41 @@ import Api from '@/api'
 import to from 'await-to-js';
 import { message } from "ant-design-vue";
 
+function normalizeTokenValue(tokenValue: unknown) {
+  if (typeof tokenValue === "string") {
+    const normalizedValue = tokenValue.trim();
+    if (!normalizedValue || normalizedValue === "null" || normalizedValue === "undefined") {
+      return "";
+    }
+    return normalizedValue;
+  }
+
+  if (tokenValue == null) {
+    return "";
+  }
+
+  return String(tokenValue);
+}
+
+export function hasValidToken(tokenValue: unknown) {
+  return !!normalizeTokenValue(tokenValue);
+}
 
 export async function initLoginStoreUserInfo() {
   const loginStore = useLoginStatusStore()
 
-  if (loginStore.isLogin) {
-    let [err, res] = await to(loginStore.getUserInfo())
+  if (!hasValidToken(loginStore.token)) {
+    loginStore.logout()
+    return false
   }
+
+  if (loginStore.userInfo) {
+    loginStore.isLogin = true
+    return true
+  }
+
+  let [err, res] = await to(loginStore.getUserInfo())
+  return !err && !!res
 }
 
 export const useLoginStatusStore = defineStore("login_status", () => {
@@ -34,27 +62,37 @@ export const useLoginStatusStore = defineStore("login_status", () => {
   const once = ref();
   const isAdmin = ref(false);
 
-
-  if (token.value) {
-    isLogin.value = true
-  }
+  token.value = normalizeTokenValue(token.value)
 
   async function getUserInfo() {
     const loginStore = useLoginStatusStore()
-    // 增加延时确保token完全设置
-    console.log('🔑 getUserInfo开始，当前token:', loginStore.token);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('🔑 延时500ms后开始调用API');
-    
-    const _userInfo = await Api.getUserInfo()
-    if (_userInfo) {
-      userInfo.value = _userInfo
-      loginStore.isAdmin = _userInfo.isAdmin
-      isLogin.value = true
-      console.log('✅ getUserInfo成功:', _userInfo);
-    } else {
-      isLogin.value = false
+    const normalizedToken = normalizeTokenValue(loginStore.token)
+
+    if (!normalizedToken) {
+      logout()
+      return null
+    }
+
+    loginStore.token = normalizedToken
+
+    try {
+      console.log('🔑 getUserInfo开始，当前token:', loginStore.token);
+      const _userInfo = await Api.getUserInfo()
+      if (_userInfo) {
+        userInfo.value = _userInfo
+        loginStore.isAdmin = _userInfo.isAdmin
+        isLogin.value = true
+        console.log('✅ getUserInfo成功:', _userInfo);
+        return _userInfo
+      }
+
       console.log('❌ getUserInfo失败，没有获取到用户信息');
+      logout()
+      return null
+    } catch (error) {
+      console.error('❌ getUserInfo异常:', error);
+      logout()
+      return null
     }
   }
 
@@ -65,7 +103,10 @@ export const useLoginStatusStore = defineStore("login_status", () => {
   function logout() {
     isLogin.value = false
     userInfo.value = null
-    token.value = null
+    loginTime.value = null
+    token.value = ''
+    once.value = false
+    isAdmin.value = false
   }
 
   // 虚拟登录方法：设置 token 并获取用户信息
@@ -78,7 +119,10 @@ export const useLoginStatusStore = defineStore("login_status", () => {
       isAdmin.value = false;
       
       // 清理 token 格式，确保不包含 Bearer 前缀
-      const cleanToken = tokenValue
+      const cleanToken = normalizeTokenValue(tokenValue)
+      if (!cleanToken) {
+        throw new Error('无效的 token')
+      }
       
       // 设置新的 token
       token.value = cleanToken;
@@ -92,19 +136,17 @@ export const useLoginStatusStore = defineStore("login_status", () => {
       loginTime.value = new Date().toISOString();
       
       // 获取用户信息
-      await getUserInfo();
+      const currentUserInfo = await getUserInfo();
+      if (!currentUserInfo) {
+        throw new Error('获取用户信息失败');
+      }
       
       console.log('虚拟登录成功，用户信息已获取');
       message.success('自动登录成功')
       return true;
     } catch (error) {
       console.error('虚拟登录失败:', error);
-      // 如果获取用户信息失败，回滚登录状态
-      isLogin.value = false;
-      token.value = null;
-      loginTime.value = null;
-      userInfo.value = null;
-      isAdmin.value = false;
+      logout()
       return false;
     }
   }

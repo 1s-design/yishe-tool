@@ -292,9 +292,26 @@ async function uploadThumbnail() {
     // 将预览区域导出为图片
     const pngFile = await htmlToPngFile(previewContainerRef.value, `${activeFont.value.name}_thumbnail`);
 
+    let userAccount = 'anonymous'
+    let userId = undefined
+    try {
+      const { getLocalUserInfo } = await import('@/store/stores/loginAction')
+      const userInfo = getLocalUserInfo()
+      const currentUser = userInfo?.userInfo || userInfo || {}
+      userAccount = currentUser?.account || currentUser?.name || 'anonymous'
+      userId = currentUser?.id
+    } catch (e) {
+      console.warn('无法获取用户信息:', e)
+    }
+
     // 上传到COS
     const thumbnailCos = await uploadToCOS({
       file: pngFile,
+      category: 'font-template',
+      account: userAccount,
+      userId,
+      entityId: activeFont.value.id,
+      isThumbnail: true,
     });
 
     // 更新字体记录

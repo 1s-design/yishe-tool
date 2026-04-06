@@ -74,10 +74,13 @@ watch(fileList, () => {
 async function upload(category?: string, entityId?: string | number) {
   // 获取用户账号
   let userAccount = 'anonymous'
+  let userId
   try {
     const { getLocalUserInfo } = await import('@/store/stores/loginAction')
     const userInfo = getLocalUserInfo()
-    userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+    const currentUser = userInfo?.userInfo || userInfo || {}
+    userAccount = currentUser?.account || currentUser?.name || 'anonymous'
+    userId = currentUser?.id
   } catch (e) {
     console.warn('无法获取用户信息:', e)
   }
@@ -89,6 +92,7 @@ async function upload(category?: string, entityId?: string | number) {
           file: u.raw,
           category: category || 'manual', // 默认使用 manual，调用方可以传入
           account: userAccount,
+          userId: userId,
           entityId: entityId
         });
         u.url = cos.url;

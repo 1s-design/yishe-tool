@@ -1588,6 +1588,7 @@ async function doUpload() {
         file: file,
         category: 'sticker',
         account: loginStore?.userInfo?.account || loginStore?.userInfo?.name || undefined,
+        userId: loginStore?.userInfo?.id,
       })
     } catch (err) {
       throw new Error('上传到COS失败: ' + (err.message || err))

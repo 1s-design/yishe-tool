@@ -233,10 +233,13 @@ async function handleOk() {
 
   // 获取用户账号
   let userAccount = 'anonymous'
+  let userId = undefined
   try {
     const { getLocalUserInfo } = await import('@/store/stores/loginAction')
     const userInfo = getLocalUserInfo()
-    userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+    const currentUser = userInfo?.userInfo || userInfo || {}
+    userAccount = currentUser?.account || currentUser?.name || 'anonymous'
+    userId = currentUser?.id
   } catch (e) {
     console.warn('无法获取用户信息:', e)
   }
@@ -245,13 +248,15 @@ async function handleOk() {
     let { url } = await Api.uploadToCOS({ 
       file: form.value.file.raw,
       category: 'product-model',
-      account: userAccount
+      account: userAccount,
+      userId
     });
 
     let cos = await Api.uploadToCOS({
       file: baseViewerRef.value.getScreenShotFile(),
       category: 'product-model',
       account: userAccount,
+      userId,
       isThumbnail: true
     });
 
@@ -270,6 +275,7 @@ async function handleOk() {
       file: baseViewerRef.value.getScreenShotFile(),
       category: 'product-model',
       account: userAccount,
+      userId,
       entityId: form.value.id, // 编辑时使用模型 ID
       isThumbnail: true
     });

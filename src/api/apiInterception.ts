@@ -56,8 +56,11 @@ function shouldInjectOwnership(url = '', method = '') {
 
 function appendOwnership(payload, userId) {
   if (payload instanceof FormData) {
-    if (!payload.get('userId')) {
+    const currentUserId = payload.get('userId');
+    if (!currentUserId) {
       payload.append('userId', userId);
+    } else if (typeof currentUserId !== 'string') {
+      payload.set('userId', String(currentUserId));
     }
     return payload;
   }
@@ -68,6 +71,8 @@ function appendOwnership(payload, userId) {
 
   if (payload.userId === undefined || payload.userId === null || payload.userId === '') {
     payload.userId = userId;
+  } else if (typeof payload.userId !== 'string') {
+    payload.userId = String(payload.userId);
   }
   return payload;
 }

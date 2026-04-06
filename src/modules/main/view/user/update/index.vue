@@ -211,7 +211,8 @@ async function submit() {
     let { url } = await Api.uploadToCOS({ 
       file: avatarFile.value,
       category: 'user-avatar',
-      account: userAccount
+      account: userAccount,
+      userId: loginStore.userInfo?.id
     });
     form.value.avatar = url;
   }

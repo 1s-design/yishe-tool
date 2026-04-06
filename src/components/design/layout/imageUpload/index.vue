@@ -53,9 +53,15 @@ function handleExceed(files) {
 async function submit() {
   loading.value = true;
 
+  const { getLocalUserInfo } = await import("@/store/stores/loginAction");
+  const userInfo = getLocalUserInfo();
+  const currentUser = userInfo?.userInfo || userInfo || {};
+
   const { url } = await uploadToCOS({
     file: files.value[0].raw,
-    key: files.value[0].name,
+    category: 'sticker',
+    account: currentUser?.account || currentUser?.name || 'anonymous',
+    userId: currentUser?.id,
   });
 
   await uploadImage({

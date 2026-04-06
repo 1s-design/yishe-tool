@@ -167,18 +167,44 @@ async function setup() {
 
   app.use(i18n)
 
-  app.use(router)
-
   app.use(ElementPlus)
 
   app.config.globalProperties.__DEV__ = import.meta.env.DEV
 
-  await initLoginStoreUserInfo()
+  try {
+    // 优先处理 URL token，避免旧 token 抢先污染当前会话。
+    await handleUrlToken();
+  } catch (error) {
+    console.error('处理 URL token 失败:', error);
+  }
 
-  await initConfigStoreBasicConfig()
+  try {
+    await initLoginStoreUserInfo()
+  } catch (error) {
+    console.error('初始化登录信息失败:', error);
+    useLoginStatusStore().logout();
+  }
 
-  // 处理 URL 参数中的 token
-  await handleUrlToken();
+  try {
+    await initConfigStoreBasicConfig()
+  } catch (error) {
+    console.error('初始化基础配置失败:', error);
+  }
+
+  app.use(router)
+  await router.isReady()
+
+  const loginStore = useLoginStatusStore();
+  const currentRouteName = router.currentRoute.value.name;
+
+  if (!loginStore.isLogin && currentRouteName !== 'Login' && currentRouteName !== 'Signup') {
+    await router.replace({ name: 'Login' });
+  }
+
+  if (loginStore.isLogin && currentRouteName === 'Login') {
+    await router.replace({ name: 'Home' });
+  }
+
   app.mount('#app')
 
 
@@ -193,7 +219,6 @@ if (Utils.isMobile) {
 } else {
   setup()
 }
-
 
 
 

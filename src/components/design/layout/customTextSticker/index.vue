@@ -47,11 +47,20 @@ function exportPng() {
 
 async function upload() {
   let file = await exportTextStickerFile();
-  let cos = await uploadToCOS({ file: file });
+  const { getLocalUserInfo } = await import("@/store/stores/loginAction");
+  const userInfo = getLocalUserInfo();
+  const currentUser = userInfo?.userInfo || userInfo || {};
+  let cos = await uploadToCOS({
+    file,
+    category: "sticker",
+    account: currentUser?.account || currentUser?.name || "anonymous",
+    userId: currentUser?.id,
+  });
   await createSticker({
-    url,
-    thumbnail: cos,
+    url: cos.url,
+    thumbnail: cos.url,
     type: "text",
+    userId: currentUser?.id || null,
   });
   message.success("上传成功");
 }

@@ -13,6 +13,8 @@ import { useLoginStatusStore } from "@/store/stores/login";
 
 export async function saveCustomModel(form) {
     const loginStore = useLoginStatusStore();
+    const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous';
+    const userId = loginStore.userInfo?.id;
 
     // 上传本地贴纸 , 过滤出本地的贴纸
     // let localDecals = currentModelController.value.decalControllers.filter(
@@ -26,7 +28,14 @@ export async function saveCustomModel(form) {
 
     const thumbnail = currentModelController.value.getScreenShotFile();
 
-    const cos = await uploadToCOS({ file: thumbnail });
+    const cos = await uploadToCOS({
+        file: thumbnail,
+        category: 'custom-model',
+        account: userAccount,
+        userId,
+        entityId: currentEditingModelId.value || form?.id,
+        isThumbnail: true,
+    });
  
     const modelInfo = await currentModelController.value.exportTo1stf();
 
@@ -50,6 +59,8 @@ export async function saveCustomModel(form) {
 
 export async function updateCustomModelWithUpload(form) {
     const loginStore = useLoginStatusStore();
+    const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous';
+    const userId = loginStore.userInfo?.id;
 
     // 上传本地贴纸 , 过滤出本地的贴纸
     // let localDecals = currentModelController.value.decalControllers.filter(
@@ -62,7 +73,14 @@ export async function updateCustomModelWithUpload(form) {
     // }
 
     const thumbnail = currentModelController.value.getScreenShotFile();
-    const cos = await uploadToCOS({ file: thumbnail });
+    const cos = await uploadToCOS({
+        file: thumbnail,
+        category: 'custom-model',
+        account: userAccount,
+        userId,
+        entityId: form?.id || currentEditingModelId.value,
+        isThumbnail: true,
+    });
     const modelInfo = await currentModelController.value.exportTo1stf();
 
     const params = {

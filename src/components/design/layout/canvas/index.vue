@@ -414,6 +414,7 @@ async function doUpload() {
       file: file,
       category: 'sticker',
       account: loginStore?.userInfo?.account || loginStore?.userInfo?.name || undefined,
+      userId: loginStore?.userInfo?.id,
     });
 
     // 直接保存到素材

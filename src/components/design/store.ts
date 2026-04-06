@@ -43,10 +43,13 @@ export async function saveScreenshot() {
 
     // 获取用户账号
     let userAccount = 'anonymous'
+    let userId
     try {
       const { getLocalUserInfo } = await import('@/store/stores/loginAction')
       const userInfo = getLocalUserInfo()
-      userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+      const currentUser = userInfo?.userInfo || userInfo || {}
+      userAccount = currentUser?.account || currentUser?.name || 'anonymous'
+      userId = currentUser?.id
     } catch (e) {
       console.warn('无法获取用户信息:', e)
     }
@@ -56,6 +59,7 @@ export async function saveScreenshot() {
       file,
       category: 'design-draft',
       account: userAccount,
+      userId,
       entityId: isEdit.value && currentEditingModelId.value ? currentEditingModelId.value : undefined
     }).then(cos => {
         createDraft({
@@ -542,5 +546,4 @@ export function exitEditMode() {
 
 // 角度选择全局状态
 export const selectedAngles = ref<string[]>([]);
-
 

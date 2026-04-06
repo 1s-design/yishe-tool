@@ -362,6 +362,8 @@ const fileBarFontPreviewRef = ref();
 async function uploadSingleFile(file) {
   file = toRaw(file);
   const keywords = file.tags && file.tags.join(",");
+  const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous'
+  const userId = loginStore.userInfo?.id
 
   // 自动识别文件后缀
   let suffix = '';
@@ -373,11 +375,11 @@ async function uploadSingleFile(file) {
   }
 
   if (Utils.type.isImageName(file.name)) {
-    const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous'
     const fileCos = await uploadToCOS({ 
       file: file.raw,
       category: 'sticker',
-      account: userAccount
+      account: userAccount,
+      userId
     });
 
     const params = {
@@ -400,12 +402,12 @@ async function uploadSingleFile(file) {
 
     const png = await htmlToPngFile(fileBarFontPreviewRef.value);
 
-    const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous'
     // 先上传字体文件，然后使用其ID作为entityId上传缩略图
     const fileCos = await uploadToCOS({ 
       file: file.raw,
       category: 'font-template',
-      account: userAccount
+      account: userAccount,
+      userId
     });
 
     // 注意：这里缩略图暂时没有entityId，因为字体文件刚上传还没有ID
@@ -414,6 +416,7 @@ async function uploadSingleFile(file) {
       file: png,
       category: 'font-template',
       account: userAccount,
+      userId,
       isThumbnail: true
     });
 
@@ -438,12 +441,12 @@ async function uploadSingleFile(file) {
 
     const png = baseViewerRef.value.getScreenShotFile();
 
-    const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous'
     // 先上传模型文件，然后使用其ID作为entityId上传缩略图
     const fileCos = await uploadToCOS({ 
       file: file.raw,
       category: 'product-model',
-      account: userAccount
+      account: userAccount,
+      userId
     });
 
     // 注意：这里缩略图暂时没有entityId，因为模型文件刚上传还没有ID
@@ -452,6 +455,7 @@ async function uploadSingleFile(file) {
       file: png,
       category: 'product-model',
       account: userAccount,
+      userId,
       isThumbnail: true
     });
 
@@ -471,11 +475,11 @@ async function uploadSingleFile(file) {
   }
 
   if (Utils.type.isPsd(file.name)) {
-    const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous'
     const fileCos = await uploadToCOS({ 
       file: file.raw,
       category: 'psd-template',
-      account: userAccount
+      account: userAccount,
+      userId
     });
 
     const params = {

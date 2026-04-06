@@ -49,12 +49,15 @@ const handleRecordedVideo = async (blob: Blob, animationName?: string) => {
     
     // 获取用户账号
     let userAccount = 'anonymous'
+    let userId = undefined
     try {
       const LOGIN_FLAG = "1s_login"
       const userInfoStr = localStorage.getItem(LOGIN_FLAG) || sessionStorage.getItem(LOGIN_FLAG)
       if (userInfoStr) {
         const userInfo = JSON.parse(userInfoStr)
-        userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+        const currentUser = userInfo?.userInfo || userInfo || {}
+        userAccount = currentUser?.account || currentUser?.name || 'anonymous'
+        userId = currentUser?.id
       }
     } catch (e) {
       console.warn('无法获取用户信息:', e)
@@ -65,6 +68,7 @@ const handleRecordedVideo = async (blob: Blob, animationName?: string) => {
       file,
       category: 'design-draft',
       account: userAccount,
+      userId,
       entityId: isEdit.value && currentEditingModelId.value ? currentEditingModelId.value : undefined
     });
     
@@ -447,7 +451,6 @@ async function fadeInScene(scene, duration) {
 
 // 重新导出从 store 导入的变量
 export { isEdit, currentEditingModelInfo };
-
 
 
 

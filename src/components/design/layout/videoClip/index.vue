@@ -258,10 +258,13 @@ const handleRecordedVideo = async (blob: Blob) => {
 
     // 获取用户账号
     let userAccount = 'anonymous'
+    let userId = undefined
     try {
       const { getLocalUserInfo } = await import('@/store/stores/loginAction')
       const userInfo = getLocalUserInfo()
-      userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+      const currentUser = userInfo?.userInfo || userInfo || {}
+      userAccount = currentUser?.account || currentUser?.name || 'anonymous'
+      userId = currentUser?.id
     } catch (e) {
       console.warn('无法获取用户信息:', e)
     }
@@ -271,6 +274,7 @@ const handleRecordedVideo = async (blob: Blob) => {
       file,
       category: 'design-draft',
       account: userAccount,
+      userId,
       entityId: isEdit?.value && currentEditingModelInfo?.value?.id ? currentEditingModelInfo.value.id : undefined
     });
 
@@ -335,10 +339,13 @@ const handleSaveToDraft = async () => {
 
       // 获取用户账号
       let userAccount = 'anonymous'
+      let userId = undefined
       try {
         const { getLocalUserInfo } = await import('@/store/stores/loginAction')
         const userInfo = getLocalUserInfo()
-        userAccount = userInfo?.account || userInfo?.name || 'anonymous'
+        const currentUser = userInfo?.userInfo || userInfo || {}
+        userAccount = currentUser?.account || currentUser?.name || 'anonymous'
+        userId = currentUser?.id
       } catch (e) {
         console.warn('无法获取用户信息:', e)
       }
@@ -348,6 +355,7 @@ const handleSaveToDraft = async () => {
         file,
         category: 'design-draft',
         account: userAccount,
+        userId,
         entityId: isEdit?.value && currentEditingModelInfo?.value?.id ? currentEditingModelInfo.value.id : undefined
       });
 

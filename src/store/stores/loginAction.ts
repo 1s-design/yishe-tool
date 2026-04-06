@@ -84,9 +84,9 @@ export const doLoginAction = async (data, once = false) => {
 
 
 export const doLogout = async () => {
-  await Api.logout();
+  await Api.logout().catch((error) => {
+    console.warn('退出登录接口调用失败，继续清理本地登录态:', error);
+  });
   const loginStatusStore = useLoginStatusStore();
-  loginStatusStore.isLogin = false;
-  loginStatusStore.userInfo = null;
-  loginStatusStore.loginTime = null;
+  loginStatusStore.logout();
 };

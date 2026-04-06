@@ -22,7 +22,7 @@
 <script setup>
 import { ref } from "vue";
 import icon from "./record.svg?component";
-import { currentModelController } from "@/components/design/store";
+import { currentModelController, currentEditingModelId, isEdit } from "@/components/design/store";
 import { uploadToCOS, createDraft } from "@/api";
 import { message } from "ant-design-vue";
 
@@ -82,15 +82,36 @@ const handleRecordedVideo = async (blob) => {
   try {
     // 创建文件对象
     const file = new File([blob], `录制视频_${new Date().getTime()}.webm`, { type: 'video/webm' });
+
+    let userAccount = 'anonymous';
+    let userId = undefined;
+    try {
+      const { getLocalUserInfo } = await import('@/store/stores/loginAction');
+      const userInfo = getLocalUserInfo();
+      const currentUser = userInfo?.userInfo || userInfo || {};
+      userAccount = currentUser?.account || currentUser?.name || 'anonymous';
+      userId = currentUser?.id;
+    } catch (e) {
+      console.warn('无法获取用户信息:', e);
+    }
     
     // 上传到 COS
-    const cos = await uploadToCOS({ file });
+    const cos = await uploadToCOS({
+      file,
+      category: 'design-draft',
+      account: userAccount,
+      userId,
+      entityId: isEdit.value && currentEditingModelId.value ? currentEditingModelId.value : undefined,
+    });
     
     // 保存到草稿箱
     await createDraft({
       url: cos.url,
       name: '模型录制视频',
-      updateTime: new Date()
+      type: 'video',
+      suffix: 'webm',
+      updateTime: new Date(),
+      ...(isEdit.value && currentEditingModelId.value ? { customModelId: currentEditingModelId.value } : {})
     });
     
     message.success('视频已保存到草稿箱');
