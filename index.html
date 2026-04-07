@@ -22,170 +22,109 @@
             #app {
                 width: 100%;
                 height: 100%;
+                font-size: 10px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                margin: 0;
+                background: #0f1115;
+                color: #f5f7fa;
             }
 
-            .loading {
-                font-size: 16px;
-                font-family: 'Montserrat', sans-serif;
-                font-weight: 500;
+            .app-loading-shell {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                min-height: 100%;
+                padding: 24px;
+                background: #0f1115;
+                color: #f5f7fa;
+                box-sizing: border-box;
+            }
+
+            .app-loading-shell__stage {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                width: min(100%, 320px);
                 text-align: center;
-                color: #aaa;
-
-                span {
-                    display: inline-block;
-                }
             }
 
-            .loadingitem span {
-                animation: loadingitem 1.2s infinite alternate;
+            .app-loading-shell__text {
+                display: flex;
+                align-items: center;
+                min-height: 24px;
             }
 
-
-            .loadingitem span {
-                letter-spacing: -4px;
-                animation-delay: calc(0.05s * (var(--i) - 1));
+            .app-loading-shell__text p {
+                position: relative;
+                margin: 0;
+                color: #f5f7fa;
+                font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+                font-size: clamp(16px, 1.6vw, 18.4px);
+                font-weight: 500;
+                letter-spacing: -0.03em;
+                line-height: 1.2;
             }
 
-            /* 为每个 span 设置自定义属性 */
-            .loadingitem span:nth-child(1) {
-                --i: 1;
+            .app-loading-shell__text p::after {
+                position: absolute;
+                left: calc(100% + 0.08em);
+                animation: app-loading-dots 3s infinite linear;
+                color: #f5f7fa;
+                content: '';
             }
 
-            .loadingitem span:nth-child(2) {
-                --i: 2;
-            }
-
-            .loadingitem span:nth-child(3) {
-                --i: 3;
-            }
-
-            .loadingitem span:nth-child(4) {
-                --i: 4;
-            }
-
-            .loadingitem span:nth-child(5) {
-                --i: 5;
-            }
-
-            .loadingitem span:nth-child(6) {
-                --i: 6;
-            }
-
-            .loadingitem span:nth-child(7) {
-                --i: 7;
-            }
-
-            .loadingitem span:nth-child(8) {
-                --i: 8;
-            }
-
-            .loadingitem span:nth-child(9) {
-                --i: 9;
-            }
-
-            .loadingitem span:nth-child(10) {
-                --i: 10;
-            }
-
-            .loadingitem span:nth-child(11) {
-                --i: 11;
-            }
-
-            .loadingitem span:nth-child(12) {
-                --i: 12;
-            }
-
-            .loadingitem span:nth-child(13) {
-                --i: 13;
-            }
-
-            .loadingitem span:nth-child(14) {
-                --i: 14;
-            }
-
-            .loadingitem span:nth-child(15) {
-                --i: 15;
-            }
-
-            .loadingitem span:nth-child(16) {
-                --i: 16;
-            }
-
-            .loadingitem span:nth-child(17) {
-                --i: 17;
-            }
-
-            .loadingitem span:nth-child(18) {
-                --i: 18;
-            }
-
-            .loadingitem span:nth-child(19) {
-                --i: 19;
-            }
-
-            .loadingitem span:nth-child(20) {
-                --i: 20;
-            }
-
-            .loadingitem span:nth-child(21) {
-                --i: 21;
-            }
-
-            .loadingitem span:nth-child(22) {
-                --i: 22;
-            }
-
-            .loadingitem span:nth-child(23) {
-                --i: 23;
-            }
-
-            .loadingitem span:nth-child(24) {
-                --i: 24;
-            }
-
-
-
-
-            @keyframes loadingitem {
+            @keyframes app-loading-dots {
                 0% {
-                    opacity: 1;
+                    content: '';
+                }
+
+                10% {
+                    content: '.';
+                }
+
+                40% {
+                    content: '..';
+                }
+
+                70% {
+                    content: '...';
                 }
 
                 100% {
-                    opacity: 0;
+                    content: '';
+                }
+            }
+
+            @media (max-width: 640px) {
+                .app-loading-shell {
+                    padding: 20px;
+                }
+
+                .app-loading-shell__stage {
+                    width: min(100%, 280px);
+                    gap: 6px;
+                }
+
+                .app-loading-shell__text {
+                    min-height: 22.4px;
+                }
+
+                .app-loading-shell__text p {
+                    font-size: 15.2px;
                 }
             }
         </style>
 
-
-        <div class="loading loadingitem">
-            <span>D</span>
-            <span>e</span>
-            <span>s</span>
-            <span>i</span>
-            <span>g</span>
-            <span>n</span>
-            <span> &nbsp; </span>
-            <span>S</span>
-            <span>o</span>
-            <span>m</span>
-            <span>e</span>
-            <span>t</span>
-            <span>h</span>
-            <span>i</span>
-            <span>n</span>
-            <span>g</span>
-            <span> &nbsp; </span>
-            <span>S</span>
-            <span>p</span>
-            <span>e</span>
-            <span>c</span>
-            <span>i</span>
-            <span>a</span>
-            <span>l</span>
+        <div class="app-loading-shell" role="status" aria-live="polite" aria-label="1s design tool">
+            <div class="app-loading-shell__stage">
+                <div class="app-loading-shell__text">
+                    <p>1s design tool</p>
+                </div>
+            </div>
         </div>
     </div>
     <script type="module" src="./src/modules/main/main.ts"></script>
