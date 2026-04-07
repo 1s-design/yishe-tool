@@ -43,9 +43,11 @@
         class="theme-switch"
       />
 
+      <!--
       <el-button type="primary" size="small" @click="showSaveModel = true" class="save-btn" :icon="Download">
         <span>保存</span>
       </el-button>
+      -->
     </div>
     <user-avatar v-if="loginStatusStore.isLogin" />
     <el-button @click="login" v-else type="primary" size="small" class="login-btn">登录</el-button>
@@ -60,7 +62,6 @@ import {
   canvasBgColor,
   canvasBgOpacity,
   currentModelController,
-  showSaveModel,
   showUpload,
   lastModifiedTime,
   storageName,
@@ -73,7 +74,7 @@ import {
 } from "../store";
 
 import { openFileModal } from "@/components/design/layout/upload/index.tsx";
-import { Share, UploadFilled, Download } from "@element-plus/icons-vue";
+import { Share, UploadFilled } from "@element-plus/icons-vue";
 import userAvatar from "@/components/user/userAvatar.vue";
 import headerMenuDropdown from "./headerMenuDropdown/index.vue";
 import { onShortcutTrigger } from "../shortcut/index";

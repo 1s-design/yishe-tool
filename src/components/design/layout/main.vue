@@ -509,6 +509,7 @@ async function initAction() {
   width: var(--1s-left-panel-width);
   flex-shrink: 0;
   border-right: 1px solid var(--1s-border-color);
+  background: var(--1s-left-menu-container-background-color);
 }
 
 .design-layout__panel--right {
