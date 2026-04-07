@@ -65,77 +65,99 @@ import '@websitebeaver/vue-magnifier/styles.css'
 import AutomationOverlay from '@/components/automationOverlay.vue'
 
 import { useConfigStore, initConfigStoreBasicConfig } from '@/store/stores/config.ts';
-import { useLoginStatusStore, initLoginStoreUserInfo } from '@/store/stores/login';
+import { normalizeTokenValue, useLoginStatusStore, initLoginStoreUserInfo } from '@/store/stores/login';
 import to from 'await-to-js';
 import { setupSingleTabManager } from '@/utils/singleTabManager'
 
+const EMBED_RUNTIME_KEY = 'yishe_tool_embed_runtime'
+
+function isEmbeddedRuntime() {
+  return window.self !== window.top
+}
+
+function parseUrlRuntimeParams() {
+  const searchParams = new URLSearchParams(window.location.search)
+  const hashQuery = window.location.hash.split('?')[1] || ''
+  const hashParams = new URLSearchParams(hashQuery)
+
+  const embedSource = searchParams.get('embed') || hashParams.get('embed') || ''
+  const tenantId = searchParams.get('tenantId') || hashParams.get('tenantId') || ''
+  const tokenFromUrl = normalizeTokenValue(searchParams.get('token') || hashParams.get('token') || '')
+
+  return {
+    embedSource,
+    tenantId,
+    tokenFromUrl,
+  }
+}
+
+function syncEmbedRuntimeState(embedSource: string) {
+  if (embedSource) {
+    sessionStorage.setItem(EMBED_RUNTIME_KEY, embedSource)
+    return
+  }
+
+  sessionStorage.removeItem(EMBED_RUNTIME_KEY)
+}
+
+function cleanupAuthParamsFromUrl() {
+  const currentUrl = new URL(window.location.href)
+  currentUrl.searchParams.delete('token')
+  currentUrl.searchParams.delete('tenantId')
+
+  if (currentUrl.hash.includes('?')) {
+    const [hashPath, hashQuery] = currentUrl.hash.slice(1).split('?')
+    const nextHashParams = new URLSearchParams(hashQuery || '')
+    nextHashParams.delete('token')
+    nextHashParams.delete('tenantId')
+    const nextHashQuery = nextHashParams.toString()
+    currentUrl.hash = nextHashQuery ? `${hashPath}?${nextHashQuery}` : hashPath
+  }
+
+  window.history.replaceState({}, '', currentUrl.toString())
+}
+
 // 检查并处理 URL 参数中的 token
 async function handleUrlToken() {
-  // 解析 URL 参数，支持 hash 路由
-  let tokenFromUrl = null;
-
-  // 方法1: 尝试从 search 参数获取
-  const urlParams = new URLSearchParams(window.location.search);
-  tokenFromUrl = urlParams.get('token');
-
-  // 方法2: 如果 search 中没有，尝试从 hash 中获取
-  if (!tokenFromUrl && window.location.hash) {
-    const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-    tokenFromUrl = hashParams.get('token');
-  }
-
-  // 方法3: 直接从完整 URL 中解析
-  if (!tokenFromUrl) {
-    const fullUrl = window.location.href;
-    const tokenMatch = fullUrl.match(/[?&]token=([^&#]+)/);
-    if (tokenMatch) {
-      tokenFromUrl = decodeURIComponent(tokenMatch[1]);
-    }
-  }
+  const { embedSource, tokenFromUrl } = parseUrlRuntimeParams()
+  syncEmbedRuntimeState(embedSource)
 
   console.log('当前 URL:', window.location.href);
   console.log('search 参数:', window.location.search);
   console.log('hash 参数:', window.location.hash);
   console.log('解析到的 token:', tokenFromUrl);
 
-  if (tokenFromUrl) {
-    console.log('处理urltoken')
-
-    const loginStore = useLoginStatusStore();
-
-    // 使用虚拟登录方法设置 token 并获取用户信息
-    const loginSuccess = await loginStore.virtualLogin(tokenFromUrl);
-
-    if (loginSuccess) {
-      console.log('从 URL 参数获取到 token 并完成虚拟登录');
-
-      // 清除 URL 中的 token 参数（避免在地址栏显示）
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.delete('token');
-
-      // 如果 hash 中有 token，也要清除
-      if (currentUrl.hash && currentUrl.hash.includes('token=')) {
-        const hashUrl = new URL('http://dummy.com' + currentUrl.hash);
-        hashUrl.searchParams.delete('token');
-        currentUrl.hash = hashUrl.pathname + hashUrl.search;
-      }
-
-      window.history.replaceState({}, '', currentUrl.toString());
-    } else {
-      console.error('虚拟登录失败，token 可能无效');
-    }
-  } else {
+  if (!tokenFromUrl) {
     console.log('无token')
+    return false
   }
+
+  console.log('处理urltoken')
+
+  const loginStore = useLoginStatusStore();
+  const loginSuccess = await loginStore.virtualLogin(tokenFromUrl, {
+    silent: isEmbeddedRuntime(),
+  });
+
+  if (loginSuccess) {
+    console.log('从 URL 参数获取到 token 并完成虚拟登录');
+    cleanupAuthParamsFromUrl()
+    return true
+  }
+
+  console.error('虚拟登录失败，token 可能无效');
+  return false
 }
 
 
 async function setup() {
 
   // 启动单标签页管理器
-  const canContinue = setupSingleTabManager();
-  if (!canContinue) {
-    return; // 如果检测到其他活跃标签页，直接返回
+  if (!isEmbeddedRuntime()) {
+    const canContinue = setupSingleTabManager();
+    if (!canContinue) {
+      return; // 如果检测到其他活跃标签页，直接返回
+    }
   }
 
   // pc 端专有的拦截器

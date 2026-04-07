@@ -1,4 +1,4 @@
-@forward 'element-plus/theme-chalk/src/common/var.scss' with ($colors: ('primary': ('base': #6900ff,
+@forward 'element-plus/theme-chalk/src/common/var.scss' with ($colors: ('primary': ('base': #2563eb,
     ),
   ),
 );
@@ -12,16 +12,19 @@
 }
 
 .el-popper {
-  font-size: 1rem !important;
+  font-size: 0.9rem !important;
 }
 
 .el-popover.el-popper {
-  box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 8px 0px, rgba(0, 0, 0, 0.08) 0px 5px 20px 0px;
-  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  border-radius: 10px;
 }
 
 .el-select-dropdown__item {
-  padding: 0 20px !important;
+  min-height: 26px;
+  padding: 0 14px !important;
+  font-size: 0.9rem;
+  line-height: 26px;
 }
 
 .el-slider {
@@ -42,6 +45,7 @@
 
 .el-loading-mask {
   z-index: 99;
+  backdrop-filter: blur(2px);
 }
 
 .el-button:focus-visible {
@@ -49,23 +53,290 @@
 }
 
 .is-text {
-  font-size: 1rem !important;
+  font-size: 0.9rem !important;
 }
 
 .el-dropdown-menu--small .el-dropdown-menu__item {
-  font-size: 1rem;
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+  line-height: 26px;
 }
 
 .el-scrollbar {
-  --el-scrollbar-bg-color: #ddd;
+  --el-scrollbar-bg-color: var(--1s-scrollbar-background);
+}
+
+.el-button--small {
+  min-height: 24px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-size: 0.9rem;
+}
+
+.el-input__wrapper,
+.el-select__wrapper {
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 7px;
+  font-size: 0.9rem;
+}
+
+.el-input--small .el-input__wrapper,
+.el-select--small .el-select__wrapper,
+.el-date-editor.el-input__wrapper,
+.el-textarea__inner {
+  font-size: 0.9rem;
+}
+
+.el-textarea__inner {
+  padding: 6px 8px;
+  border-radius: 7px;
+}
+
+.el-switch {
+  --el-switch-height: 18px;
+  --el-switch-width: 34px;
+  --el-switch-border-radius: 999px;
+}
+
+.el-switch__core .el-switch__action {
+  width: 14px;
+  height: 14px;
+}
+
+.el-switch__label {
+  font-size: 0.9rem;
+}
+
+.el-drawer {
+  --el-drawer-bg-color: var(--1s-surface-background);
 }
 
 .el-select__wrapper {
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .el-popover {
-  font-size: 1rem !important;
+  font-size: 0.9rem !important;
+}
+
+.el-radio-button--small .el-radio-button__inner,
+.el-checkbox,
+.el-radio {
+  font-size: 0.9rem;
+}
+
+.ant-btn-sm,
+.ant-btn {
+  height: 24px;
+  padding: 0 9px;
+  font-size: 0.9rem;
+  border-radius: 7px;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-single .ant-select-selector,
+.ant-picker {
+  min-height: 26px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.9rem;
+  border-radius: 7px;
+}
+
+.ant-select-single .ant-select-selector {
+  padding-inline: 8px !important;
+}
+
+.ant-select-item,
+.ant-dropdown-menu-item,
+.ant-dropdown-menu-submenu-title {
+  min-height: 26px;
+  padding: 3px 10px !important;
+  font-size: 0.9rem;
+}
+
+.designiy.dark,
+body.designiy-dark {
+  color-scheme: dark;
+
+  --el-bg-color: var(--1s-surface-background);
+  --el-bg-color-page: var(--1s-shell-background);
+  --el-bg-color-overlay: var(--1s-elevated-background);
+  --el-fill-color-blank: var(--1s-surface-background);
+  --el-fill-color-light: var(--1s-control-surface-muted);
+  --el-fill-color-lighter: #1a1a1a;
+  --el-fill-color-dark: #1f1f1f;
+  --el-fill-color-darker: #242424;
+  --el-text-color-primary: var(--1s-text-color);
+  --el-text-color-regular: var(--1s-text-color-secondary);
+  --el-text-color-secondary: var(--1s-text-color-secondary);
+  --el-text-color-placeholder: var(--1s-text-color-tertiary);
+  --el-border-color: var(--1s-border-color);
+  --el-border-color-light: var(--1s-border-color);
+  --el-border-color-lighter: #1f1f1f;
+  --el-border-color-extra-light: #191919;
+  --el-border-color-dark: var(--1s-border-color-strong);
+  --el-border-color-darker: #3a3a3a;
+  --el-mask-color: rgba(0, 0, 0, 0.72);
+  --el-mask-color-extra-light: rgba(0, 0, 0, 0.5);
+  --el-disabled-bg-color: #161616;
+  --el-disabled-text-color: #666666;
+  --el-disabled-border-color: #262626;
+  --el-overlay-color-light: rgba(0, 0, 0, 0.7);
+  --el-overlay-color-lighter: rgba(0, 0, 0, 0.54);
+  --el-box-shadow-light: var(--1s-shadow-sm);
+  --el-box-shadow: var(--1s-shadow-md);
+  --el-box-shadow-dark: var(--1s-shadow-md);
+
+  .el-button:not(.el-button--primary):not(.is-link),
+  .el-input__wrapper,
+  .el-select__wrapper,
+  .el-textarea__inner,
+  .el-picker-panel,
+  .el-color-dropdown__main-wrapper,
+  .el-color-dropdown__btns,
+  .el-color-dropdown__value,
+  .el-dialog,
+  .el-drawer,
+  .el-card,
+  .el-collapse-item__wrap,
+  .el-descriptions__body,
+  .el-table,
+  .el-table tr,
+  .el-table th.el-table__cell,
+  .el-table td.el-table__cell {
+    background: var(--1s-control-surface-background);
+    color: var(--1s-text-color);
+    border-color: var(--1s-control-border-color);
+  }
+
+  .el-button:not(.el-button--primary):not(.is-link):hover,
+  .el-input__wrapper:hover,
+  .el-select__wrapper:hover,
+  .el-pagination button:hover,
+  .el-pager li:hover,
+  .el-dropdown-menu__item:not(.is-disabled):hover {
+    background: var(--1s-control-hover-background);
+  }
+
+  .el-input__wrapper.is-focus,
+  .el-select__wrapper.is-focused,
+  .el-textarea__inner:focus {
+    box-shadow: var(--1s-control-focus-ring) !important;
+  }
+
+  .el-form-item__label,
+  .el-radio__label,
+  .el-checkbox__label,
+  .el-descriptions__label,
+  .el-descriptions__content,
+  .el-dropdown-menu__item,
+  .el-select-dropdown__item,
+  .el-pagination,
+  .el-pagination button,
+  .el-pager li,
+  .el-switch__label,
+  .el-dialog__title,
+  .el-drawer__title {
+    color: var(--1s-text-color-secondary);
+  }
+
+  .el-switch {
+    --el-switch-off-color: #2c2c2c;
+  }
+
+  .el-switch__label.is-active,
+  .el-select-dropdown__item.selected,
+  .el-dropdown-menu__item:not(.is-disabled):focus,
+  .el-dropdown-menu__item:not(.is-disabled):hover,
+  .el-pager li.is-active {
+    color: var(--1s-text-color);
+  }
+
+  .el-popper.is-light,
+  .el-select-dropdown,
+  .el-picker__popper,
+  .el-color-dropdown,
+  .el-popover.el-popper {
+    background: var(--1s-elevated-background);
+    border-color: var(--1s-border-color);
+    color: var(--1s-text-color);
+    box-shadow: var(--1s-shadow-md);
+  }
+
+  .el-popper.is-light .el-popper__arrow::before {
+    background: var(--1s-elevated-background);
+    border-color: var(--1s-border-color);
+  }
+
+  .el-slider__runway {
+    background: #202020;
+  }
+
+  .el-slider__bar {
+    background: var(--1s-accent-color);
+  }
+
+  .el-empty__description,
+  .el-empty__description p,
+  .el-color-dropdown__value,
+  .el-input-number__decrease,
+  .el-input-number__increase {
+    color: var(--1s-text-color-secondary);
+  }
+
+  .el-pagination button:disabled,
+  .el-pager li.is-disabled {
+    color: #5f5f5f;
+  }
+
+  .ant-modal-content,
+  .ant-modal-header,
+  .ant-drawer-content,
+  .ant-drawer-header,
+  .ant-select-dropdown,
+  .ant-dropdown-menu,
+  .ant-popover-inner,
+  .ant-popconfirm-inner,
+  .ant-notification-notice,
+  .ant-message-notice-content {
+    background: var(--1s-elevated-background) !important;
+    color: var(--1s-text-color) !important;
+    border-color: var(--1s-border-color) !important;
+    box-shadow: var(--1s-shadow-md) !important;
+  }
+
+  .ant-modal-title,
+  .ant-drawer-title,
+  .ant-dropdown-menu-title-content,
+  .ant-popover-title,
+  .ant-notification-notice-message,
+  .ant-notification-notice-description,
+  .ant-message-custom-content {
+    color: var(--1s-text-color) !important;
+  }
+
+  .ant-modal-close,
+  .ant-drawer-close,
+  .ant-dropdown-menu-item,
+  .ant-select-item,
+  .ant-pagination-item a,
+  .ant-pagination-prev .ant-pagination-item-link,
+  .ant-pagination-next .ant-pagination-item-link {
+    color: var(--1s-text-color-secondary) !important;
+  }
+
+  .ant-input,
+  .ant-input-affix-wrapper,
+  .ant-select-selector,
+  .ant-btn-default {
+    background: var(--1s-control-surface-background) !important;
+    color: var(--1s-text-color) !important;
+    border-color: var(--1s-control-border-color) !important;
+  }
 }
 
 
@@ -80,7 +351,7 @@
   .el-input--small,
   .el-select--small .el-select__wrapper,
   .el-radio-button--small {
-    font-size: 10px !important;
+    font-size: 9px !important;
   }
 }
 
@@ -94,7 +365,7 @@
   .el-input--small,
   .el-select--small .el-select__wrapper,
   .el-radio-button--small {
-    font-size: 10px !important;
+    font-size: 9px !important;
   }
 }
 
@@ -108,7 +379,7 @@
   .el-input--small,
   .el-select--small .el-select__wrapper,
   .el-radio-button--small {
-    font-size: 10px !important;
+    font-size: 9px !important;
 
   }
 }
@@ -123,7 +394,7 @@
   .el-input--small,
   .el-select--small .el-select__wrapper,
   .el-radio-button--small {
-    font-size: 10px !important;
+    font-size: 9px !important;
   }
 }
 

@@ -1,5 +1,5 @@
 <template>
-    <div id="basic-canvas-canvas-container" v-if="show" ref="panzoomContainerRef">
+    <div id="basic-canvas-canvas-container" class="png-background" v-if="show" ref="panzoomContainerRef">
         <div ref="panzoomRef" class="panzoom-wrapper">
             <canvass></canvass>
         </div>
@@ -25,9 +25,9 @@
                 </div>
 
                 <div style="flex:1;"></div>
-                <div v-if="loading" class="italic font-bold text-indigo-500"> 正在渲染贴纸... </div>
+                <div v-if="loading" class="rendering-indicator">正在渲染贴纸...</div>
 
-                <el-button type="danger" link @click="showMainCanvas = false">
+                <el-button type="danger" link class="close-button" @click="showMainCanvas = false">
                     <el-icon size="20">
                         <CircleCloseFilled></CircleCloseFilled>
                     </el-icon>
@@ -155,7 +155,6 @@ watch(show, async (val) => {
     height: 100%;
     /* 核心修改：移除 flex 居中，完全通过位移控制，防止缩放时坐标跳变 */
     display: block;
-    background: #f0f2f5;
     position: relative;
     overflow: hidden;
 }
@@ -176,21 +175,61 @@ watch(show, async (val) => {
 .top-menu {
     display: flex;
     align-items: center;
-    height: 50px;
-    padding: 0 20px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    height: 42px;
+    padding: 0 12px;
+    background: linear-gradient(
+        180deg,
+        var(--1s-elevated-background) 0%,
+        var(--1s-surface-background) 100%
+    );
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--1s-border-color);
+    color: var(--1s-text-color);
 }
 
 .control-group {
     display: flex;
     align-items: center;
-    background: #fff;
-    padding: 2px 8px;
-    border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    gap: 8px;
+    background: var(--1s-control-surface-background);
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--1s-control-border-color);
+    box-shadow: var(--1s-shadow-sm);
+    gap: 4px;
+}
+
+.control-group :deep(.el-button) {
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
+    padding: 0;
+    color: var(--1s-text-color-secondary);
+    background: transparent;
+    border-color: transparent;
+}
+
+.control-group :deep(.el-button:hover) {
+    color: var(--1s-text-color);
+    background: var(--1s-control-hover-background);
+}
+
+.control-group :deep(.el-button.is-circle) {
+    border-radius: 999px;
+}
+
+.rendering-indicator {
+    font-size: 10px;
+    font-style: italic;
+    font-weight: 600;
+    color: var(--1s-accent-color);
+}
+
+.close-button {
+    color: var(--1s-text-color-tertiary);
+}
+
+.close-button:hover {
+    color: #f87171;
 }
 </style>
 

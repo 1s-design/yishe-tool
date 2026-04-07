@@ -7,7 +7,7 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <div style="width: 360px; padding: 12px">
+  <div class="video-clip-panel">
     <el-form>
       <el-form-item label="导出图片">
         <div>
@@ -392,6 +392,23 @@ const handleSaveToDraft = async () => {
   }
 };
 </script>
+
+<style scoped lang="less">
+.video-clip-panel {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 12px;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1080px) {
+  .video-clip-panel {
+    padding: 10px;
+  }
+}
+</style>
 
 <style scoped>
 .recording {

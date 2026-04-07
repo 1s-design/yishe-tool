@@ -142,11 +142,13 @@ getList();
 </script>
 <style lang="less" scoped>
 .container {
-  width: 360px;
+  width: 100%;
+  min-width: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
 }
 
 .menu {
@@ -171,18 +173,18 @@ getList();
   min-height: 0;
   box-sizing: border-box;
   position: relative;
-  background: #fff;
+  background: var(--1s-surface-background);
   transition: background 0.3s;
 }
 
 .scroll-list.loading-wave {
   background: linear-gradient(
     90deg,
-    #ffffff 0%,
-    #f5f5f5 25%,
-    #ffffff 50%,
-    #f5f5f5 75%,
-    #ffffff 100%
+    var(--1s-surface-background) 0%,
+    var(--1s-control-surface-muted) 25%,
+    var(--1s-surface-background) 50%,
+    var(--1s-control-surface-muted) 75%,
+    var(--1s-surface-background) 100%
   );
   background-size: 200% 100%;
   animation: wave-bg 2s ease-in-out infinite;
@@ -229,9 +231,10 @@ getList();
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #efefef;
+  background-color: var(--1s-control-surface-muted);
   border-radius: 4px;
   box-sizing: border-box;
+  border: 1px solid var(--1s-control-border-color);
 }
 
 .image-wrapper :deep(.s1-image) {
@@ -264,7 +267,7 @@ getList();
 .bar {
   width: 100%;
   font-size: 10px;
-  color: #666;
+  color: var(--1s-control-text-muted);
   display: flex;
   padding: 0 7px;
   justify-content: space-between;
@@ -274,7 +277,7 @@ getList();
   flex-shrink: 0;
 
   &:hover {
-    color: #000;
+    color: var(--1s-text-color);
     cursor: pointer;
   }
 
@@ -295,7 +298,7 @@ getList();
 
 .empty {
   text-align: center;
-  color: #999;
+  color: var(--1s-text-color-tertiary);
   padding: 40px 0;
 }
 
@@ -304,7 +307,8 @@ getList();
   width: 100%;
   display: flex;
   justify-content: center;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--1s-border-color);
+  background: var(--1s-panel-background);
   
   :deep(.el-pagination) {
     justify-content: center;

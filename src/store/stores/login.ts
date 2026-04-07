@@ -16,9 +16,9 @@ import Api from '@/api'
 import to from 'await-to-js';
 import { message } from "ant-design-vue";
 
-function normalizeTokenValue(tokenValue: unknown) {
+export function normalizeTokenValue(tokenValue: unknown) {
   if (typeof tokenValue === "string") {
-    const normalizedValue = tokenValue.trim();
+    const normalizedValue = tokenValue.trim().replace(/^Bearer\s+/i, '').trim();
     if (!normalizedValue || normalizedValue === "null" || normalizedValue === "undefined") {
       return "";
     }
@@ -110,7 +110,7 @@ export const useLoginStatusStore = defineStore("login_status", () => {
   }
 
   // 虚拟登录方法：设置 token 并获取用户信息
-  async function virtualLogin(tokenValue: string) {
+  async function virtualLogin(tokenValue: string, options?: { silent?: boolean }) {
     try {
       // 先清除原来的登录状态
       isLogin.value = false;
@@ -142,7 +142,9 @@ export const useLoginStatusStore = defineStore("login_status", () => {
       }
       
       console.log('虚拟登录成功，用户信息已获取');
-      message.success('自动登录成功')
+      if (!options?.silent) {
+        message.success('自动登录成功')
+      }
       return true;
     } catch (error) {
       console.error('虚拟登录失败:', error);

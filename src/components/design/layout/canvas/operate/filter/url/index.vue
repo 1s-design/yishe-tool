@@ -16,19 +16,16 @@
             {{ modelLabel }}
           </el-button>
         </template>
-        <div style="width: 760px">
+        <div class="filter-popover-panel">
           <template v-if="activeTab == Tab.BuiltIn">
             <el-row style="row-gap: 1rem">
               <el-col :span="24">
-                <div
-                  class="w-full flex justify-between items-center"
-                  style="padding: 0 1rem; height: 48px"
-                >
-                  <el-input
-                    v-model="searchInput"
-                    style="width: 240px"
-                    placeholder="关键字搜索"
-                  ></el-input>
+              <div class="filter-toolbar w-full flex justify-between items-center">
+                <el-input
+                  v-model="searchInput"
+                  class="filter-search-input"
+                  placeholder="关键字搜索"
+                ></el-input>
                   <el-tooltip content="禁用滤镜效果" placement="top">
                     <el-button link @click="removeCurrentFilter">
                       <el-icon size="16">
@@ -46,7 +43,7 @@
                     <el-scrollbar height="360px">
                       <el-row
                         v-if="withSearchFilter(category.children).length"
-                        style="row-gap: 0.6rem; margin: 1rem"
+                        class="filter-grid"
                       >
                         <el-col
                           v-for="item in withSearchFilter(category.children)"
@@ -57,7 +54,7 @@
                             :class="{ checked: filterIsChecked(item) }"
                             @click="useCurrentFiter(item)"
                           >
-                            <div class="preview-box" style="width: 100px; height: 100px">
+                            <div class="preview-box">
                               <div
                                 class="w-full h-full flex justify-center items-center"
                                 :style="{ filter: `url( #${item.filterId})` }"
@@ -262,10 +259,7 @@
 
           <el-row>
             <el-col :span="24">
-              <div
-                class="flex toolbar items-center"
-                style="column-gap: 1rem; height: 48px"
-              >
+              <div class="flex toolbar items-center filter-footer">
                 <!-- <template v-if="activeTab == Tab.BuiltIn">
                   <el-button :icon="Switch" size="small" @click="activeTab = Tab.Custom">
                     使用自定义高级滤镜
@@ -459,6 +453,31 @@ function useCurrentFiter(effect: SvgFilterCustomEffectType) {
 </script>
 
 <style scoped lang="less">
+.filter-popover-panel {
+  width: min(760px, calc(100vw - 40px));
+  max-width: 100%;
+}
+
+.filter-toolbar {
+  min-height: 44px;
+  padding: 0 12px;
+  gap: 10px;
+}
+
+.filter-search-input {
+  width: min(240px, 100%);
+}
+
+.filter-grid {
+  row-gap: 8px;
+  margin: 12px;
+}
+
+.filter-footer {
+  min-height: 44px;
+  column-gap: 10px;
+}
+
 .label {
   width: 64px;
   text-wrap: nowrap;
@@ -486,10 +505,12 @@ function useCurrentFiter(effect: SvgFilterCustomEffectType) {
 }
 
 .filter-item {
-  margin: 1rem 0;
-  row-gap: 1rem;
+  margin: 8px 0;
+  row-gap: 8px;
 
   .preview-box {
+    width: 88px;
+    height: 88px;
     overflow: hidden;
     transition: 0.1s;
     border-radius: 0.4rem;
@@ -506,6 +527,22 @@ function useCurrentFiter(effect: SvgFilterCustomEffectType) {
   }
 
   &:hover {
+  }
+}
+
+@media (max-width: 1080px) {
+  .filter-popover-panel {
+    width: min(680px, calc(100vw - 32px));
+  }
+
+  .filter-toolbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+  }
+
+  .filter-search-input {
+    width: 100%;
   }
 }
 </style>

@@ -18,7 +18,7 @@ import mainView from "./layout/main.vue";
 import { isDarkMode, isEdit, currentEditingModelInfo } from "./store";
 import { usePreventScreenResize } from "./composition/preventScreenResize";
 import { onBeforeRouteLeave, useRoute } from "vue-router";
-import { onBeforeMount, onMounted, ref } from "vue";
+import { onBeforeMount, onMounted, onBeforeUnmount, ref, watchEffect } from "vue";
 import { getModelById } from "@/api";
 import { useStats } from "@/common/use/stats";
 import { message, Modal } from "ant-design-vue";
@@ -45,6 +45,21 @@ function onbeforeunload(e) {
   return '关闭提示';
 }
 
+watchEffect(() => {
+  if (typeof document === "undefined") {
+    return;
+  }
+  document.body.classList.toggle("designiy-dark", isDarkMode.value);
+  document.body.classList.toggle("designiy-light", !isDarkMode.value);
+});
+
+onBeforeUnmount(() => {
+  if (typeof document === "undefined") {
+    return;
+  }
+  document.body.classList.remove("designiy-dark", "designiy-light");
+});
+
 onBeforeRouteLeave(async (to, from, next) => {
   await s1Confirm({
     content: "确认要离开当前页面吗",
@@ -61,8 +76,10 @@ onBeforeRouteLeave(async (to, from, next) => {
   height: 100%;
   position: relative;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: stretch;
+  align-items: stretch;
+  background: var(--1s-shell-background);
+  color: var(--1s-text-color);
 
   * {
     -webkit-user-drag: none;

@@ -1,6 +1,6 @@
 <template>
   <div class="content flex flex-col">
-    <el-form class="pt-8" label-width="84px" label-position="left" style="margin: 0 24px">
+    <el-form class="material-form pt-8" label-width="84px" label-position="left">
       <!-- 原始材质开关 -->
       <el-form-item label="原始材质">
         <div class="switch-container">
@@ -51,7 +51,7 @@
           <template v-if="currentModelController.state.material.textureInfo">
             <div>
               <s1-img
-                style="background: #f7f7f7; width: 200px; height: 200px"
+                class="texture-preview"
                 :src="currentModelController.state.material?.textureInfo?.url"
               ></s1-img>
               <el-button
@@ -239,8 +239,17 @@ watch(() => currentModelController.value, (controller) => {
 
 <style scoped lang="less">
 .content {
-  width: 360px;
+  width: 100%;
+  min-width: 0;
   height: 100%;
+  overflow: auto;
+}
+
+.material-form {
+  width: 100%;
+  margin: 0;
+  padding: 0 16px 16px;
+  box-sizing: border-box;
 }
 
 .color-item-wrapper {
@@ -271,11 +280,19 @@ watch(() => currentModelController.value, (controller) => {
 
 .color-label {
   font-size: 9px;
-  color: #999;
+  color: var(--1s-text-color-tertiary);
   text-align: center;
   line-height: 1.1;
   max-width: 50px;
   word-break: break-all;
+}
+
+.texture-preview {
+  width: min(100%, 200px);
+  height: min(100%, 200px);
+  background: var(--1s-control-surface-muted);
+  border: 1px solid var(--1s-control-border-color);
+  border-radius: 8px;
 }
 
 .switch-container {
@@ -300,7 +317,7 @@ watch(() => currentModelController.value, (controller) => {
   // 优化标签样式
   .el-switch__label {
     font-size: 8px;
-    color: #666;
+    color: var(--1s-control-text-muted);
     font-weight: 400;
     line-height: 1;
   }
@@ -316,7 +333,7 @@ watch(() => currentModelController.value, (controller) => {
 
 .switch-description {
   font-size: 8px;
-  color: #666;
+  color: var(--1s-control-text-muted);
   line-height: 1.2;
   margin-top: 2px;
 }
@@ -337,7 +354,7 @@ watch(() => currentModelController.value, (controller) => {
 
   .info-text {
     font-size: 9px;
-    color: #666;
+    color: var(--1s-control-text-muted);
     line-height: 1.2;
   }
 
@@ -346,6 +363,12 @@ watch(() => currentModelController.value, (controller) => {
     font-size: 9px;
     height: 20px;
     padding: 0 8px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .material-form {
+    padding-inline: 12px;
   }
 }
 </style>

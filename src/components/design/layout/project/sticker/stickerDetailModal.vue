@@ -14,24 +14,25 @@
     :destroyOnClose="true"
     @close="close"
     width="980px"
+    wrap-class-name="project-detail-modal"
   >
     <div class="flex">
       <s1-img
         :src="detailInfo.url"
-        style="width: 480px; height: 480px; flex-shrink: 0"
+        class="sticker-detail-image"
         @load="imgLoad"
       >
       </s1-img>
-      <div style="padding: 24px; row-gap: 12px" class="flex flex-col">
-        <h1>{{ detailInfo.name  }}</h1>
-        <h6>{{ detailInfo.description }}</h6>
-        <h6>{{ detailInfo.keywords }}</h6>
-        <h6>{{ detailInfo.updateTime }}</h6>
-        <div class="color-palette flex" style="column-gap: 12px">
+      <div class="sticker-detail-side flex flex-col">
+        <h1 class="sticker-detail-title">{{ detailInfo.name }}</h1>
+        <h6 class="sticker-detail-text">{{ detailInfo.description }}</h6>
+        <h6 class="sticker-detail-text">{{ detailInfo.keywords }}</h6>
+        <h6 class="sticker-detail-text sticker-detail-time">{{ detailInfo.updateTime }}</h6>
+        <div class="color-palette flex">
           <div
             v-for="color in colors"
             :key="color"
-            style="width: 24px; height: 24px; border-radius: 12px; cursor: pointer; border: 1px solid #eee;"
+            class="sticker-detail-color"
             :style="{ background: color }"
             @click="copyColor(color)"
             :title="'点击复制 ' + color"
@@ -88,4 +89,47 @@ async function imgLoad(img) {
 }
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.sticker-detail-image {
+  width: 480px;
+  height: 480px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1px solid var(--1s-control-border-color);
+  background: var(--1s-control-surface-muted);
+}
+
+.sticker-detail-side {
+  padding: 24px;
+  row-gap: 12px;
+  color: var(--project-text-primary, var(--1s-text-color));
+}
+
+.sticker-detail-title {
+  color: var(--project-text-primary, var(--1s-text-color));
+}
+
+.sticker-detail-text {
+  color: var(--project-text-secondary, var(--1s-text-color-secondary));
+  line-height: 1.6;
+}
+
+.sticker-detail-time {
+  color: var(--project-text-tertiary, var(--1s-text-color-tertiary));
+}
+
+.color-palette {
+  column-gap: 12px;
+  flex-wrap: wrap;
+  row-gap: 12px;
+}
+
+.sticker-detail-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid var(--1s-control-border-color);
+  box-shadow: var(--1s-shadow-sm);
+}
+</style>

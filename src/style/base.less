@@ -3,7 +3,7 @@ img::part(span) {
 }
 
 :root {
-    --1s-main: #6900ff;
+    --1s-main: var(--1s-accent-color, #2563eb);
 }
 
 @font-face {
@@ -28,10 +28,14 @@ html {
     height: 100%;
     font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
     font-size: 10px;
+    background: var(--1s-shell-background, #eef2f7);
+    color: var(--1s-text-color, #18202c);
 }
 
-
-
+body {
+    margin: 0;
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
 
 .text-ellipsis {
     overflow: hidden !important;
@@ -40,7 +44,8 @@ html {
 }
 
 .chess-background {
-    background-image: linear-gradient(45deg, #eee 25%, transparent 0, transparent 75%, #eee 0), linear-gradient(45deg, #eee 25%, transparent 0, transparent 75%, #eee 0)
+    background-color: var(--1s-checkerboard-base, #fdfefe);
+    background-image: linear-gradient(45deg, var(--1s-checkerboard-cell-dark, #e7ebf1) 25%, transparent 0, transparent 75%, var(--1s-checkerboard-cell-dark, #e7ebf1) 0), linear-gradient(45deg, var(--1s-checkerboard-cell-dark, #e7ebf1) 25%, transparent 0, transparent 75%, var(--1s-checkerboard-cell-dark, #e7ebf1) 0)
 }
 
 
@@ -77,8 +82,8 @@ input:-webkit-autofill:active {
 
 /* 模拟png背景 */
 .png-background {
-    background: #fff !important;
-    background-image: linear-gradient(45deg, #eee 25%, transparent 0, transparent 75%, #eee 0), linear-gradient(45deg, #eee 25%, transparent 0, transparent 75%, #eee 0) !important;
+    background: var(--1s-checkerboard-base, #fdfefe) !important;
+    background-image: linear-gradient(45deg, var(--1s-checkerboard-cell-dark, #e7ebf1) 25%, transparent 0, transparent 75%, var(--1s-checkerboard-cell-dark, #e7ebf1) 0), linear-gradient(45deg, var(--1s-checkerboard-cell-dark, #e7ebf1) 25%, transparent 0, transparent 75%, var(--1s-checkerboard-cell-dark, #e7ebf1) 0) !important;
     background-position: 0 0, 10px 10px !important;
     background-size: 20px 20px !important;
 }
@@ -89,8 +94,8 @@ input:-webkit-autofill:active {
 
 
 .mini-png-background {
-    background-image: linear-gradient(45deg, #ccc 25%, transparent 0, transparent 75%, #ccc 0, #ccc), linear-gradient(45deg, #ccc 25%, transparent 0, transparent 75%, #ccc 0, #ccc);
-    background-image: linear-gradient(45deg, var(--checkerboard-pattern_color, #ccc) 25%, transparent 0, transparent 75%, var(--checkerboard-pattern_color, #ccc) 0, var(--checkerboard-pattern_color, #ccc)), linear-gradient(45deg, var(--checkerboard-pattern_color, #ccc) 25%, transparent 0, transparent 75%, var(--checkerboard-pattern_color, #ccc) 0, var(--checkerboard-pattern_color, #ccc));
+    background-color: var(--1s-checkerboard-base, #fdfefe);
+    background-image: linear-gradient(45deg, var(--checkerboard-pattern_color, var(--1s-checkerboard-cell-mini-dark, #d7dee8)) 25%, transparent 0, transparent 75%, var(--checkerboard-pattern_color, var(--1s-checkerboard-cell-mini-dark, #d7dee8)) 0, var(--checkerboard-pattern_color, var(--1s-checkerboard-cell-mini-dark, #d7dee8))), linear-gradient(45deg, var(--checkerboard-pattern_color, var(--1s-checkerboard-cell-mini-dark, #d7dee8)) 25%, transparent 0, transparent 75%, var(--checkerboard-pattern_color, var(--1s-checkerboard-cell-mini-dark, #d7dee8)) 0, var(--checkerboard-pattern_color, var(--1s-checkerboard-cell-mini-dark, #d7dee8)));
     background-position: 0 0, 4px 4px;
     background-size: 8px 8px;
 }

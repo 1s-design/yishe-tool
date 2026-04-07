@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col min-h-screen">
+  <div class="project-page flex flex-col min-h-screen">
     <div class="flex-1 relative">
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full mx-auto p-4">
         <div
@@ -10,7 +10,7 @@
             padding="5%"
             :src="item.thumbnail"
             @click="itemClick(item)"
-            class="w-[240px] !h-[180px] rounded-lg bg-[#f6f6f6] flex-shrink-0"
+            class="project-thumb w-[240px] !h-[180px] rounded-lg flex-shrink-0"
           >
             <s1-icon
               v-if="item.uploader?.isAdmin"
@@ -24,15 +24,15 @@
               {{ item.name || "未命名" }}
             </div>
             <div class="flex items-center gap-2">
-              <div class="label-tag" v-if="item.isPublic">已共享</div>
+              <div class="project-tag project-tag--accent" v-if="item.isPublic">已共享</div>
               <div
-                class="label-tag"
+                class="project-tag"
                 v-if="item?.uploader?.account == loginStore.userInfo?.account"
               >
                 我
               </div>
             </div>
-            <div class="timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
+            <div class="project-timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
             <div class="flex-1"></div>
 
             <a-dropdown trigger="click">
@@ -57,7 +57,7 @@
           </div>
         </div>
       </div>
-      <div v-if="loading" class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center">
+      <div v-if="loading" class="project-loading-overlay absolute inset-0 flex items-center justify-center">
         <el-icon class="animate-spin text-2xl"><Loading /></el-icon>
       </div>
       <s1-empty v-if="isEmpty">
@@ -65,7 +65,7 @@
       </s1-empty>
     </div>
     
-    <div class="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-4">
+    <div class="project-footer sticky bottom-0 left-0 right-0 py-4">
       <div class="mx-auto flex justify-end">
         <el-pagination
           v-model:current-page="currentPage"
@@ -262,20 +262,4 @@ async function ok() {
   min-height: 36px;
 }
 
-.label-tag {
-  background-color: #ccc;
-  color: #fff;
-  border-radius: 2px;
-  padding: 1px 2px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-.timeago {
-  font-size: 0.9rem;
-  color: #999;
-  font-weight: bold;
-  white-space: nowrap;
-}
 </style>

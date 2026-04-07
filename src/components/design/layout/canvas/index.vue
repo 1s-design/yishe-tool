@@ -5,7 +5,7 @@
       v-if="!showMainCanvas"
       v-loading="renderingLoading"
       v-bind="loadingOptions"
-      class="canvas-container"
+      class="canvas-container mini-png-background"
     >
       <canvass></canvass>
       <div class="canvas-container-bottom-menu">
@@ -477,20 +477,22 @@ function genSticker() {
 }
 
 .container {
-  width: 360px;
+  width: 100%;
+  min-width: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
 }
 
 .canvas-container {
-  width: 320px;
-  height: 320px;
+  width: min(100%, 320px);
+  height: min(320px, calc(100vw - 48px));
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 10px;
+  margin: 8px;
   position: relative;
   overflow: hidden;
 

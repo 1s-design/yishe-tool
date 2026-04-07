@@ -1,48 +1,45 @@
 <template>
   <loading v-if="isFirstPageLoading"></loading>
 
-  <div
-    id="layout-container"
-    style="width: 100%; height: 100%; display: flex; flex-direction: column"
-  >
-    <div id="layout-header" style="height: var(--1s-header-height)">
-      <div v-if="showHeader" style="width: 100%; height: 100%; display: flex">
+  <div id="layout-container" class="design-layout" :class="{ 'has-header': showHeader }">
+    <div v-if="showHeader" id="layout-header" class="design-layout__header">
+      <div class="design-layout__header-inner">
         <header-menu />
       </div>
     </div>
 
-    <div
-      id="layout-body"
-      style="display: flex; height: calc(100% - var(--1s-header-height))"
-    >
-      <div id="layout-left-menu" style="height: 100%; border-right: 1px solid #f3f3f3">
-        <left-menu v-if="showLeftMenu"></left-menu>
+    <div id="layout-body" class="design-layout__body">
+      <div v-if="showLeftMenu" id="layout-left-menu" class="design-layout__rail">
+        <left-menu></left-menu>
       </div>
 
-      <div id="layout-left" style="height: 100%; display: flex">
-        <div style="height: 100%">
+      <div v-if="leftComponent" id="layout-left" class="design-layout__panel design-layout__panel--left">
+        <div class="design-layout__panel-scroll">
           <keep-alive include="sticker">
             <component :is="leftComponent"></component>
           </keep-alive>
         </div>
       </div>
 
-      <div id="layout-canvas" style="display: flex; flex-direction: column; height: 100%">
+      <div id="layout-canvas" class="design-layout__canvas">
         <!-- 截屏组件 -->
         <screenshot ref="screenshotInstance"></screenshot>
 
         <!-- 画布区域 -->
-        <div style="flex: 1; position: relative; min-height: 0" class="threejs-canvas-container-container">
+        <div
+          ref="canvasViewportRef"
+          class="design-layout__canvas-stage threejs-canvas-container-container"
+          :class="{ 'design-layout__canvas-stage--main-canvas': showMainCanvas }"
+        >
           <div
             v-if="isDesign3DEnabled"
             v-show="shouldShowThreeCanvas"
             class="threejs-canvas-container"
-            ref="canvasContainerRef"
             :style="canvasContainerStyle"
           >
             <div
               id="threejs-canvas"
-              style="width: 100%"
+              class="design-layout__three-canvas"
               ref="mountContainer"
               :style="{ background: currentCanvasBackground?.backgroundCss }"
             ></div>
@@ -52,7 +49,7 @@
               <el-select
                 v-model="selectedAspectRatio"
                 size="small"
-                style=" font-size: 12px; width: 100%;"
+                class="aspect-ratio-selector__control"
                 @change="updateAspectRatio"
               >
                 <el-option
@@ -67,22 +64,19 @@
 
           <basic-canvas
             v-show="showMainCanvas"
-            style="width: 100%; height: 100%; z-index: 3"
+            class="design-layout__basic-canvas"
             ref="basicCanvasRef"
           ></basic-canvas>
         </div>
 
         <!-- 底部菜单 -->
-        <div
-          v-if="showBottomMenu"
-          style="height: var(--1s-bottom-menu-height); flex-shrink: 0"
-        >
+        <div v-if="showBottomMenu" class="design-layout__bottom">
           <bottom-menu></bottom-menu>
         </div>
       </div>
 
-      <div id="layout-right" style="display: flex" v-if="rightComponent">
-        <div style="height: 100%">
+      <div v-if="rightComponent" id="layout-right" class="design-layout__panel design-layout__panel--right">
+        <div class="design-layout__panel-scroll">
           <component :is="rightComponent"></component>
         </div>
       </div>
@@ -325,11 +319,11 @@ const rightComponent = computed(() => {
 // 挂载容器
 const mountContainer = ref();
 
-// 画布容器引用
-const canvasContainerRef = ref();
+// 画布可用区域引用
+const canvasViewportRef = ref();
 
 // 使用useElementSize获取容器尺寸
-const { width: containerWidth, height: containerHeight } = useElementSize(canvasContainerRef);
+const { width: containerWidth, height: containerHeight } = useElementSize(canvasViewportRef);
 
 // 比例选择相关
 const aspectRatioOptions = [
@@ -352,14 +346,18 @@ const updateAspectRatio = () => {
 
 // 计算画布容器样式：根据选择的比例计算宽度
 const canvasContainerStyle = computed(() => {
-  const height = containerHeight.value;
-  const width = height * selectedAspectRatio.value; // 根据比例计算宽度
+  const height = Math.max(containerHeight.value - 2, 160);
+  const width = Math.min(
+    height * selectedAspectRatio.value,
+    Math.max(containerWidth.value - 24, 180)
+  );
   
   return {
     position: 'relative' as const,
     height: '100%',
     width: `${width}px`,
-    margin: '0 auto', // 居中显示
+    maxWidth: '100%',
+    margin: '0 auto',
     display: 'flex',
     justifyContent: 'center'
   };
@@ -378,7 +376,7 @@ onMounted(async () => {
   } else {
     menuState.value.activeMenu = menuItems.canvas;
   }
-  await Utils.sleep(1200);
+  await nextTick();
   isFirstPageLoading.value = false;
   // 抛出页面加载完成事件
   const designPageLoadedBus = useEventBus("design-page-loaded");
@@ -459,51 +457,140 @@ async function initAction() {
 </script>
 
 <style lang="less">
-#threejs-canvas {
-  overflow: hidden;
+.design-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--1s-shell-background);
+  color: var(--1s-text-color);
+}
+
+.design-layout__header {
+  z-index: 11;
+  flex-shrink: 0;
+  height: var(--1s-header-height);
+  border-bottom: 1px solid var(--1s-border-color);
+  background: var(--1s-surface-background);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.design-layout__header-inner {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+}
+
+.design-layout__body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.design-layout__rail {
+  width: var(--1s-left-menu-width);
+  flex-shrink: 0;
+  border-right: 1px solid var(--1s-border-color-strong);
+  background: var(--1s-left-menu-background-color);
+}
+
+.design-layout__panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  background: var(--1s-panel-background);
+}
+
+.design-layout__panel--left {
+  width: var(--1s-left-panel-width);
+  flex-shrink: 0;
+  border-right: 1px solid var(--1s-border-color);
+}
+
+.design-layout__panel--right {
+  width: var(--1s-right-panel-width);
+  flex-shrink: 0;
+  border-left: 1px solid var(--1s-border-color);
+  box-shadow: -1px 0 0 rgba(15, 23, 42, 0.03);
+  z-index: 4;
+}
+
+.design-layout__panel-scroll {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.design-layout__panel-scroll > * {
+  width: 100%;
+  min-width: 0;
 }
 
 #layout-canvas {
-  height: 100%;
-  flex: 1;
   position: relative;
-  overflow: hidden;
   display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   flex-direction: column;
+  overflow: hidden;
 }
 
-#layout-header {
-  z-index: 11;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px;
+.design-layout__canvas-stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--1s-canvas-stage-padding);
+  background-color: var(--1s-canvas-stage-background);
+  background-image:
+    linear-gradient(var(--1s-grid-line-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--1s-grid-line-color) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
+.design-layout__canvas-stage--main-canvas {
+  padding: 0;
+}
+
+.threejs-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.design-layout__three-canvas,
 #threejs-canvas {
   position: absolute;
-  top: 20px;
-  left: 0;
-  right: 0;
-  bottom: 20px;
+  inset: var(--1s-canvas-inner-gap);
   z-index: 1;
-  border: 2px solid rgba(105, 0, 255, 0.4);
-  box-shadow: 0 0 20px rgba(105, 0, 255, 0.25);
-  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--1s-accent-color-soft);
+  border-radius: var(--1s-radius-md);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
-#basics-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 2;
+.design-layout__basic-canvas {
+  width: 100%;
+  height: 100%;
+  z-index: 3;
 }
 
-#layout-left {
-  box-shadow: 1px 0px 0px 0px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #eee;
-}
-
-#layout-right {
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 2px 0px;
-  z-index: 4;
+.design-layout__bottom {
+  display: flex;
+  height: var(--1s-bottom-menu-height);
+  flex-shrink: 0;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 12px;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.06), transparent);
 }
 
 .bg-transparent {
@@ -512,42 +599,60 @@ async function initAction() {
 
 .auto-width-modal {
   .ant-modal {
-    min-width: 360px;
+    min-width: 320px;
     width: auto !important;
   }
+
   .ant-modal-content {
     width: fit-content;
-    min-width: 360px;
+    min-width: 320px;
   }
 }
 
 .aspect-ratio-selector {
-  display: inline-block;
   position: absolute;
-  bottom: 6px;
-  left: 6px;
+  bottom: 10px;
+  left: 10px;
   z-index: 10;
-  padding: 1px;
-  border-radius: 2px;
-  width: 120px;
+  width: 112px;
+  border: 1px solid var(--1s-border-color);
+  border-radius: var(--1s-radius-sm);
+  background: var(--1s-elevated-background);
+  box-shadow: var(--1s-shadow-sm);
+  overflow: hidden;
 }
 
-.threejs-canvas-container-container {
-  background-image: 
-    linear-gradient(rgba(200, 200, 200, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(200, 200, 200, 0.3) 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-color: #f8f8f8;
-}
-
-
-.threejs-canvas-container {
-  position: relative;
+.aspect-ratio-selector__control {
   width: 100%;
-  height: 100%;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  box-sizing: border-box;
+  font-size: 11px;
+}
+
+@media (max-width: 1366px) {
+  .design-layout__canvas-stage {
+    background-size: 18px 18px;
+  }
+
+  .aspect-ratio-selector {
+    width: 104px;
+    bottom: 8px;
+    left: 8px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .design-layout__canvas-stage {
+    background-size: 16px 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .design-layout__bottom {
+    padding: 0 8px;
+  }
+
+  .aspect-ratio-selector {
+    width: 96px;
+  }
 }
 </style>
 

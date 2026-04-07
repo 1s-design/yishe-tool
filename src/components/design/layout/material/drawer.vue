@@ -201,7 +201,7 @@ onMounted(() => {
   .current-material-label {
     margin-right: 8px;
     font-size: 14px;
-    color: #666;
+    color: var(--1s-control-text-muted);
   }
   
   .current-material-image {
@@ -231,15 +231,16 @@ onMounted(() => {
   gap: 12px;
   padding: 12px;
   border-radius: 8px;
-  background: #fafafa;
+  background: var(--1s-control-surface-background);
+  border: 1px solid var(--1s-control-border-color);
   transition: all 0.2s ease;
   width: 100%;
   box-sizing: border-box;
   
   &:hover {
-    background: #f0f0f0;
+    background: var(--1s-control-hover-background);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--1s-control-focus-ring);
   }
 }
 
@@ -248,10 +249,11 @@ onMounted(() => {
 }
 
 .material-thumbnail {
-  background: #f7f7f7;
+  background: var(--1s-control-surface-muted);
   height: 80px;
   width: 80px;
   border-radius: 8px;
+  border: 1px solid var(--1s-control-border-color);
 }
 
 .material-info-section {
@@ -269,7 +271,7 @@ onMounted(() => {
   
   .material-name {
     margin: 0 0 4px 0;
-    color: #333;
+    color: var(--1s-text-color);
     font-size: 14px;
     font-weight: 500;
     line-height: 1.4;
@@ -280,7 +282,7 @@ onMounted(() => {
   
   .material-description {
     margin: 0;
-    color: #666;
+    color: var(--1s-control-text-muted);
     font-size: 12px;
     line-height: 1.4;
     display: -webkit-box;
@@ -300,13 +302,13 @@ onMounted(() => {
 .empty-state {
   text-align: center;
   padding: 20px;
-  color: #999;
+  color: var(--1s-text-color-tertiary);
 }
 
 .pagination-section {
   padding: 12px 12px 4px 12px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--1s-border-color);
   flex-shrink: 0;
-  background: #fff;
+  background: var(--1s-surface-background);
 }
-</style> 
+</style>

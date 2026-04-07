@@ -8,7 +8,7 @@
  * 
  * Copyright (c) 2024 by 1s, All Rights Reserved. 
  */
-import { useLoginStatusStore } from "@/store/stores/login";
+import { normalizeTokenValue, useLoginStatusStore } from "@/store/stores/login";
 import { ElMessage } from 'element-plus'
 import { message } from 'ant-design-vue'
 import { doLogout } from "@/store/stores/loginAction";
@@ -143,18 +143,18 @@ export const tokenResponseInterceptor = (response) => {
   
   // 优先从响应头获取token
   if (response.headers.authorization) {
-    loginStore.token = response.headers.authorization
-    console.log('🔑 从响应头获取token:', response.headers.authorization);
+    loginStore.token = normalizeTokenValue(response.headers.authorization)
+    console.log('🔑 从响应头获取token:', loginStore.token);
   }
   // 如果响应头没有token，尝试从响应体获取
   else if (response.data && response.data.data && response.data.data.token) {
-    loginStore.token = response.data.data.token
-    console.log('🔑 从响应体获取token:', response.data.data.token);
+    loginStore.token = normalizeTokenValue(response.data.data.token)
+    console.log('🔑 从响应体获取token:', loginStore.token);
   }
   // 兼容旧的响应结构
   else if (response.data && response.data.token) {
-    loginStore.token = response.data.token
-    console.log('🔑 从响应体获取token(旧结构):', response.data.token);
+    loginStore.token = normalizeTokenValue(response.data.token)
+    console.log('🔑 从响应体获取token(旧结构):', loginStore.token);
   }
   
   return response;
@@ -162,7 +162,9 @@ export const tokenResponseInterceptor = (response) => {
 
 export const tokenRequestInterceptor = (request) => {
   let loginStore = useLoginStatusStore();
-  console.log('🔑 tokenRequestInterceptor被调用，当前token:', loginStore.token);
+  const normalizedToken = normalizeTokenValue(loginStore.token)
+  loginStore.token = normalizedToken
+  console.log('🔑 tokenRequestInterceptor被调用，当前token:', normalizedToken);
   console.log('🔑 请求URL:', request.url);
 
   const currentUserId = loginStore.userInfo?.id ? String(loginStore.userInfo.id) : '';
@@ -170,8 +172,10 @@ export const tokenRequestInterceptor = (request) => {
     request.data = appendOwnership(request.data, currentUserId);
   }
 
-  if (loginStore.token) {
-    request.headers.authorization = `Bearer ${loginStore.token}`;
+  request.headers = request.headers || {}
+
+  if (normalizedToken) {
+    request.headers.authorization = `Bearer ${normalizedToken}`;
     console.log('🔑 请求头设置token:', request.headers.authorization);
     console.log('🔑 完整请求头:', request.headers);
   } else {

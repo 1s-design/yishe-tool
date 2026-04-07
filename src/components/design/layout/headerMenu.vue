@@ -11,10 +11,9 @@
 <template>
   <div class="designiy-header">
     <div
-      class="designiy-header-logo flex items-center justify-center shrink-0"
-      style="width: 64px; height: 100%"
+      class="designiy-header__brand flex items-center justify-center shrink-0"
     >
-      <img src="/favicon.png" style="height: 32px; object-fit: contain;" />
+      <img src="/favicon.png" class="designiy-header__brand-logo" />
     </div>
 
     <template v-if="isEdit">
@@ -24,9 +23,9 @@
       </div>
     </template>
 
-    <div style="flex-grow: 1"></div>
+    <div class="designiy-header__spacer"></div>
 
-    <a-button size="small" type="text"> 快速指南 </a-button>
+    <a-button size="small" type="text" class="header-link">快速指南</a-button>
 
     <!-- 连接状态显示 (已移除) -->
     
@@ -35,33 +34,21 @@
         素材上传
       </el-button> -->
 
-      <el-tooltip :content="showThreeCanvas ? '点击关闭3D画布' : '点击开启3D画布'" placement="bottom">
-        <el-switch
-          v-model="showThreeCanvas"
-          inline-prompt
-          active-text="3D"
-          inactive-text="3D"
-          :active-icon="View"
-          :inactive-icon="Hide"
-          class="three-canvas-switch"
-        />
-      </el-tooltip>
-
       <el-switch
         v-model="isDarkMode"
         inline-prompt
-        style="--el-switch-off-color: #bbb"
-        active-text="夜间"
-        inactive-text="白天"
+        style="--el-switch-off-color: var(--1s-border-color-strong)"
+        active-text="夜"
+        inactive-text="昼"
         class="theme-switch"
       />
 
-      <el-button type="primary" @click="showSaveModel = true" round class="save-btn" :icon="Download">
+      <el-button type="primary" size="small" @click="showSaveModel = true" class="save-btn" :icon="Download">
         <span>保存</span>
       </el-button>
     </div>
     <user-avatar v-if="loginStatusStore.isLogin" />
-    <el-button @click="login" v-else round type="primary"> 登 录 </el-button>
+    <el-button @click="login" v-else type="primary" size="small" class="login-btn">登录</el-button>
   </div>
 </template>
 
@@ -83,11 +70,10 @@ import {
   isEdit,
   currentEditingModelId,
   exitEditMode,
-  showThreeCanvas,
 } from "../store";
 
 import { openFileModal } from "@/components/design/layout/upload/index.tsx";
-import { Share, UploadFilled, Download, View, Hide } from "@element-plus/icons-vue";
+import { Share, UploadFilled, Download } from "@element-plus/icons-vue";
 import userAvatar from "@/components/user/userAvatar.vue";
 import headerMenuDropdown from "./headerMenuDropdown/index.vue";
 import { onShortcutTrigger } from "../shortcut/index";
@@ -164,22 +150,28 @@ function confirmExitEditMode() {
   display: flex;
   justify-content: start;
   align-items: center;
-  column-gap: 1rem;
-  padding-right: 1rem;
-  min-width: 0; // 防止flex子元素溢出
-  // background: #121212;
+  column-gap: var(--1s-control-gap);
+  padding: 0 10px 0 6px;
+  min-width: 0;
+  background: var(--1s-surface-background);
+  color: var(--1s-text-color);
 }
 
-.icon-btn {
-  --el-button-text-color: #bbb;
+.designiy-header__brand {
+  width: 44px;
+  height: 100%;
+  flex-shrink: 0;
 }
 
-.designiy-header-menu {
-  width: 64px;
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.designiy-header__brand-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.designiy-header__spacer {
+  flex: 1;
+  min-width: 0;
 }
 
 .edit-mode-info {
@@ -187,7 +179,7 @@ function confirmExitEditMode() {
   
   .model-id-text {
     font-size: 10px;
-    color: #666;
+    color: var(--1s-text-color-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -195,9 +187,16 @@ function confirmExitEditMode() {
   }
 }
 
+.header-link {
+  padding-inline: 4px;
+  font-size: 10px;
+  color: var(--1s-text-color-secondary);
+}
+
 .header-actions {
   min-width: 0;
   flex-wrap: nowrap;
+  gap: 6px;
   
   .action-btn {
     white-space: nowrap;
@@ -211,9 +210,26 @@ function confirmExitEditMode() {
     flex-shrink: 0;
   }
   
-  .save-btn {
+  .save-btn,
+  .login-btn {
     flex-shrink: 0;
   }
+}
+
+.save-btn,
+.login-btn {
+  min-width: 50px;
+  padding-inline: 10px;
+}
+
+:deep(.el-switch) {
+  --el-switch-height: 18px;
+  --el-switch-width: 34px;
+  --el-switch-border-radius: 999px;
+}
+
+:deep(.el-switch__label) {
+  font-size: 9px;
 }
 
 // 响应式设计
@@ -221,10 +237,9 @@ function confirmExitEditMode() {
   .edit-mode-info .model-id-text {
     max-width: 150px;
   }
-  
-  .header-actions .action-btn {
-    padding: 8px 12px;
-    font-size: 13px;
+
+  .header-link {
+    display: none;
   }
 }
 
@@ -235,32 +250,21 @@ function confirmExitEditMode() {
   
   .header-actions {
     gap: 4px;
-    
-    .action-btn {
-      padding: 6px 10px;
-      font-size: 12px;
-    }
   }
 }
 
 @media (max-width: 800px) {
   .designiy-header {
-    column-gap: 0.5rem;
-    padding-right: 0.5rem;
+    padding: 0 8px 0 4px;
   }
   
   .edit-mode-info .model-id-text {
     max-width: 100px;
-    font-size: 12px;
+    font-size: 9px;
   }
   
   .header-actions {
     gap: 2px;
-    
-    .action-btn {
-      padding: 4px 8px;
-      font-size: 11px;
-    }
     
     .theme-switch,
     .three-canvas-switch {
@@ -272,24 +276,13 @@ function confirmExitEditMode() {
 @media (max-width: 600px) {
   .edit-mode-info {
     .model-id-text {
-      display: none; // 在很小屏幕上隐藏模型ID文本
+      display: none;
     }
   }
   
   .header-actions {
-    .action-btn {
-      padding: 4px 6px;
-      font-size: 10px;
-      min-width: 32px;
-      
-      // 隐藏按钮文字，只显示图标
-      span {
-        display: none;
-      }
-    }
-    
     .save-btn {
-      min-width: 32px;
+      min-width: 36px;
       
       span {
         display: none;
@@ -300,18 +293,16 @@ function confirmExitEditMode() {
 
 @media (max-width: 480px) {
   .designiy-header {
-    column-gap: 0.25rem;
-    padding-right: 0.25rem;
+    column-gap: 4px;
+    padding-right: 6px;
   }
   
   .header-actions {
     gap: 1px;
     
-    .action-btn,
     .save-btn {
-      padding: 3px 4px;
-      min-width: 28px;
-      height: 28px;
+      min-width: 32px;
+      padding-inline: 8px;
     }
     
     .theme-switch,

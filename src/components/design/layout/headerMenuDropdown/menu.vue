@@ -5,11 +5,13 @@
 </template>
 <script setup>
 </script>
-<style>
+<style lang="less">
 .designiy-dropdown-menu {
-  box-shadow: 0 0 20px rgba(100, 100, 100, 0.2);
-  background-color: #fff;
+  box-shadow: var(--1s-shadow-md);
+  background-color: var(--1s-elevated-background);
+  color: var(--1s-text-color);
+  border: 1px solid var(--1s-border-color);
   border-radius: 6px;
-  padding:10px 0;
+  padding: 10px 0;
 }
 </style>

@@ -3,7 +3,7 @@
         <template #icon> <icon-text-align></icon-text-align> </template>
         <template #name> 文字对齐 </template>
         <template #content>
-            <el-select v-model="model" size="small" style="width:180px">
+            <el-select v-model="model" size="small" class="operate-compact-select">
                 <el-option v-for="item in textAlignOptions" :key="item.value" :label="item.label" :value="item.value">
                     <span> {{ item.label }} </span>
                 </el-option>
@@ -38,5 +38,9 @@ const textAlignOptions = ref([
 
 </script> 
     
-<style></style>
+<style scoped>
+.operate-compact-select {
+  width: min(180px, 100%);
+}
+</style>
 

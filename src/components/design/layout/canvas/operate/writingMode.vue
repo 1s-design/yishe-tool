@@ -4,7 +4,7 @@
         <template #name> 排列方式 </template>
         <template #content>
             <el-tooltip content="英文和数字显示方向会有影响" :hide-after="0">
-                <el-select v-model="model" size="small" style="width:180px">
+                <el-select v-model="model" size="small" class="operate-compact-select">
                 <el-option v-for="item in writingModeOptions" :key="item.value" :label="item.label" :value="item.value">
                     <span> {{ item.label }} </span>
                 </el-option>
@@ -36,4 +36,8 @@ const writingModeOptions = ref([
 
 </script> 
     
-<style></style>
+<style scoped>
+.operate-compact-select {
+  width: min(180px, 100%);
+}
+</style>

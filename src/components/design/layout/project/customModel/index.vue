@@ -1,10 +1,10 @@
 <template>
-  <div class="flex flex-col min-h-screen">
+  <div class="project-page flex flex-col min-h-screen">
     <!-- 过滤器区域 -->
-    <div class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="project-toolbar px-4 py-3">
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-600">只看母版</span>
+          <span class="project-muted-text text-sm">只看母版</span>
           <el-switch 
             v-model="showTemplateOnly" 
             @change="handleFilterChange"
@@ -25,7 +25,7 @@
               @click="openDetail(item)"
               padding="5%"
               :src="item.thumbnail"
-              class="w-[240px] !h-[180px] rounded-lg bg-[#f6f6f6] flex-shrink-0"
+              class="project-thumb w-[240px] !h-[180px] rounded-lg flex-shrink-0"
             >
             </s1-image>
             <div class="template-corner-tag" v-if="item.isTemplate">母版</div>
@@ -35,9 +35,9 @@
               {{ item.name || "未命名" }}
             </div>
             <div class="flex items-center gap-2">
-              <div class="label-tag" v-if="item.isPublic">已共享</div>
+              <div class="project-tag project-tag--accent" v-if="item.isPublic">已共享</div>
             </div>
-            <div class="timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
+            <div class="project-timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
             <div class="flex-1"></div>
             <a-dropdown trigger="click">
               <el-button link>
@@ -64,7 +64,7 @@
           </div>
         </div>
       </div>
-      <div v-if="loading" class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center">
+      <div v-if="loading" class="project-loading-overlay absolute inset-0 flex items-center justify-center">
         <el-icon class="animate-spin text-2xl"><Loading /></el-icon>
       </div>
       <s1-empty v-if="isEmpty">
@@ -72,7 +72,7 @@
       </s1-empty>
     </div>
     
-    <div class="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-4">
+    <div class="project-footer sticky bottom-0 left-0 right-0 py-4">
       <div class="mx-auto flex justify-end">
         <el-pagination
           v-model:current-page="currentPage"
@@ -127,10 +127,10 @@
   >
     <div class="draft-modal-content">
       <div class="model-info mb-4">
-        <h3 class="text-lg font-medium mb-2">
+        <h3 class="project-section-title text-lg font-medium mb-2">
           模型：{{ currentModel?.name || currentModel?.id }}
         </h3>
-        <p v-if="currentModel?.description" class="text-color-regular">
+        <p v-if="currentModel?.description" class="project-muted-text">
           {{ currentModel.description }}
         </p>
       </div>
@@ -151,7 +151,7 @@
               v-if="draft.type !== 'video'"
               :src="draft.url" 
               fit="contain" 
-              class="w-full rounded-t-lg cursor-pointer bg-gray-50"
+              class="project-preview-surface w-full rounded-t-lg cursor-pointer"
               style="aspect-ratio: 4/3;"
               :preview-src-list="[draft.url]"
               :preview-teleported="true"
@@ -160,7 +160,7 @@
             <!-- 视频类型 -->
             <div 
               v-else
-              class="video-preview w-full rounded-t-lg cursor-pointer bg-gray-50"
+              class="project-preview-surface video-preview w-full rounded-t-lg cursor-pointer"
               style="aspect-ratio: 4/3;"
             >
               <video 
@@ -382,36 +382,20 @@ async function viewRelatedDrafts(model) {
   min-height: 36px;
 }
 
-.label-tag {
-  background-color: #ccc;
-  color: #fff;
-  border-radius: 2px;
-  padding: 1px 2px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
 .template-corner-tag {
   position: absolute;
   top: 8px;
   right: 8px;
-  background-color: #f39c12;
-  color: #fff;
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #f59e0b;
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 0.85rem;
   font-weight: bold;
   white-space: nowrap;
   z-index: 10;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-}
-
-.timeago {
-  font-size: 0.9rem;
-  color: #999;
-  font-weight: bold;
-  white-space: nowrap;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  box-shadow: var(--1s-shadow-sm);
 }
 
 .draft-modal-content {
@@ -430,13 +414,13 @@ async function viewRelatedDrafts(model) {
     overflow: hidden;
     transition: all 0.3s ease;
     background: var(--el-bg-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--1s-shadow-sm);
     display: flex;
     flex-direction: column;
     height: fit-content;
     
     &:hover {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      box-shadow: var(--1s-shadow-md);
       transform: translateY(-4px);
       border-color: var(--el-color-primary-light-7);
     }
@@ -501,7 +485,7 @@ async function viewRelatedDrafts(model) {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.38);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -511,7 +495,7 @@ async function viewRelatedDrafts(model) {
   }
   
   .video-icon {
-    color: white;
+    color: #fff;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 50%;
     width: 48px;
@@ -550,7 +534,8 @@ async function viewRelatedDrafts(model) {
   height: 100%;
   min-height: 400px;
   max-height: 70vh;
-  background: #f5f5f5;
+  background: var(--1s-control-surface-muted);
+  border: 1px solid var(--1s-control-border-color);
   border-radius: 8px;
   overflow: hidden;
   position: relative;

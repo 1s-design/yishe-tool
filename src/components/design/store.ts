@@ -85,7 +85,7 @@ export async function saveScreenshot() {
 
 
 // 是否为暗色模式
-export const isDarkMode = ref(false)
+export const isDarkMode = useLocalStorage('_1s_design_dark_mode', false)
 
 // 加载
 export const isFirstPageLoading = shallowRef(true);

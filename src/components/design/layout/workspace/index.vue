@@ -3,7 +3,7 @@
     <div class="info">
       <div class="preview">
         <base-gltf-viewer
-          style="flex-shrink: 0; background: #eee"
+          class="workspace-preview-viewer"
           :src="currentOperatingBaseModelInfo?.url"
         ></base-gltf-viewer>
       </div>
@@ -133,7 +133,8 @@ function clear() {
 </script>
 <style lang="less" scoped>
 .container {
-  width: 360px;
+  width: 100%;
+  min-width: 0;
   height: 100%;
   overflow: auto;
   display: flex;
@@ -150,6 +151,12 @@ function clear() {
   position: relative;
   width: 100%;
   height: 240px;
+}
+
+.workspace-preview-viewer {
+  flex-shrink: 0;
+  background: var(--1s-control-surface-muted);
+  border-radius: 8px;
 }
 
 .decal {
@@ -172,20 +179,22 @@ function clear() {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  background-color: #f9f9f9;
+  background-color: var(--1s-control-surface-background);
+  border: 1px solid var(--1s-control-border-color);
   column-gap: 1rem;
   padding: 1rem;
   border-radius: 0.4rem;
   transition: all 0.2s;
 
   &:hover {
-    box-shadow: rgba(115, 0, 255, 0.1) 0px 0px 0px 3px;
+    box-shadow: var(--1s-control-focus-ring);
     cursor: pointer;
   }
 }
 
 .active {
-  box-shadow: rgba(115, 0, 255, 0.3) 0px 0px 0px 3px !important;
+  box-shadow: 0 0 0 1px var(--1s-accent-color) !important;
+  border-color: var(--1s-accent-color);
 }
 
 .decal-item-image {
@@ -205,14 +214,14 @@ function clear() {
   text-overflow: ellipsis; //溢出用省略号显示
   white-space: nowrap; //溢出不换行
   font-size: 1em;
-  color: #555;
+  color: var(--1s-text-color);
 }
 
 .decal-item-content-desc {
   overflow: hidden; //超出的文本隐藏
   text-overflow: ellipsis; //溢出用省略号显示
   font-size: 0.9em;
-  color: #aaa;
+  color: var(--1s-text-color-tertiary);
 }
 
 .decal-item-bar {

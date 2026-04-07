@@ -1,58 +1,110 @@
 <template>
-  <div id="loading">
-    <span class="loader">1s.design</span>
+  <div class="design-loading-shell" role="status" aria-live="polite" aria-label="1s design tool 正在加载">
+    <div class="design-loading-shell__stage">
+      <div class="design-loading-shell__label">1S DESIGN TOOL</div>
+      <div class="design-loading-shell__text">
+        <p>Loading workspace</p>
+      </div>
+      <div class="design-loading-shell__caption">正在初始化设计工作区</div>
+    </div>
   </div>
 </template>
-<script setup>
-</script>
 
-<style>
-#loading {
+<style scoped>
+.design-loading-shell {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 999999;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  backdrop-filter: blur(6px);
-  background: rgba(255, 255, 255, .5);
+  justify-content: center;
+  padding: 24px;
+  background: var(--1s-loading-mask, rgba(243, 246, 251, 0.92));
+  box-sizing: border-box;
 }
 
+.design-loading-shell__stage {
+  display: flex;
+  width: min(100%, 320px);
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
 
-.loader {
-  font-size:32px;
-  display: inline-block;
-  font-style: italic;
-  font-family: ins;
-  color: #fff;
-  box-sizing: border-box;
-  text-shadow: 0 0 2px #FFF, 0 0 1px #FFF, 0 0 1px #FFF;
+.design-loading-shell__label {
+  color: var(--1s-loading-label, #6b7280);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+}
+
+.design-loading-shell__text {
+  display: flex;
+  align-items: center;
+  min-height: 1.5rem;
+}
+
+.design-loading-shell__text p {
   position: relative;
-}
-.loader::after {
-  content: '1s.design';
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: #6900ff;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
-  animation: animloader 1.2s linear infinite;
+  margin: 0;
+  color: var(--1s-text-color, #18202c);
+  font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  font-size: clamp(1rem, 1.4vw, 1.1rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
-@keyframes animloader {
+.design-loading-shell__text p::after {
+  position: absolute;
+  left: calc(100% + 0.08em);
+  color: var(--1s-text-color, #18202c);
+  content: "";
+  animation: design-loading-dots 2.2s infinite linear;
+}
+
+.design-loading-shell__caption {
+  color: var(--1s-loading-caption, #7c8695);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+@keyframes design-loading-dots {
   0% {
-    width: 0%;
+    content: "";
   }
-  90% {
-    width: 100%;
+
+  10% {
+    content: ".";
   }
+
+  40% {
+    content: "..";
+  }
+
+  70% {
+    content: "...";
+  }
+
   100% {
-    width: 100%;
+    content: "";
+  }
+}
+
+@media (max-width: 640px) {
+  .design-loading-shell {
+    padding: 20px;
+  }
+
+  .design-loading-shell__stage {
+    width: min(100%, 280px);
+    gap: 6px;
+  }
+
+  .design-loading-shell__text p {
+    font-size: 0.95rem;
   }
 }
 </style>

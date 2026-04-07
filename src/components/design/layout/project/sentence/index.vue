@@ -1,9 +1,9 @@
 <template>
-  <div class="flex flex-col min-h-screen">
+  <div class="project-page flex flex-col min-h-screen">
     <div class="flex-1 relative">
       <!-- 顶部操作栏 -->
-      <div class="flex justify-between items-center p-4 border-b border-gray-200">
-        <h2 class="text-lg font-semibold">句子管理</h2>
+      <div class="project-toolbar flex justify-between items-center p-4">
+        <h2 class="project-section-title text-lg font-semibold">句子管理</h2>
         <el-button type="primary" @click="showFormModal = true">
           <el-icon><Plus /></el-icon>
           添加句子
@@ -16,17 +16,17 @@
           <div
             v-for="item in list"
             :key="item.id"
-            class="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow min-h-[120px]"
+            class="project-card rounded-lg p-3 project-hover-lift min-h-[120px]"
           >
             <div class="flex justify-between items-start mb-2">
               <div class="flex-1">
-                <div class="text-xs text-gray-500 mb-1">
+                <div class="project-placeholder-text text-xs mb-1">
                   ID: {{ item.id }}
                 </div>
-                <div class="text-gray-800 leading-relaxed text-2xl font-medium min-h-[50px] mb-1">
+                <div class="project-section-title leading-relaxed text-2xl font-medium min-h-[50px] mb-1">
                   {{ item.content }}
                 </div>
-                <div v-if="item.description" class="text-gray-600 text-sm leading-relaxed">
+                <div v-if="item.description" class="project-muted-text text-sm leading-relaxed">
                   {{ item.description }}
                 </div>
               </div>
@@ -47,7 +47,7 @@
               </a-dropdown>
             </div>
             
-            <div class="flex justify-between items-center text-xs text-gray-500">
+            <div class="project-placeholder-text flex justify-between items-center text-xs">
               <span>创建: {{ Utils.time.timeago(item.createdAt) }}</span>
               <span>更新: {{ Utils.time.timeago(item.updatedAt) }}</span>
             </div>
@@ -56,7 +56,7 @@
       </div>
 
       <!-- 加载状态 -->
-      <div v-if="loading" class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center">
+      <div v-if="loading" class="project-loading-overlay absolute inset-0 flex items-center justify-center">
         <el-icon class="animate-spin text-2xl"><Loading /></el-icon>
       </div>
 
@@ -67,7 +67,7 @@
     </div>
     
     <!-- 分页 -->
-    <div class="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-4">
+    <div class="project-footer sticky bottom-0 left-0 right-0 py-4">
       <div class="mx-auto flex justify-end">
         <el-pagination
           v-model:current-page="currentPage"

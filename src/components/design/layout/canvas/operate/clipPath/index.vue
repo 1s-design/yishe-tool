@@ -12,7 +12,7 @@
                         {{ label }}
                     </el-button>
                 </template>
-                <div>
+                <div class="clip-path-popover-panel">
                     <template v-if="activeTab == Tab.Custom">
                         <Dragger @change="customChange"></Dragger>
                     </template>
@@ -27,7 +27,7 @@
                         </el-row> -->
                         <el-row>
                             <el-scrollbar height="300px">
-                                <el-col :span="24" style="width:480px;padding:1rem 2rem;">
+                                <el-col :span="24" class="clip-path-grid-wrap">
                                     <el-row class="w-full">
                                         <el-col :span="4" v-for="item in builtInClipPathList">
                                             <div class="flex flex-col items-center preview-item"
@@ -135,9 +135,19 @@ const model = defineModel({
 </script>
   
 <style lang="less" scoped>
+.clip-path-popover-panel {
+    width: min(480px, calc(100vw - 40px));
+    max-width: 100%;
+}
+
+.clip-path-grid-wrap {
+    width: 100%;
+    padding: 12px 16px;
+}
+
 .preview-item {
-    row-gap: 1rem;
-    padding: 1rem;
+    row-gap: 8px;
+    padding: 10px 8px;
     border-radius: .2rem;
     transition: all .2s;
 
@@ -148,7 +158,7 @@ const model = defineModel({
     .label {
         cursor: pointer;
         color: #666;
-        font-size: .9rem;
+        font-size: 11px;
         text-align: center;
     }
 }

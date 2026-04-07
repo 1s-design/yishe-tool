@@ -366,11 +366,20 @@ watch(
 <style scoped>
 .font-selector-wrapper {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
 }
 
 .font-select-button {
-  max-width: 200px;
+  flex: 1 1 120px;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .font-display-name {
@@ -400,10 +409,13 @@ watch(
   padding: 12px;
   margin-bottom: 0;
   flex-shrink: 0;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .font-search-wrapper .el-input {
   flex: 1;
+  min-width: min(320px, 100%);
 }
 
 .font-list-wrapper {
@@ -599,5 +611,11 @@ watch(
   flex-shrink: 0;
   width: 100%;
   background: #fff;
+}
+
+@media (max-width: 1080px) {
+  .font-search-wrapper .el-input {
+    min-width: 100%;
+  }
 }
 </style>

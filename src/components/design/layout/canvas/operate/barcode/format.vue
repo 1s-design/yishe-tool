@@ -3,7 +3,7 @@
     <template #icon> <icon></icon> </template>
     <template #name> 条形码格式 </template>
     <template #content>
-      <el-select v-model="model" size="small" style="width: 180px">
+      <el-select v-model="model" size="small" class="operate-compact-select">
         <template #label="{ label, value }">
           <span> {{ label }} </span>
         </template>
@@ -46,4 +46,8 @@ const barcodeFormatOptions = reactive([
 ]);
 </script>
 
-<style></style>
+<style scoped>
+.operate-compact-select {
+  width: min(180px, 100%);
+}
+</style>

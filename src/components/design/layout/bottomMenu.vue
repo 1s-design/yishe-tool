@@ -12,24 +12,24 @@
   <div class="designiy-bottom-menu">
     <el-tooltip :hide-after="0" content="拾色器" placement="top">
       <div>
-        <el-button link @click="openEyeDropper">
-          <BgColorsOutlined style="font-size: 16px" />
+        <el-button link class="bottom-menu-icon-button" @click="openEyeDropper">
+          <BgColorsOutlined class="bottom-menu-icon" />
         </el-button>
       </div>
     </el-tooltip>
 
     <el-tooltip :hide-after="0" content="保存当前模型截图" placement="top">
       <div>
-        <el-button link @click="takeshot">
-          <CameraOutlined style="font-size: 16px" />
+        <el-button link class="bottom-menu-icon-button" @click="takeshot">
+          <CameraOutlined class="bottom-menu-icon" />
         </el-button>
       </div>
     </el-tooltip>
 
     <el-tooltip :hide-after="0" content="查看所有截图" placement="top">
       <div>
-        <el-button link @click="showScreenshotDrawer = true">
-          <PictureOutlined style="font-size: 16px" />
+        <el-button link class="bottom-menu-icon-button" @click="showScreenshotDrawer = true">
+          <PictureOutlined class="bottom-menu-icon" />
         </el-button>
       </div>
     </el-tooltip>
@@ -40,23 +40,23 @@
       placement="top"
     >
       <div>
-        <el-button link @click="isFullScreen = !isFullScreen">
-          <ExpandOutlined style="font-size: 16px" />
+        <el-button link class="bottom-menu-icon-button" @click="isFullScreen = !isFullScreen">
+          <ExpandOutlined class="bottom-menu-icon" />
         </el-button>
       </div>
     </el-tooltip>
     <el-tooltip :hide-after="0" content="移除当前所有贴纸" placement="top">
       <div>
-        <el-button link @click="currentModelController.removeDecals()">
-          <DeleteOutlined style="font-size: 16px" />
+        <el-button link class="bottom-menu-icon-button" @click="currentModelController.removeDecals()">
+          <DeleteOutlined class="bottom-menu-icon" />
         </el-button>
       </div>
     </el-tooltip>
 
     <el-tooltip :hide-after="0" content="执行内置动画" placement="top">
       <div>
-        <el-button link @click="doBuiltInAnimations">
-          <VideoCameraOutlined style="font-size: 16px" />
+        <el-button link class="bottom-menu-icon-button" @click="doBuiltInAnimations">
+          <VideoCameraOutlined class="bottom-menu-icon" />
         </el-button>
       </div>
     </el-tooltip>
@@ -64,11 +64,11 @@
     <el-tooltip :hide-after="0" content="自动根据当前控制台生成模型" placement="top">
       <div>
         <el-button
-          style="box-shadow: 0 4px 15px 0 rgba(155, 0, 255, 0.2)"
+          class="bottom-menu-primary"
+          size="small"
           @click="autocreate"
           :icon="Grid"
-          round
-          color="#6900ff"
+          color="var(--1s-accent-color)"
         >
           自动生成
         </el-button>
@@ -153,25 +153,42 @@ function doBuiltInAnimations() {}
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 24px;
-  background-color: #fff;
-  border-radius: 32px 32px 0 0;
-  column-gap: 8px;
-  box-shadow: 0 10px 20px #0000001a;
+  padding: 0 12px;
+  background-color: var(--1s-elevated-background);
+  border: 1px solid var(--1s-border-color);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  column-gap: 4px;
+  box-shadow: var(--1s-shadow-sm);
 }
 
-.bottom-menu-item {
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.bottom-menu-icon-button {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px;
   color: var(--1s-icon-color);
+}
 
-  svg {
-    width: 14px;
-    height: 14px;
+.bottom-menu-icon {
+  font-size: 14px;
+}
+
+.bottom-menu-primary {
+  min-height: 28px;
+  padding-inline: 10px;
+  border: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .designiy-bottom-menu {
+    padding: 0 8px;
+    column-gap: 2px;
+  }
+
+  .bottom-menu-primary {
+    padding-inline: 8px;
+    font-size: 10px;
   }
 }
 </style>

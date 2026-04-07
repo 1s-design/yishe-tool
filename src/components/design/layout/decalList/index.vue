@@ -93,8 +93,10 @@ const decals = computed(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #fff;
-  box-shadow: rgba(0, 0, 0, 0.15) 0 0 16px;
+  background-color: var(--1s-elevated-background);
+  color: var(--1s-text-color);
+  box-shadow: var(--1s-shadow-md);
+  border: 1px solid var(--1s-border-color);
   height: 24px;
   width: 64px;
   border-radius: 8px;
@@ -103,7 +105,7 @@ const decals = computed(() => {
   left: calc(50% - 32px);
 
   &:hover {
-    background-color: #ddd;
+    background-color: var(--1s-control-hover-background);
   }
 }
 
@@ -119,15 +121,15 @@ const decals = computed(() => {
   height: 108px;
   width: 108px;
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.06);
-  background-color: #fff;
+  box-shadow: var(--1s-shadow-sm);
+  background-color: var(--1s-control-surface-background);
   border-radius: 8px;
-  border: 2px solid #eee;
+  border: 2px solid var(--1s-control-border-color);
   transition: all 0.3s;
   position: relative;
 
   &:hover {
-    border-color: #aaa;
+    border-color: var(--1s-accent-color);
   }
 }
 

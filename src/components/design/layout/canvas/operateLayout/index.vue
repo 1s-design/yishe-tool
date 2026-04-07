@@ -117,14 +117,55 @@ function remove(index) {
 }
 </style>
 <style scoped>
+.canvas-operate-form :deep(.operate-form-item-title),
+.canvas-operate-form :deep(.operate-form-item-content),
+.canvas-operate-form :deep(.el-button),
+.canvas-operate-form :deep(.el-input__inner),
+.canvas-operate-form :deep(.el-select__selected-item),
+.canvas-operate-form :deep(.el-radio__label),
+.canvas-operate-form :deep(.el-checkbox__label),
+.canvas-operate-form :deep(.el-switch__label),
+.canvas-operate-form :deep(.el-form-item__label) {
+  font-size: 0.92rem;
+}
+
+.canvas-operate-form :deep(.el-button) {
+  padding-inline: 8px;
+}
+
+.canvas-operate-form :deep(.el-input__wrapper),
+.canvas-operate-form :deep(.el-select__wrapper) {
+  min-height: 22px;
+}
+
+.canvas-operate-form :deep(.el-collapse-item__arrow) {
+  font-size: 11px;
+}
+
 :deep(.el-scrollbar__bar.is-vertical) {
   width: 4px;
 }
 
-
-
 :deep(.el-collapse-item__header) {
-  font-size: 1rem;
-  margin-left: 0.5em;
+  font-size: 0.92rem;
+  margin-left: 0.35em;
+}
+
+@media (max-width: 1080px) {
+  .canvas-operate-form :deep(.operate-form-item-title),
+  .canvas-operate-form :deep(.operate-form-item-content),
+  .canvas-operate-form :deep(.el-button),
+  .canvas-operate-form :deep(.el-input__inner),
+  .canvas-operate-form :deep(.el-select__selected-item),
+  .canvas-operate-form :deep(.el-radio__label),
+  .canvas-operate-form :deep(.el-checkbox__label),
+  .canvas-operate-form :deep(.el-switch__label),
+  .canvas-operate-form :deep(.el-form-item__label) {
+    font-size: 0.88rem;
+  }
+
+  .canvas-operate-form :deep(.el-button) {
+    padding-inline: 7px;
+  }
 }
 </style>

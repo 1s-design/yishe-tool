@@ -40,7 +40,7 @@
         @click="showBaseModelSelect = !showBaseModelSelect"
       >
         <desimage
-          style="width: 30px; height: 30px"
+          style="width: 24px; height: 24px"
           v-if="currentOperatingBaseModelInfo?.id"
           :src="currentOperatingBaseModelInfo.thumbnail"
         ></desimage>
@@ -196,60 +196,93 @@ function handleSpecialMenuClick(menuKey) {
 </script>
 <style lang="less">
 .menu-bar {
-  width: 64px;
+  width: var(--1s-left-menu-width);
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-radius: 2px;
-  row-gap: 4px;
+  row-gap: 2px;
   overflow: auto;
   background: var(--1s-left-menu-background-color);
-  padding: 16px 0;
+  padding: 10px 0 12px;
   box-sizing: border-box;
 }
 
 .menu-bar-item {
-  width: 64px;
-  height: 64px;
+  width: calc(var(--1s-left-menu-width) - 8px);
+  min-height: 56px;
+  padding: 7px 4px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   flex-shrink: 0;
-  color: #222;
-  border-bottom-right-radius: 18px;
-  border-top-right-radius: 18px;
+  color: var(--1s-left-menu-item-text-color);
+  border-radius: 10px;
+  transition: background-color 0.18s ease, color 0.18s ease;
 
   .menu-bar-item-icon {
     flex-shrink: 0;
-    padding: 6px;
+    padding: 4px;
     display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
   }
 
   span {
-    font-size: 8px;
+    margin-top: 2px;
+    font-size: 9px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    max-width: 50px;
-    font-weight: 900;
-    color: #666;
-    line-height: 16px;
+    max-width: calc(var(--1s-left-menu-width) - 10px);
+    font-weight: 500;
+    color: inherit;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+    word-break: break-word;
   }
 
   &:hover {
-    background: #eee;
+    background: var(--1s-left-menu-icon-hover-background-color);
   }
 }
 
 .menu-bar-item-focus {
-  background: #eee;
+  background: var(--1s-left-menu-item-active-background);
+  color: var(--1s-left-menu-item-text-active-color);
+}
+
+@media (max-width: 1080px) {
+  .menu-bar-item {
+    min-height: 52px;
+
+    span {
+      font-size: 8px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .menu-bar {
+    padding-top: 8px;
+  }
+
+  .menu-bar-item {
+    min-height: 48px;
+    padding: 5px 3px;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
 }
 </style>

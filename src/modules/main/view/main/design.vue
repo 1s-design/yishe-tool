@@ -26,20 +26,17 @@ onMounted(() => {
 .design-view-container{
   width: 100%;
   height: 100%;
-  background-color: #bbb;
+  background: var(--1s-shell-background, #eef2f7);
 }
 
-@padding: 0em;
-
 .design-view {
-  height: calc(100% - 2 * @padding);
-  width: calc(100% - 2 * @padding);
-  border-radius:.4em;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
-  background: #fff;
-  box-shadow: rgba(17, 17, 26, 0.1) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 8px 24px, rgba(17, 17, 26, 0.1) 0px 16px 48px;
+  background: transparent;
   display: flex;
-  margin: @padding;
   justify-content: center;
   align-items: center;
   user-select: none;

@@ -5,7 +5,7 @@
         </template>
         <template #name> {{ label }} </template>
         <template #content>
-            <el-select @change="change" v-model="model" size="small" style="width: 80px">
+            <el-select @change="change" v-model="model" size="small" class="operate-unit-select">
                 <template #label="{ value }">
                     {{ value }}
                 </template>
@@ -64,4 +64,8 @@ const absoluteSizeOptions = reactive([
 
 </script>
 
-<style></style>
+<style scoped>
+.operate-unit-select {
+  width: min(92px, 100%);
+}
+</style>

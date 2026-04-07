@@ -224,11 +224,19 @@ function handleSearchClear() {
 .image-selector-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
 }
 
 .image-select-button {
-  max-width: 200px;
+  flex: 1 1 120px;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .image-drawer-content {

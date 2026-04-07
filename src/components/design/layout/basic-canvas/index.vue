@@ -1,5 +1,5 @@
 <template>
-  <div id="basic-canvas" class="basic-canvas">
+  <div id="basic-canvas" class="basic-canvas png-background">
     <canvas-teleport></canvas-teleport>
   </div>
 </template>
@@ -13,12 +13,13 @@ import { useLoadingOptions } from "@/components/loading/index.tsx";
 
 <style scoped>
 #basic-canvas {
-  widows: 100%;
+  width: 100%;
   height: 100%;
 }
 
 .basic-canvas {
-  background: #eee;
+  width: 100%;
+  height: 100%;
 }
 
 

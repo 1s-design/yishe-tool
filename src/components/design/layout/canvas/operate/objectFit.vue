@@ -3,7 +3,7 @@
         <template #icon> 适 </template>
         <template #name> 图片适应 </template>
         <template #content>
-            <el-select v-model="model" size="small" style="width: 160px" clearable>
+            <el-select v-model="model" size="small" class="operate-compact-select" clearable>
                 <el-option v-for="item in objectFitOptions" :key="item.value" :label="item.label" :value="item.value">
                     <span> {{ item.label }} </span>
                 </el-option>
@@ -38,4 +38,8 @@ const objectFitOptions = ref([
 
 </script> 
         
-<style></style>
+<style scoped>
+.operate-compact-select {
+  width: min(160px, 100%);
+}
+</style>

@@ -8,7 +8,7 @@
  * 
  * Copyright (c) 2024 by 1s, All Rights Reserved. 
  */
-import { useLoginStatusStore } from "@/store/stores/login";
+import { normalizeTokenValue, useLoginStatusStore } from "@/store/stores/login";
 import router from "@/modules/main/router";
 import Api from '@/api'
 
@@ -53,7 +53,7 @@ export const doLoginAction = async (data, once = false) => {
   console.log('🔑 登录响应数据:', data);
   
   // 正确解析login响应结构：{ data: { token: "xxx" }, code: 0, status: true }
-  const token = data?.data?.token;
+  const token = normalizeTokenValue(data?.data?.token);
   
   console.log('🔑 登录成功，获取到token:', token);
   

@@ -15,7 +15,7 @@
                     </el-input>
                 </div>
                 
-                <div class="input-group" style="margin-left: 12px;">
+                <div class="input-group input-group--secondary">
                     <span class="label-text">高</span>
                     <el-input class="size-input" size="small" v-model.number="height.value" step="10" placeholder="高" type="number">
                         <template #suffix>
@@ -46,26 +46,51 @@ const height = defineModel<any>("height", { default: { value: 0 } });
 .size-inputs-wrapper {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    width: 100%;
+    min-width: 0;
 }
 
 .input-group {
     display: flex;
     align-items: center;
     gap: 4px;
+    flex: 0 1 auto;
+    min-width: 0;
     
     .label-text {
-        font-size: 12px;
+        font-size: 11px;
         color: #999;
+        flex-shrink: 0;
     }
 }
 
+.input-group--secondary {
+    margin-left: 0;
+}
+
 .size-input {
-    width: 90px;
+    width: 86px;
 }
 
 .unit-text {
-    font-size: 10px;
+    font-size: 9px;
     color: #ccc;
+}
+
+@media (max-width: 1080px) {
+    .size-input {
+        width: 82px;
+    }
+
+    .input-group {
+        gap: 3px;
+    }
+
+    .input-group .label-text {
+        font-size: 10px;
+    }
 }
 </style>
 

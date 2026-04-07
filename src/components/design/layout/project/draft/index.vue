@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col min-h-screen">
+  <div class="project-page flex flex-col min-h-screen">
     <div class="flex-1 relative">
       <div
         class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full mx-auto p-4"
@@ -9,30 +9,30 @@
           class="flex flex-col items-center justify-start h-[240px]"
         >
           <!-- 视频文件 -->
-          <div v-if="isVideo(item.url)" class="w-full !h-[180px] rounded-lg bg-[#f6f6f6] relative group">
+          <div v-if="isVideo(item.url)" class="project-thumb w-full !h-[180px] rounded-lg relative group">
             <video 
               class="w-full h-full object-contain"
               :src="item.url"
               controls
               controlsList="nodownload nofullscreen novolume"
             ></video>
-            <div class="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+            <div class="project-tag project-tag--danger absolute top-2 right-2">
               视频
             </div>
             <!-- 自定义模型标识 -->
             <div v-if="item.customModelId" class="absolute top-2 left-2">
-              <div class="bg-blue-500 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-lg cursor-help hover:bg-blue-600 transition-colors relative">
+              <div class="relation-badge relative">
                 模型关联
                 <!-- 悬停提示 -->
                 <div class="absolute top-full left-0 mt-2 opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:opacity-100">
-                  <div class="bg-gray-800 text-white px-3 py-2 rounded-lg text-sm shadow-lg whitespace-nowrap">
+                  <div class="project-tooltip-panel px-3 py-2 rounded-lg text-sm whitespace-nowrap">
                     <div class="font-medium mb-1">关联模型：</div>
-                    <div v-if="item.customModelInfo" class="text-blue-300">{{ item.customModelInfo.name }}</div>
-                    <div class="text-gray-400 text-xs mt-1">ID: {{ item.customModelId }}</div>
-                    <div v-if="item.customModelInfo?.description" class="text-gray-300 text-xs mt-1 max-w-48 break-words">
+                    <div v-if="item.customModelInfo" class="relation-model-name">{{ item.customModelInfo.name }}</div>
+                    <div class="project-placeholder-text text-xs mt-1">ID: {{ item.customModelId }}</div>
+                    <div v-if="item.customModelInfo?.description" class="project-muted-text text-xs mt-1 max-w-48 break-words">
                       {{ item.customModelInfo.description }}
                     </div>
-                    <div class="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-800"></div>
+                    <div class="project-tooltip-arrow"></div>
                   </div>
                 </div>
               </div>
@@ -43,22 +43,22 @@
             v-else
             padding="5%"
             :src="item.url"
-            class="w-[240px] !h-[180px] rounded-lg bg-[#f6f6f6] flex-shrink-0 relative group"
+            class="project-thumb w-[240px] !h-[180px] rounded-lg flex-shrink-0 relative group"
           >
             <!-- 自定义模型标识 -->
             <div v-if="item.customModelId" class="absolute top-2 left-2 z-10">
-              <div class="bg-blue-500 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-lg cursor-help hover:bg-blue-600 transition-colors relative">
+              <div class="relation-badge relative">
                 模型关联
                 <!-- 悬停提示 -->
                 <div class="absolute top-full left-0 mt-2 opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:opacity-100">
-                  <div class="bg-gray-800 text-white px-3 py-2 rounded-lg text-sm shadow-lg whitespace-nowrap">
+                  <div class="project-tooltip-panel px-3 py-2 rounded-lg text-sm whitespace-nowrap">
                     <div class="font-medium mb-1">关联模型：</div>
-                    <div v-if="item.customModelInfo" class="text-blue-300">{{ item.customModelInfo.name }}</div>
-                    <div class="text-gray-400 text-xs mt-1">ID: {{ item.customModelId }}</div>
-                    <div v-if="item.customModelInfo?.description" class="text-gray-300 text-xs mt-1 max-w-48 break-words">
+                    <div v-if="item.customModelInfo" class="relation-model-name">{{ item.customModelInfo.name }}</div>
+                    <div class="project-placeholder-text text-xs mt-1">ID: {{ item.customModelId }}</div>
+                    <div v-if="item.customModelInfo?.description" class="project-muted-text text-xs mt-1 max-w-48 break-words">
                       {{ item.customModelInfo.description }}
                     </div>
-                    <div class="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-800"></div>
+                    <div class="project-tooltip-arrow"></div>
                   </div>
                 </div>
               </div>
@@ -69,7 +69,7 @@
               {{ item.name || "未命名" }} {{ item.customModelId }}
             </div>
             <div class="flex-1"></div>
-            <div class="timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
+            <div class="project-timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
 
             <a-dropdown trigger="click">
               <el-button link>
@@ -93,7 +93,7 @@
       </div>
       <div
         v-if="loading"
-        class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center"
+        class="project-loading-overlay absolute inset-0 flex items-center justify-center"
       >
         <el-icon class="animate-spin text-2xl"><Loading /></el-icon>
       </div>
@@ -102,7 +102,7 @@
       </s1-empty>
     </div>
 
-    <div class="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-4">
+    <div class="project-footer sticky bottom-0 left-0 right-0 py-4">
       <div class="mx-auto flex justify-end">
         <el-pagination
           v-model:current-page="currentPage"
@@ -241,10 +241,33 @@ async function openRelatedModel(item) {
   min-height: 36px;
 }
 
-.timeago {
-  font-size: 0.9rem;
-  color: #999;
-  font-weight: bold;
-  white-space: nowrap;
+.relation-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.16);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  font-size: 10px;
+  font-weight: 600;
+  box-shadow: var(--1s-shadow-sm);
+  cursor: help;
 }
-</style> 
+
+.relation-model-name {
+  color: #93c5fd;
+}
+
+.project-tooltip-arrow {
+  position: absolute;
+  bottom: 100%;
+  left: 16px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid var(--1s-border-color);
+}
+</style>
