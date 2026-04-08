@@ -96,13 +96,14 @@
         style="font-weight: bold; color: rgba(255, 255, 255, 0.3); font-family: ins"
         :style="{ fontSize: width / 40 + 'px' }"
       >
-        Designed by {{ info?.uploader?.account || "anonymous" }} in 1s.design
+        Designed by {{ info?.uploader?.account || "anonymous" }} on {{ shareBrandName }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { publicAppConfig } from "@/config/public";
 import { ref, onMounted } from "vue";
 import { createCustomModelShareLink } from "./index.ts";
 import QRCodeStyling from "qr-code-styling";
@@ -122,6 +123,7 @@ let height = ref(props.width / 0.618);
 const qrcodeRef = ref();
 
 const targetRef = ref();
+const shareBrandName = publicAppConfig.shortName;
 
 onMounted(() => {
   let qr = new QRCodeStyling({

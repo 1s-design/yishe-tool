@@ -1,9 +1,12 @@
 <template>
-  <div class="project-page flex flex-col min-h-screen">
+  <div class="project-page flex flex-col min-h-full">
     <div class="flex-1 relative">
       <!-- 顶部操作栏 -->
-      <div class="project-toolbar flex justify-between items-center p-4">
-        <h2 class="project-section-title text-lg font-semibold">句子管理</h2>
+      <div class="project-toolbar flex justify-between items-center gap-4">
+        <div class="project-toolbar__heading">
+          <h2 class="project-section-title text-base font-semibold">句子管理</h2>
+          <div class="project-toolbar__caption">整理可复用文案，让创作时能快速调用。</div>
+        </div>
         <el-button type="primary" @click="showFormModal = true">
           <el-icon><Plus /></el-icon>
           添加句子
@@ -11,27 +14,27 @@
       </div>
 
       <!-- 句子列表 -->
-      <div class="p-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div class="p-3 pt-0">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           <div
             v-for="item in list"
             :key="item.id"
-            class="project-card rounded-lg p-3 project-hover-lift min-h-[120px]"
+            class="project-card sentence-card project-hover-lift min-h-[118px]"
           >
-            <div class="flex justify-between items-start mb-2">
+            <div class="flex justify-between items-start gap-3">
               <div class="flex-1">
-                <div class="project-placeholder-text text-xs mb-1">
+                <div class="project-placeholder-text text-[11px] mb-1">
                   ID: {{ item.id }}
                 </div>
-                <div class="project-section-title leading-relaxed text-2xl font-medium min-h-[50px] mb-1">
+                <div class="project-section-title sentence-card__content">
                   {{ item.content }}
                 </div>
-                <div v-if="item.description" class="project-muted-text text-sm leading-relaxed">
+                <div v-if="item.description" class="project-muted-text sentence-card__description">
                   {{ item.description }}
                 </div>
               </div>
               <a-dropdown trigger="click">
-                <el-button link>
+                <el-button link class="project-action-button">
                   <el-icon size="14">
                     <MoreFilled />
                   </el-icon>
@@ -47,7 +50,7 @@
               </a-dropdown>
             </div>
             
-            <div class="project-placeholder-text flex justify-between items-center text-xs">
+            <div class="project-placeholder-text sentence-card__meta">
               <span>创建: {{ Utils.time.timeago(item.createdAt) }}</span>
               <span>更新: {{ Utils.time.timeago(item.updatedAt) }}</span>
             </div>
@@ -57,7 +60,9 @@
 
       <!-- 加载状态 -->
       <div v-if="loading" class="project-loading-overlay absolute inset-0 flex items-center justify-center">
-        <el-icon class="animate-spin text-2xl"><Loading /></el-icon>
+        <div class="project-loading-overlay__spinner">
+          <el-icon class="animate-spin text-lg"><Loading /></el-icon>
+        </div>
       </div>
 
       <!-- 空状态 -->
@@ -67,7 +72,7 @@
     </div>
     
     <!-- 分页 -->
-    <div class="project-footer sticky bottom-0 left-0 right-0 py-4">
+    <div class="project-footer">
       <div class="mx-auto flex justify-end">
         <el-pagination
           v-model:current-page="currentPage"
@@ -289,10 +294,36 @@ onBeforeMount(() => {
 
 <style scoped lang="less">
 .sentence-card {
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-  }
+  padding: 12px 12px 10px;
+}
+
+.sentence-card__content {
+  min-height: 44px;
+  margin-bottom: 6px;
+  color: var(--project-text-primary);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.sentence-card__description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.sentence-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(226, 232, 240, 0.88);
+  font-size: 11px;
 }
 </style>

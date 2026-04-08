@@ -9,7 +9,7 @@
  * Copyright (c) 2023 by 1s, All Rights Reserved. 
  */
 
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 import alias from "@rollup/plugin-alias";
@@ -17,7 +17,6 @@ import { resolve } from 'path'
 import tailwindcss from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
 import Components from 'unplugin-vue-components/vite';
-import { VantResolver } from '@vant/auto-import-resolver';
 // 移动端扫码进入项目
 import { qrcode } from 'vite-plugin-qrcode';
 // 编译文件支持旧游览器
@@ -29,7 +28,10 @@ import AutoImport from "unplugin-auto-import/vite";
 
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const proxyTarget = env.VITE_PROXY_TARGET || "http://localhost:1520";
+
   const build = {
     outDir: 'www',
     assetsDir: './',
@@ -44,7 +46,7 @@ export default defineConfig(() => {
       // https dev
       // basicSsl(),
       Components({
-        resolvers: [VantResolver()],
+        dts: true,
       }),
       qrcode(),
       legacy(),
@@ -87,7 +89,7 @@ export default defineConfig(() => {
       port: 1522,
       proxy: {
         "/api": {
-          target: "http://localhost:1520",
+          target: proxyTarget,
           changeOrigin: true,
           secure: false, // 防止证书引发的
           rewrite: (path) => path.replace(/^\/api/, ""),
@@ -102,7 +104,7 @@ export default defineConfig(() => {
       },
     },
     define: {
-      '__DEV__': process.env.NODE_ENV !== 'production',
+      '__DEV__': mode !== 'production',
     }
   }
 });

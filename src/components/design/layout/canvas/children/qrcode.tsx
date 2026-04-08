@@ -11,6 +11,7 @@ import { parse } from 'gradient-parser'
 import { onCanvasChildSetup,onBeforeReturnRender } from './commonHooks.ts';
 
 import Utils from '@/common/utils'
+import { publicAppConfig } from '@/config/public'
 
 
 export const createDefaultCanvasChildQrcodeOptions = () => {
@@ -65,7 +66,7 @@ export const createDefaultCanvasChildQrcodeOptions = () => {
             type: 'pure'
         },
         backgroundUnit: canvasUnit,
-        qrcodeContent: '1s.design',
+        qrcodeContent: publicAppConfig.defaultQrCodeContent,
         borderRadius: {
             leftTop: {
                 value: 0,

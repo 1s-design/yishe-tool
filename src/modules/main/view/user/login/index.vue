@@ -10,15 +10,12 @@
 -->
 <template>
   <div class="login-container">
-    <password-login v-if="loginType == LoginType.PASSWORD"></password-login>
-    <qrcode-login v-else></qrcode-login>
+    <password-login></password-login>
   </div>
 </template>
 
 <script setup>
 import passwordLogin from "./passwordLogin.vue";
-import qrcodeLogin from "./qrcodeLogin.vue";
-import { loginType, LoginType } from "./index.tsx";
 </script>
 
 <style>

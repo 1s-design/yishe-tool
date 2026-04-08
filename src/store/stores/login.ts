@@ -76,21 +76,17 @@ export const useLoginStatusStore = defineStore("login_status", () => {
     loginStore.token = normalizedToken
 
     try {
-      console.log('🔑 getUserInfo开始，当前token:', loginStore.token);
       const _userInfo = await Api.getUserInfo()
       if (_userInfo) {
         userInfo.value = _userInfo
         loginStore.isAdmin = _userInfo.isAdmin
         isLogin.value = true
-        console.log('✅ getUserInfo成功:', _userInfo);
         return _userInfo
       }
 
-      console.log('❌ getUserInfo失败，没有获取到用户信息');
       logout()
       return null
     } catch (error) {
-      console.error('❌ getUserInfo异常:', error);
       logout()
       return null
     }
@@ -127,8 +123,6 @@ export const useLoginStatusStore = defineStore("login_status", () => {
       // 设置新的 token
       token.value = cleanToken;
 
-      console.log('设置token',token.value)
-
       // 设置登录状态
       isLogin.value = true;
       
@@ -140,14 +134,12 @@ export const useLoginStatusStore = defineStore("login_status", () => {
       if (!currentUserInfo) {
         throw new Error('获取用户信息失败');
       }
-      
-      console.log('虚拟登录成功，用户信息已获取');
+
       if (!options?.silent) {
         message.success('自动登录成功')
       }
       return true;
     } catch (error) {
-      console.error('虚拟登录失败:', error);
       logout()
       return false;
     }

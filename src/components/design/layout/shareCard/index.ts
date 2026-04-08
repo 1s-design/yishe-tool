@@ -1,6 +1,5 @@
-
-import { useConfigStore } from '@/store/stores/config'
 import { ref } from 'vue'
+import { createPreviewShareLink } from '@/config/public'
 
 
 
@@ -20,8 +19,6 @@ export const openShareCardModal = (info) => {
 
 
 export function createCustomModelShareLink(id = '') {
-
-
     if (!id) {
         id = shareCardCustomModelInfo.value?.id
     }
@@ -30,6 +27,5 @@ export function createCustomModelShareLink(id = '') {
         return ''
     }
 
-    // 保存模型的 id 和生成链接的时间
-    return `https://1s.design/#/preview?id=${id}&timestamp=${Date.now()}`
+    return createPreviewShareLink(id)
 }

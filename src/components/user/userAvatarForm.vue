@@ -23,21 +23,9 @@
       </div>
     </div>
     <div class="user-avatar-form-items">
-      <div @click="goUpdate" class="user-avatar-form-item">
-        <icon-user></icon-user>
-        个人信息
-      </div>
       <div class="user-avatar-form-item" @click="goTool">
         <icon-saved></icon-saved>
-        在线工具
-      </div>
-      <div
-        v-if="userInfo.isAdmin"
-        class="user-avatar-form-item"
-        @click="router.push({ name: 'Admin' })"
-      >
-        <icon-admin></icon-admin>
-        后台管理系统
+        进入设计工具
       </div>
       <div @click="logout" class="user-avatar-form-item">
         <icon-logout></icon-logout>
@@ -49,15 +37,12 @@
 <script setup>
 import { useLoginStatusStore } from "@/store/stores/login";
 import { doLogout } from "@/store/stores/loginAction";
-import { computed, ref, onMounted, watchEffect } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed } from "vue";
+import { useRouter } from "vue-router";
 import iconLogout from "@/icon/user/logout.svg?component";
-import iconUser from "@/icon/user/user.svg?component";
-import iconAdmin from "@/icon/user/admin.svg?component";
 import iconSaved from "@/icon/user/saved.svg?component";
 import { Modal } from "ant-design-vue";
 import Utils from "@/common/utils";
-let route = useRoute();
 let router = useRouter();
 
 // 顶部头像
@@ -73,12 +58,6 @@ const userInfo = computed(() => {
   return loginStore.userInfo || {};
 });
 
-function goUpdate() {
-  router.push({
-    name: "UserProfile",
-  });
-}
-
 async function logout(params) {
   await Modal.confirm({
     cancelText: "取消",
@@ -86,7 +65,7 @@ async function logout(params) {
     content: "确认要退出吗？",
     onOk: () => {
       doLogout();
-      router.replace("/");
+      router.replace({ name: "Design" });
     },
   });
 }

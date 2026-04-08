@@ -147,7 +147,7 @@
     v-model:open="menuState.showProject"
     width="100%"
     :footer="null"
-    wrap-class-name="full-modal"
+    wrap-class-name="full-modal full-modal--project-resources"
     :destroyOnClose="true"
   >
     <projectModal></projectModal>
@@ -243,18 +243,11 @@ import basicCanvas from "./basic-canvas/index.vue";
 import { showMainCanvas } from "./canvas/index.tsx";
 import stickerModal from "./sticker/modal.vue";
 import { Modal } from "ant-design-vue";
-import Utils from "@/common/utils";
 import { createVNode } from "vue";
-import { isLogin } from "@/store/stores/loginAction";
 import { ExclamationCircleOutlined } from "@ant-design/icons-vue";
-import Api from "@/api";
 import projectModal from "./project/index.vue";
 import ContextMenu from "@imengyu/vue3-context-menu";
-import { useRoute, useRouter } from "vue-router";
-import {
-  openLoginDialog,
-  showLoginFormModal,
-} from "@/modules/main/view/user/login/index.tsx";
+import { openLoginDialog } from "@/modules/main/view/user/login/index.tsx";
 import { useStickerDetailModal } from "@/components/design/layout/project/sticker/stickerModal";
 
 import { useCustomModelDetailModal } from "@/components/design/layout/project/customModel/customModelModal";
@@ -270,7 +263,6 @@ import { DESIGN_3D_ENABLED } from "../featureFlags";
 const { component: stickerDetailModal } = useStickerDetailModal();
 const { component: customModelDetailModal } = useCustomModelDetailModal();
 
-const router = useRouter();
 const loginStore = useLoginStatusStore();
 
 const des = useDesignStore();

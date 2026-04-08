@@ -10,13 +10,9 @@
     >
       <img src="/favicon.png" style="width: 20px; height: 20px; margin-right: 8px" />
       <div style="font-size: 14px; font-weight: bold; color: #666; text-align: left">
-        登录衣设账号
+        登录 {{ productName }}
       </div>
       <div style="flex: 1"></div>
-      <icon-qrcode
-        @click="loginType = LoginType.QRCODE"
-        style="height: 20px; width: 20px"
-      ></icon-qrcode>
     </div>
     <el-form :model="loginForm" ref="form" :rules="rules" label-position="top">
       <el-form-item prop="account">
@@ -66,33 +62,25 @@
       </el-form-item>
     </el-form>
     <div style="display: flex; justify-content: space-between">
-      <div class="login-link" @click="signup">没有账号？去注册</div>
+      <div class="login-link login-link--muted">账号由管理员统一分配</div>
       <div></div>
-      <div class="login-link" @click="">忘记密码？</div>
+      <div class="login-link login-link--muted">如需开通请联系管理员</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, toRaw, ref, computed, onMounted, nextTick } from "vue";
+import { publicAppConfig } from "@/config/public";
+import { reactive, ref, nextTick } from "vue";
 import { login } from "@/api/index";
-import { useLoginStatusStore } from "@/store/stores/login";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
-import { ElMessage } from "element-plus";
-import { loginType, LoginType } from "./index.tsx";
 
 import { View, Hide, User, Lock } from "@element-plus/icons-vue";
 import { doLoginAction } from "@/store/stores/loginAction";
-import iconQrcode from "@/icon/qrcode-half.svg?component";
-import {
-  openLoginDialog,
-  showLoginFormModal,
-} from "@/modules/main/view/user/login/index.tsx";
-const userStore = useLoginStatusStore();
+import { showLoginFormModal } from "@/modules/main/view/user/login/index.tsx";
 const router = useRouter();
-
-const route = useRoute();
+const productName = publicAppConfig.shortName;
 
 const loading = ref(false);
 
@@ -152,7 +140,7 @@ async function submit(form) {
     if (showLoginFormModal.value) {
       showLoginFormModal.value = false;
     } else {
-      router.replace("/");
+      router.replace({ name: "Design" });
     }
     await nextTick();
     loading.value = false;
@@ -168,11 +156,6 @@ async function submit(form) {
       errMsg.value = '登录失败，请检查账号密码';
     }
   }
-}
-
-function signup() {
-  showLoginFormModal.value = false;
-  router.push({ name: "Signup" });
 }
 </script>
 
@@ -204,13 +187,14 @@ function signup() {
   color: #999;
   font-size: 12px;
   font-weight: 400;
-  text-decoration: underline;
 
   &:hover {
-    cursor: pointer;
-    color: var(--el-color-primary);
-    text-decoration: underline;
+    color: #999;
   }
+}
+
+.login-link--muted {
+  cursor: default;
 }
 
 .login-type {

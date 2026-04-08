@@ -1,16 +1,16 @@
 <template>
-  <div class="project-page flex flex-col min-h-screen">
+  <div class="project-page flex flex-col min-h-full">
     <div class="flex-1 relative">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full mx-auto p-4">
+      <div class="grid grid-cols-1 gap-3 w-full p-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         <div
           v-for="item in list"
-          class="flex flex-col items-center justify-start h-[240px]"
+          class="project-card project-gallery-card"
         >
           <s1-image
             padding="5%"
             :src="item.thumbnail"
             @click="itemClick(item)"
-            class="project-thumb w-[240px] !h-[180px] rounded-lg flex-shrink-0"
+            class="project-thumb project-gallery-card__media"
           >
             <s1-icon
               v-if="item.uploader?.isAdmin"
@@ -19,24 +19,25 @@
               :size="18"
             ></s1-icon>
           </s1-image>
-          <div class="bar flex items-center justify-between w-full mt-2 px-2">
-            <div class="text-ellipsis max-w-[80px]">
-              {{ item.name || "未命名" }}
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="project-tag project-tag--accent" v-if="item.isPublic">已共享</div>
-              <div
-                class="project-tag"
-                v-if="item?.uploader?.account == loginStore.userInfo?.account"
-              >
-                我
+          <div class="project-gallery-card__body">
+            <div class="project-gallery-card__content">
+              <div class="project-gallery-card__title text-ellipsis">
+                {{ item.name || "未命名" }}
+              </div>
+              <div class="project-gallery-card__meta">
+                <div class="project-tag project-tag--accent" v-if="item.isPublic">已共享</div>
+                <div
+                  class="project-tag"
+                  v-if="item?.uploader?.account == loginStore.userInfo?.account"
+                >
+                  我
+                </div>
+                <div class="project-timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
               </div>
             </div>
-            <div class="project-timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
-            <div class="flex-1"></div>
 
-            <a-dropdown trigger="click">
-              <el-button link>
+            <a-dropdown trigger="click" class="project-gallery-card__actions">
+              <el-button link class="project-action-button">
                 <el-icon size="12">
                   <MoreFilled />
                 </el-icon>
@@ -58,14 +59,16 @@
         </div>
       </div>
       <div v-if="loading" class="project-loading-overlay absolute inset-0 flex items-center justify-center">
-        <el-icon class="animate-spin text-2xl"><Loading /></el-icon>
+        <div class="project-loading-overlay__spinner">
+          <el-icon class="animate-spin text-lg"><Loading /></el-icon>
+        </div>
       </div>
       <s1-empty v-if="isEmpty">
         <template #description> 暂无字体 </template>
       </s1-empty>
     </div>
     
-    <div class="project-footer sticky bottom-0 left-0 right-0 py-4">
+    <div class="project-footer">
       <div class="mx-auto flex justify-end">
         <el-pagination
           v-model:current-page="currentPage"
@@ -256,10 +259,4 @@ async function ok() {
 </script>
 
 <style scoped lang="less">
-.bar {
-  height: 36px;
-  column-gap: 1rem;
-  min-height: 36px;
-}
-
 </style>

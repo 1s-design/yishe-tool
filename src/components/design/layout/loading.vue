@@ -3,20 +3,25 @@
     class="design-loading-shell design-loading-shell--fullscreen"
     role="status"
     aria-live="polite"
-    aria-label="1s design tool"
+    :aria-label="loadingLabel"
   >
     <div class="design-loading-shell__stage">
       <div class="design-loading-shell__text" :style="loadingTextStyle">
-        <p>1s design tool</p>
+        <p>{{ loadingText }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { publicAppConfig } from "@/config/public";
+
 const loadingTextStyle = {
   '--design-loading-duration': '3s'
 }
+
+const loadingText = publicAppConfig.shortName;
+const loadingLabel = `${publicAppConfig.shortName} loading`;
 </script>
 
 <style scoped>

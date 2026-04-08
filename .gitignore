@@ -16,6 +16,12 @@ www
 /app
 dist-ssr
 *.local
+dump.rdb
+nohup.out
+ssl/*.crt
+ssl/*.key
+tools/*.pem
+tools/*.exe
 
 # Editor directories and files
 .vscode/*
@@ -28,5 +34,3 @@ dist-ssr
 *.sln
 *.sw?
 docs/.vitepress/cache/
-
-components.d.ts

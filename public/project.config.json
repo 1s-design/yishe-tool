@@ -1,85 +1,9 @@
 {
-    "rootUrl": "https://1s.design",
-    "h5QrcodeHref": "https://1s.design",
-    "icp": {
-        "text": "辽ICP备2024040812号",
-        "link": "https://beian.miit.gov.cn/"
-    },
-    "homepageContratUsLinks": {
-        "douyin": {
-            "name": "抖音",
-            "icon": "/image/appicon/douyin.svg",
-            "webHref": "https://www.douyin.com/user/MS4wLjABAAAAwGBmZCOehrYGnvLOQnmRrVXk6X5vq55B6uUegKFObYU",
-            "appHref": "snssdk1128://user/profile/77402594090460?refer=web",
-            "card": "/image/appcard/douyin.jpg",
-            "appShareable": true,
-            "appShareDescription": ""
-        },
-        "kuaishou": {
-            "name": "快手",
-            "icon": "/image/appicon/kuaishou.svg",
-            "webHref": "",
-            "appHref": "",
-            "card": "/image/appcard/kuaishou.jpg",
-            "appShareable": true,
-            "appShareDescription": ""
-        },
-        "instagram": {
-            "name": "instagram",
-            "icon": "/image/appicon/instagram.svg",
-            "webHref": "",
-            "appHref": "",
-            "card": "/image/appcard/instagram.jpg",
-            "appShareable": true,
-            "appShareDescription": ""
-        },
-        "weibo": {
-            "name": "微博",
-            "icon": "/image/appicon/weibo.svg",
-            "webHref": "",
-            "appHref": "",
-            "card": "/image/appcard/weibo.png",
-            "appShareable": true,
-            "appShareDescription": ""
-        },
-        "xiaohongshu": {
-            "name": "小红书",
-            "icon": "/image/appicon/xiaohongshu.svg",
-            "webHref": "",
-            "appHref": "xhsdiscover://user/65efe4100000000005008eca",
-            "card": "/image/appcard/xiaohongshu.png",
-            "appShareable": true,
-            "appShareDescription": ""
-        },
-        "zhihu": {
-            "name": "知乎",
-            "icon": "/image/appicon/zhihu.svg",
-            "webHref": "",
-            "appHref": "",
-            "card": "/image/appcard/zhihu.png",
-            "appShareable": true,
-            "appShareDescription": ""
-        },
-        "jingdong": {
-            "name": "京东",
-            "icon": "/image/appicon/jingdong.svg",
-            "webHref": "",
-            "appHref": "",
-            "appShareDescription": ""
-        },
-        "taobao": {
-            "name": "淘宝",
-            "icon": "/image/appicon/taobao.svg",
-            "webHref": "",
-            "appHref": "",
-            "appShareDescription": ""
-        },
-        "pinduoduo": {
-            "name": "拼多多",
-            "icon": "/image/appicon/pinduoduo.svg",
-            "webHref": "",
-            "appHref": "",
-            "appShareDescription": ""
-        }
-    }
+  "rootUrl": "",
+  "h5QrcodeHref": "",
+  "icp": {
+    "text": "",
+    "link": ""
+  },
+  "homepageContratUsLinks": {}
 }

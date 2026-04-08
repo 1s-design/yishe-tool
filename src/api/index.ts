@@ -90,9 +90,7 @@ export const login = (data) =>
 const updateUserInfo = (data) => apiInstance.post(Url.UPDATE_USER_INFO, data)
 
 const getUserInfo = async (data = {}) => {
-  console.log('🔑 getUserInfo API调用开始，参数:', data);
   const res = await apiInstance.post('/api/user/getUserInfo', data)
-  console.log('🔑 getUserInfo API调用完成，响应:', res);
 
   return res.data.data
 }
@@ -223,8 +221,6 @@ const decryptConfig = (encryptedString: string) => {
   const SECRET_KEY = '1s';
   
   try {
-    console.log('开始解密配置...')
-    
     // 使用 AES-256-CBC 解密
     const decrypted = CryptoJS.AES.decrypt(encryptedString, SECRET_KEY, {
       mode: CryptoJS.mode.CBC,
@@ -240,11 +236,8 @@ const decryptConfig = (encryptedString: string) => {
     
     // 解析 JSON 对象
     const config = JSON.parse(decryptedString);
-    
-    console.log('解密后的COS配置:', config)
     return config;
   } catch (error) {
-    console.error('解密配置失败:', error)
     throw new Error(`解密配置失败: ${error.message}`)
   }
 }
@@ -252,8 +245,7 @@ const decryptConfig = (encryptedString: string) => {
 export const getBasicConfig = () => new Promise(async (resolve, reject) => {
   try {
   const res = await apiInstance.post(Url.GET_BASIC_CONFIG)
-    console.log('获取到的加密配置:', res.data.data)
-    
+
     // 解密配置（后端直接返回加密字符串，经过拦截器后 res.data.data 就是字符串）
     const decryptedCos = decryptConfig(res.data.data)
     
@@ -301,15 +293,6 @@ export const likeModelComment = (params) => new Promise(async (resolve, reject) 
   const res = await apiInstance.post(Url.LIKE_MODEl_COMMENT, params)
   resolve(res.data)
 })
-
-/*
-  获取用于扫码登录的二维码
-*/
-export const requestQRCodeLoginInfo = (params) => new Promise(async (resolve, reject) => {
-  const res = await apiInstance.post(Url.GET_QRCODE_LOGIN_URL, params)
-  resolve(res.data)
-})
-
 
 /*
   发布模型

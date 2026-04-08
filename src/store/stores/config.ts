@@ -11,16 +11,14 @@
 import { defineStore } from "pinia"
 import { ref } from 'vue'
 import Api from '@/api'
+import { createDefaultProjectConfig, normalizeProjectConfig } from "@/config/public";
 
 export async function initConfigStoreBasicConfig() {
     const configStore = useConfigStore()
-    console.log('开始获取基础配置...')
     // getBasicConfig 已经在 API 层解密了，直接使用即可
     const config = await Api.getBasicConfig()
-    console.log('获取到的配置:', config)
-    
+
     configStore.$patch(config)
-    console.log('配置已更新到store')
 }
 
 export const useConfigStore = defineStore("global_config", () => {
@@ -30,20 +28,20 @@ export const useConfigStore = defineStore("global_config", () => {
     // 文件对象存储
     const cos = ref()
 
-    const json = ref({} as any)
+    const json = ref(createDefaultProjectConfig() as any)
     // 本地配置，可以通过json文件修改
     fetch('/project.config.json')
         .then(response => {
             if (!response.ok) {
-                console.log('project.config.json laod error')
+                throw new Error('project.config.json load error')
             }
             return response.json();
         })
         .then(data => {
-            json.value = data
+            json.value = normalizeProjectConfig(data)
         })
         .catch(error => {
-            console.log('project.config.json laod error')
+            json.value = createDefaultProjectConfig()
         });
 
     return {

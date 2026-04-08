@@ -94,10 +94,6 @@ export enum Url {
 
     LIKE_MODEl_COMMENT = '/likeModelComment',
 
-    // 获取用于扫码登录的地址
-    GET_QRCODE_LOGIN_URL = '/requestQRCodeLoginInfo',
-
-
     // 发布模型
     PUBLISH_MODEL = '/publishAvailableModel',
 

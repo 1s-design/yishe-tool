@@ -65,6 +65,7 @@ import {
 
 import Api from '@/api'
 import Utils from '@/common/utils'
+import { publicAppConfig } from '@/config/public'
 
 import { createMaterialFromOptions, initBasicLight, initHdr } from './controllerHelper'
 import { CameraController } from "./cameraController";
@@ -1234,7 +1235,7 @@ export class ModelController {
         ctx.drawImage(srcCanvas, 0, 0);
         // 再绘制水印
 
-        const text = 'Designed  by  1s.design';
+        const text = publicAppConfig.shareWatermark;
         const fontSize = Math.floor(canvas.height * 0.020); // 更小的字号
         ctx.save();
         ctx.font = `${fontSize}px sans-serif`; // 斜体

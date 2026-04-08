@@ -23,7 +23,7 @@ import {
 axios.defaults.timeout = 1000000; // 时间超时设置100s
 
 // 读取配置中的请求地址
-axios.defaults.baseURL = import.meta.env.VITE_API;
+axios.defaults.baseURL = String(import.meta.env.VITE_API || "").trim() || "/api";
 
 export const apiInstance: any = axios.create({
     validateStatus: function (status) {

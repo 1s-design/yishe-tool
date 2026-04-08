@@ -49,14 +49,10 @@ export const isLogin = () => {
 export const doLoginAction = async (data, once = false) => {
   // 保存登录时间
   const now = new Date().getTime();
-  
-  console.log('🔑 登录响应数据:', data);
-  
+
   // 正确解析login响应结构：{ data: { token: "xxx" }, code: 0, status: true }
   const token = normalizeTokenValue(data?.data?.token);
-  
-  console.log('🔑 登录成功，获取到token:', token);
-  
+
   // 同步用户信息
   const loginStatusStore = useLoginStatusStore();
   loginStatusStore.isLogin = true;
@@ -66,18 +62,10 @@ export const doLoginAction = async (data, once = false) => {
   // 确保token被正确设置
   if (token) {
     loginStatusStore.token = token;
-    console.log('🔑 设置token到store:', loginStatusStore.token);
-  } else {
-    console.log('❌ 没有找到token，检查响应数据结构:', {
-      data: data,
-      'data.data': data?.data,
-      'data.data.token': data?.data?.token
-    });
   }
   
   // 等待token设置完成后再调用getUserInfo
   await new Promise(resolve => setTimeout(resolve, 200));
-  console.log('🔑 开始调用getUserInfo，当前store中的token:', loginStatusStore.token);
   await loginStatusStore.getUserInfo();
 };
 
