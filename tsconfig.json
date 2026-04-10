@@ -10,12 +10,13 @@
         "target": "ESNext",
         "useDefineForClassFields": true,
         "module": "ESNext",
-        "moduleResolution": "Node",
+        "moduleResolution": "Bundler",
         "strict": false,
         "jsx": "preserve",
         "resolveJsonModule": true,
         "isolatedModules": true,
         "esModuleInterop": true,
+        "ignoreDeprecations": "6.0",
         "lib": [
             "ESNext",
             "DOM"
@@ -30,6 +31,8 @@
         "esm": true
     },
     "include": [
+        "auto-imports.d.ts",
+        "components.d.ts",
         "src/**/*.ts",
         "src/**/*.d.ts",
         "src/**/*.tsx",

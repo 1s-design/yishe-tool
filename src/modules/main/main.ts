@@ -11,7 +11,7 @@
 
 import { createApp } from 'vue'
 import 'animate.css';
-import "tailwindcss/tailwind.css"
+import '@/index.css'
 import { createPinia } from 'pinia'
 
 import router from '../main/router'
@@ -171,7 +171,6 @@ async function setup() {
   app.mount('#app')
 }
 setup()
-
 
 
 

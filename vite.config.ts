@@ -12,13 +12,8 @@
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
-import alias from "@rollup/plugin-alias";
 import { resolve } from 'path'
-import tailwindcss from 'tailwindcss'
-import autoprefixer from 'autoprefixer'
 import Components from 'unplugin-vue-components/vite';
-// 移动端扫码进入项目
-import { qrcode } from 'vite-plugin-qrcode';
 // 编译文件支持旧游览器
 import legacy from '@vitejs/plugin-legacy';
 // import AntdvResolver from 'antdv-component-resolver'
@@ -42,13 +37,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      alias(),
       // https dev
       // basicSsl(),
       Components({
-        dts: true,
+        dts: "components.d.ts",
       }),
-      qrcode(),
       legacy(),
       vue({
         template: {  }
@@ -60,7 +53,7 @@ export default defineConfig(({ mode }) => {
       // 自动引入
       AutoImport({
         imports: ["vue", "vue-router"],
-        dts: true
+        dts: "auto-imports.d.ts"
       }),
 
       createSvgIconsPlugin({
@@ -73,12 +66,6 @@ export default defineConfig(({ mode }) => {
     base: '/',
     build,
     css: {
-      postcss: {
-        plugins: [
-          tailwindcss,
-          autoprefixer,
-        ]
-      },
       preprocessorOptions: {
         less: {
           javascriptEnabled: true,
