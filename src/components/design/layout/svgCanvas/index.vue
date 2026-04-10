@@ -90,7 +90,6 @@
 
 <script setup lang="tsx">
 import { Canvg } from "canvg";
-import operate from "./operate.vue";
 import {
   svgToBase64,
   downloadByFile,
