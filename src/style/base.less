@@ -4,6 +4,8 @@ img::part(span) {
 
 :root {
     --1s-main: var(--1s-accent-color, #2563eb);
+    --1s-font-family-sans: "fangzhengheitijianti", "SimHei", "Heiti SC", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+    --el-font-family: var(--1s-font-family-sans);
 }
 
 @font-face {
@@ -26,7 +28,7 @@ body,
 html {
     width: 100%;
     height: 100%;
-    font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+    font-family: var(--1s-font-family-sans);
     font-size: 10px;
     background: var(--1s-shell-background, #eef2f7);
     color: var(--1s-text-color, #18202c);
@@ -35,6 +37,13 @@ html {
 body {
     margin: 0;
     transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+button,
+input,
+textarea,
+select {
+    font-family: inherit;
 }
 
 .text-ellipsis {
