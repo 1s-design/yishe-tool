@@ -4,7 +4,7 @@
       <!-- 顶部操作栏 -->
       <div class="project-toolbar flex justify-between items-center gap-4">
         <div class="project-toolbar__heading">
-          <h2 class="project-section-title text-base font-semibold">句子管理</h2>
+          <h2 class="project-section-title text-base font-semibold">文案管理</h2>
           <div class="project-toolbar__caption">整理可复用文案，让创作时能快速调用。</div>
         </div>
         <el-button type="primary" @click="showFormModal = true">
