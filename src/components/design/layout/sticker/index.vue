@@ -3,26 +3,41 @@
     <div class="menu">
       <div class="flex justify-between w-full">
         <div style="flex: 1"></div>
-        <el-button @click="refresh" link type="primary">刷新</el-button>
+        <el-button @click="refresh" link type="primary">
+          <el-icon><Refresh /></el-icon>
+          刷新
+        </el-button>
       </div>
       <div class="search">
-        <el-input v-model="stickerSearchQueryParams.searchText" placeholder="寻找贴纸">
+        <el-input
+          v-model="stickerSearchQueryParams.searchText"
+          placeholder="搜索贴纸名称或编码"
+          clearable
+          @keyup.enter="handleSearch"
+        >
           <template #prefix>
             <el-icon>
               <Search />
             </el-icon>
           </template>
           <template #suffix>
-            <el-icon>
-              <Operation />
-            </el-icon>
+            <el-button
+              @click="handleSearch"
+              type="primary"
+              size="small"
+              :loading="loading"
+            >
+              搜索
+            </el-button>
           </template>
         </el-input>
       </div>
     </div>
     <div class="scroll-list" :class="{ 'loading-wave': loading }">
       <div v-if="!loading && list.length === 0" class="empty">
-        暂无数据
+        <el-icon :size="48" class="empty-icon"><Picture /></el-icon>
+        <div class="empty-text">暂无贴纸</div>
+        <div class="empty-hint">试试其他搜索关键词</div>
       </div>
       <div v-else class="list-grid">
         <div v-for="item in list" :key="item.id" class="item">
@@ -35,10 +50,13 @@
               @load="imgLoad"
             >
             </s1-image>
+            <div v-if="item.code" class="code-badge">
+              {{ item.code }}
+            </div>
           </div>
           <sticker-popover :stickerInfo="item">
             <div class="bar">
-              <div class="title text-ellipsis">{{ item.name || "......" }}</div>
+              <div class="title text-ellipsis">{{ item.name || "未命名" }}</div>
               <el-icon>
                 <ArrowRight />
               </el-icon>
@@ -63,7 +81,7 @@
 </template>
 <script setup lang="tsx">
 import { ref, watch } from "vue";
-import { Search, Operation, ArrowRight } from "@element-plus/icons-vue";
+import { Search, ArrowRight, Refresh, Picture } from "@element-plus/icons-vue";
 import { getStickerList } from "@/api";
 import stickerPopover from "./stickerPopover.vue";
 import { currentModelController } from "@/components/design/store";
@@ -80,6 +98,11 @@ const pageSize = ref(20);
 const total = ref(0);
 
 function refresh() {
+  currentPage.value = 1;
+  getList();
+}
+
+function handleSearch() {
   currentPage.value = 1;
   getList();
 }
@@ -131,11 +154,6 @@ async function getList() {
     loading.value = false;
   }
 }
-
-watch([() => stickerSearchQueryParams.value.searchText], () => {
-  currentPage.value = 1;
-  getList();
-});
 
 // 初始化加载
 getList();
@@ -220,6 +238,11 @@ getList();
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .image-wrapper {
@@ -232,9 +255,15 @@ getList();
   align-items: center;
   justify-content: center;
   background-color: var(--1s-control-surface-muted);
-  border-radius: 4px;
+  border-radius: 8px;
   box-sizing: border-box;
   border: 1px solid var(--1s-control-border-color);
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .image-wrapper :deep(.s1-image) {
@@ -263,6 +292,22 @@ getList();
   object-fit: contain;
 }
 
+.code-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  user-select: none;
+}
 
 .bar {
   width: 100%;
@@ -286,7 +331,7 @@ getList();
     line-height: 1em;
     flex-shrink: 0;
   }
-  
+
   .title {
     flex: 1;
     min-width: 0;
@@ -298,8 +343,27 @@ getList();
 
 .empty {
   text-align: center;
-  color: var(--1s-text-color-tertiary);
-  padding: 40px 0;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 12px;
+
+  .empty-icon {
+    color: var(--1s-text-color-tertiary);
+    opacity: 0.5;
+  }
+
+  .empty-text {
+    color: var(--1s-text-color-secondary);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .empty-hint {
+    color: var(--1s-text-color-tertiary);
+    font-size: 12px;
+  }
 }
 
 .pagination-wrapper {
@@ -309,26 +373,36 @@ getList();
   justify-content: center;
   border-top: 1px solid var(--1s-border-color);
   background: var(--1s-panel-background);
-  
+
   :deep(.el-pagination) {
     justify-content: center;
-    
+
     .el-pagination__sizes,
     .el-pagination__total {
       display: none;
     }
-    
+
     .btn-prev,
     .btn-next {
       margin: 0 4px;
     }
-    
+
     .el-pager {
       li {
         min-width: 28px;
         height: 28px;
         line-height: 28px;
         font-size: 12px;
+        border-radius: 4px;
+
+        &.is-active {
+          background: var(--el-color-primary);
+          color: #fff;
+        }
+
+        &:hover {
+          color: var(--el-color-primary);
+        }
       }
     }
   }

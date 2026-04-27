@@ -13,7 +13,7 @@
             clearable 
             @change="getList"
           >
-            <el-option label="全部" :value="null" />
+            <el-option label="全部" :value="''" />
             <el-option label="是" :value="true" />
             <el-option label="否" :value="false" />
           </el-select>
@@ -261,11 +261,16 @@ const queryParams = ref({
 async function getList() {
   loading.value = true;
   try {
-    const res = await getStickerList({
+    const params = {
       currentPage: currentPage.value,
       pageSize: pageSize.value,
       ...queryParams.value,
-    });
+    };
+    // 过滤空字符串，避免传递给后端
+    if (params.isCustom === '') {
+      delete params.isCustom;
+    }
+    const res = await getStickerList(params);
     list.value = res.list;
     total.value = res.total;
     isEmpty.value = list.value.length === 0;

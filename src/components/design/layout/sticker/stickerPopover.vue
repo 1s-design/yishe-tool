@@ -13,11 +13,16 @@
         <el-descriptions-item label="类型">
           {{ getStickerTypeLabel(stickerInfo.type) || "无" }}
         </el-descriptions-item>
-        <el-descriptions-item label="上传者">{{
+        <el-descriptions-item label="编码" v-if="stickerInfo.code">
+          <code class="code-text">{{ stickerInfo.code }}</code>
+        </el-descriptions-item>
+        <el-descriptions-item :label="stickerInfo.code ? '上传者' : '上传者'">{{
           stickerInfo.uploader?.account || "未知"
         }}</el-descriptions-item>
-        <el-descriptions-item label=""></el-descriptions-item>
-        <el-descriptions-item label="上传时间" :span="2">
+        <el-descriptions-item label="上传时间" :span="2" v-if="!stickerInfo.code">
+          {{ stickerInfo.createTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="上传时间" :span="2" v-if="stickerInfo.code">
           {{ stickerInfo.createTime }}
         </el-descriptions-item>
         <el-descriptions-item label="描述" :span="2">
@@ -27,7 +32,7 @@
           {{ stickerInfo.keywords || "无" }}
         </el-descriptions-item>
 
-        <!-- 3D 贴纸使用链路已停用，暂不展示“使用该贴纸”。 -->
+        <!-- 3D 贴纸使用链路已停用，暂不展示"使用该贴纸"。 -->
         <!-- <el-descriptions-item :span="2">
           <el-button style="flex: 1" class="w-full" @click="use" type="primary">
             使用该贴纸
@@ -76,5 +81,16 @@ function useInCanvasSticker() {
 .container {
   width: 300px;
   height: auto;
+}
+
+.code-text {
+  font-family: 'Courier New', monospace;
+  background: var(--1s-control-surface-muted);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-color-primary);
+  letter-spacing: 0.5px;
 }
 </style>
