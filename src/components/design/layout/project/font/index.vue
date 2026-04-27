@@ -1,5 +1,13 @@
 <template>
   <div class="project-page flex flex-col min-h-full">
+    <div class="project-toolbar">
+      <slot name="tabs"></slot>
+      <div class="project-toolbar__controls">
+        <el-button @click="reset">刷新</el-button>
+      </div>
+      <div class="project-toolbar__caption">{{ total }} 项</div>
+    </div>
+
     <div class="flex-1 relative">
       <div class="grid grid-cols-1 gap-3 w-full p-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         <div

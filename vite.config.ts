@@ -13,6 +13,7 @@ import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 import { resolve } from 'path'
+import { fileURLToPath } from "node:url";
 import Components from 'unplugin-vue-components/vite';
 // 编译文件支持旧游览器
 import legacy from '@vitejs/plugin-legacy';
@@ -23,6 +24,9 @@ import AutoImport from "unplugin-auto-import/vite";
 
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+const viteCacheDir = path.resolve("/tmp", `yishe-tool-vite-${process.getuid?.() || "user"}`);
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const proxyTarget = env.VITE_PROXY_TARGET || "http://localhost:1520";
@@ -31,11 +35,12 @@ export default defineConfig(({ mode }) => {
     outDir: 'www',
     assetsDir: './',
     rollupOptions: {
-      input: resolve(__dirname, 'index.html'),
+      input: resolve(dirname, 'index.html'),
     }
   }
 
   return {
+    cacheDir: viteCacheDir,
     plugins: [
       // https dev
       // basicSsl(),
@@ -86,8 +91,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         /*  @/ 代表src 路径下 ， @ 代表全局路径下 */
-        "@": path.resolve(__dirname, "./src"),
-        "@common": path.resolve(__dirname, "./common/"),
+        "@": path.resolve(dirname, "./src"),
+        "@common": path.resolve(dirname, "./common/"),
       },
     },
     define: {

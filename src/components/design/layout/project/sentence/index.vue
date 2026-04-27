@@ -2,11 +2,9 @@
   <div class="project-page flex flex-col min-h-full">
     <div class="flex-1 relative">
       <!-- 顶部操作栏 -->
-      <div class="project-toolbar flex justify-between items-center gap-4">
-        <div class="project-toolbar__heading">
-          <h2 class="project-section-title text-base font-semibold">文案管理</h2>
-          <div class="project-toolbar__caption">整理可复用文案，让创作时能快速调用。</div>
-        </div>
+      <div class="project-toolbar">
+        <slot name="tabs"></slot>
+        <div class="project-toolbar__caption">{{ total }} 条</div>
         <el-button type="primary" @click="showFormModal = true">
           <el-icon><Plus /></el-icon>
           添加句子
@@ -19,7 +17,7 @@
           <div
             v-for="item in list"
             :key="item.id"
-            class="project-card sentence-card project-hover-lift min-h-[118px]"
+            class="project-card sentence-card project-hover-lift"
           >
             <div class="flex justify-between items-start gap-3">
               <div class="flex-1">
@@ -294,7 +292,8 @@ onBeforeMount(() => {
 
 <style scoped lang="less">
 .sentence-card {
-  padding: 12px 12px 10px;
+  min-height: 0;
+  padding: 0 0 12px;
 }
 
 .sentence-card__content {
@@ -323,7 +322,6 @@ onBeforeMount(() => {
   align-items: center;
   gap: 8px;
   padding-top: 8px;
-  border-top: 1px solid rgba(226, 232, 240, 0.88);
   font-size: 11px;
 }
 </style>

@@ -2,13 +2,14 @@
   <div class="project-page flex flex-col min-h-full">
     <!-- 过滤区域 -->
     <div class="project-toolbar">
+      <slot name="tabs"></slot>
       <div class="project-toolbar__controls">
         <div class="project-toolbar__group">
           <span class="project-toolbar__label">自定义贴纸</span>
           <el-select 
             v-model="queryParams.isCustom" 
             placeholder="请选择类型" 
-            style="width: 120px" 
+            style="width: 92px" 
             clearable 
             @change="getList"
           >
@@ -17,8 +18,9 @@
             <el-option label="否" :value="false" />
           </el-select>
         </div>
-        <el-button type="primary" @click="reset">重置筛选</el-button>
+        <el-button @click="reset">重置筛选</el-button>
       </div>
+      <div class="project-toolbar__caption">{{ total }} 项</div>
     </div>
     
     <div class="flex-1 relative">
@@ -65,7 +67,6 @@
                 <div class="project-timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
               </div>
             </div>
-
             <a-dropdown trigger="click" class="project-gallery-card__actions">
               <el-button link class="project-action-button">
                 <el-icon>
@@ -75,16 +76,19 @@
               <template #overlay>
                 <a-menu>
                   <a-menu-item @click="edit(item)"> 编辑 </a-menu-item>
-                  <a-menu-item @click="useSticker(item)"> 在工作台使用 </a-menu-item>
+                  <!-- 3D 工作台链路已停用，暂不提供直接使用贴纸入口。 -->
+                  <!-- <a-menu-item @click="useSticker(item)"> 在工作台使用 </a-menu-item> -->
                   <!-- <a-menu-item @click="editStickerInWorkspace(item)">
                       在工作台中编辑
                   </a-menu-item> -->
+                  <a-menu-item
+                    @click="useInCanvasSticker(item)"
+                  >
+                    在贴纸制作中使用
+                  </a-menu-item>
 
                   <a-menu-item @click="showRepeatEffect(item)"> 查看重复效果 </a-menu-item>
 
-                  <a-menu-item @click="setOfficialTemplate(item)">
-                    设置为样例模版
-                  </a-menu-item>
                   <a-menu-item @click="deleteItem(item)">
                     <span style="color: var(--el-color-danger)">删除</span>
                   </a-menu-item>
@@ -108,7 +112,7 @@
         </div>
       </div>
       <s1-empty v-if="isEmpty">
-        <template #description> 暂无模型 </template>
+        <template #description> 暂无贴纸 </template>
       </s1-empty>
     </div>
 
@@ -216,16 +220,19 @@ import { getStickerList } from "@/api";
 import { usePaging } from "@/hooks/data/paging.ts";
 import desimage from "@/components/image.vue";
 import { MoreOutlined } from "@ant-design/icons-vue";
-import { currentModelController, viewDisplayController } from "@/components/design/store";
+import { menuItems, menuState, setActiveMenu } from "@/components/design/store";
 import { initDraggableElement } from "@/components/design/utils/draggable";
 import { imgToFile, createImgObjectURL, imgToBase64 } from "@/common/transform/index";
 import { stickerAutoplacementTags } from "@/components/design/components/tagsInput/index.ts";
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 
 import { loadingBottom } from "@/components/loading/index.tsx";
-import { currentOperatingCanvasChild } from "@/components/design/layout/canvas/index.tsx";
+import {
+  addCanvasChild,
+  canvasStickerOptions,
+} from "@/components/design/layout/canvas/index.tsx";
+import { createDefaultCanvasChildcanvasStickerOptions } from "@/components/design/layout/canvas/children/canvas.tsx";
 import Utils from "@/common/utils";
-import { canvasStickerOptions } from "@/components/design/layout/canvas/index.tsx";
 import { message, Modal } from "ant-design-vue";
 import { s1Confirm } from "@/common/message";
 import Api from "@/api";
@@ -247,7 +254,7 @@ const isEmpty = ref(false);
 
 // 查询参数
 const queryParams = ref({
-  isCustom: null, // 自定义贴纸过滤
+  isCustom: true, // 默认仅显示自定义贴纸
 });
 
 // 获取列表数据
@@ -285,7 +292,7 @@ function handleSizeChange(val: number) {
 // 重置
 function reset() {
   currentPage.value = 1;
-  queryParams.value.isCustom = null;
+  queryParams.value.isCustom = true;
   getList();
 }
 
@@ -293,9 +300,35 @@ onBeforeMount(() => {
   getList();
 });
 
-function useSticker(item) {
-  canvasStickerOptions.value = item.meta.data;
-  message.success("引用成功");
+// function useSticker(item) {
+//   canvasStickerOptions.value = item.meta.data;
+//   message.success("引用成功");
+// }
+
+function useInCanvasSticker(item) {
+  if (item.meta?.data) {
+    canvasStickerOptions.value = item.meta.data;
+  } else {
+    canvasStickerOptions.value = {
+      unit: "px",
+      showCanvasRealSize: false,
+      supportBackgroundColor: {
+        type: "pure",
+        color: "rgba(0,0,0,0)",
+      },
+      svgFilter: {
+        children: [],
+      },
+      children: [createDefaultCanvasChildcanvasStickerOptions()],
+    };
+    addCanvasChild({
+      type: "image",
+      imageInfo: item,
+    });
+  }
+  menuState.value.showProject = false;
+  setActiveMenu(menuItems.canvas);
+  message.success("已加载到贴纸制作");
 }
 
 async function deleteItem(item) {
@@ -349,12 +382,6 @@ function itemClick(item) {
 }
 
 /**
- * @method 设置为官方模版
- */
-
-function setOfficialTemplate(item) {}
-
-/**
  * @method 在工作台中编辑
  */
 function editStickerInWorkspace(item) {}
@@ -404,7 +431,6 @@ function onImageLoad(event) {
   background: var(--1s-control-surface-muted);
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid var(--1s-control-border-color);
   display: flex;
   justify-content: center;
   align-items: center;

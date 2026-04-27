@@ -27,11 +27,12 @@
           {{ stickerInfo.keywords || "无" }}
         </el-descriptions-item>
 
-        <el-descriptions-item :span="2">
+        <!-- 3D 贴纸使用链路已停用，暂不展示“使用该贴纸”。 -->
+        <!-- <el-descriptions-item :span="2">
           <el-button style="flex: 1" class="w-full" @click="use" type="primary">
             使用该贴纸
           </el-button>
-        </el-descriptions-item>
+        </el-descriptions-item> -->
         <el-descriptions-item :span="2" v-if="stickerInfo.type == 'composition'">
           <el-button
             style="flex: 1"
@@ -47,7 +48,8 @@
   </el-popover>
 </template>
 <script setup lang="ts">
-import { currentModelController } from "@/components/design/store";
+// 3D 贴纸使用链路已停用，保留代码方便后续恢复。
+// import { currentModelController } from "@/components/design/store";
 import { getStickerTypeLabel } from "./index";
 import { canvasStickerOptions } from "../canvas";
 import { message } from "ant-design-vue";
@@ -58,11 +60,11 @@ const props = defineProps({
   },
 });
 
-function use() {
-  currentModelController.value.addClickDelaySticker({
-    ...props.stickerInfo,
-  });
-}
+// function use() {
+//   currentModelController.value.addClickDelaySticker({
+//     ...props.stickerInfo,
+//   });
+// }
 
 function useInCanvasSticker() {
   canvasStickerOptions.value = props.stickerInfo.meta.data;
