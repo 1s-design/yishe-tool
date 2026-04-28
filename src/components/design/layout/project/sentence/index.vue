@@ -4,6 +4,20 @@
       <!-- 顶部操作栏 -->
       <div class="project-toolbar">
         <slot name="tabs"></slot>
+        <div class="project-toolbar__controls">
+          <el-input
+            v-model="searchText"
+            placeholder="搜索句子内容"
+            clearable
+            @keyup.enter="handleSearch"
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+          <el-button @click="handleSearch" type="primary" :loading="loading">搜索</el-button>
+        </div>
         <div class="project-toolbar__caption">{{ total }} 条</div>
         <el-button type="primary" @click="showFormModal = true">
           <el-icon><Plus /></el-icon>
@@ -124,7 +138,7 @@
 
 <script setup lang="tsx">
 import { ref, onBeforeMount } from "vue";
-import { MoreFilled, Loading, Plus } from "@element-plus/icons-vue";
+import { MoreFilled, Loading, Plus, Search } from "@element-plus/icons-vue";
 import Utils from "@/common/utils";
 import Api from "@/api";
 import { s1Confirm } from "@/common/message";
@@ -134,6 +148,9 @@ import { message } from "ant-design-vue";
 const list = ref([]);
 const loading = ref(false);
 const isEmpty = ref(false);
+
+// 搜索相关
+const searchText = ref('');
 
 // 分页相关
 const currentPage = ref(1);
@@ -154,10 +171,14 @@ const form = ref({
 async function getList() {
   loading.value = true;
   try {
-    const res = await Api.getSentenceList({
+    const params: any = {
       currentPage: currentPage.value,
       pageSize: pageSize.value,
-    });
+    };
+    if (searchText.value.trim()) {
+      params.match = [searchText.value.trim()];
+    }
+    const res = await Api.getSentenceList(params);
     list.value = res.list || [];
     total.value = res.total || 0;
     isEmpty.value = list.value.length === 0;
@@ -167,6 +188,11 @@ async function getList() {
   } finally {
     loading.value = false;
   }
+}
+
+function handleSearch() {
+  currentPage.value = 1;
+  getList();
 }
 
 // 处理页码改变

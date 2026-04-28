@@ -3,6 +3,18 @@
     <div class="project-toolbar">
       <slot name="tabs"></slot>
       <div class="project-toolbar__controls">
+        <el-input
+          v-model="searchText"
+          placeholder="搜索字体名称或描述"
+          clearable
+          @keyup.enter="handleSearch"
+          style="width: 200px"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-button @click="handleSearch" type="primary" :loading="loading">搜索</el-button>
         <el-button @click="reset">刷新</el-button>
       </div>
       <div class="project-toolbar__caption">{{ total }} 项</div>
@@ -146,7 +158,7 @@
 
 <script setup lang="tsx">
 import { ref, onBeforeMount } from "vue";
-import { MoreFilled, Loading } from "@element-plus/icons-vue";
+import { MoreFilled, Loading, Search } from "@element-plus/icons-vue";
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 import { currentOperatingCanvasChild } from "@/components/design/layout/canvas/index.tsx";
 import Utils from "@/common/utils";
@@ -161,6 +173,9 @@ const loginStore = useLoginStatusStore();
 
 const loadingOptions = useLoadingOptions({});
 
+// 搜索相关
+const searchText = ref('');
+
 // 分页相关
 const currentPage = ref(1);
 const pageSize = ref(20);
@@ -173,10 +188,14 @@ const isEmpty = ref(false);
 async function getList() {
   loading.value = true;
   try {
-    const res = await getFontList({
+    const params: any = {
       currentPage: currentPage.value,
       pageSize: pageSize.value,
-    });
+    };
+    if (searchText.value.trim()) {
+      params.match = [searchText.value.trim()];
+    }
+    const res = await getFontList(params);
     list.value = res.list;
     total.value = res.total;
     isEmpty.value = list.value.length === 0;
@@ -185,6 +204,11 @@ async function getList() {
   } finally {
     loading.value = false;
   }
+}
+
+function handleSearch() {
+  currentPage.value = 1;
+  getList();
 }
 
 // 处理页码改变
