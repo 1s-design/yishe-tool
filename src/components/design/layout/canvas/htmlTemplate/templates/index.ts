@@ -11,8 +11,15 @@ import { packagingTemplates } from "./packaging";
 import { posterTemplates } from "./posters";
 import { productPatternTemplates } from "./productPatterns";
 import { stickerTemplates } from "./stickers";
+import { loadAllJsonTemplates } from "./jsonTemplates";
+
+// 从 JSON 文件加载新模板
+const jsonTemplates = loadAllJsonTemplates();
 
 export const builtInHtmlTemplates: HtmlTemplateDefinition[] = [
+  // JSON 模板（新增的高质量模板）
+  ...jsonTemplates,
+  // 原有模板
   ...productPatternTemplates,
   ...stickerTemplates,
   ...allOverPrintTemplates,

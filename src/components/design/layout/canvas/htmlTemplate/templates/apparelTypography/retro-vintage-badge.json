@@ -1,0 +1,30 @@
+{
+  "id": "retro-vintage-badge",
+  "name": "复古徽章",
+  "category": "服饰 / 文字排版",
+  "description": "弧形文字+中心图形，经典美式复古风格，适合品牌标识和纪念款。",
+  "tags": ["复古", "徽章", "美式", "品牌"],
+  "difficulty": "intermediate",
+  "printStyle": "cutout",
+  "suitableProducts": ["T恤", "帽子", "贴纸", "马克杯"],
+  "sceneDescription": "适合品牌周年庆、复古主题系列、工装风格。弧形排版让文字更有仪式感，适合品牌名、地点、年份等信息。",
+  "sortOrder": 220,
+  "fields": [
+    { "key": "text.top", "label": "上方弧形文字", "type": "text", "placeholder": "AUTHENTIC", "description": "沿上弧排列的文字" },
+    { "key": "text.center", "label": "中心文字", "type": "text", "placeholder": "BRAND" },
+    { "key": "text.bottom", "label": "下方弧形文字", "type": "text", "placeholder": "SINCE 1990", "description": "沿下弧排列的文字" },
+    { "key": "text.year", "label": "年份", "type": "text", "placeholder": "1990", "description": "可选：成立年份或纪念年份" },
+    { "key": "color.primary", "label": "主色", "type": "color" },
+    { "key": "color.secondary", "label": "次要色", "type": "color" },
+    { "key": "style.size", "label": "中心文字大小", "type": "number", "min": 40, "max": 100, "step": 5 }
+  ],
+  "defaults": {
+    "text": { "top": "AUTHENTIC", "center": "BRAND", "bottom": "SINCE 1990", "year": "1990" },
+    "color": {
+      "primary": { "color": "#1e3a8a", "type": "pure" },
+      "secondary": { "color": "#dc2626", "type": "pure" }
+    },
+    "style": { "size": 70 }
+  },
+  "html": "<style>\n  .container{width:100%;height:100%;display:grid;place-items:center;padding:5%;box-sizing:border-box;background:#f8f9fa;}\n  .badge{width:min(90%, 500px);aspect-ratio:1;position:relative;display:grid;place-items:center;}\n  .circle-outer{position:absolute;inset:0;border:4px solid {{color.primary}};border-radius:50%;}\n  .circle-inner{position:absolute;inset:8%;border:2px solid {{color.secondary}};border-radius:50%;}\n  .center-content{position:relative;z-index:2;text-align:center;}\n  .center-text{font-size:clamp({{style.size}}px, 10vw, 80px);font-weight:900;color:{{color.primary}};letter-spacing:0.05em;line-height:1;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;}\n  .year-text{font-size:clamp(14px, 2.5vw, 20px);font-weight:700;color:{{color.secondary}};letter-spacing:0.2em;margin-top:10px;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;}\n  .arc-top,.arc-bottom{position:absolute;left:50%;transform:translateX(-50%);font-size:clamp(16px, 3vw, 24px);font-weight:800;letter-spacing:0.25em;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;}\n  .arc-top{top:12%;color:{{color.primary}};}\n  .arc-bottom{bottom:12%;color:{{color.secondary}};}\n</style>\n<div class=\"container\">\n  <div class=\"badge\">\n    <div class=\"circle-outer\"></div>\n    <div class=\"circle-inner\"></div>\n    <div class=\"arc-top\">{{text.top}}</div>\n    <div class=\"center-content\">\n      <div class=\"center-text\">{{text.center}}</div>\n      <div class=\"year-text\">{{text.year}}</div>\n    </div>\n    <div class=\"arc-bottom\">{{text.bottom}}</div>\n  </div>\n</div>"
+}

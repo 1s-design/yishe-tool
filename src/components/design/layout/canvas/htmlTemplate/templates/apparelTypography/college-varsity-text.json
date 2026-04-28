@@ -1,0 +1,29 @@
+{
+  "id": "college-varsity-text",
+  "name": "学院运动风",
+  "category": "服饰 / 文字排版",
+  "description": "美式大学运动风格，粗体弧形文字，适合校队、社团、纪念款。",
+  "tags": ["学院", "运动", "美式", "校队"],
+  "difficulty": "intermediate",
+  "printStyle": "cutout",
+  "suitableProducts": ["卫衣", "T恤", "帽子", "运动包"],
+  "sceneDescription": "适合学校社团、毕业纪念、校队队服、校友会等场景。经典美式风格，辨识度高，年轻人喜欢。",
+  "sortOrder": 250,
+  "fields": [
+    { "key": "text.school", "label": "学校/组织名", "type": "text", "placeholder": "UNIVERSITY", "description": "上方弧形文字" },
+    { "key": "text.sport", "label": "运动/社团名", "type": "text", "placeholder": "ATHLETICS", "description": "中间文字" },
+    { "key": "text.year", "label": "年份", "type": "text", "placeholder": "2024", "description": "可选：入学年份或纪念年份" },
+    { "key": "color.primary", "label": "主色", "type": "color" },
+    { "key": "color.accent", "label": "辅助色", "type": "color" },
+    { "key": "style.arc", "label": "弧形强度", "type": "number", "min": 0, "max": 100, "step": 10 }
+  ],
+  "defaults": {
+    "text": { "school": "UNIVERSITY", "sport": "ATHLETICS", "year": "2024" },
+    "color": {
+      "primary": { "color": "#1e40af", "type": "pure" },
+      "accent": { "color": "#f59e0b", "type": "pure" }
+    },
+    "style": { "arc": 60 }
+  },
+  "html": "<style>\n  .container{width:100%;height:100%;display:grid;place-items:center;padding:5%;box-sizing:border-box;background:#ffffff;}\n  .varsity-badge{width:min(90%, 450px);text-align:center;position:relative;}\n  .school-text{font-size:clamp(24px, 4.5vw, 40px);font-weight:900;color:{{color.primary}};letter-spacing:0.2em;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;margin-bottom:15px;}\n  .sport-text{font-size:clamp(48px, 10vw, 90px);font-weight:900;color:{{color.accent}};letter-spacing:0.05em;line-height:0.9;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;text-shadow:3px 3px 0 {{color.primary}};}\n  .year-text{font-size:clamp(16px, 3vw, 24px);font-weight:800;color:{{color.primary}};letter-spacing:0.3em;margin-top:15px;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;}\n  .stripe{width:80%;height:4px;background:linear-gradient(90deg, transparent, {{color.accent}}, transparent);margin:12px auto;}\n</style>\n<div class=\"container\">\n  <div class=\"varsity-badge\">\n    <div class=\"school-text\">{{text.school}}</div>\n    <div class=\"stripe\"></div>\n    <div class=\"sport-text\">{{text.sport}}</div>\n    <div class=\"stripe\"></div>\n    <div class=\"year-text\">{{text.year}}</div>\n  </div>\n</div>"
+}

@@ -90,7 +90,7 @@
     <template #footer>
       <div class="html-editor-dialog__footer">
         <div class="html-editor-dialog__footer-tip">
-          当前元素只维护一份 HTML 源码；模板库和变量绑定最终都会编译到这里并同步预览。
+          当前元素只维护一份 HTML 源码；模板库和变量绑定最终都会编译到这里。
         </div>
         <div class="html-editor-dialog__footer-actions">
           <el-button @click="handleCancel">取消</el-button>
@@ -117,15 +117,25 @@ declare global {
   }
 }
 
-const CODEMIRROR_STYLE_ASSETS = ["/lib/codemirror/lib/codemirror.min.css"];
+// 使用 CDN 加载 CodeMirror，避免本地文件依赖
+const CODEMIRROR_CDN_BASE = "https://cdn.jsdelivr.net/npm/codemirror@5.65.16";
+const CODEMIRROR_STYLE_ASSETS = [`${CODEMIRROR_CDN_BASE}/lib/codemirror.min.css`];
 const CODEMIRROR_SCRIPT_ASSETS = [
-  "/lib/codemirror/lib/codemirror.min.js",
-  "/lib/codemirror/mode/xml/xml.min.js",
-  "/lib/codemirror/mode/javascript/javascript.min.js",
-  "/lib/codemirror/mode/css/css.min.js",
-  "/lib/codemirror/mode/htmlmixed/htmlmixed.min.js",
-  "/lib/codemirror/addon/edit/closetag.min.js",
-  "/lib/codemirror/addon/edit/closebrackets.min.js",
+  `${CODEMIRROR_CDN_BASE}/lib/codemirror.min.js`,
+  `${CODEMIRROR_CDN_BASE}/mode/xml/xml.min.js`,
+  `${CODEMIRROR_CDN_BASE}/mode/javascript/javascript.min.js`,
+  `${CODEMIRROR_CDN_BASE}/mode/css/css.min.js`,
+  `${CODEMIRROR_CDN_BASE}/mode/htmlmixed/htmlmixed.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/edit/closetag.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/edit/closebrackets.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/selection/active-line.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/fold/foldcode.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/fold/foldgutter.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/fold/brace-fold.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/fold/xml-fold.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/fold/comment-fold.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/hint/show-hint.min.js`,
+  `${CODEMIRROR_CDN_BASE}/addon/hint/html-hint.min.js`,
 ];
 
 let codeMirrorAssetsPromise: Promise<void> | null = null;
@@ -371,6 +381,13 @@ function mountEditor() {
       indentUnit: 2,
       autoCloseTags: true,
       autoCloseBrackets: true,
+      styleActiveLine: true,
+      foldGutter: true,
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+      extraKeys: {
+        "Ctrl-Space": "autocomplete",
+        "Ctrl-/": "toggleComment",
+      },
     });
 
     editorInstance.value.on?.("change", (instance: any) => {
@@ -515,6 +532,7 @@ onBeforeUnmount(() => {
 }
 
 .html-editor-dialog__hint {
+  flex: 1;
   font-size: 13px;
   color: var(--el-text-color-regular);
 }

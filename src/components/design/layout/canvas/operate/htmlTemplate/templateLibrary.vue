@@ -32,9 +32,66 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
+
+        <div class="html-template-library__filters">
+          <el-select
+            v-model="filterCategory"
+            clearable
+            placeholder="分类"
+            size="large"
+            class="html-template-library__filter-select"
+          >
+            <el-option
+              v-for="cat in categoryOptions"
+              :key="cat"
+              :label="cat"
+              :value="cat"
+            />
+          </el-select>
+
+          <el-select
+            v-model="filterDifficulty"
+            clearable
+            placeholder="难度"
+            size="large"
+            class="html-template-library__filter-select"
+          >
+            <el-option label="简单" value="simple" />
+            <el-option label="中等" value="intermediate" />
+            <el-option label="复杂" value="advanced" />
+          </el-select>
+
+          <el-select
+            v-model="filterPrintStyle"
+            clearable
+            placeholder="印花方式"
+            size="large"
+            class="html-template-library__filter-select"
+          >
+            <el-option
+              v-for="style in printStyleOptions"
+              :key="style"
+              :label="getPrintStyleLabel(style)"
+              :value="style"
+            />
+          </el-select>
+
+          <el-tooltip content="我的收藏" placement="bottom">
+            <el-button
+              :type="showFavoritesOnly ? 'warning' : 'default'"
+              size="large"
+              :icon="Star"
+              circle
+              @click="showFavoritesOnly = !showFavoritesOnly"
+            />
+          </el-tooltip>
+        </div>
+
         <div class="html-template-library__stats">
           {{ filteredTemplates.length }} / {{ templateList.length }} 个模板
         </div>
+
+        <el-button size="large" @click="dialogVisible = false">关闭</el-button>
       </div>
 
       <div v-loading="loading" class="html-template-library__grid">
@@ -45,6 +102,7 @@
             class="html-template-library__card"
             :class="{
               'is-active': model?.htmlTemplateMeta?.id === template.id,
+              'is-favorite': isFavorite(template.id),
             }"
             @click="applyTemplate(template)"
           >
@@ -58,6 +116,14 @@
                   v-html="previewPayloadMap[template.id]?.previewMarkup"
                 ></div>
               </div>
+              <el-button
+                class="html-template-library__favorite-btn"
+                :type="isFavorite(template.id) ? 'warning' : 'default'"
+                :icon="isFavorite(template.id) ? StarFilled : Star"
+                circle
+                size="small"
+                @click.stop="toggleFavorite(template.id)"
+              />
             </div>
             <div class="html-template-library__card-body">
               <div class="html-template-library__card-topline">
@@ -96,30 +162,16 @@
         </div>
       </div>
     </div>
-
-    <template #footer>
-      <div class="html-template-library__footer">
-        <div class="html-template-library__footer-tip">
-          模板会写入当前 HTML 元素，同时带上可编辑的变量绑定。
-        </div>
-        <div class="html-template-library__footer-actions">
-          <el-button plain @click="saveCurrentAsTemplate">保存当前为模板</el-button>
-          <el-button @click="dialogVisible = false">关闭</el-button>
-        </div>
-      </div>
-    </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { Search } from "@element-plus/icons-vue";
+import { computed, ref, watch } from "vue";
+import { Search, Star, StarFilled } from "@element-plus/icons-vue";
 import icon from "@/components/design/assets/icon/project.svg?component";
 import operateFormItem from "@/components/design/layout/canvas/operate/operateFormItem.vue";
 import {
   getHtmlTemplateLibrary,
-  saveLocalHtmlTemplate,
 } from "@/components/design/layout/canvas/htmlTemplate/service.ts";
 import {
   applyHtmlTemplateToTarget,
@@ -135,6 +187,42 @@ import {
   type HtmlTemplateSource,
 } from "@/components/design/layout/canvas/htmlTemplate/types";
 
+// 收藏管理
+const FAVORITES_STORAGE_KEY = "_1s_html_template_favorites";
+
+function getFavorites(): Set<string> {
+  try {
+    const data = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    if (!data) return new Set();
+    return new Set(JSON.parse(data));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveFavorites(favorites: Set<string>) {
+  try {
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...favorites]));
+  } catch (e) {
+    console.warn("Failed to save favorites:", e);
+  }
+}
+
+const favorites = ref<Set<string>>(getFavorites());
+
+function isFavorite(templateId: string): boolean {
+  return favorites.value.has(templateId);
+}
+
+function toggleFavorite(templateId: string) {
+  if (favorites.value.has(templateId)) {
+    favorites.value.delete(templateId);
+  } else {
+    favorites.value.add(templateId);
+  }
+  saveFavorites(favorites.value);
+}
+
 const model = defineModel({
   default: {} as any,
 });
@@ -144,10 +232,50 @@ const loading = ref(false);
 const searchKeyword = ref("");
 const templateList = ref<HtmlTemplateDefinition[]>([]);
 
+// 筛选条件
+const filterCategory = ref("");
+const filterDifficulty = ref<HtmlTemplateDifficulty | "">("");
+const filterPrintStyle = ref<HtmlTemplatePrintStyle | "">("");
+const showFavoritesOnly = ref(false);
+
+// 分类选项
+const categoryOptions = computed(() => {
+  const categories = new Set(templateList.value.map(t => t.category));
+  return Array.from(categories).sort();
+});
+
+// 印花方式 选项
+const printStyleOptions = computed(() => {
+  const styles = new Set(templateList.value.flatMap(t => t.printStyle ? [t.printStyle] : []));
+  return Array.from(styles).sort();
+});
+
+// 筛选逻辑
 const filteredTemplates = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase();
 
   return templateList.value.filter((item) => {
+    // 收藏筛选
+    if (showFavoritesOnly.value && !favorites.value.has(item.id)) {
+      return false;
+    }
+
+    // 分类筛选
+    if (filterCategory.value && item.category !== filterCategory.value) {
+      return false;
+    }
+
+    // 难度筛选
+    if (filterDifficulty.value && item.difficulty !== filterDifficulty.value) {
+      return false;
+    }
+
+    // 印花方式筛选
+    if (filterPrintStyle.value && item.printStyle !== filterPrintStyle.value) {
+      return false;
+    }
+
+    // 搜索
     if (!keyword) {
       return true;
     }
@@ -246,53 +374,6 @@ function formatSuitableProducts(products?: string[]) {
   return products.join(" / ");
 }
 
-async function saveCurrentAsTemplate() {
-  ensureHtmlTemplateOptions(model.value);
-
-  if (!String(model.value?.htmlContent || "").trim()) {
-    return ElMessage.warning("当前 HTML 为空，先编辑内容再保存模板。");
-  }
-
-  let value = "";
-  try {
-    const result = await ElMessageBox.prompt(
-      "输入模板名称，当前 HTML 会保存到本地模板库。",
-      "保存为模板",
-      {
-        confirmButtonText: "保存",
-        cancelButtonText: "取消",
-        inputValue: model.value?.htmlTemplateMeta?.name || "",
-        inputValidator(inputValue) {
-          return String(inputValue || "").trim() ? true : "请输入模板名称";
-        },
-      }
-    );
-    value = result.value;
-  } catch (error) {
-    return;
-  }
-
-  const savedTemplate = saveLocalHtmlTemplate({
-    name: value,
-    category: "我的模板",
-    description: model.value?.htmlTemplateMeta?.description || "从当前 HTML 保存的自定义模板",
-    tags: model.value?.htmlTemplateMeta?.tags || ["local"],
-    difficulty: model.value?.htmlTemplateMeta?.difficulty,
-    sceneDescription:
-      model.value?.htmlTemplateMeta?.sceneDescription || "从当前画布 HTML 保存的自定义模板。",
-    suitableProducts: model.value?.htmlTemplateMeta?.suitableProducts || [],
-    printStyle: model.value?.htmlTemplateMeta?.printStyle,
-    sortOrder: model.value?.htmlTemplateMeta?.sortOrder,
-    htmlContent: model.value?.htmlContent || "",
-    bindingFields: model.value?.htmlTemplateFields || [],
-    defaultBindings: model.value?.htmlBindings || {},
-  });
-
-  await loadTemplateLibrary();
-  searchKeyword.value = "";
-  ElMessage.success(`模板 "${savedTemplate.name}" 已保存到本地模板库`);
-}
-
 </script>
 
 <style scoped lang="less">
@@ -304,7 +385,7 @@ async function saveCurrentAsTemplate() {
 }
 
 .html-template-library__layout {
-  height: calc(100vh - 138px);
+  height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -314,16 +395,31 @@ async function saveCurrentAsTemplate() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
 }
 
 .html-template-library__search {
-  max-width: 420px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.html-template-library__filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.html-template-library__filter-select {
+  width: 120px;
 }
 
 .html-template-library__stats {
   font-size: 12px;
   color: #6b7280;
+  flex-shrink: 0;
 }
 
 .html-template-library__grid {
@@ -350,6 +446,7 @@ async function saveCurrentAsTemplate() {
   flex-direction: column;
   min-height: 0;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  position: relative;
 }
 
 .html-template-library__card:hover,
@@ -363,6 +460,7 @@ async function saveCurrentAsTemplate() {
   flex: 0 0 auto;
   background: linear-gradient(180deg, #f8fafc, #eef2ff);
   padding: 14px;
+  position: relative;
 }
 
 .html-template-library__preview-inner {
@@ -376,6 +474,17 @@ async function saveCurrentAsTemplate() {
 .html-template-library__preview-content {
   width: 100%;
   height: 100%;
+}
+
+.html-template-library__favorite-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  &:hover {
+    transform: scale(1.1);
+  }
 }
 
 .html-template-library__card-body {
@@ -500,24 +609,6 @@ async function saveCurrentAsTemplate() {
   color: #6b7280;
 }
 
-.html-template-library__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.html-template-library__footer-tip {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.html-template-library__footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .html-template-library__grid::-webkit-scrollbar,
 .html-template-library__card-body::-webkit-scrollbar {
   width: 8px;
@@ -538,8 +629,7 @@ async function saveCurrentAsTemplate() {
 
 @media (max-width: 900px) {
   .html-template-library__trigger,
-  .html-template-library__toolbar,
-  .html-template-library__footer {
+  .html-template-library__toolbar {
     flex-direction: column;
     align-items: stretch;
   }
@@ -553,8 +643,9 @@ async function saveCurrentAsTemplate() {
     max-width: none;
   }
 
-  .html-template-library__footer-actions {
-    justify-content: flex-end;
+  .html-template-library__filters {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .html-template-library__grid {

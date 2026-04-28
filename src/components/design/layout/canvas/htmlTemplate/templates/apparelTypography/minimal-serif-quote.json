@@ -1,0 +1,28 @@
+{
+  "id": "minimal-serif-quote",
+  "name": "极简衬线名言",
+  "category": "服饰 / 文字排版",
+  "description": "优雅衬线字体，经典引用格式，适合文艺、复古、知识分子风格。",
+  "tags": ["文艺", "名言", "复古", "知识分子风"],
+  "difficulty": "simple",
+  "printStyle": "cutout",
+  "suitableProducts": ["T恤", "帆布袋", "明信片", "笔记本封面"],
+  "sceneDescription": "适合文艺青年、喜欢文学和哲学的人群。可以印名言、歌词、诗句或个人创作。排版经典耐看，不会过时。",
+  "sortOrder": 210,
+  "fields": [
+    { "key": "text.quote", "label": "名言内容", "type": "textarea", "placeholder": "\"Less is more.\"", "rows": 3, "description": "建议使用有深度的短句，3-15 个词" },
+    { "key": "text.author", "label": "作者", "type": "text", "placeholder": "Mies van der Rohe", "description": "可选：作者名或出处" },
+    { "key": "color.text", "label": "文字颜色", "type": "color" },
+    { "key": "color.accent", "label": "装饰线颜色", "type": "color" },
+    { "key": "font.quote", "label": "名言字体", "type": "font" }
+  ],
+  "defaults": {
+    "text": { "quote": "\"Less is more.\"", "author": "Mies van der Rohe" },
+    "color": {
+      "text": { "color": "#1a1a1a", "type": "pure" },
+      "accent": { "color": "#c9a227", "type": "pure" }
+    },
+    "font": { "quote": { "id": "", "name": "", "url": "" } }
+  },
+  "html": "<style>\n  .container{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8%;box-sizing:border-box;background:#ffffff;}\n  .quote-block{max-width:80%;text-align:center;position:relative;padding:30px 0;}\n  .quote-mark{font-size:clamp(60px, 10vw, 100px);line-height:0.5;color:{{color.accent}};opacity:0.3;font-family:Georgia,\"Times New Roman\",serif;}\n  .quote-text{font-size:clamp(20px, 4vw, 36px);line-height:1.5;color:{{color.text}};font-style:italic;margin:20px 0;font-family:{{font.quote.family}},Georgia,\"Times New Roman\",serif;}\n  .divider{width:60px;height:2px;background:{{color.accent}};margin:20px auto;}\n  .author{font-size:clamp(12px, 2vw, 16px);color:{{color.text}};opacity:0.7;letter-spacing:0.1em;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;}\n</style>\n<div class=\"container\">\n  <div class=\"quote-block\">\n    <div class=\"quote-mark\">\"</div>\n    <div class=\"quote-text\">{{text.quote}}</div>\n    <div class=\"divider\"></div>\n    <div class=\"author\">{{text.author}}</div>\n  </div>\n</div>"
+}
