@@ -175,8 +175,14 @@ export function resolveAgentTaskSpec(
   let delivery = inferred.delivery;
 
   if (preset === "single") {
-    source = "blank";
-    intent = "create";
+    // 若用户意图明确为修改/微调/优化，即使在 single 预设下也优先保留修改意图与画布来源
+    if (inferred.intent === "edit" || inferred.intent === "optimize" || inferred.intent === "analyze") {
+      source = "current-canvas";
+      intent = inferred.intent;
+    } else {
+      source = "blank";
+      intent = "create";
+    }
     outputKind = "single";
     delivery = options.delivery || "save";
   } else if (preset === "group") {

@@ -210,8 +210,11 @@ export function extractExplicitCanvasSize(
 
 export function isModificationRequest(userMessage: string): boolean {
   const text = String(userMessage || "");
-  return /基于当前(?:设计|画布)|现有设计|保留现有|不要清空|继续修改|修改当前|调整当前|替换当前|在此基础上|based on (?:the )?current|update (?:the )?current/i.test(
-    text,
+  return (
+    /基于当前(?:设计|画布)|现有设计|保留现有|不要清空|继续修改|修改当前|调整当前|替换当前|在此基础上|微调|修改|调整|优化|改一下|调一下|变一下|换个|把.{0,20}(?:改|换|调|移|放|加|删|设|做成|变成)|字体|字号|颜色|文字|文案|间距|透明度|居中|对齐|缩小|放大|加粗|变浅|变深|背景色|位置|排版|再加|添加一个|补充|润色|based on (?:the )?current|update (?:the )?current|edit|modify|tweak|adjust|change/i.test(
+      text,
+    ) &&
+    !/清空(?:画布)?|全部重做|重新设计|重新来|新建|重新做/i.test(text)
   );
 }
 
@@ -219,26 +222,36 @@ export function isNewDesignRequest(
   userMessage: string,
   task?: ResolvedAgentTaskSpec,
 ): boolean {
-  if (task?.preset === "standard") {
-    return isNewDesignRequest(userMessage);
-  }
-  if (task) {
-    return (
-      task.intent === "create" &&
-      (task.source === "blank" || task.source === "reference-image")
-    );
-  }
   const text = String(userMessage || "");
-  if (isModificationRequest(text)) return false;
-  if (
-    shouldAllowCanvasAnalysis(text) &&
-    !/创建|生成|制作|设计一|做一|创作一|新建|复刻|仿做|仿制|同款/i.test(text)
-  ) {
+
+  // 1. 如果用户显式输入了微调/修改/调整类意图，且非明确清空重做，绝不清空画布
+  if (isModificationRequest(text)) {
     return false;
   }
 
-  return /创建|新建|生成|制作|实现|设计一(?:张|个|套|款|幅|枚|组)|做一(?:张|个|套|款|幅|枚|组)|创作一(?:张|个|套|款|幅|枚|组)|清空画布.*(?:添加|创建)|复刻|仿做|仿制|做同款|相同款|照着.{0,12}(?:做|制作)|create|generate|make a|design a/i.test(
-    text,
+  // 2. 如果任务明确设置了修改或分析意图，不是新设计
+  if (task && (task.intent === "edit" || task.intent === "analyze" || task.intent === "optimize" || task.source === "current-canvas")) {
+    return false;
+  }
+
+  // 3. standard 模式或默认推断模式：根据自然语言意图判定
+  if (task?.preset === "standard" || !task) {
+    if (
+      shouldAllowCanvasAnalysis(text) &&
+      !/创建|生成|制作|设计一|做一|创作一|新建|复刻|仿做|仿制|同款/i.test(text)
+    ) {
+      return false;
+    }
+
+    return /创建|新建|生成|制作|实现|设计一(?:张|个|套|款|幅|枚|组)|做一(?:张|个|套|款|幅|枚|组)|创作一(?:张|个|套|款|幅|枚|组)|清空画布.*(?:添加|创建)|复刻|仿做|仿制|做同款|相同款|照着.{0,12}(?:做|制作)|create|generate|make a|design a/i.test(
+      text,
+    );
+  }
+
+  // 4. 其他显式模式（如 single、group、batch）
+  return (
+    task.intent === "create" &&
+    (task.source === "blank" || task.source === "reference-image")
   );
 }
 

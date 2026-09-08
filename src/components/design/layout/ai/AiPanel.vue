@@ -527,13 +527,13 @@ const isDragOver = ref(false);
 const autoFollowMessages = ref(true);
 const hasUnreadMessages = ref(false);
 
-// 任务参数模型 - 默认：单图 1 张，保存到贴纸库
+// 任务参数模型 - 默认：标准智能推断模式，保留画布/智能识别意图
 const taskOptions = useLocalStorage<AgentTaskOptions>(
-  "_1s_ai_task_options_v2",
+  "_1s_ai_task_options_v3",
   {
-    preset: "single",
-    source: "blank",
-    intent: "create",
+    preset: "standard",
+    source: "current-canvas",
+    intent: "edit",
     outputKind: "single",
     jobCount: 1,
     memberCount: 4,
@@ -597,12 +597,12 @@ const activeParamSummary = computed(() => {
   };
 });
 
-// 重置参数为默认单张创作
+// 重置参数为默认智能标准模式
 function resetParamsToDefault() {
   taskOptions.value = {
-    preset: "single",
-    source: "blank",
-    intent: "create",
+    preset: "standard",
+    source: "current-canvas",
+    intent: "edit",
     outputKind: "single",
     jobCount: 1,
     memberCount: 4,

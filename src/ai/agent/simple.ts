@@ -1147,7 +1147,7 @@ async function runAgentLoop(
   }
 
   // 2. 确定性前置操作直接执行，不再各消耗一轮模型调用。
-  if (executionPlan.isNewDesign) {
+  if (executionPlan.isNewDesign && !isModificationRequest(userMessage)) {
     clearAgentDesignProvenance(canvasStickerOptions.value);
     const result = await executePreflightOperation(
       "canvas.clear",
