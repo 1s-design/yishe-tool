@@ -286,16 +286,16 @@
         class="ai-param-banner flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border-2 text-xs shadow-2xs select-none"
       >
         <div
-          class="flex items-center gap-1.5 min-w-0 cursor-pointer group"
+          class="ai-param-banner__content flex items-center gap-1.5 min-w-0 cursor-pointer group"
           @click="showTaskConfigModal = true"
           title="点击重新配置形式与参数"
         >
-          <span class="ai-param-badge h-5 px-1.5 text-[10px] font-bold gap-1 rounded bg-primary text-white inline-flex items-center shrink-0">
+          <span class="ai-param-badge h-5 px-1.5 text-[10px] font-bold gap-1 rounded inline-flex items-center shrink-0">
             <component :is="activeParamSummary.icon" class="h-3 w-3" />
             <span>{{ activeParamSummary.title }}</span>
           </span>
-          <span class="text-xs ai-panel-text font-semibold truncate">{{ activeParamSummary.desc }}</span>
-          <span class="text-[10px] group-hover:underline flex items-center gap-0.5 shrink-0 ml-0.5">
+          <span class="ai-param-banner__desc text-xs font-semibold truncate">{{ activeParamSummary.desc }}</span>
+          <span class="ai-param-banner__action text-[10px] font-medium flex items-center gap-0.5 shrink-0 ml-0.5">
             <span>(点击修改)</span>
           </span>
         </div>
@@ -1376,20 +1376,49 @@ function parseResult(content: string) {
 
 /* Param banner */
 .ai-param-banner {
-  border-color: rgba(11, 87, 208, 0.4);
+  border-color: rgba(11, 87, 208, 0.35);
   background-color: rgba(11, 87, 208, 0.08);
+  transition: all 0.2s ease;
 }
-.ai-param-banner .group:hover span {
-  color: var(--1s-accent-color);
+.ai-param-banner:hover {
+  border-color: rgba(11, 87, 208, 0.6);
+  background-color: rgba(11, 87, 208, 0.12);
+}
+.ai-param-banner__content {
+  transition: opacity 0.2s ease;
+}
+.ai-param-banner__content:hover {
+  opacity: 0.95;
 }
 .ai-param-badge {
-  background-color: var(--1s-accent-color);
-  color: #ffffff;
+  background-color: #0b57d0 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(11, 87, 208, 0.25);
+}
+.ai-param-badge * {
+  color: #ffffff !important;
+}
+.ai-param-banner__desc {
+  color: var(--1s-text-color-primary, #0f172a);
+  transition: color 0.15s ease;
+}
+.ai-param-banner__content:hover .ai-param-banner__desc {
+  color: #0b57d0;
+}
+.ai-param-banner__action {
+  color: #0b57d0;
+  opacity: 0.85;
+  transition: all 0.15s ease;
+}
+.ai-param-banner__content:hover .ai-param-banner__action {
+  opacity: 1;
+  text-decoration: underline;
 }
 .ai-param-clear-btn {
-  background-color: var(--1s-surface-background);
-  border-color: var(--1s-border-color);
-  color: var(--1s-text-color-secondary);
+  background-color: var(--1s-surface-background, #ffffff);
+  border-color: var(--1s-border-color, #e2e8f0);
+  color: var(--1s-text-color-secondary, #64748b);
+  transition: all 0.2s ease;
 }
 .ai-param-clear-btn:hover {
   background-color: #ef4444;
@@ -1547,7 +1576,35 @@ function parseResult(content: string) {
 :global(html.dark) .ai-param-banner,
 :global(.dark) .ai-param-banner,
 :global(body.designiy-dark) .ai-param-banner {
-  background-color: rgba(11, 87, 208, 0.15);
+  border-color: rgba(59, 130, 246, 0.45);
+  background-color: rgba(37, 99, 235, 0.16);
+}
+:global(html.dark) .ai-param-banner:hover,
+:global(.dark) .ai-param-banner:hover,
+:global(body.designiy-dark) .ai-param-banner:hover {
+  border-color: rgba(96, 165, 250, 0.7);
+  background-color: rgba(37, 99, 235, 0.22);
+}
+:global(html.dark) .ai-param-banner .ai-param-badge,
+:global(.dark) .ai-param-banner .ai-param-badge,
+:global(body.designiy-dark) .ai-param-banner .ai-param-badge {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+:global(html.dark) .ai-param-banner .ai-param-banner__desc,
+:global(.dark) .ai-param-banner .ai-param-banner__desc,
+:global(body.designiy-dark) .ai-param-banner .ai-param-banner__desc {
+  color: #f1f5f9;
+}
+:global(html.dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc,
+:global(.dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc,
+:global(body.designiy-dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc {
+  color: #93c5fd;
+}
+:global(html.dark) .ai-param-banner .ai-param-banner__action,
+:global(.dark) .ai-param-banner .ai-param-banner__action,
+:global(body.designiy-dark) .ai-param-banner .ai-param-banner__action {
+  color: #60a5fa;
 }
 
 /* ===== Scrollbar ===== */
