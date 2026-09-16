@@ -216,41 +216,7 @@
         </div>
       </div>
 
-      <!-- 制作完成快速动作卡片 -->
-      <div
-        v-if="showSuccessActionCard"
-        class="ai-panel-success rounded-xl border border-emerald-500/30 bg-emerald-50/40 p-2.5 space-y-2"
-      >
-        <div class="flex items-center justify-between text-xs text-emerald-800 font-medium">
-          <div class="flex items-center gap-1">
-            <CheckCircle2 class="h-3.5 w-3.5 text-emerald-500" />
-            <span>贴纸设计已成功生成并在画布呈现</span>
-          </div>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button
-            class="ai-panel-action-btn h-6 text-[11px] gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-2.5 rounded-md"
-            @click="quickSaveCustomSticker"
-          >
-            <Save class="h-3 w-3" />
-            保存作品
-          </button>
-          <button
-            class="ai-panel-action-btn-outline h-6 text-[11px] gap-1 border border-emerald-500/30 hover:bg-emerald-100/50 px-2.5 rounded-md"
-            @click="quickExportPng"
-          >
-            <Download class="h-3 w-3" />
-            导出 PNG
-          </button>
-          <button
-            class="ai-panel-action-btn-ghost h-6 text-[11px] gap-1 ml-auto px-2.5 rounded-md"
-            @click="quickEnterEditMode"
-          >
-            <Edit3 class="h-3 w-3" />
-            继续微调
-          </button>
-        </div>
-      </div>
+      <!-- 制作完成快速动作卡片（已移除） -->
 
       <!-- 回到底部浮动按钮 -->
       <button
@@ -778,31 +744,6 @@ const planProgress = computed(() => {
   };
 });
 
-// 是否展示完成后的快捷操作卡片（仅当确实成功且没有失败/未完成的步骤）
-const showSuccessActionCard = computed(() => {
-  if (isProcessing.value) return false;
-  if (agent.state.status === "error") return false;
-  const msgs = messages.value;
-  if (!msgs.length) return false;
-  const last = msgs[msgs.length - 1];
-  if (!last || last.role !== "assistant" || isWaitingForUser.value) return false;
-
-  // 检查最后一条消息是否包含中断或失败特征
-  const text = String(last.content || "");
-  if (/任务未完成|未完成|执行失败|达到最大执行轮次|发生错误/i.test(text)) {
-    return false;
-  }
-
-  // 如果有执行计划，检查是否有未完成或失败的步骤
-  if (currentPlan.value?.steps?.length) {
-    const hasUnfinished = currentPlan.value.steps.some(
-      (s: any) => s.status === "pending" || s.status === "in_progress" || s.status === "failed"
-    );
-    if (hasUnfinished) return false;
-  }
-
-  return true;
-});
 
 function scrollToBottom(force = false) {
   nextTick(() => {
@@ -839,23 +780,6 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', onDragEnd);
   unsubscribe?.();
 });
-
-// Quick action buttons
-async function quickSaveCustomSticker() {
-  await executeAITool("canvas.updateAndSaveSticker", { autoTrim: true });
-}
-
-function quickExportPng() {
-  currentCanvasControllerInstance.value?.downloadPng();
-}
-
-function quickEnterEditMode() {
-  taskOptions.value.source = "current-canvas";
-  taskOptions.value.intent = "edit";
-  nextTick(() => {
-    textareaRef.value?.focus();
-  });
-}
 
 // Send handler
 function handleSend() {
@@ -1310,48 +1234,6 @@ function parseResult(content: string) {
   opacity: 0.9;
 }
 
-/* Success action card */
-.ai-panel-success {
-  border-color: rgba(16, 185, 129, 0.3);
-  background-color: #ecfdf5;
-}
-.ai-panel-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  transition: all 0.15s ease;
-}
-.ai-panel-action-btn-outline {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  color: #059669;
-  transition: all 0.15s ease;
-}
-.ai-panel-action-btn-outline:hover {
-  background-color: rgba(5, 150, 105, 0.1);
-}
-.ai-panel-action-btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  color: var(--1s-text-color-secondary);
-  transition: all 0.15s ease;
-}
-.ai-panel-action-btn-ghost:hover {
-  color: var(--1s-text-color);
-  background-color: var(--1s-control-hover-background);
-}
-
 /* Scroll to bottom button */
 .ai-panel-scroll-btn {
   border-color: var(--1s-border-color);
@@ -1376,13 +1258,13 @@ function parseResult(content: string) {
 
 /* Param banner */
 .ai-param-banner {
-  border-color: rgba(11, 87, 208, 0.35);
-  background-color: rgba(11, 87, 208, 0.08);
+  border-color: var(--1s-accent-color-soft);
+  background-color: var(--1s-hover-background);
   transition: all 0.2s ease;
 }
 .ai-param-banner:hover {
-  border-color: rgba(11, 87, 208, 0.6);
-  background-color: rgba(11, 87, 208, 0.12);
+  border-color: var(--1s-accent-color);
+  background-color: var(--1s-active-background);
 }
 .ai-param-banner__content {
   transition: opacity 0.2s ease;
@@ -1391,22 +1273,22 @@ function parseResult(content: string) {
   opacity: 0.95;
 }
 .ai-param-badge {
-  background-color: #0b57d0 !important;
+  background-color: var(--1s-accent-color) !important;
   color: #ffffff !important;
-  box-shadow: 0 1px 2px rgba(11, 87, 208, 0.25);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--1s-accent-color) 25%, transparent);
 }
 .ai-param-badge * {
   color: #ffffff !important;
 }
 .ai-param-banner__desc {
-  color: var(--1s-text-color-primary, #0f172a);
+  color: var(--1s-text-color);
   transition: color 0.15s ease;
 }
 .ai-param-banner__content:hover .ai-param-banner__desc {
-  color: #0b57d0;
+  color: var(--1s-accent-color);
 }
 .ai-param-banner__action {
-  color: #0b57d0;
+  color: var(--1s-accent-color);
   opacity: 0.85;
   transition: all 0.15s ease;
 }
@@ -1550,12 +1432,6 @@ function parseResult(content: string) {
   background-color: var(--1s-surface-background);
 }
 
-:global(html.dark) .ai-panel-success,
-:global(.dark) .ai-panel-success,
-:global(body.designiy-dark) .ai-panel-success {
-  background-color: rgba(6, 78, 59, 0.2);
-}
-
 :global(html.dark) .ai-ref-image,
 :global(.dark) .ai-ref-image,
 :global(body.designiy-dark) .ai-ref-image {
@@ -1576,35 +1452,35 @@ function parseResult(content: string) {
 :global(html.dark) .ai-param-banner,
 :global(.dark) .ai-param-banner,
 :global(body.designiy-dark) .ai-param-banner {
-  border-color: rgba(59, 130, 246, 0.45);
-  background-color: rgba(37, 99, 235, 0.16);
+  border-color: var(--1s-accent-color-soft);
+  background-color: var(--1s-hover-background);
 }
 :global(html.dark) .ai-param-banner:hover,
 :global(.dark) .ai-param-banner:hover,
 :global(body.designiy-dark) .ai-param-banner:hover {
-  border-color: rgba(96, 165, 250, 0.7);
-  background-color: rgba(37, 99, 235, 0.22);
+  border-color: var(--1s-accent-color);
+  background-color: var(--1s-active-background);
 }
 :global(html.dark) .ai-param-banner .ai-param-badge,
 :global(.dark) .ai-param-banner .ai-param-badge,
 :global(body.designiy-dark) .ai-param-banner .ai-param-badge {
-  background-color: #2563eb !important;
+  background-color: var(--1s-accent-color) !important;
   color: #ffffff !important;
 }
 :global(html.dark) .ai-param-banner .ai-param-banner__desc,
 :global(.dark) .ai-param-banner .ai-param-banner__desc,
 :global(body.designiy-dark) .ai-param-banner .ai-param-banner__desc {
-  color: #f1f5f9;
+  color: var(--1s-text-color);
 }
 :global(html.dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc,
 :global(.dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc,
 :global(body.designiy-dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc {
-  color: #93c5fd;
+  color: var(--1s-accent-color);
 }
 :global(html.dark) .ai-param-banner .ai-param-banner__action,
 :global(.dark) .ai-param-banner .ai-param-banner__action,
 :global(body.designiy-dark) .ai-param-banner .ai-param-banner__action {
-  color: #60a5fa;
+  color: var(--1s-accent-color);
 }
 
 /* ===== Scrollbar ===== */
