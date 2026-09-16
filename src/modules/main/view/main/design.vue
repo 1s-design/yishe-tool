@@ -39,6 +39,7 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  user-select: none;
+  // 允许画布内文字选中复制；仅在需要拖拽的交互元素上单独设置 user-select: none
+  user-select: auto;
 }
 </style>

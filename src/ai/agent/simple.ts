@@ -42,6 +42,7 @@ import {
   failPendingPlanSteps,
   getIncompleteDeliveryActions,
   getPlanProgress,
+  isModificationRequest,
   settlePlanStep,
   shouldAllowCanvasAnalysis,
   shouldContinueAfterArtwork,
@@ -64,6 +65,7 @@ interface AgentMessage {
   tool_calls?: any[];
   tool_call_id?: string;
   tool_name?: string;
+  reasoning_content?: string; // thinking 模式的思考过程，后续请求需传回
   meta?: {
     iteration?: number; // 迭代轮次
     toolArgs?: any; // 工具调用参数
@@ -405,10 +407,23 @@ function toLLMMessage(message: AgentMessage) {
     };
   }
 
+  // DeepSeek 要求：带 tools 的请求中，所有 assistant 消息都必须有 reasoning_content
+  // （即使没有 tool_calls 的 assistant 消息也需要，否则返回 400）
+  const hasToolCalls = message.tool_calls?.length;
+  const isAssistant = message.role === "assistant";
+  // 如果有原始 reasoning_content 就保留，否则 assistant 消息补空字符串
+  const reasoningContent =
+    message.reasoning_content !== undefined
+      ? message.reasoning_content
+      : isAssistant
+        ? ""
+        : undefined;
+
   return {
     role: message.role,
     content: message.content || "",
-    ...(message.tool_calls?.length ? { tool_calls: message.tool_calls } : {}),
+    ...(hasToolCalls ? { tool_calls: message.tool_calls } : {}),
+    ...(reasoningContent !== undefined ? { reasoning_content: reasoningContent } : {}),
   };
 }
 
@@ -1117,10 +1132,11 @@ async function runAgentLoop(
   agentState.plan = executionPlan.plan;
   const plan = agentState.plan;
   const hardMaxIterations = 48;
-  let maxIterations = Math.max(
-    10,
-    Math.min(hardMaxIterations, (plan?.steps.length || 0) + 3),
+  let maxIterations = Math.min(
+    hardMaxIterations,
+    (plan?.steps.length || 0) + 3,
   );
+  maxIterations = Math.max(1, maxIterations);
   const extendBatchIterationBudget = () => {
     const batchTask = agentState.batchTask;
     if (!batchTask) return;
@@ -1278,31 +1294,24 @@ async function runAgentLoop(
   const conversationMessages = agentState.messages.map(toLLMMessage);
   let referenceMessage: any = null;
   if (referenceImage) {
-    let currentUserMessageIndex = -1;
-    for (let index = conversationMessages.length - 1; index >= 0; index--) {
-      if (conversationMessages[index].role === "user") {
-        currentUserMessageIndex = index;
-        break;
-      }
-    }
-    if (currentUserMessageIndex >= 0) {
-      referenceMessage = {
-        role: "user",
-        content: [
-          { type: "text", text: userMessage },
-          {
-            type: "image_url",
-            image_url: { url: referenceImage, detail: "high" },
-          },
-        ],
-      };
-      conversationMessages[currentUserMessageIndex] = referenceMessage;
-    }
+    referenceMessage = {
+      role: "user",
+      content: [
+        { type: "text", text: userMessage },
+        {
+          type: "image_url",
+          image_url: { url: referenceImage, detail: "high" },
+        },
+      ],
+    };
   }
 
+  // 参考图模式：不传历史消息，只发 system + 当前用户消息（含参考图）
+  // 原因：历史消息中可能包含 reasoning_content（thinking 模式），而视觉模型
+  // 不支持 thinking，API 会因历史 thinking blocks 不完整而返回 400 错误。
   const messagesForLLM: any[] = [
     { role: "system", content: systemPrompt },
-    ...conversationMessages,
+    ...(referenceImage ? [referenceMessage] : conversationMessages),
   ];
 
   for (let i = 0; i < maxIterations; i++) {
@@ -1388,12 +1397,23 @@ async function runAgentLoop(
         ...messagesForLLM,
         ...iterationGuidance,
       ];
+      const finalMessages = sanitizeToolProtocolMessages(iterationMessages);
+      // 调试：检查 finalMessages 中的 reasoning_content
+      console.log("[Agent] finalMessages:", JSON.stringify(finalMessages.map((m: any) => ({
+        role: m.role,
+        has_reasoning: m.reasoning_content !== undefined,
+        reasoning_len: m.reasoning_content?.length || 0,
+        has_tool_calls: !!m.tool_calls?.length,
+        content_preview: String(m.content || "").slice(0, 50),
+      })), null, 2));
       response = await directChat({
-        messages: sanitizeToolProtocolMessages(iterationMessages),
+        messages: finalMessages,
         tools: allTools,
         maxTokens: referenceImage ? 4096 : undefined,
         temperature: referenceImage ? 0.4 : undefined,
         timeoutMs: AI_TIMEOUTS.chat,
+        // DeepSeek 默认开启 thinking 模式，必须显式禁用
+        enableThinking: false,
       });
     } catch (error: any) {
       console.error("[Agent] LLM error:", error);
@@ -1446,6 +1466,8 @@ async function runAgentLoop(
 
     const content = parsed.content;
     const toolCalls = parsed.tool_calls || [];
+    // DeepSeek 需要在后续请求中回传 reasoning_content，必须保存
+    const reasoningContent = parsed.reasoning_content;
     let assistantToolCallsAppended = false;
     const appendAssistantToolCalls = () => {
       if (assistantToolCallsAppended) return;
@@ -1453,6 +1475,7 @@ async function runAgentLoop(
         role: "assistant",
         content: content || "",
         tool_calls: toolCalls,
+        ...(reasoningContent !== undefined ? { reasoning_content: reasoningContent } : {}),
       });
       assistantToolCallsAppended = true;
     };
@@ -1463,6 +1486,7 @@ async function runAgentLoop(
         role: "assistant",
         content,
         tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
+        reasoning_content: reasoningContent,
         meta: {
           iteration,
           duration: llmDuration,
@@ -1531,6 +1555,23 @@ async function runAgentLoop(
 
       console.log("[Agent] No tool calls, ending loop");
       return;
+    }
+
+    // 计划已全部完成但 LLM 仍返回了工具调用，拦截并结束
+    if (plan && plan.steps.length > 0) {
+      const allDone = plan.steps.every(
+        (s) => s.status === "done" || s.status === "failed",
+      );
+      if (allDone && getIncompleteBatchReason() === "") {
+        console.log(
+          "[Agent] Plan already completed but LLM returned tool calls, ignoring and ending",
+        );
+        addMessage({
+          role: "assistant",
+          content: "已完成。",
+        });
+        return;
+      }
     }
 
     // 执行工具调用
@@ -2005,6 +2046,21 @@ async function runAgentLoop(
       return;
     }
 
+    // 计划全部完成时提前退出，避免多余的 LLM 调用和重复回复
+    if (plan && plan.steps.length > 0) {
+      const allDone = plan.steps.every(
+        (s) => s.status === "done" || s.status === "failed",
+      );
+      if (allDone && getIncompleteBatchReason() === "") {
+        console.log("[Agent] All plan steps completed, ending loop early");
+        addMessage({
+          role: "assistant",
+          content: "已完成。",
+        });
+        return;
+      }
+    }
+
     // 视觉自检（每 4 轮）
     if (
       allowCanvasAnalysis &&
@@ -2029,6 +2085,7 @@ async function runAgentLoop(
           temperature: 0.3,
           maxTokens: 100,
           timeoutMs: AI_TIMEOUTS.quickEvaluate,
+          enableThinking: false,
         });
         const evalContent = parseChatResponse(quickEval);
         if (evalContent?.content) {
@@ -2186,6 +2243,7 @@ ${stateSummary}
       ],
       temperature: 0.3,
       timeoutMs: AI_TIMEOUTS.quickEvaluate,
+      enableThinking: false,
     });
 
     let resultText = extractContent(response);
@@ -2325,6 +2383,7 @@ ${evaluation.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}
           compactPresetShortcuts: true,
         }),
         timeoutMs: AI_TIMEOUTS.chat,
+        enableThinking: false,
       });
 
       // 解析并执行改进操作

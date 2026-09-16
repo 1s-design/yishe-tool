@@ -2,7 +2,7 @@
   <div
     v-if="open || isOpen"
     ref="panelRef"
-    class="ai-panel fixed z-50 flex flex-col overflow-hidden rounded-2xl shadow-lg select-none"
+    class="ai-panel fixed z-50 flex flex-col overflow-hidden rounded-2xl shadow-lg"
     :class="{ 'is-dragging': isDragging }"
     :style="panelStyle"
   >

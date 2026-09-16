@@ -1,6 +1,7 @@
 export interface ParsedResponse {
   content: string;
   tool_calls?: any[];
+  reasoning_content?: string;
 }
 
 function normalizeResponseContent(content: any): string {
@@ -21,6 +22,7 @@ function parseResponseCandidate(candidate: any): ParsedResponse | null {
     return {
       content: normalizeResponseContent(message.content),
       tool_calls: message.tool_calls,
+      reasoning_content: message.reasoning_content || undefined,
     };
   }
 
@@ -28,6 +30,7 @@ function parseResponseCandidate(candidate: any): ParsedResponse | null {
     return {
       content: normalizeResponseContent(candidate.message.content),
       tool_calls: candidate.message.tool_calls,
+      reasoning_content: candidate.message.reasoning_content || undefined,
     };
   }
 

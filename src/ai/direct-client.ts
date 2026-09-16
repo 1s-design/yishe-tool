@@ -184,6 +184,8 @@ export async function directChat(options: {
   keyId?: number | null;
   featureCode?: string;
   timeoutMs?: number;
+  reasoningEffort?: string;
+  enableThinking?: boolean;
 }): Promise<any> {
   const {
     messages,
@@ -194,6 +196,8 @@ export async function directChat(options: {
     keyId,
     featureCode,
     timeoutMs,
+    reasoningEffort,
+    enableThinking,
   } = options;
 
   const mode = aiSettings.value.mode || "proxy";
@@ -210,6 +214,10 @@ export async function directChat(options: {
 
     if (maxTokens) body.max_tokens = maxTokens;
     if (tools && tools.length > 0) body.tools = tools;
+    if (reasoningEffort) body.reasoning_effort = reasoningEffort;
+    if (enableThinking !== undefined) body.enable_thinking = enableThinking;
+
+    console.log("[DirectChat] proxy request body:", JSON.stringify(body, null, 2));
 
     return postAgentProxy(body, { timeoutMs: timeoutMs ?? AI_TIMEOUTS.chat });
   }
@@ -283,6 +291,7 @@ export async function* directChatStream(options: {
   keyId?: number | null;
   featureCode?: string;
   timeoutMs?: number;
+  reasoningEffort?: string;
 }): AsyncGenerator<any, void, unknown> {
   const {
     messages,
@@ -293,6 +302,7 @@ export async function* directChatStream(options: {
     keyId,
     featureCode,
     timeoutMs,
+    reasoningEffort,
   } = options;
 
   const mode = aiSettings.value.mode || "proxy";
@@ -309,6 +319,7 @@ export async function* directChatStream(options: {
 
     if (maxTokens) body.max_tokens = maxTokens;
     if (tools && tools.length > 0) body.tools = tools;
+    if (reasoningEffort) body.reasoning_effort = reasoningEffort;
 
     const response = await postAgentProxy(body, {
       timeoutMs: timeoutMs ?? AI_TIMEOUTS.chat,
