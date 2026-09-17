@@ -1,14 +1,15 @@
 <template>
   <div id="basic-canvas" class="basic-canvas png-background">
-    <canvas-teleport></canvas-teleport>
+    <canvas-teleport ref="teleportRef"></canvas-teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import canvasTeleport from '@/components/design/layout/canvas/teleport.vue'
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 
+const teleportRef = ref()
 </script>
 
 <style scoped>

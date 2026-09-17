@@ -40,11 +40,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { CanvasController, showMainCanvas } from '@/components/design/layout/canvas/index.tsx'
-import { 
-    CircleCloseFilled, 
-    Aim, 
-    ZoomIn, 
-    ZoomOut 
+import {
+    CircleCloseFilled,
+    Aim,
+    ZoomIn,
+    ZoomOut
 } from '@element-plus/icons-vue'
 import panzoom from 'panzoom'
 import Utils from '@/common/utils'
@@ -160,7 +160,7 @@ watch(show, async (val) => {
     height: 100%;
     display: block;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .panzoom-wrapper {

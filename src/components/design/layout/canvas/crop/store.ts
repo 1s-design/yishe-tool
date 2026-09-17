@@ -7,7 +7,7 @@
 import { ref, computed, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import type { CropPreset, CropGuide, CropRegion, SafeZone } from './types'
-import { calculateCropRegion, calculateSafeZone } from './engine'
+import { calculateCropRegion, calculateSafeZone, findOptimalCanvasRatio, calculateSafeAreaRatio, calculatePresetCropRegion, calculateMixedSafeZone, findOptimalCanvasSizeMixed, formatRatioAsText } from './engine'
 import { canvasStickerOptionsOnlyChild } from '../index'
 import { DEFAULT_CROP_PRESETS } from './presets'
 
@@ -43,17 +43,52 @@ export function addCropGuide(preset: CropPreset) {
   }
 }
 
-export function addCustomCropGuide(width: number, height: number, name?: string) {
+/**
+ * 添加比例型裁剪参考线
+ */
+export function addRatioCropGuide(width: number, height: number, name?: string) {
   const ratio = width / height
-  const id = `custom-${width}x${height}-${Date.now()}`
+  const id = `ratio-${width}-${height}-${Date.now()}`
   const preset: CropPreset = {
     id,
-    name: name || `${width}×${height}`,
+    type: 'ratio',
+    name: name || `${width}:${height}`,
     width,
     height,
     ratio,
   }
   addCropGuide(preset)
+}
+
+/**
+ * 添加像素型裁剪参考线（固定像素尺寸，不随画布缩放）
+ * 例如：1920×1080、800×600 等
+ */
+export function addPixelCropGuide(pixelWidth: number, pixelHeight: number, name?: string) {
+  const ratio = pixelWidth / pixelHeight
+  const id = `pixel-${pixelWidth}x${pixelHeight}-${Date.now()}`
+  const preset: CropPreset = {
+    id,
+    type: 'pixel',
+    name: name || `${pixelWidth}×${pixelHeight}`,
+    width: pixelWidth,
+    height: pixelHeight,
+    ratio,
+  }
+  addCropGuide(preset)
+}
+
+/**
+ * 添加自定义裁剪参考线（根据输入自动判断类型）
+ * 如果宽高都 ≤ 100，认为是比例；否则认为是像素尺寸
+ */
+export function addCustomCropGuide(width: number, height: number, name?: string) {
+  // 判断：如果宽高都较小（≤100），视为比例；否则视为像素
+  if (width <= 100 && height <= 100) {
+    addRatioCropGuide(width, height, name)
+  } else {
+    addPixelCropGuide(width, height, name)
+  }
 }
 
 export function removeCropGuide(id: string) {
@@ -84,17 +119,20 @@ export const activeCropRegions = computed(() => {
   const canvasChild = canvasStickerOptionsOnlyChild.value
   if (!canvasChild || !showCropGuides.value) return []
 
-  const designRatio = canvasChild.width.value / canvasChild.height.value
+  const canvasWidth = canvasChild.width.value
+  const canvasHeight = canvasChild.height.value
 
   return cropGuides.value
     .filter(g => g.visible)
     .map(g => {
       const preset = cropPresets.value.find(p => p.id === g.presetId)
       if (!preset) return null
+      const region = calculatePresetCropRegion(preset, canvasWidth, canvasHeight)
+      if (!region) return null // 像素约束无法满足
       return {
         guide: g,
         preset,
-        region: calculateCropRegion(designRatio, preset.ratio),
+        region,
       }
     })
     .filter(Boolean) as Array<{ guide: CropGuide; preset: CropPreset; region: CropRegion }>
@@ -107,14 +145,15 @@ export const safeZone = computed<SafeZone>(() => {
     return { left: 0, top: 0, right: 1, bottom: 1, valid: false }
   }
 
-  const designRatio = canvasChild.width.value / canvasChild.height.value
+  const canvasWidth = canvasChild.width.value
+  const canvasHeight = canvasChild.height.value
 
   const visibleRegions = cropGuides.value
     .filter(g => g.visible)
     .map(g => {
       const preset = cropPresets.value.find(p => p.id === g.presetId)
       if (!preset) return null
-      return calculateCropRegion(designRatio, preset.ratio)
+      return calculatePresetCropRegion(preset, canvasWidth, canvasHeight)
     })
     .filter(Boolean) as CropRegion[]
 
@@ -125,6 +164,80 @@ export const safeZone = computed<SafeZone>(() => {
 export const unaddedPresets = computed(() => {
   const activeIds = new Set(cropPresets.value.map(p => p.id))
   return availablePresets.value.filter(p => !activeIds.has(p.id))
+})
+
+// -- Computed: 当前所有可见参考线的目标比例 --
+export const activeTargetRatios = computed(() => {
+  return cropGuides.value
+    .filter(g => g.visible)
+    .map(g => {
+      const preset = cropPresets.value.find(p => p.id === g.presetId)
+      return preset?.ratio
+    })
+    .filter((r): r is number => r !== undefined)
+})
+
+// -- Computed: 最优画布比例 - 使得安全区域最大化 --
+export const optimalCanvasRatio = computed(() => {
+  const ratios = activeTargetRatios.value
+  if (ratios.length === 0) return null
+  if (ratios.length === 1) return ratios[0]
+  return findOptimalCanvasRatio(ratios)
+})
+
+// -- Computed: 当前画布的安全区域占比 --
+export const currentSafeAreaRatio = computed(() => {
+  const canvasChild = canvasStickerOptionsOnlyChild.value
+  if (!canvasChild) return null
+  const canvasRatio = canvasChild.width.value / canvasChild.height.value
+  const ratios = activeTargetRatios.value
+  if (ratios.length === 0) return null
+  return calculateSafeAreaRatio(canvasRatio, ratios)
+})
+
+// -- Computed: 最优比例下的安全区域占比 --
+export const optimalSafeAreaRatio = computed(() => {
+  const ratios = activeTargetRatios.value
+  if (ratios.length < 2) return null
+  const optimal = optimalCanvasRatio.value
+  if (!optimal) return null
+  return calculateSafeAreaRatio(optimal, ratios)
+})
+
+// -- Computed: 最优比例的显示文本 --
+export const optimalRatioText = computed(() => {
+  const ratio = optimalCanvasRatio.value
+  if (!ratio) return ''
+  return formatRatioAsText(ratio)
+})
+
+// -- Computed: 所有可见预设的完整信息（含类型）--
+export const activePresets = computed(() => {
+  return cropGuides.value
+    .filter(g => g.visible)
+    .map(g => {
+      const preset = cropPresets.value.find(p => p.id === g.presetId)
+      return preset
+    })
+    .filter((p): p is CropPreset => p !== undefined)
+})
+
+// -- Computed: 当前画布的安全区（支持混合约束）--
+export const currentMixedSafeZone = computed(() => {
+  const canvasChild = canvasStickerOptionsOnlyChild.value
+  if (!canvasChild) return null
+  const canvasWidth = canvasChild.width.value
+  const canvasHeight = canvasChild.height.value
+  const presets = activePresets.value
+  if (presets.length === 0) return null
+  return calculateMixedSafeZone(canvasWidth, canvasHeight, presets)
+})
+
+// -- Computed: 推荐画布尺寸（支持混合约束）--
+export const recommendedCanvasSize = computed(() => {
+  const presets = activePresets.value
+  if (presets.length === 0) return null
+  return findOptimalCanvasSizeMixed(presets)
 })
 
 // -- Color rotation for new guides --

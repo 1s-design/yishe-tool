@@ -1131,12 +1131,13 @@ async function runAgentLoop(
 
   agentState.plan = executionPlan.plan;
   const plan = agentState.plan;
-  const hardMaxIterations = 48;
+  const hardMaxIterations = 60;
+  // 初始迭代预算：每步计划至少预留 2 轮（思考 + 执行），再加缓冲
   let maxIterations = Math.min(
     hardMaxIterations,
-    (plan?.steps.length || 0) + 3,
+    (plan?.steps.length || 0) * 2 + 6,
   );
-  maxIterations = Math.max(1, maxIterations);
+  maxIterations = Math.max(4, maxIterations);
   const extendBatchIterationBudget = () => {
     const batchTask = agentState.batchTask;
     if (!batchTask) return;

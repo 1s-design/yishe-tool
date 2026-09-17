@@ -138,42 +138,43 @@ export const Canvas = defineComponent({
                 options: props.options
             })
 
-            return <div id="this_is_canvas_container_id" style={containerStyle} >
-                {/* 转换的元素 */}
-                <div id={currentCanvasControllerInstance.value?.rawId} style={style} ref={targetElRef}>
-                    {/* svg过滤器 */}
-                    <SvgFilterComponent></SvgFilterComponent>
-                    {/* <SvgFilterStyleComponent></SvgFilterStyleComponent> */}
+            return <div style={{ position: 'relative', display: 'inline-block', overflow: 'visible' }}>
+                <div id="this_is_canvas_container_id" style={containerStyle} >
+                    {/* 转换的元素 */}
+                    <div id={currentCanvasControllerInstance.value?.rawId} style={style} ref={targetElRef}>
+                        {/* svg过滤器 */}
+                        <SvgFilterComponent></SvgFilterComponent>
+                        {/* <SvgFilterStyleComponent></SvgFilterStyleComponent> */}
 
-                    {/* 裁剪 */}
-                    <SvgClipPathComponent></SvgClipPathComponent>
+                        {/* 裁剪 */}
+                        <SvgClipPathComponent></SvgClipPathComponent>
 
-                    {/* 这里把所有的元素放在svg中,但是有一个问题，文字无法显示颜色和字体 ，直接放在div中貌似也没啥问题，也不知道当时为啥放这里了 */}
-                    {/* <svg style="width:100%;height:100%;">
-                        <foreignObject style="width:100%;height:100%;">
-                            {ctx.slots.default()}
-                        </foreignObject>
-                    </svg> */}
+                        {/* 这里把所有的元素放在svg中,但是有一个问题，文字无法显示颜色和字体 ，直接放在div中貌似也没啥问题，也不知道当时为啥放这里了 */}
+                        {/* <svg style="width:100%;height:100%;">
+                            <foreignObject style="width:100%;height:100%;">
+                                {ctx.slots.default()}
+                            </foreignObject>
+                        </svg> */}
 
-                    <div
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            overflow: 'hidden',
-                        }}
-                    >
-                     {ctx.slots.default()}
+                        <div
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                overflow: 'hidden',
+                            }}
+                        >
+                         {ctx.slots.default()}
+                        </div>
+
                     </div>
-
+                    {/* 真实的画布 */}
+                    <canvas id={currentCanvasControllerInstance.value?.canvasId} style={canvasStyle} width={pxWidth} height={pxHeight}></canvas>
                 </div>
-                {/* 裁剪参考线覆盖层 (仅编辑器可见, html-to-image 不捕获) */}
+                {/* 裁剪参考线 - 放在 canvas container 后面，确保线条显示在最上层，允许线条向外延伸 */}
                 <CropOverlay canvasWidth={pxWidth} canvasHeight={pxHeight} />
-                {/* 真实的画布 */}
-                <canvas id={currentCanvasControllerInstance.value?.canvasId} style={canvasStyle} width={pxWidth} height={pxHeight}></canvas>
-
             </div>
         }
     }
