@@ -3,7 +3,7 @@
     <DialogContent class="max-w-[380px] p-6 gap-0">
       <VisuallyHidden>
         <DialogTitle>登录</DialogTitle>
-        <DialogDescription>输入账号和密码登录 1s Design Tool</DialogDescription>
+        <DialogDescription>输入账号和密码登录 1s design tool</DialogDescription>
       </VisuallyHidden>
       <password-login />
     </DialogContent>
