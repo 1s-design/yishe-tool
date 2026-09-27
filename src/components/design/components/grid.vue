@@ -1,10 +1,10 @@
 <template>
   <div class="grid">
-    <el-row>
-      <el-col :span="24 / column" v-for="item in list">
+    <div class="grid-row">
+      <div class="grid-col" :style="{ width: 100 / column + '%' }" v-for="item in list">
         <slot></slot>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -26,5 +26,15 @@ const props = defineProps({
 .grid {
   width: 100%;
   height: 100%;
+}
+
+.grid-row {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.grid-col {
+  box-sizing: border-box;
 }
 </style>

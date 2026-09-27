@@ -1,90 +1,104 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="formula" title="公式">
-      <operate-form-item>
-        <template #name>LaTeX</template>
-        <template #content>
-          <div class="math-formula-editor">
-            <div class="math-formula-editor__toolbar">
-              <el-popover
-                v-model:visible="aiPopoverVisible"
-                trigger="click"
-                placement="right-start"
-                width="320"
-              >
-                <div class="math-ai-popover">
-                  <el-input
-                    v-model="aiPrompt"
-                    type="textarea"
-                    :rows="3"
-                    resize="vertical"
-                    spellcheck="false"
-                    :disabled="aiLoading"
-                    placeholder="描述公式，例如：二次方程求根公式 / 水的生成反应"
-                    @keydown.enter.ctrl="generateFormulaByAi"
-                  ></el-input>
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
+  >
+    <AccordionItem value="formula">
+      <AccordionTrigger>公式</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>LaTeX</template>
+          <template #content>
+            <div class="math-formula-editor">
+              <div class="math-formula-editor__toolbar">
+                <Popover v-model:open="aiPopoverVisible">
+                  <PopoverTrigger as-child>
+                    <Button size="sm" variant="outline" @click.stop>AI</Button>
+                  </PopoverTrigger>
+                  <PopoverContent side="right" align="start" class="w-[320px]">
+                    <div class="math-ai-popover">
+                      <Textarea
+                        v-model="aiPrompt"
+                        :rows="3"
+                        class="resize-y"
+                        spellcheck="false"
+                        :disabled="aiLoading"
+                        placeholder="描述公式，例如：二次方程求根公式 / 水的生成反应"
+                        @keydown.enter.ctrl="generateFormulaByAi"
+                      ></Textarea>
 
-                  <div class="math-ai-popover__actions">
-                    <el-button size="small" @click="aiPopoverVisible = false">取消</el-button>
-                    <el-button
-                      size="small"
-                      type="primary"
-                      :loading="aiLoading"
-                      :disabled="!aiPrompt.trim() || aiLoading"
-                      @click="generateFormulaByAi"
-                    >
-                      确定
-                    </el-button>
-                  </div>
+                      <div class="math-ai-popover__actions">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          @click="aiPopoverVisible = false"
+                          >取消</Button
+                        >
+                        <Button
+                          size="sm"
+                          variant="default"
+                          :disabled="!aiPrompt.trim() || aiLoading"
+                          @click="generateFormulaByAi"
+                        >
+                          确定
+                        </Button>
+                      </div>
 
-                  <div v-if="aiError" class="math-ai-popover__error">{{ aiError }}</div>
-                </div>
+                      <div v-if="aiError" class="math-ai-popover__error">{{ aiError }}</div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-                <template #reference>
-                  <el-button size="small" type="primary" plain>AI</el-button>
-                </template>
-              </el-popover>
+              <Textarea
+                v-model="currentOperatingCanvasChild.formula"
+                :rows="5"
+                class="resize-y"
+                spellcheck="false"
+                placeholder="\frac{a}{b}=c 或 \ce{2H2 + O2 -> 2H2O}"
+              ></Textarea>
             </div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-            <el-input
-              v-model="currentOperatingCanvasChild.formula"
-              type="textarea"
-              :rows="5"
-              resize="vertical"
-              spellcheck="false"
-              placeholder="\frac{a}{b}=c 或 \ce{2H2 + O2 -> 2H2O}"
-            ></el-input>
-          </div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+    <AccordionItem value="style">
+      <AccordionTrigger>样式</AccordionTrigger>
+      <AccordionContent>
+        <operateItemFontSize
+          label="公式大小"
+          v-model="currentOperatingCanvasChild.fontSize"
+        ></operateItemFontSize>
+        <operateItemFontFamily
+          label="公式字体"
+          v-model="currentOperatingCanvasChild.fontFamilyInfo"
+        ></operateItemFontFamily>
+        <operateItemFontColor v-model="currentOperatingCanvasChild.fontColor"></operateItemFontColor>
+        <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor"></operateItemBackgroundColor>
+        <operateItemTextAlign v-model="currentOperatingCanvasChild.textAlign"></operateItemTextAlign>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="style" title="样式">
-      <operateItemFontSize
-        label="公式大小"
-        v-model="currentOperatingCanvasChild.fontSize"
-      ></operateItemFontSize>
-      <operateItemFontFamily
-        label="公式字体"
-        v-model="currentOperatingCanvasChild.fontFamilyInfo"
-      ></operateItemFontFamily>
-      <operateItemFontColor v-model="currentOperatingCanvasChild.fontColor"></operateItemFontColor>
-      <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor"></operateItemBackgroundColor>
-      <operateItemTextAlign v-model="currentOperatingCanvasChild.textAlign"></operateItemTextAlign>
-    </el-collapse-item>
+    <AccordionItem value="layout">
+      <AccordionTrigger>尺寸</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        ></operateItemSize>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="layout" title="尺寸">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      ></operateItemSize>
-    </el-collapse-item>
-
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-    </el-collapse-item>
-  </el-collapse>
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -96,6 +110,19 @@ import operateItemFontFamily from '@/components/design/layout/canvas/operate/fon
 import operateItemFontColor from '@/components/design/layout/canvas/operate/fontColor.vue'
 import operateItemBackgroundColor from '@/components/design/layout/canvas/operate/backgroundColor.vue'
 import operateItemTextAlign from '@/components/design/layout/canvas/operate/textAlign.vue'
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion'
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { currentOperatingCanvasChild } from '../index.tsx'
 import { generateMathFormula } from '../children/aiMathService'
 
@@ -148,10 +175,6 @@ async function generateFormulaByAi() {
   display: flex;
   justify-content: flex-end;
   gap: 4px;
-
-  :deep(.el-button + .el-button) {
-    margin-left: 0;
-  }
 }
 
 .math-ai-popover__error {

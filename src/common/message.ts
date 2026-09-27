@@ -30,7 +30,9 @@ export const message = {
     const duration = opts.duration != null ? opts.duration * 1000 : undefined
     return toast[type](opts.content, duration)
   },
-  destroy: () => {},
+  destroy: (_key?: string) => {},
+  // 兼容 ant-design-vue message.config（本实现为无操作）
+  config: (_opts: unknown) => {},
 }
 
 /**

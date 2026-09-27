@@ -3,19 +3,22 @@
     <template #icon> <icon-bold></icon-bold> </template>
     <template #name> 厚度 </template>
     <template #content>
-      <el-select v-model="model" size="small" style="width: 80px">
-        <template #label="{ label, value }">
-          <span :style="{ fontWeight: value }"> {{ label }} </span>
-        </template>
-        <el-option
-          v-for="item in fontWeightOptions"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
-        >
-          <span :style="{ fontWeight: item.value }"> {{ item.label }} </span>
-        </el-option>
-      </el-select>
+      <Select v-model="model">
+        <SelectTrigger class="w-[80px] h-6 text-[11px]">
+          <SelectValue>
+            <span :style="{ fontWeight: model }"> {{ (fontWeightOptions.find(o => o.value === model) || {}).label }} </span>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-for="item in fontWeightOptions"
+            :key="item.value"
+            :value="item.value"
+          >
+            <span :style="{ fontWeight: item.value }"> {{ item.label }} </span>
+          </SelectItem>
+        </SelectContent>
+      </Select>
     </template>
   </operate-form-item>
 </template>
@@ -24,6 +27,7 @@
 import iconFontSize from "@/components/design/assets/icon/font-size.svg?component";
 import { ref, reactive } from "vue";
 import iconBold from "@/components/design/assets/icon/bold.svg?component";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 const model = defineModel({});
 
 const fontWeightOptions = reactive([

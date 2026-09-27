@@ -1,35 +1,45 @@
 <template>
   <div class="content">
     <div class="list" v-infinite-scroll="getList" :infinite-scroll-distance="150">
-      <el-row :gutter="8" style="row-gap: 1em">
-        <el-col :span="24 / column" v-for="item in list" align="center">
+      <div
+        class="model-grid"
+        :style="{ gridTemplateColumns: `repeat(${column}, minmax(0, 1fr))` }"
+      >
+        <div v-for="item in list" class="text-center">
           <div class="item">
             <div class="preview">
               <gltf-viewer :model="item.meta.modelInfo"></gltf-viewer>
             </div>
-            <el-popover placement="auto" trigger="click" width="auto">
-              <template #reference>
+            <Popover>
+              <PopoverTrigger as-child>
                 <div class="bar">
                   <div class="title text-ellipsis">{{ item.name || "......" }}</div>
-                  <el-icon><ArrowRightBold /></el-icon>
+                  <ArrowRight class="item-arrow h-[1em] w-[1em]" />
                 </div>
-              </template>
-              <popover></popover>
-            </el-popover>
+              </PopoverTrigger>
+              <PopoverContent side="right" class="w-auto">
+                <popover></popover>
+              </PopoverContent>
+            </Popover>
           </div>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="tsx">
 import { ref, onBeforeMount } from "vue";
-import { Search, ArrowRightBold } from "@element-plus/icons-vue";
+import { ArrowRight } from "lucide-vue-next";
 import { getCustomModelList } from "@/api";
 import { usePaging } from "@/hooks/data/paging.ts";
 import desimage from "@/components/image.vue";
 import popover from "./popover.vue";
 import gltfViewer from "@/components/model/gltfViewer/index.vue";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 const { list, getList } = usePaging((params) => {
   return getCustomModelList({
@@ -56,6 +66,11 @@ const column = ref(2);
   flex: 1;
   overflow: auto;
   padding: 1em;
+}
+
+.model-grid {
+  display: grid;
+  gap: 1em 8px;
 }
 
 .item {
@@ -87,11 +102,11 @@ const column = ref(2);
   align-items: center;
   column-gap: 1em;
   &:hover {
-    color: #000;
+    color: var(--1s-text-color);
     cursor: pointer;
   }
 
-  .el-icon {
+  .item-arrow {
     height: 1em;
     line-height: 1em;
   }

@@ -3,96 +3,83 @@
     <template #icon> <icon-position></icon-position> </template>
     <template #name> 显示位置 </template>
     <template #content>
-      <el-popover width="auto" trigger="click" popper-class="el-popover-operation">
-        <template #reference>
-          <el-button size="small" link>{{ positionLabel }}</el-button>
-        </template>
+      <Popover>
+        <PopoverTrigger as-child>
+          <Button size="sm" variant="link">{{ positionLabel }}</Button>
+        </PopoverTrigger>
+        <PopoverContent class="w-auto">
         <div>
-          <el-row
+          <div
             v-if="active == 'params'"
-            align="middle"
-            justify="center"
+            class="flex flex-col items-center"
             style="width: 160px; row-gap: 0.2rem"
           >
-            <el-col :span="24">
+            <div class="w-full">
               <div class="flex items-center justify-between">
                 <span style="font-weight: bold; padding: 1em 0">优先级自上而下排列 </span>
               </div>
-            </el-col>
-            <el-col :span="8">
-              <div>整体居中</div>
-            </el-col>
-            <el-col :span="16">
-              <div class="content">
-                <el-switch size="small" v-model="model.center"></el-switch>
+            </div>
+            <div class="flex w-full items-center">
+              <div class="w-1/3">整体居中</div>
+              <div class="w-2/3 content">
+                <Switch v-model:checked="model.center"></Switch>
               </div>
-            </el-col>
-            <el-col :span="8">
-              <div>垂直居中</div>
-            </el-col>
-            <el-col :span="16">
-              <div class="content">
-                <el-switch size="small" v-model="model.verticalCenter"></el-switch>
+            </div>
+            <div class="flex w-full items-center">
+              <div class="w-1/3">垂直居中</div>
+              <div class="w-2/3 content">
+                <Switch v-model:checked="model.verticalCenter"></Switch>
               </div>
-            </el-col>
-            <el-col :span="8">
-              <div>水平居中</div>
-            </el-col>
-            <el-col :span="16">
-              <div class="content">
-                <el-switch size="small" v-model="model.horizontalCenter"></el-switch>
+            </div>
+            <div class="flex w-full items-center">
+              <div class="w-1/3">水平居中</div>
+              <div class="w-2/3 content">
+                <Switch v-model:checked="model.horizontalCenter"></Switch>
               </div>
-            </el-col>
+            </div>
             <template v-for="item in positionOptions">
-              <el-col :span="8">
-                <div>{{ item.label }}</div>
-              </el-col>
-              <el-col :span="16">
-                <div>
-                  <el-popover
-                    placement="right"
-                    :teleported="false"
-                    popper-class="el-popover-operation"
-                  >
-                    <template #reference>
+              <div class="flex w-full items-center">
+                <div class="w-1/3">{{ item.label }}</div>
+                <div class="w-2/3">
+                  <Popover>
+                    <PopoverTrigger as-child>
                       <div class="content">
-                        <el-input
-                          style="width: 80px"
-                          size="small"
-                          min="0"
-                          step="1"
-                          type="number"
-                          v-model.number="model[item.type].value"
-                        >
-                          <template #suffix>
-                            <span class="text-[10px] text-muted-foreground">
-                              {{ model[item.type].unit }}
-                            </span>
-                          </template>
-                        </el-input>
+                        <div class="flex items-center gap-1" style="width: 80px">
+                          <Input
+                            class="h-6 text-[11px] min-w-0 flex-1"
+                            min="0"
+                            step="1"
+                            type="number"
+                            v-model.number="model[item.type].value"
+                          />
+                          <span class="text-[10px] text-muted-foreground">
+                            {{ model[item.type].unit }}
+                          </span>
+                        </div>
                       </div>
-                    </template>
-                    <el-row align="middle" justify="end">
-                      <el-col :span="24">
-                        <el-radio-group v-model="model[item.type].unit" size="small">
-                          <el-radio v-for="(u, index) in unitOptions" :value="u.value">
+                    </PopoverTrigger>
+                    <PopoverContent side="right" class="w-auto">
+                      <div class="flex items-end justify-end">
+                        <RadioGroup v-model="model[item.type].unit" class="flex flex-row flex-wrap items-center gap-3">
+                          <label v-for="(u, index) in unitOptions" :key="u.value" class="flex flex-row flex-wrap items-center gap-3">
+                            <RadioGroupItem :value="u.value" />
                             <span class="text-xs">{{ u.label }}</span>
-                          </el-radio>
-                        </el-radio-group>
-                      </el-col>
-                    </el-row>
-                  </el-popover>
+                          </label>
+                        </RadioGroup>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
-              </el-col>
-            </template>
-            <el-col :span="24">
-              <div style="height: 30px" class="flex items-center">
-                <el-button @click="active = 'drag'" class="w-full" size="small">
-                  <AimOutlined />手动调整
-                </el-button>
               </div>
-            </el-col>
-          </el-row>
+            </template>
+            <div class="w-full">
+              <div style="height: 30px" class="flex items-center">
+                <Button @click="active = 'drag'" class="w-full" size="sm" variant="outline">
+                  <Crosshair />手动调整
+                </Button>
+              </div>
+            </div>
+          </div>
 
           <div v-if="active == 'drag'">
             <dragger
@@ -105,17 +92,18 @@
             </dragger>
 
             <div class="flex w-full items-center" style="margin-top: 1rem">
-              <el-button link @click="active = 'params'">
-                <LeftOutlined />返回
-              </el-button>
-              <el-button @click="reset" link>
-                <RedoOutlined></RedoOutlined>
+              <Button variant="link" @click="active = 'params'">
+                <ChevronLeft />返回
+              </Button>
+              <Button @click="reset" variant="link">
+                <Redo2></Redo2>
                 重置位置
-              </el-button>
+              </Button>
             </div>
           </div>
         </div>
-      </el-popover>
+        </PopoverContent>
+      </Popover>
     </template>
   </operate-form-item>
 </template>
@@ -136,8 +124,12 @@ import {
 import dragger from "./dragger.vue";
 import Utils from "@/common/utils";
 
-import { Pointer } from "@element-plus/icons-vue";
-import { AimOutlined, LeftOutlined, RedoOutlined } from "@ant-design/icons-vue";
+import { ChevronLeft, Crosshair, Redo2 } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 const model = defineModel({
   default: {} as any,

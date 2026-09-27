@@ -1,198 +1,208 @@
 <template>
   <main>
-    <el-collapse v-model="actives">
-      <el-collapse-item name="1">
-        <template #title>
+    <Accordion type="multiple" :model-value="actives" @update:model-value="v => actives = v">
+      <AccordionItem value="1">
+        <AccordionTrigger>
           <div class="title">文字属性</div>
-        </template>
-        <el-row :gutter="24" align="middle">
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon> <icon-font-size></icon-font-size> </template>
-              <template #name> 文字大小 </template>
-              <template #content>
-                <el-input
-                  v-model="operatingTextStickerOptions.fontSize"
-                  size="small"
-                ></el-input>
-              </template>
-            </operate-form-item>
-          </el-col>
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon> <icon-bold></icon-bold> </template>
-              <template #name> 厚度 </template>
-              <template #content>
-                <el-select
-                  v-model="operatingTextStickerOptions.fontWeight"
-                  size="small"
-                  style="width: 72px"
-                >
-                  <el-option
-                    v-for="item in fontWeightOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  >
-                    <span :style="{ fontWeight: item.value }"> {{ item.label }} </span>
-                  </el-option>
-                </el-select>
-              </template>
-            </operate-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon> <icon-italic></icon-italic> </template>
-              <template #name> 斜体 </template>
-              <template #content>
-                <el-switch v-model="operatingTextStickerOptions.italic" size="small" />
-              </template>
-            </operate-form-item>
-          </el-col>
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon> <icon-font-color></icon-font-color> </template>
-              <template #name> 字体颜色</template>
-              <template #content>
-                <!-- <color-picker
-                  v-model:pureColor="operatingTextStickerOptions.fontColor"
-                  v-model:gradientColor="operatingTextStickerOptions.fontGradientColor"
-                ></color-picker> -->
-              </template>
-            </operate-form-item>
-          </el-col>
-
-          <el-col :span="24">
-            <operate-form-item>
-              <template #icon> <icon-font-family></icon-font-family> </template>
-              <template #name> </template>
-              <template #content>
-                <template v-if="operatingTextStickerOptions.fontFamilyInfo">
-                  <el-image
-                    @click="showFontModal = true"
-                    style="background: #f3f4f6; border-radius: 0.2em; height: 2.4em"
-                    fit="contain"
-                    :src="operatingTextStickerOptions.fontFamilyInfo.thumbnail?.url"
-                  ></el-image>
+        </AccordionTrigger>
+        <AccordionContent>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-2 items-center">
+            <div>
+              <operate-form-item>
+                <template #icon> <icon-font-size></icon-font-size> </template>
+                <template #name> 文字大小 </template>
+                <template #content>
+                  <Input
+                    v-model="operatingTextStickerOptions.fontSize"
+                  ></Input>
                 </template>
-                <div v-else @click="showFontModal = true">暂未选择</div>
-              </template>
-            </operate-form-item>
-          </el-col>
-        </el-row>
-      </el-collapse-item>
-      <el-collapse-item name="2">
-        <template #title>
+              </operate-form-item>
+            </div>
+            <div>
+              <operate-form-item>
+                <template #icon> <icon-bold></icon-bold> </template>
+                <template #name> 厚度 </template>
+                <template #content>
+                  <Select
+                    v-model="operatingTextStickerOptions.fontWeight"
+                    style="width: 72px"
+                  >
+                    <SelectTrigger class="h-6 text-[11px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem
+                        v-for="item in fontWeightOptions"
+                        :key="item.value"
+                        :value="item.value"
+                      >
+                        <span :style="{ fontWeight: item.value }"> {{ item.label }} </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </template>
+              </operate-form-item>
+            </div>
+
+            <div>
+              <operate-form-item>
+                <template #icon> <icon-italic></icon-italic> </template>
+                <template #name> 斜体 </template>
+                <template #content>
+                  <Switch v-model:checked="operatingTextStickerOptions.italic" />
+                </template>
+              </operate-form-item>
+            </div>
+            <div>
+              <operate-form-item>
+                <template #icon> <icon-font-color></icon-font-color> </template>
+                <template #name> 字体颜色</template>
+                <template #content>
+                  <!-- <color-picker
+                    v-model:pureColor="operatingTextStickerOptions.fontColor"
+                    v-model:gradientColor="operatingTextStickerOptions.fontGradientColor"
+                  ></color-picker> -->
+                </template>
+              </operate-form-item>
+            </div>
+
+            <div class="col-span-2">
+              <operate-form-item>
+                <template #icon> <icon-font-family></icon-font-family> </template>
+                <template #name> </template>
+                <template #content>
+                  <template v-if="operatingTextStickerOptions.fontFamilyInfo">
+                    <img
+                      @click="showFontModal = true"
+                      style="background: #f3f4f6; border-radius: 0.2em; height: 2.4em"
+                      class="object-contain cursor-pointer"
+                      :src="operatingTextStickerOptions.fontFamilyInfo.thumbnail?.url"
+                      alt=""
+                    />
+                  </template>
+                  <div v-else @click="showFontModal = true">暂未选择</div>
+                </template>
+              </operate-form-item>
+            </div>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="2">
+        <AccordionTrigger>
           <div class="title">布局相关</div>
-        </template>
-        <el-row :gutter="24" align="middle">
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon> <icon-line-height></icon-line-height> </template>
-              <template #name> 行高 </template>
-              <template #content>
-                <el-input
-                  v-model="operatingTextStickerOptions.lineHeight"
-                  size="small"
-                  min="0"
-                  max="5"
-                  step=".1"
-                ></el-input>
-              </template>
-            </operate-form-item>
-          </el-col>
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon> <icon-letter-spacing></icon-letter-spacing> </template>
-              <template #name> 间距 </template>
-              <template #content>
-                <el-input
-                  v-model="operatingTextStickerOptions.letterSpacing"
-                  size="small"
-                  min="-1"
-                  max="1"
-                  step=".1"
-                ></el-input>
-              </template>
-            </operate-form-item>
-          </el-col>
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon> <icon-writing-mode></icon-writing-mode> </template>
-              <template #name> 排列方式 </template>
-              <template #content> </template>
-            </operate-form-item>
-          </el-col>
-        </el-row>
-      </el-collapse-item>
-      <el-collapse-item name="3">
-        <template #title>
+        </AccordionTrigger>
+        <AccordionContent>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-2 items-center">
+            <div>
+              <operate-form-item>
+                <template #icon> <icon-line-height></icon-line-height> </template>
+                <template #name> 行高 </template>
+                <template #content>
+                  <Input
+                    v-model="operatingTextStickerOptions.lineHeight"
+                    min="0"
+                    max="5"
+                    step=".1"
+                  ></Input>
+                </template>
+              </operate-form-item>
+            </div>
+            <div>
+              <operate-form-item>
+                <template #icon> <icon-letter-spacing></icon-letter-spacing> </template>
+                <template #name> 间距 </template>
+                <template #content>
+                  <Input
+                    v-model="operatingTextStickerOptions.letterSpacing"
+                    min="-1"
+                    max="1"
+                    step=".1"
+                  ></Input>
+                </template>
+              </operate-form-item>
+            </div>
+            <div>
+              <operate-form-item>
+                <template #icon> <icon-writing-mode></icon-writing-mode> </template>
+                <template #name> 排列方式 </template>
+                <template #content> </template>
+              </operate-form-item>
+            </div>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="3">
+        <AccordionTrigger>
           <div class="title">边框</div>
-        </template>
-        <el-row :gutter="24" align="middle">
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon><icon-border-color></icon-border-color> </template>
-              <template #name> 边框颜色 </template>
-              <template #content>
-                <color-picker
-                  v-model:pureColor="operatingTextStickerOptions.borderColor"
-                ></color-picker>
-              </template>
-            </operate-form-item>
-          </el-col>
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon><icon-border-style></icon-border-style> </template>
-              <template #name> 边框样式 </template>
-              <template #content> </template>
-            </operate-form-item>
-          </el-col>
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon><icon-border-width></icon-border-width> </template>
-              <template #name> 边框宽度 </template>
-              <template #content>
-                <el-input
-                  v-model="operatingTextStickerOptions.borderWidth"
-                  min="0"
-                  max="5"
-                  step=".1"
-                  size="small"
-                ></el-input>
-              </template>
-            </operate-form-item>
-          </el-col>
-        </el-row>
-      </el-collapse-item>
-      <el-collapse-item name="4">
-        <template #title>
+        </AccordionTrigger>
+        <AccordionContent>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-2 items-center">
+            <div>
+              <operate-form-item>
+                <template #icon><icon-border-color></icon-border-color> </template>
+                <template #name> 边框颜色 </template>
+                <template #content>
+                  <color-picker
+                    v-model:pureColor="operatingTextStickerOptions.borderColor"
+                  ></color-picker>
+                </template>
+              </operate-form-item>
+            </div>
+            <div>
+              <operate-form-item>
+                <template #icon><icon-border-style></icon-border-style> </template>
+                <template #name> 边框样式 </template>
+                <template #content> </template>
+              </operate-form-item>
+            </div>
+            <div>
+              <operate-form-item>
+                <template #icon><icon-border-width></icon-border-width> </template>
+                <template #name> 边框宽度 </template>
+                <template #content>
+                  <Input
+                    v-model="operatingTextStickerOptions.borderWidth"
+                    min="0"
+                    max="5"
+                    step=".1"
+                  ></Input>
+                </template>
+              </operate-form-item>
+            </div>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="4">
+        <AccordionTrigger>
           <div class="title">背景</div>
-        </template>
-        <el-row :gutter="24" align="middle">
-          <el-col :span="12">
-            <operate-form-item>
-              <template #icon> <icon-background-color></icon-background-color> </template>
-              <template #name> 背景色 </template>
-              <template #content>
-                <color-picker
-                  v-model:pureColor="operatingTextStickerOptions.backgroundColor"
-                  v-model:gradientColor="
-                    operatingTextStickerOptions.gradientBackgroundColor
-                  "
-                ></color-picker>
-              </template>
-            </operate-form-item>
-          </el-col>
-        </el-row>
-      </el-collapse-item>
-      <el-collapse-item name="5">
-        <template #title>
+        </AccordionTrigger>
+        <AccordionContent>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-2 items-center">
+            <div>
+              <operate-form-item>
+                <template #icon> <icon-background-color></icon-background-color> </template>
+                <template #name> 背景色 </template>
+                <template #content>
+                  <color-picker
+                    v-model:pureColor="operatingTextStickerOptions.backgroundColor"
+                    v-model:gradientColor="
+                      operatingTextStickerOptions.gradientBackgroundColor
+                    "
+                  ></color-picker>
+                </template>
+              </operate-form-item>
+            </div>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="5">
+        <AccordionTrigger>
           <div class="title">特殊效果</div>
-        </template>
-      </el-collapse-item>
-    </el-collapse>
+        </AccordionTrigger>
+        <AccordionContent>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   </main>
 </template>
 
@@ -214,6 +224,21 @@ import iconBorderStyle from "@/components/design/assets/icon/border-style.svg?co
 import iconBorderColor from "@/components/design/assets/icon/border-color.svg?component";
 
 import { operatingTextStickerOptions, showFontModal } from "../../store";
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion';
 
 const r = ref();
 
@@ -273,6 +298,6 @@ main {
   // height: 12px;
   // line-height: 12px;
   // padding-left: 0.5em;
-  // border-left: 3px solid var(--el-color-primary);
+  // border-left: 3px solid var(--primary);
 }
 </style>

@@ -1,9 +1,10 @@
 <template>
-  <el-collapse v-model="imageCollapseActives">
-    <el-collapse-item name="1" title="基础属性">
-      <template #title>
+  <Accordion type="multiple" :model-value="imageCollapseActives" @update:model-value="v => imageCollapseActives = v as string[]">
+    <AccordionItem value="1">
+      <AccordionTrigger>
         <div class="title">基础属性</div>
-      </template>
+      </AccordionTrigger>
+      <AccordionContent>
       <operateItemImageSelect v-model="currentOperatingCanvasChild.imageInfo">
       </operateItemImageSelect>
 
@@ -16,40 +17,55 @@
 
       <operateItemObjectFit v-model="currentOperatingCanvasChild.objectFit">
       </operateItemObjectFit>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="2" title="通用属性">
+    <AccordionItem value="2">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
       <operateItemCommonGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemCommonGroup>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="4">
-      <template #title>
+    <AccordionItem value="4">
+      <AccordionTrigger>
         <div class="title">滤镜效果</div>
-      </template>
+      </AccordionTrigger>
+      <AccordionContent>
       <operateItemFilterGroup
         v-model="currentOperatingCanvasChild.filter"
       ></operateItemFilterGroup>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="5">
-      <template #title>
+    <AccordionItem value="5">
+      <AccordionTrigger>
         <div class="title">图片平铺</div>
-      </template>
+      </AccordionTrigger>
+      <AccordionContent>
       <operateItemImagePrintGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemImagePrintGroup>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
     <operateItemClipPath
       v-model="currentOperatingCanvasChild.clipPath"
     ></operateItemClipPath>
-  </el-collapse>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
+
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";

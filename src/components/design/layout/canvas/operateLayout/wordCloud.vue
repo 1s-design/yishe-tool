@@ -1,326 +1,389 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      ></operateItemSize>
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
+  >
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        ></operateItemSize>
 
-      <operate-form-item style="align-items: start">
-        <template #name>词语列表</template>
-        <template #content>
-          <el-input
-            v-model="wordListText"
-            type="textarea"
-            size="small"
-            :autosize="{ minRows: 5, maxRows: 12 }"
-            placeholder="每行一个：文字,权重"
-            @change="applyWordListText"
-            @blur="applyWordListText"
-          ></el-input>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+        <operate-form-item style="align-items: start">
+          <template #name>词语列表</template>
+          <template #content>
+            <Textarea
+              v-model="wordListText"
+              :rows="5"
+              class="resize-y"
+              placeholder="每行一个：文字,权重"
+              @change="applyWordListText"
+              @blur="applyWordListText"
+            ></Textarea>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="presentation" title="表现">
-      <operateItemFontFamily
-        v-model="wordcloud2.fontFamilyInfo"
-      ></operateItemFontFamily>
+    <AccordionItem value="presentation">
+      <AccordionTrigger>表现</AccordionTrigger>
+      <AccordionContent>
+        <operateItemFontFamily
+          v-model="wordcloud2.fontFamilyInfo"
+        ></operateItemFontFamily>
 
-      <operate-form-item>
-        <template #name>备用字体</template>
-        <template #content>
-          <el-input
-            v-model="wordcloud2.fontFamily"
-            size="small"
-            placeholder="sans-serif"
-          ></el-input>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>备用字体</template>
+          <template #content>
+            <Input
+              v-model="wordcloud2.fontFamily"
+              class="h-6 text-[11px]"
+              placeholder="sans-serif"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>字重</template>
-        <template #content>
-          <el-input
-            v-model="wordcloud2.fontWeight"
-            size="small"
-            placeholder="normal / bold / 600"
-          ></el-input>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>字重</template>
+          <template #content>
+            <Input
+              v-model="wordcloud2.fontWeight"
+              class="h-6 text-[11px]"
+              placeholder="normal / bold / 600"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>颜色模式</template>
-        <template #content>
-          <el-select v-model="wordcloud2.colorMode" size="small">
-            <el-option label="固定颜色" value="fixed"></el-option>
-            <el-option label="调色板" value="palette"></el-option>
-            <el-option label="随机深色" value="random-dark"></el-option>
-            <el-option label="随机浅色" value="random-light"></el-option>
-          </el-select>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>颜色模式</template>
+          <template #content>
+            <Select v-model="wordcloud2.colorMode">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fixed">固定颜色</SelectItem>
+                <SelectItem value="palette">调色板</SelectItem>
+                <SelectItem value="random-dark">随机深色</SelectItem>
+                <SelectItem value="random-light">随机浅色</SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
 
-      <operateItemColor
-        v-if="wordcloud2.colorMode === 'fixed'"
-        label="文字颜色"
-        v-model="fixedColor"
-      ></operateItemColor>
+        <operateItemColor
+          v-if="wordcloud2.colorMode === 'fixed'"
+          label="文字颜色"
+          v-model="fixedColor"
+        ></operateItemColor>
 
-      <operate-form-item
-        v-if="wordcloud2.colorMode === 'palette'"
-        style="align-items: start"
-      >
-        <template #name>调色板</template>
-        <template #content>
-          <el-input
-            v-model="paletteText"
-            type="textarea"
-            size="small"
-            :autosize="{ minRows: 2, maxRows: 6 }"
-            placeholder="#111111, #ff4d6d, #2ec4b6"
-            @change="applyPaletteText"
-            @blur="applyPaletteText"
-          ></el-input>
-        </template>
-      </operate-form-item>
+        <operate-form-item
+          v-if="wordcloud2.colorMode === 'palette'"
+          style="align-items: start"
+        >
+          <template #name>调色板</template>
+          <template #content>
+            <Textarea
+              v-model="paletteText"
+              :rows="2"
+              class="resize-y"
+              placeholder="#111111, #ff4d6d, #2ec4b6"
+              @change="applyPaletteText"
+              @blur="applyPaletteText"
+            ></Textarea>
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>背景色</template>
-        <template #content>
-          <el-input
-            v-model="wordcloud2.backgroundColor"
-            size="small"
-            placeholder="rgba(0,0,0,0)"
-          ></el-input>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>背景色</template>
+          <template #content>
+            <Input
+              v-model="wordcloud2.backgroundColor"
+              class="h-6 text-[11px]"
+              placeholder="rgba(0,0,0,0)"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>最小绘制阈值</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.minSize"
-            size="small"
-            :min="0"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>最小绘制阈值</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.minSize"
+              :min="0"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.minSize = Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>字号倍率</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.weightFactor"
-            size="small"
-            :min="0"
-            :step="0.1"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>字号倍率</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.weightFactor"
+              :min="0"
+              :step="0.1"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.weightFactor = Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>清空画布</template>
-        <template #content>
-          <el-switch v-model="wordcloud2.clearCanvas"></el-switch>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+        <operate-form-item>
+          <template #name>清空画布</template>
+          <template #content>
+            <Switch v-model:checked="wordcloud2.clearCanvas"></Switch>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="dimension" title="布局">
-      <operate-form-item>
-        <template #name>网格尺寸</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.gridSize"
-            size="small"
-            :min="1"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+    <AccordionItem value="dimension">
+      <AccordionTrigger>布局</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>网格尺寸</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.gridSize"
+              :min="1"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.gridSize = Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>中心点 X</template>
-        <template #content>
-          <el-input-number
-            v-model="originX"
-            size="small"
-            :min="0"
-            placeholder="自动"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>中心点 X</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="originX"
+              :min="0"
+              placeholder="自动"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (originX = v === '' ? undefined : Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>中心点 Y</template>
-        <template #content>
-          <el-input-number
-            v-model="originY"
-            size="small"
-            :min="0"
-            placeholder="自动"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>中心点 Y</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="originY"
+              :min="0"
+              placeholder="自动"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (originY = v === '' ? undefined : Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>允许超出</template>
-        <template #content>
-          <el-switch v-model="wordcloud2.drawOutOfBound"></el-switch>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>允许超出</template>
+          <template #content>
+            <Switch v-model:checked="wordcloud2.drawOutOfBound"></Switch>
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>自动缩小</template>
-        <template #content>
-          <el-switch v-model="wordcloud2.shrinkToFit"></el-switch>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+        <operate-form-item>
+          <template #name>自动缩小</template>
+          <template #content>
+            <Switch v-model:checked="wordcloud2.shrinkToFit"></Switch>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="mask" title="遮罩调试">
-      <operate-form-item>
-        <template #name>绘制遮罩</template>
-        <template #content>
-          <el-switch v-model="wordcloud2.drawMask"></el-switch>
-        </template>
-      </operate-form-item>
+    <AccordionItem value="mask">
+      <AccordionTrigger>遮罩调试</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>绘制遮罩</template>
+          <template #content>
+            <Switch v-model:checked="wordcloud2.drawMask"></Switch>
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>遮罩颜色</template>
-        <template #content>
-          <el-input v-model="wordcloud2.maskColor" size="small"></el-input>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>遮罩颜色</template>
+          <template #content>
+            <Input v-model="wordcloud2.maskColor" class="h-6 text-[11px]"></Input>
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>遮罩间隔</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.maskGapWidth"
-            size="small"
-            :min="0"
-            :step="0.1"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+        <operate-form-item>
+          <template #name>遮罩间隔</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.maskGapWidth"
+              :min="0"
+              :step="0.1"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.maskGapWidth = Number(v))"
+            />
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="timing" title="性能">
-      <operate-form-item>
-        <template #name>绘制等待</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.wait"
-            size="small"
-            :min="0"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+    <AccordionItem value="timing">
+      <AccordionTrigger>性能</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>绘制等待</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.wait"
+              :min="0"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.wait = Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>中止阈值</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.abortThreshold"
-            size="small"
-            :min="0"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+        <operate-form-item>
+          <template #name>中止阈值</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.abortThreshold"
+              :min="0"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.abortThreshold = Number(v))"
+            />
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="rotation" title="旋转">
-      <operate-form-item>
-        <template #name>旋转概率</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.rotateRatio"
-            size="small"
-            :min="0"
-            :max="1"
-            :step="0.05"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+    <AccordionItem value="rotation">
+      <AccordionTrigger>旋转</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>旋转概率</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.rotateRatio"
+              :min="0"
+              :max="1"
+              :step="0.05"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.rotateRatio = Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>最小角度</template>
-        <template #content>
-          <el-input-number
-            v-model="minRotationDeg"
-            size="small"
-            :step="15"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>最小角度</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="minRotationDeg"
+              :step="15"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (minRotationDeg = Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>最大角度</template>
-        <template #content>
-          <el-input-number
-            v-model="maxRotationDeg"
-            size="small"
-            :step="15"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>最大角度</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="maxRotationDeg"
+              :step="15"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (maxRotationDeg = Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>角度步数</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.rotationSteps"
-            size="small"
-            :min="0"
-            :step="1"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+        <operate-form-item>
+          <template #name>角度步数</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.rotationSteps"
+              :min="0"
+              :step="1"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.rotationSteps = Number(v))"
+            />
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="shape" title="形状">
-      <operate-form-item>
-        <template #name>形状</template>
-        <template #content>
-          <el-select v-model="wordcloud2.shape" size="small">
-            <el-option
-              v-for="shape in shapeOptions"
-              :key="shape"
-              :label="shape"
-              :value="shape"
-            ></el-option>
-          </el-select>
-        </template>
-      </operate-form-item>
+    <AccordionItem value="shape">
+      <AccordionTrigger>形状</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>形状</template>
+          <template #content>
+            <Select v-model="wordcloud2.shape">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="shape in shapeOptions"
+                  :key="shape"
+                  :value="shape"
+                >
+                  {{ shape }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>扁平度</template>
-        <template #content>
-          <el-input-number
-            v-model="wordcloud2.ellipticity"
-            size="small"
-            :min="0.1"
-            :step="0.1"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #name>扁平度</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="wordcloud2.ellipticity"
+              :min="0.1"
+              :step="0.1"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (wordcloud2.ellipticity = Number(v))"
+            />
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>随机顺序</template>
-        <template #content>
-          <el-switch v-model="wordcloud2.shuffle"></el-switch>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+        <operate-form-item>
+          <template #name>随机顺序</template>
+          <template #content>
+            <Switch v-model:checked="wordcloud2.shuffle"></Switch>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup
-        v-model="currentOperatingCanvasChild"
-      ></operateItemCommonGroup>
-    </el-collapse-item>
-  </el-collapse>
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup
+          v-model="currentOperatingCanvasChild"
+        ></operateItemCommonGroup>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -329,6 +392,22 @@ import operateItemSize from "@/components/design/layout/canvas/operate/size/rela
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemFontFamily from "@/components/design/layout/canvas/operate/fontFamily/fontFamily.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { currentOperatingCanvasChild } from "../index.tsx";
 import { createDefaultWordCloud2EngineOptions } from "../children/wordCloud/index.tsx";
 

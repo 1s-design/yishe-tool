@@ -9,34 +9,48 @@
         </div>
       </div>
       <div class="canvas-structure__actions">
-        <el-radio-group v-model="viewMode" size="small">
-          <el-radio-button value="tree">树形</el-radio-button>
-          <el-radio-button value="json">JSON</el-radio-button>
-        </el-radio-group>
-        <el-tooltip content="复制 JSON" placement="top" :show-after="300">
-          <el-button size="small" @click="copyJson">
-            <template #icon><CopyOutlined /></template>
-            复制
-          </el-button>
-        </el-tooltip>
-        <el-tooltip :content="autoRefresh ? '停止自动刷新' : '开启自动刷新'" placement="top" :show-after="300">
-          <el-button size="small" :type="autoRefresh ? 'primary' : 'default'" @click="autoRefresh = !autoRefresh">
-            <template #icon><SyncOutlined :spin="autoRefresh" /></template>
-            {{ autoRefresh ? '实时' : '手动' }}
-          </el-button>
-        </el-tooltip>
+        <div class="flex items-center gap-1">
+          <Button size="sm" :variant="viewMode === 'tree' ? 'default' : 'outline'" @click="viewMode = 'tree'">树形</Button>
+          <Button size="sm" :variant="viewMode === 'json' ? 'default' : 'outline'" @click="viewMode = 'json'">JSON</Button>
+        </div>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button size="sm" @click="copyJson">
+              <Copy class="w-3.5 h-3.5 mr-1" />
+              复制
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">复制 JSON</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button size="sm" :variant="autoRefresh ? 'default' : 'outline'" @click="autoRefresh = !autoRefresh">
+              <RefreshCw class="w-3.5 h-3.5 mr-1" :class="{ 'animate-spin': autoRefresh }" />
+              {{ autoRefresh ? '实时' : '手动' }}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{{ autoRefresh ? '停止自动刷新' : '开启自动刷新' }}</TooltipContent>
+        </Tooltip>
       </div>
     </div>
 
     <div class="canvas-structure__search">
-      <el-input
-        v-model="searchText"
-        size="small"
-        placeholder="搜索字段名或值..."
-        clearable
-      >
-        <template #prefix><SearchOutlined /></template>
-      </el-input>
+      <div class="relative w-full">
+        <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          v-model="searchText"
+          placeholder="搜索字段名或值..."
+          class="h-6 text-[11px] pl-8 pr-7"
+        />
+        <button
+          v-if="searchText"
+          type="button"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          @click="searchText = ''"
+        >
+          <X class="w-3 h-3" />
+        </button>
+      </div>
     </div>
 
     <div class="canvas-structure__body">
@@ -76,8 +90,15 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted, reactive } from 'vue'
 import { canvasStickerOptions } from '../canvas/index.tsx'
-import { ElMessage } from 'element-plus'
-import { CopyOutlined, SyncOutlined, SearchOutlined } from '@ant-design/icons-vue'
+import { message } from '@/common/message';
+import { Copy, RefreshCw, Search, X } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip'
 import JsonNode from './JsonNode.vue'
 
 const viewMode = ref<'tree' | 'json'>('tree')
@@ -175,9 +196,9 @@ onUnmounted(stopAutoRefresh)
 function copyJson() {
   const json = JSON.stringify(displayData.value, null, 2)
   navigator.clipboard.writeText(json).then(() => {
-    ElMessage.success('已复制到剪贴板')
+    message.success('已复制到剪贴板')
   }).catch(() => {
-    ElMessage.warning('复制失败')
+    message.warning('复制失败')
   })
 }
 

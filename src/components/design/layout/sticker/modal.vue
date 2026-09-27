@@ -10,25 +10,30 @@
   <div class="model">
     <scrollbar>
       <div v-infinite-scroll="getList" :infinite-scroll-distance="150">
-        <el-row style="row-gap: 1em; padding: 20px">
-          <el-col :span="24 / column" v-for="item in list" align="center">
-            <a-dropdown arrow placement="bottom">
-              <div>
-                <s1-image class="img" padding="5%" :src="item.url"> </s1-image>
-              </div>
-              <template #overlay>
-                <a-menu>
-                  <a-menu-item
-                    v-if="item.type == 'image'"
-                    @click="useAsCanvasImage(item)"
-                  >
-                    使用该图片作为当前背景元素
-                  </a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
-          </el-col>
-        </el-row>
+        <div class="flex flex-wrap gap-y-4 p-5">
+          <div
+            v-for="item in list"
+            :key="item.id"
+            class="flex flex-col items-center"
+            :style="{ width: `${100 / column}%` }"
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <div>
+                  <s1-image class="img" padding="5%" :src="item.url"> </s1-image>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center">
+                <DropdownMenuItem
+                  v-if="item.type == 'image'"
+                  @select="useAsCanvasImage(item)"
+                >
+                  使用该图片作为当前背景元素
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
         <loadingBottom v-if="loading"></loadingBottom>
       </div>
     </scrollbar>
@@ -37,7 +42,6 @@
 
 <script setup lang="tsx">
 import { ref, onBeforeMount } from "vue";
-import { Search, ArrowRightBold, Operation, ArrowRight } from "@element-plus/icons-vue";
 import { getStickerList } from "@/api";
 import { usePaging } from "@/hooks/data/paging.ts";
 import desimage from "@/components/image.vue";
@@ -52,6 +56,12 @@ import { stickerQueryParams, stickerLabelMap, StickerType } from "./index.tsx";
 import { loadingBottom } from "@/components/loading/index.tsx";
 import { currentOperatingCanvasChild } from "@/components/design/layout/canvas/index.tsx";
 import Utils from "@/common/utils";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 // 列表展示几列
 const column = ref(8);
@@ -94,6 +104,6 @@ const { list, getList, loading, reset, firstLoading, subsequentLoading } = usePa
 .img {
   width: 100px;
   height: 100px;
-  background: #f1f1f1;
+  background: var(--1s-control-surface-muted);
 }
 </style>

@@ -60,19 +60,23 @@
 
             <!-- 比例选择菜单 -->
             <div class="aspect-ratio-selector">
-              <el-select
-                v-model="selectedAspectRatio"
-                size="small"
-                class="aspect-ratio-selector__control"
-                @change="updateAspectRatio"
+              <Select
+                :model-value="String(selectedAspectRatio)"
+                @update:model-value="v => { selectedAspectRatio = Number(v); updateAspectRatio(); }"
               >
-                <el-option
-                  v-for="ratio in aspectRatioOptions"
-                  :key="ratio.value"
-                  :label="ratio.label"
-                  :value="ratio.value"
-                />
-              </el-select>
+                <SelectTrigger class="aspect-ratio-selector__control h-6 text-[11px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="ratio in aspectRatioOptions"
+                    :key="ratio.value"
+                    :value="String(ratio.value)"
+                  >
+                    {{ ratio.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -101,50 +105,55 @@
     </div>
   </div>
 
-  <a-modal
-    title="AI 操作"
-    v-model:open="showOperationsModal"
-    width="100%"
-    :footer="null"
-    wrap-class-name="full-modal"
-    :destroyOnClose="true"
-  >
-    <operationsPanel></operationsPanel>
-  </a-modal>
+  <Dialog :modal="false" v-model:open="showOperationsModal">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col">
+      <DialogHeader class="px-5 py-3 border-b border-border flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogTitle class="text-sm font-semibold">AI 操作</DialogTitle>
+      </DialogHeader>
+      <div class="flex-1 overflow-auto min-h-0">
+        <operationsPanel></operationsPanel>
+      </div>
+    </DialogContent>
+  </Dialog>
 
-  <a-modal
-    title="选择基础模型"
-    v-model:open="showBaseModelSelect"
-    width="100%"
-    :footer="null"
-    wrap-class-name="full-modal"
-  >
-    <base-model-select></base-model-select>
-  </a-modal>
+  <Dialog :modal="false" v-model:open="showBaseModelSelect">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col">
+      <DialogHeader class="px-5 py-3 border-b border-border flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogTitle class="text-sm font-semibold">选择基础模型</DialogTitle>
+      </DialogHeader>
+      <div class="flex-1 overflow-auto min-h-0">
+        <base-model-select></base-model-select>
+      </div>
+    </DialogContent>
+  </Dialog>
 
-  <el-drawer
-    v-model="showSceneControl"
-    :modal="true"
-    :size="360"
-    :with-header="true"
-    :append-to-body="true"
-    :wrapper-closable="true"
-    modal-class="bg-transparent"
-    title="场景控制"
-  >
-    <scene-control></scene-control>
-  </el-drawer>
+  <div
+    v-if="showSceneControl"
+    class="fixed inset-0 z-[1000] bg-transparent"
+    @click="showSceneControl = false"
+  ></div>
+  <aside v-if="showSceneControl" class="scene-control-drawer">
+    <div class="scene-control-drawer__header">
+      <span class="text-sm font-semibold">场景控制</span>
+      <Button variant="ghost" size="icon-sm" @click="showSceneControl = false">
+        <X class="h-3.5 w-3.5" />
+      </Button>
+    </div>
+    <div class="scene-control-drawer__body">
+      <scene-control></scene-control>
+    </div>
+  </aside>
 
-  <a-modal
-    title="数据结构"
-    v-model:open="showCanvasStructure"
-    width="100%"
-    :footer="null"
-    wrap-class-name="full-modal"
-    :destroyOnClose="true"
-  >
-    <canvas-structure />
-  </a-modal>
+  <Dialog :modal="false" v-model:open="showCanvasStructure">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col">
+      <DialogHeader class="px-5 py-3 border-b border-border flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogTitle class="text-sm font-semibold">数据结构</DialogTitle>
+      </DialogHeader>
+      <div class="flex-1 overflow-auto min-h-0">
+        <canvas-structure />
+      </div>
+    </DialogContent>
+  </Dialog>
 
   <fontModal></fontModal>
   <imageEditorModal></imageEditorModal>
@@ -158,30 +167,30 @@
     <sticker-modal></sticker-modal>
   </diydialog>
 
-  <a-modal
-    title="资源上传"
-    v-model:open="showUpload"
-    width="100%"
-    :footer="null"
-    wrap-class-name="full-modal"
-  >
-    <upload></upload>
-  </a-modal>
+  <Dialog :modal="false" v-model:open="showUpload">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col">
+      <DialogHeader class="px-5 py-3 border-b border-border flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogTitle class="text-sm font-semibold">资源上传</DialogTitle>
+      </DialogHeader>
+      <div class="flex-1 overflow-auto min-h-0">
+        <upload></upload>
+      </div>
+    </DialogContent>
+  </Dialog>
 
-  <a-modal
-    title="保存模型"
-    v-model:open="showSaveModel"
-    :footer="null"
-    width="100%"
-    :mask-closable="true"
-    centered
-    wrap-class-name="full-modal"
-  >
-    <save-model></save-model>
-  </a-modal>
+  <Dialog :modal="false" v-model:open="showSaveModel">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col">
+      <DialogHeader class="px-5 py-3 border-b border-border flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogTitle class="text-sm font-semibold">保存模型</DialogTitle>
+      </DialogHeader>
+      <div class="flex-1 overflow-auto min-h-0">
+        <save-model></save-model>
+      </div>
+    </DialogContent>
+  </Dialog>
 
   <!-- 创作资源弹层 (基于 shadcn-vue Dialog) -->
-  <Dialog v-model:open="menuState.showProject">
+  <Dialog :modal="false" v-model:open="menuState.showProject">
     <DialogContent class="max-w-[94vw] w-[94vw] h-[88vh] max-h-[88vh] p-0 overflow-hidden flex flex-col rounded-2xl border-[var(--1s-border-color)] bg-[var(--1s-surface-background)] shadow-2xl">
       <DialogHeader class="px-5 py-3 border-b border-[var(--1s-divider-color)] flex flex-row items-center justify-between space-y-0">
         <div class="flex items-center gap-2">
@@ -216,7 +225,7 @@
   <AiPanel :open="isAiPanelOpen" @close="isAiPanelOpen = false" />
 
   <!-- 登录提示弹窗 -->
-  <Dialog v-model:open="showLoginConfirmModal">
+  <Dialog :modal="false" v-model:open="showLoginConfirmModal">
     <DialogContent class="max-w-[320px] p-5 gap-3">
       <DialogHeader>
         <DialogTitle class="text-sm font-semibold">提示</DialogTitle>
@@ -308,7 +317,7 @@ import stickerModal from "./sticker/modal.vue";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Sparkles } from "lucide-vue-next";
+import { Sparkles, X } from "lucide-vue-next";
 import projectModal from "./project/index.vue";
 import ContextMenu from "@imengyu/vue3-context-menu";
 import { openLoginDialog } from "@/modules/main/view/user/login/index.tsx";
@@ -663,17 +672,39 @@ async function initAction() {
   background: transparent !important;
 }
 
-.auto-width-modal {
-  .ant-modal {
-    min-width: 320px;
-    width: auto !important;
-  }
-
-  .ant-modal-content {
-    width: fit-content;
-    min-width: 320px;
-  }
+.scene-control-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 360px;
+  max-width: 100vw;
+  height: 100vh;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--1s-panel-background, hsl(var(--background)));
+  border-left: 1px solid var(--1s-border-color, hsl(var(--border)));
+  box-shadow: var(--1s-shadow-lg);
 }
+
+.scene-control-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--1s-border-color, hsl(var(--border)));
+}
+
+.scene-control-drawer__body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  padding: 16px 20px;
+}
+
+.auto-width-modal {}
 
 .aspect-ratio-selector {
   position: absolute;

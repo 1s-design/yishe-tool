@@ -1,53 +1,43 @@
 <template>
-    <el-row  :gutter="16">
-        <el-col :span="10">
-            <div class="label">宽度</div>
-        </el-col>
-        <el-col :span="14">
-            <el-input size="small" v-model="svgCanvasWidth"   min="100" step="10"></el-input>
-        </el-col>
-    </el-row>
-    <el-row :gutter="16">
-        <el-col :span="10">
-            <div class="label">
-                高度
-            </div>
-        </el-col>
-        <el-col :span="14">
-            <el-input v-model="svgCanvasHeight" size="small"  min="100" step="10"></el-input>
-        </el-col>
-    </el-row>
-    <el-row :gutter="16">
-        <el-col :span="10">
-            <div class="label">
-                宽高比 
-            </div>
-        </el-col>
-        <el-col :span="14">
+    <div class="flex items-center gap-4 mx-1.5 my-1.5">
+        <div class="label" style="width: 41.666%">宽度</div>
+        <div style="width: 58.333%">
+            <Input size="small" v-model="svgCanvasWidth" min="100" step="10"></Input>
+        </div>
+    </div>
+    <div class="flex items-center gap-4 mx-1.5 my-1.5">
+        <div class="label" style="width: 41.666%">
+            高度
+        </div>
+        <div style="width: 58.333%">
+            <Input v-model="svgCanvasHeight" size="small" min="100" step="10"></Input>
+        </div>
+    </div>
+    <div class="flex items-center gap-4 mx-1.5 my-1.5">
+        <div class="label" style="width: 41.666%">
+            宽高比 
+        </div>
+        <div style="width: 58.333%">
             <div>{{ svgCanvasWidth / svgCanvasHeight }}</div>
-        </el-col>
-    </el-row>
-    <el-row :gutter="16" justify="end">
-        <el-col :span="10">
-            <div class="label">
-                主画布
-            </div>
-        </el-col>
-        <el-col :span="14">
-            <el-switch v-model="svgCanvasSyncMainCanvas" size="small" inline-prompt  />
-        </el-col>
-    </el-row>
+        </div>
+    </div>
+    <div class="flex items-center gap-4 mx-1.5 my-1.5 justify-end">
+        <div class="label" style="width: 41.666%">
+            主画布
+        </div>
+        <div style="width: 58.333%">
+            <Switch v-model:checked="svgCanvasSyncMainCanvas" />
+        </div>
+    </div>
 </template>
     
 <script setup lang='ts'>
 import { svgCanvasChildren, svgCanvasWidth,svgCanvasHeight,svgCanvasSyncMainCanvas} from '@/components/design/store'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 </script>
     
 <style lang="less" scoped>
-.el-row{
-    margin: 6px;
-}
-
 .label{
     height: 100%;
     align-content: center;

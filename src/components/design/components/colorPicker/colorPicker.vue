@@ -11,27 +11,26 @@
       <template #extra>
         <div class="custom-css-input">
           <div class="label">直接输入 CSS (十六进制/渐变/OKLCH)</div>
-          <el-input
-            v-model="model.color"
-            size="small"
-            placeholder="粘贴 CSS 样式..."
-            @change="handleCSSChange"
-          >
-            <template #prefix>
-              <el-icon><edit-pen /></el-icon>
-            </template>
-          </el-input>
+          <div class="relative">
+            <Edit class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+            <Input
+              v-model="model.color"
+              class="pl-7 h-6 text-xs"
+              placeholder="粘贴 CSS 样式..."
+              @change="handleCSSChange"
+            />
+          </div>
         </div>
-        <el-button
-          plain
+        <Button
+          variant="outline"
           class="w-full"
-          size="small"
+          size="sm"
           style="margin-top: 12px"
-          :icon="Picture"
           @click="open"
         >
+          <Picture class="w-3.5 h-3.5 mr-1" />
           颜色库 / 高级编辑器
-        </el-button>
+        </Button>
         <slot />
       </template>
     </color-picker>
@@ -43,7 +42,9 @@ import { ColorPicker } from "vue3-colorpicker";
 import "vue3-colorpicker/style.css";
 import { ref, watch } from "vue";
 import { useAttrs } from "vue";
-import { Picture, EditPen } from "@element-plus/icons-vue";
+import { Image as Picture, Edit } from "lucide-vue-next";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 import modal from "./modal.vue";
 
@@ -103,7 +104,7 @@ function handleCSSChange() {
   margin-bottom: 8px;
   .label {
     font-size: 11px;
-    color: #999;
+    color: var(--1s-text-color-tertiary);
     margin-bottom: 5px;
   }
 }

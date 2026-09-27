@@ -1,6 +1,8 @@
 <template>
-  <el-collapse v-model="textCollapseActives">
-    <el-collapse-item name="1" title="文字属性">
+  <Accordion type="multiple" :model-value="textCollapseActives" @update:model-value="v => textCollapseActives = v as string[]">
+    <AccordionItem value="1">
+      <AccordionTrigger>文字属性</AccordionTrigger>
+      <AccordionContent>
       <operateItemTextContent v-model="currentOperatingCanvasChild.textContent">
       </operateItemTextContent>
 
@@ -51,27 +53,34 @@
         v-model:color="currentOperatingCanvasChild.textStrokeColor"
       >
       </operateItemTextStroke>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="1.5" title="文字背景图">
+    <AccordionItem value="1.5">
+      <AccordionTrigger>文字背景图</AccordionTrigger>
+      <AccordionContent>
       <operateItemImageSelect
         label="选择文字背景图"
         v-model="currentOperatingCanvasChild.imageInfo"
       >
       </operateItemImageSelect>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="2" title="通用属性">
+    <AccordionItem value="2">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
       <operateItemCommonGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemCommonGroup>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="4">
-      <template #title>
+    <AccordionItem value="4">
+      <AccordionTrigger>
         <div class="title">环形文字</div>
-      </template>
-
+      </AccordionTrigger>
+      <AccordionContent>
       <operateItemSwitch
         label="使用圆形文字"
         v-model="currentOperatingCanvasChild.isRoundText"
@@ -82,50 +91,41 @@
         <template #name>环形文字</template>
         <template #content>
           <div class="round-text-ai">
-            <el-popover
-              v-model:visible="aiPopoverVisible"
-              trigger="click"
-              placement="right-start"
-              width="340"
-            >
-              <div class="round-text-ai-popover">
-                <el-input
-                  v-model="aiPrompt"
-                  type="textarea"
-                  :rows="4"
-                  resize="vertical"
-                  spellcheck="false"
-                  :disabled="aiLoading"
-                  placeholder="描述想要的文字风格，例如：励志座右铭、咖啡品牌标语、新年祝福"
-                  @keydown.enter.ctrl="generateRoundTextByAi"
-                ></el-input>
+            <Popover v-model:open="aiPopoverVisible">
+              <PopoverTrigger as-child>
+                <Button size="sm" variant="outline" @click.stop>AI 生成文字</Button>
+              </PopoverTrigger>
+              <PopoverContent side="right" align="start" class="w-[340px]">
+                <div class="round-text-ai-popover">
+                  <Textarea
+                    v-model="aiPrompt"
+                    :rows="4"
+                    spellcheck="false"
+                    :disabled="aiLoading"
+                    placeholder="描述想要的文字风格，例如：励志座右铭、咖啡品牌标语、新年祝福"
+                    @keydown.enter.ctrl="generateRoundTextByAi"
+                  ></Textarea>
 
-                <div class="round-text-ai-popover__actions">
-                  <el-button size="small" @click="aiPopoverVisible = false"
-                    >取消</el-button
-                  >
-                  <el-button
-                    size="small"
-                    type="primary"
-                    :loading="aiLoading"
-                    :disabled="!aiPrompt.trim() || aiLoading"
-                    @click="generateRoundTextByAi"
-                  >
-                    确定
-                  </el-button>
+                  <div class="round-text-ai-popover__actions">
+                    <Button size="sm" variant="ghost" @click="aiPopoverVisible = false"
+                      >取消</Button
+                    >
+                    <Button
+                      size="sm"
+                      variant="default"
+                      :disabled="!aiPrompt.trim() || aiLoading"
+                      @click="generateRoundTextByAi"
+                    >
+                      确定
+                    </Button>
+                  </div>
+
+                  <div v-if="aiError" class="round-text-ai-error">
+                    {{ aiError }}
+                  </div>
                 </div>
-
-                <div v-if="aiError" class="round-text-ai-error">
-                  {{ aiError }}
-                </div>
-              </div>
-
-              <template #reference>
-                <el-button size="small" type="primary" plain @click.stop
-                  >AI 生成文字</el-button
-                >
-              </template>
-            </el-popover>
+              </PopoverContent>
+            </Popover>
           </div>
         </template>
       </operate-form-item>
@@ -133,12 +133,12 @@
       <operate-form-item>
         <template #name>半径</template>
         <template #content>
-          <el-input-number
+          <Input
+            type="number"
             v-model="currentOperatingCanvasChild.roundTextRadius.value"
             :min="50"
             :max="1000"
-            size="small"
-          ></el-input-number>
+          ></Input>
         </template>
       </operate-form-item>
 
@@ -152,16 +152,19 @@
         v-model="currentOperatingCanvasChild.isCounterclockwise"
       >
       </operateItemSwitch>
-    </el-collapse-item>
-    <el-collapse-item name="5">
-      <template #title>
+      </AccordionContent>
+    </AccordionItem>
+    <AccordionItem value="5">
+      <AccordionTrigger>
         <div class="title">滤镜效果</div>
-      </template>
+      </AccordionTrigger>
+      <AccordionContent>
       <operateItemFilterGroup
         v-model="currentOperatingCanvasChild.filter"
       ></operateItemFilterGroup>
-    </el-collapse-item>
-  </el-collapse>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -174,6 +177,21 @@ import {
   watchEffect,
   nextTick,
 } from "vue";
+
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";

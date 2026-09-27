@@ -5,32 +5,39 @@
         <strong>自定义贴纸</strong>
         <small>1s 设计工具作品，独立保存并可再次编辑</small>
       </div>
-      <el-button link type="primary" :loading="loading" @click="loadList">刷新</el-button>
+      <Button variant="link" size="sm" :disabled="loading" @click="loadList">刷新</Button>
     </header>
     <div class="panel-actions">
-      <el-button size="small" type="primary" @click="createNew">新建贴纸</el-button>
+      <Button size="sm" @click="createNew">新建贴纸</Button>
       <span class="hint">保存时会更新当前作品，不会直接进入素材库</span>
     </div>
-    <div v-loading="loading" class="sticker-list">
+    <div class="sticker-list">
+      <div v-if="loading" class="flex items-center justify-center py-6">
+        <Loader2 class="h-5 w-5 animate-spin" />
+      </div>
       <div v-for="item in list" :key="item.id" class="sticker-card">
         <img :src="item.url" :alt="item.name || '自定义贴纸'" />
         <div class="card-body">
           <div class="name" :title="item.name">{{ item.name || '未命名贴纸' }}</div>
           <div class="date">{{ formatDate(item.updateTime || item.createTime) }}</div>
           <div class="card-actions">
-            <el-button link type="primary" @click="edit(item)">编辑</el-button>
-            <el-button link type="success" :loading="importingId === item.id" @click="importItem(item)">导入素材库</el-button>
-            <el-button link type="danger" @click="removeItem(item)">删除</el-button>
+            <Button variant="link" size="sm" @click="edit(item)">编辑</Button>
+            <Button variant="link" size="sm" :disabled="importingId === item.id" @click="importItem(item)">导入素材库</Button>
+            <Button variant="link" size="sm" class="text-destructive" @click="removeItem(item)">删除</Button>
           </div>
         </div>
       </div>
-      <el-empty v-if="!loading && !list.length" description="暂无自定义贴纸，先制作一个吧" />
+      <div v-if="!loading && !list.length" class="py-8 text-center text-sm text-muted-foreground">
+        暂无自定义贴纸，先制作一个吧
+      </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { Loader2 } from "lucide-vue-next";
+import { Button } from '@/components/ui/button';
 import { message, Modal } from '@/common/message';
 import {
   getCustomStickerList,
@@ -128,6 +135,6 @@ onMounted(loadList);
 .hint, .date { color: #8a94a6; font-size: 12px; }
 .sticker-list { flex: 1; min-height: 0; overflow: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 10px; }
 .sticker-card { overflow: hidden; border: 1px solid var(--1s-control-border-color, #e5e7eb); border-radius: 8px; background: var(--1s-surface-background, #fff); }
-.sticker-card img { display: block; width: 100%; height: 105px; object-fit: contain; background: #f5f7fa; }
+.sticker-card img { display: block; width: 100%; height: 105px; object-fit: contain; background: var(--1s-control-surface-muted); }
 .card-body { padding: 7px; }.name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }.card-actions { display: flex; gap: 2px; margin-top: 4px; flex-wrap: wrap; }
 </style>

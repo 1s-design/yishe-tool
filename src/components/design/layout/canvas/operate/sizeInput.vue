@@ -1,36 +1,40 @@
 <template>
-  <el-popover :placement="placement" width="180" popper-class="el-popover-operation">
-    <template #reference>
+  <Popover>
+    <PopoverTrigger as-child>
       <div class="size-input">
-        <el-input
+        <Input
+          type="number"
+          v-model.number="model"
           :placeholder="placeholder"
-          size="small"
+          class="h-5 w-full pr-8 text-[11px]"
           min="0"
           step="1"
-          v-model.number="model"
-        >
-          <template #suffix>
-            <span class="text-[10px] text-muted-foreground">
-              {{ unit }}
-            </span>
-          </template>
-        </el-input>
+        />
+        <span class="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+          {{ unit }}
+        </span>
       </div>
-    </template>
-    <el-row align="middle" justify="end">
-      <el-col :span="24">
-        <el-radio-group v-model="unit" size="small">
-          <el-radio v-for="(u, index) in unitOptions" :value="u.value">
-            <div class="text-xs">{{ u.label }}</div>
-          </el-radio>
-        </el-radio-group>
-      </el-col>
-    </el-row>
-  </el-popover>
+    </PopoverTrigger>
+    <PopoverContent class="w-[180px]">
+      <div class="flex items-center justify-end">
+        <div class="w-full">
+          <RadioGroup v-model="unit" class="grid gap-1">
+            <label v-for="(u, index) in unitOptions" :key="u.value" class="flex items-center gap-2 cursor-pointer">
+              <RadioGroupItem :value="u.value" />
+              <div class="text-xs">{{ u.label }}</div>
+            </label>
+          </RadioGroup>
+        </div>
+      </div>
+    </PopoverContent>
+  </Popover>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from "vue";
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 /*
  带有单位选择弹层的输入框
@@ -52,16 +56,12 @@ const unit = defineModel("unit", {});
 
 <style scoped lang="less">
 .size-input {
+  position: relative;
   flex-shrink: 0;
   height: 20px;
   display: flex;
   width: 80px;
   align-items: center;
   justify-content: end;
-
-  :deep(.el-input) {
-    height: 20px;
-    width: 80px;
-  }
 }
 </style>

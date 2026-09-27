@@ -9,17 +9,13 @@
  * Copyright (c) 2023 by 1s, All Rights Reserved. 
 -->
 <template>
-  <a-config-provider :theme="antdTheme" :locale="antLocale">
-    <el-config-provider :locale="elementLocale">
-      <TooltipProvider :delay-duration="150">
-        <div class="app-content" :class="appThemeClass">
-          <router-view></router-view>
-        </div>
-        <!-- shadcn Dialog-based login modal -->
-        <login-form />
-      </TooltipProvider>
-    </el-config-provider>
-  </a-config-provider>
+  <TooltipProvider :delay-duration="150">
+    <div class="app-content" :class="appThemeClass">
+      <router-view></router-view>
+    </div>
+    <!-- shadcn Dialog-based login modal -->
+    <login-form />
+  </TooltipProvider>
 
   <!-- shadcn Toast host -->
   <ToastHost />
@@ -28,31 +24,11 @@
 </template>
 <script setup>
 import { computed, ref, watchEffect } from "vue";
-import zhCn from "element-plus/dist/locale/zh-cn.mjs";
-import en from "element-plus/dist/locale/en.mjs";
-import { theme } from 'ant-design-vue'
-
-import antEn from 'ant-design-vue/es/locale/en_US';
-import antZh from 'ant-design-vue/es/locale/zh_CN';
 
 import loginForm from '@/modules/main/view/user/login/index.vue'
 import { isDarkMode } from '@/components/design/store'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ToastHost } from '@/components/ui/toast'
-
-
-const antLocale = computed(() => {
-  if (locale.value == "en") {
-    return antEn;
-  } else {
-    return antZh;
-  }
-});
-
-
-
-const { defaultAlgorithm, darkAlgorithm } = theme
-
 
 import { useI18n } from "vue-i18n";
 
@@ -60,47 +36,17 @@ const { t, locale, global } = useI18n();
 
 const screenSize = ref(window.innerWidth)
 
-const customToken = computed(() => {
-  if (screenSize.value < 768) {
-    return { fontSize: 10, controlHeight: 28 }
-  } else if (screenSize.value < 1960) {
-    return { fontSize: 10, controlHeight: 30 }
-  } else {
-    return { fontSize: 11, controlHeight: 32 }
-  }
-})
-
 // 监听窗口大小变化
 window.addEventListener('resize', () => {
   screenSize.value = window.innerWidth
 })
 
-const antdTheme = computed(() => ({
-  algorithm: isDarkMode.value ? darkAlgorithm : defaultAlgorithm,
-  token: {
-    ...customToken.value,
-    colorPrimary: isDarkMode.value ? "#fafafa" : "#09090b",
-    borderRadius: 6,
-  },
-}))
-
 const appThemeClass = computed(() => (isDarkMode.value ? "tool-theme-dark" : "tool-theme-light"));
-const elementLocale = computed(() => {
-  if (locale.value == "en") {
-    return en;
-  } else {
-    return zhCn;
-  }
-});
 
 watchEffect(() => {
   document.documentElement.classList.toggle('dark', isDarkMode.value)
   document.documentElement.classList.toggle('light', !isDarkMode.value)
 })
-
-
-
-
 </script>
 <style>
 html,

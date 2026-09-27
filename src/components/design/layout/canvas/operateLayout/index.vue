@@ -1,13 +1,14 @@
 <template>
-  <el-scrollbar class="canvas-operate-scrollbar">
+  <ScrollArea class="canvas-operate-scrollbar">
     <div class="canvas-operate-form">
       <component v-if="activeChild" :is="CanvasChildOperationComponentMap[activeChild.type]"></component>
     </div>
-  </el-scrollbar>
+  </ScrollArea>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { currentOperatingCanvasChildId, currentOperatingCanvasChild } from "../index.tsx";
 
 const activeChild = computed(() => currentOperatingCanvasChild.value);

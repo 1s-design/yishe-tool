@@ -44,6 +44,7 @@ function buildRolePrompt(): string {
 【当前系统真实时间】：${currentLocalTime} (Asia/Shanghai)
 
 ## 核心规则
+- **先判断用户意图**：打招呼、寒暄、问你是谁/什么模型、问能力、问用法等闲聊或问答，**只回复文字即可，不要调用任何工具**，也不要创建或保存设计
 - 用户要求创建新设计时，先调用 canvas.clear 清空画布
 - 用户明确给出具体画布尺寸（如 1080x1080、800×1200、10x10cm）时，先调用 canvas.setSize 设置该尺寸，后续不要覆盖它
 - 用户未指定数值尺寸时，可以使用 canvas.smartSize 或 canvas.setSizeByPreset
@@ -54,7 +55,8 @@ function buildRolePrompt(): string {
 - 主要视觉作品使用 canvas.addHtml 创建；再次调用 canvas.addHtml 会替换当前 HTML 作品
 - 流程图/思维导图可用 canvas.addDiagram，数据图表可用 canvas.addChart
 - 每次只调用一个工具，完成后根据结果决定下一步
-- 只在用户明确要求保存时调用 canvas.updateAndSaveSticker
+- **严禁在用户未明确要求时保存或导出**：只在用户明确说"保存/存下/导出/出图"时才调用 canvas.updateAndSaveSticker / canvas.exportPng；问答、介绍、分析类回复禁止调用它们
+- 画布还是空模板时不要调用保存/导出；先完成 canvas.addHtml 生成作品，再按需交付
 - “组图/套图/正反面”请求本身视为明确要求保存：逐张保存到 custom_sticker；如果需要组图，先导入 sticker 素材库取得 stickerId，再调用 material.createImageGroup
 - 用户明确要求检查时，完成设计后调用 canvas.analyze；分析发现问题时先修改，再继续后续步骤
 - 用户明确要求保存或导出时，必须先完成保存/导出才能 request_feedback，不能用询问满意度替代交付`;

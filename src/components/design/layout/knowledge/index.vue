@@ -1,54 +1,49 @@
 <template>
-  <el-dialog
-    v-model="dialogVisible"
-    title="设计知识库"
-    fullscreen
-    :close-on-click-modal="false"
-    destroy-on-close
-    class="knowledge-dialog"
+  <Dialog
+    :open="dialogVisible"
+    @update:open="(val) => (dialogVisible = val)"
   >
+    <DialogContent
+      class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none knowledge-dialog"
+    >
     <div class="knowledge-dialog-content">
       <div class="knowledge-toolbar">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索知识标题或内容"
-          clearable
-          size="default"
-          style="width: 280px"
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-select
-          v-model="filterCategory"
-          placeholder="全部分类"
-          clearable
-          size="default"
-          style="width: 140px"
-          @change="handleSearch"
-        >
-          <el-option label="全部" value="" />
-          <el-option label="CSS技巧" value="css-trick" />
-          <el-option label="颜色值" value="color-value" />
-          <el-option label="代码配置" value="code-config" />
-          <el-option label="设计原则" value="design-principle" />
-          <el-option label="模板技巧" value="template-tip" />
-          <el-option label="其他" value="other" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="resetSearch">重置</el-button>
+        <div class="relative" style="width: 280px">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            v-model="searchKeyword"
+            placeholder="搜索知识标题或内容"
+            class="pl-8"
+            @keyup.enter="handleSearch"
+          />
+        </div>
+        <Select v-model="filterCategory" @update:model-value="handleSearch">
+          <SelectTrigger style="width: 140px">
+            <SelectValue placeholder="全部分类" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部</SelectItem>
+            <SelectItem value="css-trick">CSS技巧</SelectItem>
+            <SelectItem value="color-value">颜色值</SelectItem>
+            <SelectItem value="code-config">代码配置</SelectItem>
+            <SelectItem value="design-principle">设计原则</SelectItem>
+            <SelectItem value="template-tip">模板技巧</SelectItem>
+            <SelectItem value="other">其他</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button @click="handleSearch">搜索</Button>
+        <Button variant="outline" @click="resetSearch">重置</Button>
         <div class="toolbar-spacer"></div>
-        <el-button type="primary" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
+        <Button @click="handleCreate">
+          <Plus class="w-3.5 h-3.5 mr-1" />
           新增
-        </el-button>
+        </Button>
       </div>
 
-      <div class="knowledge-content" v-loading="loading">
-        <div v-if="list.length === 0 && !loading" class="empty-state">
-          <el-icon :size="64" class="empty-icon"><Collection /></el-icon>
+      <div class="knowledge-content">
+        <div v-if="loading" class="loading-state">加载中...</div>
+        <div v-else-if="list.length === 0" class="empty-state">
+          <Collection class="empty-icon w-16 h-16" />
           <div class="empty-text">暂无知识条目</div>
           <div class="empty-hint">点击"新增"录入设计知识</div>
         </div>
@@ -62,38 +57,36 @@
           >
             <div class="card-header">
               <span class="card-title">{{ item.title }}</span>
-              <el-tag size="small" :type="getCategoryType(item.category)">
+              <Badge :variant="getCategoryType(item.category)">
                 {{ getCategoryLabel(item.category) }}
-              </el-tag>
+              </Badge>
             </div>
             <div class="card-content">{{ truncateContent(item.content) }}</div>
             <div class="card-footer">
               <div class="card-tags">
-                <el-tag
+                <Badge
                   v-for="tag in (item.tags || []).slice(0, 3)"
                   :key="tag"
-                  size="small"
-                  type="info"
+                  variant="secondary"
                   class="tag-item"
                 >
                   {{ tag }}
-                </el-tag>
-                <el-tag
+                </Badge>
+                <Badge
                   v-if="(item.tags || []).length > 3"
-                  size="small"
-                  type="info"
+                  variant="secondary"
                   class="tag-item"
                 >
                   +{{ item.tags.length - 3 }}
-                </el-tag>
+                </Badge>
               </div>
               <div class="card-actions">
-                <el-button link type="primary" size="small" @click.stop="handleEdit(item)">
+                <Button variant="link" size="sm" @click.stop="handleEdit(item)">
                   编辑
-                </el-button>
-                <el-button link type="danger" size="small" @click.stop="handleDelete(item)">
+                </Button>
+                <Button variant="link" size="sm" class="text-destructive hover:text-destructive" @click.stop="handleDelete(item)">
                   删除
-                </el-button>
+                </Button>
               </div>
             </div>
           </div>
@@ -101,15 +94,16 @@
       </div>
 
       <div class="knowledge-pagination" v-if="total > pageSize">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[12, 24, 36]"
-          :total="total"
-          layout="total, sizes, prev, pager, next"
-          @current-change="loadList"
-          @size-change="handleSizeChange"
-        />
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-muted-foreground">共 {{ total }} 条</span>
+          <Button variant="outline" size="sm" :disabled="currentPage <= 1" @click="currentPage = currentPage - 1; loadList()">
+            上一页
+          </Button>
+          <span class="text-xs text-muted-foreground">{{ currentPage }} / {{ Math.max(1, Math.ceil(total / pageSize)) }}</span>
+          <Button variant="outline" size="sm" :disabled="currentPage >= Math.max(1, Math.ceil(total / pageSize))" @click="currentPage = currentPage + 1; loadList()">
+            下一页
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -118,18 +112,34 @@
       :edit-data="currentEditItem"
       @success="handleEditSuccess"
     />
-  </el-dialog>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, Search, Collection } from "@element-plus/icons-vue";
+import { confirm as uiConfirm } from '@/components/ui/confirm';
+import { message } from '@/common/message';
+import { Plus, Search, Library as Collection } from "lucide-vue-next";
 import {
   getDesignKnowledgePage,
   deleteDesignKnowledge,
 } from "@/api";
 import EditDialog from "./edit-dialog.vue";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const props = defineProps<{
   visible: boolean;
@@ -165,12 +175,12 @@ const editDialogVisible = ref(false);
 const currentEditItem = ref<any>(null);
 
 const categoryMap: Record<string, { label: string; type: string }> = {
-  "css-trick": { label: "CSS技巧", type: "" },
+  "css-trick": { label: "CSS技巧", type: "default" },
   "color-value": { label: "颜色值", type: "success" },
   "code-config": { label: "代码配置", type: "warning" },
-  "design-principle": { label: "设计原则", type: "danger" },
-  "template-tip": { label: "模板技巧", type: "info" },
-  other: { label: "其他", type: "info" },
+  "design-principle": { label: "设计原则", type: "destructive" },
+  "template-tip": { label: "模板技巧", type: "secondary" },
+  other: { label: "其他", type: "secondary" },
 };
 
 function getCategoryLabel(category: string) {
@@ -178,7 +188,7 @@ function getCategoryLabel(category: string) {
 }
 
 function getCategoryType(category: string) {
-  return (categoryMap[category]?.type as any) || "info";
+  return (categoryMap[category]?.type as any) || "secondary";
 }
 
 function truncateContent(content: string) {
@@ -193,13 +203,13 @@ async function loadList() {
       currentPage: currentPage.value,
       pageSize: pageSize.value,
       keyword: searchKeyword.value || undefined,
-      category: filterCategory.value || undefined,
+      category: filterCategory.value === "all" ? undefined : (filterCategory.value || undefined),
     });
     list.value = res?.list || [];
     total.value = res?.total || 0;
   } catch (error) {
     console.error("加载知识列表失败:", error);
-    ElMessage.error("加载知识列表失败");
+    message.error("加载知识列表失败");
   } finally {
     loading.value = false;
   }
@@ -234,17 +244,19 @@ function handleEdit(item: any) {
 
 async function handleDelete(item: any) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除知识条目"${item.title}"吗？`,
-      "确认删除",
-      { type: "warning" },
-    );
+    const okDelete = await uiConfirm({
+      title: "确认删除",
+      description: `确定要删除知识条目"${item.title}"吗？`,
+      okText: "确定",
+      cancelText: "取消",
+    });
+    if (!okDelete) return;
     await deleteDesignKnowledge({ ids: [item.id] });
-    ElMessage.success("删除成功");
+    message.success("删除成功");
     loadList();
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("删除失败");
+      message.error("删除失败");
     }
   }
 }
@@ -255,17 +267,12 @@ function handleEditSuccess() {
 </script>
 
 <style scoped>
-.knowledge-dialog :deep(.el-dialog__body) {
-  padding: 0;
-  height: calc(100vh - 120px);
-  overflow: hidden;
-}
-
 .knowledge-dialog-content {
   height: 100%;
   display: flex;
   flex-direction: column;
   padding: 20px;
+  overflow: hidden;
 }
 
 .knowledge-toolbar {
@@ -273,7 +280,7 @@ function handleEditSuccess() {
   align-items: center;
   gap: 12px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--1s-border-color);
 }
 
 .toolbar-spacer {
@@ -292,12 +299,12 @@ function handleEditSuccess() {
   align-items: center;
   justify-content: center;
   height: 300px;
-  color: var(--el-text-color-secondary);
+  color: var(--1s-text-color-secondary);
 }
 
 .empty-icon {
   margin-bottom: 16px;
-  color: var(--el-text-color-placeholder);
+  color: var(--1s-text-color-tertiary);
 }
 
 .empty-text {
@@ -307,7 +314,13 @@ function handleEditSuccess() {
 
 .empty-hint {
   font-size: 14px;
-  color: var(--el-text-color-placeholder);
+  color: var(--1s-text-color-tertiary);
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--1s-text-color-secondary);
 }
 
 .knowledge-grid {
@@ -318,16 +331,16 @@ function handleEditSuccess() {
 
 .knowledge-card {
   padding: 16px;
-  border: 1px solid var(--el-border-color-light);
+  border: 1px solid var(--1s-border-color);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
-  background: var(--el-bg-color);
+  background: var(--1s-surface-background);
 }
 
 .knowledge-card:hover {
-  border-color: var(--el-color-primary);
-  box-shadow: var(--el-box-shadow-light);
+  border-color: var(--1s-accent-color);
+  box-shadow: var(--1s-shadow-sm);
 }
 
 .card-header {
@@ -340,7 +353,7 @@ function handleEditSuccess() {
 .card-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--1s-text-color);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -349,7 +362,7 @@ function handleEditSuccess() {
 
 .card-content {
   font-size: 13px;
-  color: var(--el-text-color-secondary);
+  color: var(--1s-text-color-secondary);
   line-height: 1.6;
   margin-bottom: 12px;
   display: -webkit-box;
@@ -389,6 +402,6 @@ function handleEditSuccess() {
   display: flex;
   justify-content: center;
   padding-top: 16px;
-  border-top: 1px solid var(--el-border-color-lighter);
+  border-top: 1px solid var(--1s-border-color);
 }
 </style>

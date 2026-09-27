@@ -11,14 +11,11 @@
 <template>
   <div class="designiy-text-sticker">
     <div class="designiy-text-sticker-header">
-      <el-input v-model="input" placeholder="">
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-        <template #suffix>
-          <el-icon><Operation /></el-icon>
-        </template>
-      </el-input>
+      <div class="relative w-full">
+        <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+        <Input v-model="input" placeholder="" class="pl-8 pr-8 bg-[#f9f9f9] shadow-none" />
+        <SlidersHorizontal class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+      </div>
     </div>
     <div class="designiy-text-sticker-body">
       <resource></resource>
@@ -29,7 +26,8 @@
 <script setup lang="ts">
 import resource from "./resource.vue";
 import { ref } from "vue";
-import { Search, Operation, FolderOpened } from "@element-plus/icons-vue";
+import { Search, SlidersHorizontal } from "lucide-vue-next";
+import { Input } from "@/components/ui/input";
 const input = ref("");
 const value = ref();
 const options = ref([]);
@@ -49,11 +47,6 @@ const options = ref([]);
   row-gap: 10px;
   display: flex;
   flex-direction: column;
-  .el-input__wrapper {
-    box-shadow: none;
-    background-color: #f9f9f9;
-    font-size: 12px;
-  }
 }
 
 .designiy-text-sticker-body {

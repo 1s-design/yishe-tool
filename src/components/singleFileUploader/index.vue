@@ -1,26 +1,21 @@
 <template>
   <div class="single-file-uploader">
-    <el-upload
+    <input
       ref="uploadRef"
-      :auto-upload="false"
-      :limit="1"
-      :on-exceed="handleExceed"
+      type="file"
       :accept="accept"
-    >
-      <template #trigger>
-        <el-button type="primary">选择文件</el-button>
-      </template>
-      <template #tip> {{ tip }} </template>
-    </el-upload>
+      class="hidden"
+      @change="handleExceed"
+    />
+    <Button @click="uploadRef?.click()">选择文件</Button>
+    <div class="text-xs text-muted-foreground mt-1">{{ tip }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Plus } from "@element-plus/icons-vue";
 import Api from "@/api";
 import { message } from '@/common/message';
-import { genFileId } from "element-plus";
 
 /**
  * 这里采用的策略为选择及上传，删除即删除
@@ -41,11 +36,11 @@ const model = defineModel({
 
 const uploadRef = ref();
 
-const handleExceed = (files) => {
-  uploadRef.value!.clearFiles();
-  const file = files[0];
-  file.uid = genFileId();
-  uploadRef.value!.handleStart(file);
+const handleExceed = (e) => {
+  const input = e.target;
+  const file = input.files?.[0];
+  // limit 1：始终只保留最后一次选择的文件
+  model.value = file ? [file] : [];
 };
 
 /**

@@ -66,3 +66,29 @@
     --ring: 240 4.9% 83.9%;
   }
 }
+/* s1-loading directive (replaces el-loading) */
+.s1-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, hsl(var(--background)) 55%, transparent);
+  pointer-events: none;
+}
+
+.s1-loading-spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, hsl(var(--primary)) 25%, transparent);
+  border-top-color: hsl(var(--primary));
+  animation: s1-spin 0.7s linear infinite;
+}
+
+@keyframes s1-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -5,13 +5,15 @@
         </template>
         <template #name> 亮度 </template>
         <template #content>
-            <el-tooltip content="亮度效果，0位全黑，100为正常显示效果" :hide-after="0">
-                <el-input style="width:80px"  v-model="model" size="small" max="999" min="0" step="1" type="number">
-                    <template #suffix>
+            <Tooltip>
+                <TooltipTrigger as-child>
+                    <div class="flex items-center gap-1" style="width:80px">
+                        <Input type="number" v-model="model" class="h-6 min-w-0 flex-1 text-[11px]" max="999" min="0" step="1" />
                         <div style="font-size:1rem;"> % </div>
-                    </template>
-                </el-input>
-            </el-tooltip>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">亮度效果，0位全黑，100为正常显示效果</TooltipContent>
+            </Tooltip>
         </template>
     </operate-form-item>
 </template>
@@ -19,6 +21,8 @@
 <script setup lang="ts">
 import icon from "@/components/design/assets/icon/brightness.svg?component";
 import { canvasStickerOptions } from '@/components/design/layout/canvas/index.tsx'
+import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 const props = defineProps({
     tooltip: {
@@ -31,4 +35,3 @@ const model = defineModel({})
 </script>
   
 <style></style>
-  

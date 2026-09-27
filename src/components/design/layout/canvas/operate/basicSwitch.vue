@@ -3,13 +3,14 @@
         <template #icon> <icon></icon> </template>
         <template #name> {{ label }} </template>
         <template #content>
-            <el-switch v-model="model" size="small" />
+            <Switch v-model:checked="model" />
         </template>
     </operate-form-item>
 </template>
-    
+
 <script setup lang='ts'>
 import icon from "@/components/design/assets/icon/switch.svg?component";
+import { Switch } from '@/components/ui/switch'
 const model = defineModel({})
 
 const props = defineProps({
@@ -18,6 +19,6 @@ const props = defineProps({
     }
 })
 
-</script> 
-    
+</script>
+
 <style></style>

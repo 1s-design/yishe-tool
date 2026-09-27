@@ -19,8 +19,8 @@
                 :key="call.id"
                 class="tool-call-item"
               >
-                <el-tag size="small" type="info"
-                  >🔧 {{ call.function.name }}</el-tag
+                <Badge variant="secondary"
+                  >🔧 {{ call.function.name }}</Badge
                 >
               </div>
             </div>
@@ -40,34 +40,39 @@
     </div>
 
     <!-- 人工介入弹窗 -->
-    <el-dialog
-      v-model="showInteraction"
-      :title="interactionData?.question || '请选择'"
-      width="420px"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-    >
+    <Dialog v-model:open="showInteraction">
+      <DialogContent
+        class="max-w-[420px]"
+        @escape-key-down.prevent
+        @interact-outside.prevent
+      >
+        <DialogHeader>
+          <DialogTitle>{{ interactionData?.question || '请选择' }}</DialogTitle>
+        </DialogHeader>
       <div
         v-if="interactionData?.type === 'ask_choice'"
         class="interaction-choice"
       >
-        <el-radio-group
+        <RadioGroup
           v-if="interactionData.options?.length"
           v-model="userAnswer"
           class="options-group"
         >
-          <el-radio
+          <label
             v-for="opt in interactionData.options"
             :key="opt"
-            :value="opt"
-            border
-            class="option-item"
+            class="option-item flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2"
           >
-            {{ opt }}
-          </el-radio>
-        </el-radio-group>
-        <el-divider v-if="interactionData.options?.length">或者</el-divider>
-        <el-input
+            <RadioGroupItem :value="opt" />
+            <span class="text-xs">{{ opt }}</span>
+          </label>
+        </RadioGroup>
+        <div v-if="interactionData.options?.length" class="flex items-center gap-2">
+          <Separator class="flex-1" />
+          <span class="text-xs text-muted-foreground">或者</span>
+          <Separator class="flex-1" />
+        </div>
+        <Input
           v-model="userAnswer"
           placeholder="输入你的回答..."
           @keydown.enter="submitAnswer"
@@ -78,41 +83,45 @@
         v-if="interactionData?.type === 'request_feedback'"
         class="interaction-feedback"
       >
-        <el-input
+        <Textarea
           v-model="userAnswer"
-          type="textarea"
           :rows="3"
           placeholder="输入你的反馈..."
           @keydown.enter.ctrl="submitAnswer"
         />
       </div>
 
-      <template #footer>
-        <el-button
-          type="primary"
+      <DialogFooter>
+        <Button
           :disabled="!userAnswer.trim()"
           @click="submitAnswer"
-          >确定</el-button
+          >确定</Button
         >
-      </template>
-    </el-dialog>
+      </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- 输入区域 -->
     <div class="chat-input">
-      <el-input
-        v-model="inputText"
-        placeholder="描述你想要的设计..."
-        :disabled="agent.isProcessing.value"
-        @keydown.enter.exact.prevent="handleSend"
-        @compositionstart="isComposing = true"
-        @compositionend="isComposing = false"
-      >
-        <template #append>
-          <el-button :loading="agent.isProcessing.value" @click="handleSend">
-            发送
-          </el-button>
-        </template>
-      </el-input>
+      <div class="flex items-center">
+        <Input
+          v-model="inputText"
+          placeholder="描述你想要的设计..."
+          :disabled="agent.isProcessing.value"
+          class="rounded-r-none"
+          @keydown.enter.exact.prevent="handleSend"
+          @compositionstart="isComposing = true"
+          @compositionend="isComposing = false"
+        />
+        <Button
+          variant="outline"
+          class="rounded-l-none"
+          :disabled="agent.isProcessing.value"
+          @click="handleSend"
+        >
+          发送
+        </Button>
+      </div>
     </div>
   </div>
 </template>
@@ -121,6 +130,19 @@
 import { ref, computed, nextTick, watch, onMounted, onUnmounted } from "vue";
 import { designAgent } from "@/ai/langgraph";
 import type { AgentInteraction } from "@/ai/langgraph";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
 
 const agent = designAgent;
 

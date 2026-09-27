@@ -7,45 +7,49 @@
         <div class="top-menu-containter">
             <div class="top-menu">
                 <div class="control-group">
-                    <el-tooltip content="重置到中心" placement="bottom">
-                        <el-button circle size="small" @click="resetPanzoom">
-                            <el-icon><Aim /></el-icon>
-                        </el-button>
-                    </el-tooltip>
-                    <el-tooltip content="放大" placement="bottom">
-                        <el-button circle size="small" @click="zoomIn">
-                            <el-icon><ZoomIn /></el-icon>
-                        </el-button>
-                    </el-tooltip>
-                    <el-tooltip content="缩小" placement="bottom">
-                        <el-button circle size="small" @click="zoomOut">
-                            <el-icon><ZoomOut /></el-icon>
-                        </el-button>
-                    </el-tooltip>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button variant="ghost" size="icon-xs" class="rounded-full" @click="resetPanzoom">
+                                <Crosshair class="h-3.5 w-3.5" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>重置到中心</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button variant="ghost" size="icon-xs" class="rounded-full" @click="zoomIn">
+                                <ZoomIn class="h-3.5 w-3.5" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>放大</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button variant="ghost" size="icon-xs" class="rounded-full" @click="zoomOut">
+                                <ZoomOut class="h-3.5 w-3.5" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>缩小</TooltipContent>
+                    </Tooltip>
                 </div>
 
                 <div style="flex:1;"></div>
                 <div v-if="loading" class="rendering-indicator">正在渲染贴纸...</div>
 
-                <el-button type="danger" link class="close-button" @click="showMainCanvas = false">
-                    <el-icon size="20">
-                        <CircleCloseFilled></CircleCloseFilled>
-                    </el-icon>
-                </el-button>
+                <Button variant="ghost" size="icon" class="close-button" @click="showMainCanvas = false">
+                    <XCircle class="h-5 w-5" />
+                </Button>
             </div>
         </div>
     </div>
 </template>
-  
+
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { CanvasController, showMainCanvas } from '@/components/design/layout/canvas/index.tsx'
-import {
-    CircleCloseFilled,
-    Aim,
-    ZoomIn,
-    ZoomOut
-} from '@element-plus/icons-vue'
+import { XCircle, ZoomIn, ZoomOut, Crosshair } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import panzoom from 'panzoom'
 import Utils from '@/common/utils'
 import { setPanzoomInstance } from './panzoomStore'
@@ -196,25 +200,6 @@ watch(show, async (val) => {
     border: 1px solid var(--1s-control-border-color);
     box-shadow: var(--1s-shadow-sm);
     gap: 4px;
-}
-
-.control-group :deep(.el-button) {
-    width: 24px;
-    height: 24px;
-    min-height: 24px;
-    padding: 0;
-    color: var(--1s-text-color-secondary);
-    background: transparent;
-    border-color: transparent;
-}
-
-.control-group :deep(.el-button:hover) {
-    color: var(--1s-text-color);
-    background: var(--1s-control-hover-background);
-}
-
-.control-group :deep(.el-button.is-circle) {
-    border-radius: 999px;
 }
 
 .rendering-indicator {

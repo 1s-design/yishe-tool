@@ -1,14 +1,12 @@
 <template>
-  <a-modal
-    v-bind="$attrs"
-    width="100%"
-    :wrapClassName="'full-screen-modal'"
-    title="颜色库"
-    :footer="null"
-    centered
-    :destroyOnClose="true"
-    @cancel="close"
-  >
+  <Dialog v-bind="$attrs" @update:open="close">
+    <DialogContent
+      class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col"
+    >
+      <DialogHeader class="px-6 py-3 border-b border-border">
+        <DialogTitle>颜色库</DialogTitle>
+      </DialogHeader>
+      <div class="flex-1 overflow-auto min-h-0">
     <div class="color-library-container">
       <!-- Sidebar Categories -->
       <div class="sidebar">
@@ -20,7 +18,7 @@
             :class="{ active: activeCategory === 'EXERT_EDITOR' }"
             @click="activeCategory = 'EXERT_EDITOR'"
           >
-            <el-icon style="margin-right: 8px"><edit-pen /></el-icon>
+            <Edit class="w-4 h-4" style="margin-right: 8px" />
             高级 CSS 编辑器
           </div>
           <div class="divider"></div>
@@ -43,25 +41,21 @@
           <div class="breadcrumb">
             {{ activeCategory }} <span v-if="search"> / 搜索: "{{ search }}"</span>
           </div>
-          <el-input
-            v-model="search"
-            style="width: 320px"
-            placeholder="搜素颜色名称、描述或十六进制..."
-            prefix-icon="Search"
-            clearable
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
+          <div class="relative" style="width: 320px">
+            <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              v-model="search"
+              class="pl-8"
+              placeholder="搜素颜色名称、描述或十六进制..."
+            />
+          </div>
         </div>
 
         <div v-if="activeCategory === 'EXERT_EDITOR'" class="expert-editor-view">
           <div class="editor-section">
             <div class="label">自定义背景 (CSS Background / Color)</div>
-            <el-input
+            <Textarea
               v-model="customCSS"
-              type="textarea"
               :rows="5"
               placeholder="例如: linear-gradient(to right, oklch(60% 0.3 0), oklch(60% 0.3 200)) 或 #ff0000"
               @input="updatePreview"
@@ -70,27 +64,27 @@
             <div class="quick-templates">
               <div class="label">快速模板</div>
               <div class="template-tags">
-                <el-tooltip
+                <Tooltip
                   v-for="t in templates" 
                   :key="t.name"
-                  effect="dark"
-                  :content="t.value"
-                  placement="top"
                 >
-                  <el-tag 
-                    @click="applyTemplate(t.value)"
-                    class="template-tag"
-                    effect="plain"
-                  >
-                    {{ t.name }}
-                    <span class="template-value-preview">{{ t.value.substring(0, 10) }}...</span>
-                  </el-tag>
-                </el-tooltip>
+                  <TooltipTrigger as-child>
+                    <Badge 
+                      @click="applyTemplate(t.value)"
+                      class="template-tag"
+                      variant="outline"
+                    >
+                      {{ t.name }}
+                      <span class="template-value-preview">{{ t.value.substring(0, 10) }}...</span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{{ t.value }}</TooltipContent>
+                </Tooltip>
               </div>
             </div>
 
             <div class="actions">
-              <el-button type="primary" @click="applyCustomCSS" large>确认应用此样式</el-button>
+              <Button @click="applyCustomCSS" class="h-9 px-4">确认应用此样式</Button>
             </div>
           </div>
 
@@ -114,46 +108,58 @@
               :key="item.name + item.color"
               class="color-item-wrapper"
             >
-              <el-tooltip
-                effect="dark"
-                :content="item.description || item.name"
-                placement="top"
-                :show-after="300"
+              <Tooltip
+                :delay-duration="300"
               >
-                <div class="color-item" @click="select(item)">
-                  <div
-                    class="color-preview"
-                    :style="{ background: item.color }"
-                  >
-                    <div class="color-actions">
-                      <el-button circle size="small" @click.stop="copyColor(item.color)">
-                        <el-icon><CopyDocument /></el-icon>
-                      </el-button>
+                <TooltipTrigger as-child>
+                  <div class="color-item" @click="select(item)">
+                    <div
+                      class="color-preview"
+                      :style="{ background: item.color }"
+                    >
+                      <div class="color-actions">
+                        <Button variant="secondary" size="icon-sm" class="rounded-full" @click.stop="copyColor(item.color)">
+                          <Copy class="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div class="color-info">
+                      <div class="color-name">{{ item.name }}</div>
+                      <div class="color-value" :title="item.color">{{ getDisplayColor(item.color) }}</div>
                     </div>
                   </div>
-                  <div class="color-info">
-                    <div class="color-name">{{ item.name }}</div>
-                    <div class="color-value" :title="item.color">{{ getDisplayColor(item.color) }}</div>
-                  </div>
-                </div>
-              </el-tooltip>
+                </TooltipTrigger>
+                <TooltipContent side="top">{{ item.description || item.name }}</TooltipContent>
+              </Tooltip>
             </div>
           </div>
           
           <div v-if="filteredColors.length === 0" class="empty-state">
-            <el-empty description="未找到匹配的颜色" />
+            <div class="text-sm text-muted-foreground">未找到匹配的颜色</div>
           </div>
         </div>
       </div>
     </div>
-  </a-modal>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { colorLibrary, ColorItem } from "./data";
-import { Search, CopyDocument, EditPen } from "@element-plus/icons-vue";
-import { ElMessage } from "element-plus";
+import { Search, Copy, Edit } from "lucide-vue-next";
+import { message } from '@/common/message';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const search = ref("");
 const activeCategory = ref(colorLibrary[0].name);
@@ -272,7 +278,7 @@ function close() {
 
 function copyColor(color: string) {
   navigator.clipboard.writeText(color);
-  ElMessage.success("已复制: " + color);
+  message.success("已复制: " + color);
 }
 
 function getDisplayColor(color: string) {
@@ -280,49 +286,17 @@ function getDisplayColor(color: string) {
 }
 </script>
 
-<style lang="less">
-.full-screen-modal {
-  .ant-modal {
-    max-width: 100%;
-    top: 0;
-    padding-bottom: 0;
-    margin: 0;
-    height: 100vh;
-  }
-  .ant-modal-content {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    border-radius: 0;
-    box-shadow: none;
-  }
-  .ant-modal-body {
-    flex: 1;
-    padding: 0;
-    overflow: hidden;
-  }
-  .ant-modal-header {
-    border-bottom: 1px solid #eee;
-    padding: 12px 24px;
-    background: #fff;
-  }
-  .ant-modal-close {
-    top: 12px;
-  }
-}
-</style>
-
 <style scoped lang="less">
 .color-library-container {
   display: flex;
   height: 100%;
-  background: #fff;
+  background: var(--1s-surface-background);
 }
 
 .sidebar {
   width: 220px;
   flex-shrink: 0;
-  border-right: 1px solid #f0f0f0;
+  border-right: 1px solid var(--1s-border-color);
   display: flex;
   flex-direction: column;
 
@@ -330,7 +304,7 @@ function getDisplayColor(color: string) {
     padding: 20px;
     font-size: 12px;
     font-weight: bold;
-    color: #999;
+    color: var(--1s-text-color-tertiary);
     text-transform: uppercase;
     letter-spacing: 1px;
   }
@@ -344,7 +318,7 @@ function getDisplayColor(color: string) {
     padding: 12px 20px;
     cursor: pointer;
     transition: all 0.2s;
-    color: #666;
+    color: var(--1s-text-color-secondary);
     font-size: 14px;
     border-left: 3px solid transparent;
     white-space: nowrap;
@@ -364,15 +338,15 @@ function getDisplayColor(color: string) {
     }
 
     &:hover {
-      background: #f0f0f0;
-      color: #333;
+      background: var(--1s-control-surface-muted);
+      color: var(--1s-text-color);
     }
 
     &.active {
-      background: #fff;
-      color: #000;
+      background: var(--1s-surface-background);
+      color: var(--1s-text-color);
       font-weight: 600;
-      border-left-color: #000;
+      border-left-color: var(--1s-text-color);
     }
   }
 
@@ -387,7 +361,7 @@ function getDisplayColor(color: string) {
     &.active {
       background: #e63946 !important;
       color: #fff !important;
-      border-left-color: #000;
+      border-left-color: var(--1s-text-color);
     }
   }
 }
@@ -401,8 +375,8 @@ function getDisplayColor(color: string) {
 
 .toolbar {
   padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--1s-surface-background);
+  border-bottom: 1px solid var(--1s-border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -410,11 +384,11 @@ function getDisplayColor(color: string) {
   .breadcrumb {
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: var(--1s-text-color);
     
     span {
       font-size: 12px;
-      color: #ccc;
+      color: var(--1s-text-color-tertiary);
       font-weight: normal;
       margin-left: 8px;
     }
@@ -434,7 +408,7 @@ function getDisplayColor(color: string) {
 }
 
 .color-item {
-  background: #fff;
+  background: var(--1s-surface-background);
   overflow: hidden;
   transition: opacity 0.2s;
   cursor: pointer;
@@ -472,7 +446,7 @@ function getDisplayColor(color: string) {
   display: flex;
   padding: 40px;
   gap: 40px;
-  background: #fdfdfd;
+  background: var(--1s-surface-background);
   height: 100%;
   overflow-y: auto;
 
@@ -485,7 +459,7 @@ function getDisplayColor(color: string) {
     .label {
       font-size: 14px;
       font-weight: 600;
-      color: #333;
+      color: var(--1s-text-color);
       margin-bottom: 8px;
     }
 
@@ -506,13 +480,13 @@ function getDisplayColor(color: string) {
         padding: 6px 12px;
         
         &:hover {
-          border-color: #000;
-          color: #000;
+          border-color: var(--1s-text-color);
+          color: var(--1s-text-color);
         }
 
         .template-value-preview {
           font-size: 10px;
-          color: #bbb;
+          color: var(--1s-text-color-tertiary);
           font-weight: normal;
           font-family: monospace;
           margin-top: 2px;
@@ -535,7 +509,7 @@ function getDisplayColor(color: string) {
     .expert-preview-box {
       aspect-ratio: 1;
       border-radius: 12px;
-      border: 1px solid #eee;
+      border: 1px solid var(--1s-border-color);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -552,8 +526,8 @@ function getDisplayColor(color: string) {
 
     .preview-info {
       font-size: 12px;
-      color: #666;
-      background: #f5f5f5;
+      color: var(--1s-text-color-secondary);
+      background: var(--1s-control-surface-muted);
       padding: 12px;
       border-radius: 8px;
       code {
@@ -565,18 +539,18 @@ function getDisplayColor(color: string) {
 
 .divider {
   height: 1px;
-  background: #f0f0f0;
+  background: var(--1s-control-surface-muted);
   margin: 10px 20px;
 }
 
 .color-info {
   padding: 10px;
-  background: #fff;
+  background: var(--1s-surface-background);
 
   .color-name {
     font-size: 13px;
     font-weight: 500;
-    color: #333;
+    color: var(--1s-text-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -584,7 +558,7 @@ function getDisplayColor(color: string) {
 
   .color-value {
     font-size: 10px;
-    color: #bbb;
+    color: var(--1s-text-color-tertiary);
     margin-top: 4px;
     font-family: monospace;
     white-space: nowrap;
@@ -599,6 +573,6 @@ function getDisplayColor(color: string) {
   justify-content: center;
   align-items: center;
   height: 100%;
-  background: #fff;
+  background: var(--1s-surface-background);
 }
 </style>

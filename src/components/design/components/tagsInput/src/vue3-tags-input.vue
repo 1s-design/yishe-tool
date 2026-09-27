@@ -446,7 +446,7 @@ $paddingTag: 5px;
     right: 0;
     margin: 0;
     padding: 5px 0;
-    background: #ffffff;
+    background: var(--1s-surface-background);
     z-index: 1050;
     color: #475569;
     box-shadow: 0 3px 8px 2px rgba(0, 0, 0, 0.1);

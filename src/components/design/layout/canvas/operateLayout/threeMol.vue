@@ -1,58 +1,50 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="data" title="分子数据">
+  <Accordion type="multiple" :model-value="activeNames" @update:model-value="v => activeNames = v as string[]">
+    <AccordionItem value="data">
+      <AccordionTrigger>分子数据</AccordionTrigger>
+      <AccordionContent>
       <operate-form-item>
         <template #name>PDB ID</template>
         <template #content>
           <div class="threemol-pdbid-row">
-            <el-input
+            <Input
               v-model="currentOperatingCanvasChild.pdbId"
-              size="small"
               placeholder="例如 1BNA, 4HHB"
-              clearable
-            ></el-input>
-            <el-popover
-              v-model:visible="aiPopoverVisible"
-              trigger="click"
-              placement="right-start"
-              width="340"
-            >
-              <div class="threemol-ai-popover">
-                <el-input
-                  v-model="aiPrompt"
-                  type="textarea"
-                  :rows="4"
-                  resize="vertical"
-                  spellcheck="false"
-                  :disabled="aiLoading"
-                  placeholder="描述分子，例如：血红蛋白、DNA 双螺旋、胰岛素"
-                  @keydown.enter.ctrl="generateByAi"
-                ></el-input>
+              class="flex-1"
+            ></Input>
+            <Popover v-model:open="aiPopoverVisible">
+              <PopoverTrigger as-child>
+                <Button size="sm" variant="outline">AI 生成</Button>
+              </PopoverTrigger>
+              <PopoverContent side="right" align="start" class="w-[340px]">
+                <div class="threemol-ai-popover">
+                  <Textarea
+                    v-model="aiPrompt"
+                    :rows="4"
+                    spellcheck="false"
+                    :disabled="aiLoading"
+                    placeholder="描述分子，例如：血红蛋白、DNA 双螺旋、胰岛素"
+                    @keydown.enter.ctrl="generateByAi"
+                  ></Textarea>
 
-                <div class="threemol-ai-popover__actions">
-                  <el-button size="small" @click="aiPopoverVisible = false"
-                    >取消</el-button
-                  >
-                  <el-button
-                    size="small"
-                    type="primary"
-                    :loading="aiLoading"
-                    :disabled="!aiPrompt.trim() || aiLoading"
-                    @click="generateByAi"
-                  >
-                    确定
-                  </el-button>
+                  <div class="threemol-ai-popover__actions">
+                    <Button size="sm" variant="ghost" @click="aiPopoverVisible = false"
+                      >取消</Button
+                    >
+                    <Button
+                      size="sm"
+                      variant="default"
+                      :disabled="!aiPrompt.trim() || aiLoading"
+                      @click="generateByAi"
+                    >
+                      确定
+                    </Button>
+                  </div>
+
+                  <div v-if="aiError" class="threemol-error">{{ aiError }}</div>
                 </div>
-
-                <div v-if="aiError" class="threemol-error">{{ aiError }}</div>
-              </div>
-
-              <template #reference>
-                <el-button size="small" type="primary" plain
-                  >AI 生成</el-button
-                >
-              </template>
-            </el-popover>
+              </PopoverContent>
+            </Popover>
           </div>
         </template>
       </operate-form-item>
@@ -60,68 +52,110 @@
       <operate-form-item>
         <template #name>格式</template>
         <template #content>
-          <el-select v-model="currentOperatingCanvasChild.format" size="small">
-            <el-option label="PDB" value="pdb" />
-            <el-option label="SDF" value="sdf" />
-            <el-option label="XYZ" value="xyz" />
-            <el-option label="MOL2" value="mol2" />
-          </el-select>
+          <Select v-model="currentOperatingCanvasChild.format">
+            <SelectTrigger class="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pdb">PDB</SelectItem>
+              <SelectItem value="sdf">SDF</SelectItem>
+              <SelectItem value="xyz">XYZ</SelectItem>
+              <SelectItem value="mol2">MOL2</SelectItem>
+            </SelectContent>
+          </Select>
         </template>
       </operate-form-item>
 
       <operate-form-item>
         <template #name>数据</template>
         <template #content>
-          <el-input
+          <Textarea
             v-model="currentOperatingCanvasChild.data"
-            type="textarea"
             :rows="6"
-            resize="vertical"
             spellcheck="false"
             placeholder="粘贴 PDB/SDF/XYZ 数据..."
             class="threemol-data-input"
-          ></el-input>
+          ></Textarea>
         </template>
       </operate-form-item>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="style" title="渲染样式">
+    <AccordionItem value="style">
+      <AccordionTrigger>渲染样式</AccordionTrigger>
+      <AccordionContent>
       <operate-form-item>
         <template #name>样式</template>
         <template #content>
-          <el-select v-model="currentOperatingCanvasChild.style" size="small">
-            <el-option label="棍棒 (Stick)" value="stick" />
-            <el-option label="球体 (Sphere)" value="sphere" />
-            <el-option label="卡通 (Cartoon)" value="cartoon" />
-            <el-option label="线条 (Line)" value="line" />
-            <el-option label="十字 (Cross)" value="cross" />
-          </el-select>
+          <Select v-model="currentOperatingCanvasChild.style">
+            <SelectTrigger class="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="stick">棍棒 (Stick)</SelectItem>
+              <SelectItem value="sphere">球体 (Sphere)</SelectItem>
+              <SelectItem value="cartoon">卡通 (Cartoon)</SelectItem>
+              <SelectItem value="line">线条 (Line)</SelectItem>
+              <SelectItem value="cross">十字 (Cross)</SelectItem>
+            </SelectContent>
+          </Select>
         </template>
       </operate-form-item>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="basic" title="基础">
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
       <operateItemSize
         label="尺寸"
         v-model:width="currentOperatingCanvasChild.width"
         v-model:height="currentOperatingCanvasChild.height"
       />
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="bg" title="背景">
+    <AccordionItem value="bg">
+      <AccordionTrigger>背景</AccordionTrigger>
+      <AccordionContent>
       <operateItemBackgroundColor
         v-model="currentOperatingCanvasChild.backgroundColor"
       />
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
       <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-    </el-collapse-item>
-  </el-collapse>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";

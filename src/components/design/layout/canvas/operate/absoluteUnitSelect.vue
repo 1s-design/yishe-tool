@@ -5,15 +5,16 @@
         </template>
         <template #name> {{ label }} </template>
         <template #content>
-            <el-select @change="change" v-model="model" size="small" class="operate-unit-select">
-                <template #label="{ value }">
-                    {{ value }}
-                </template>
-                <el-option  v-for="item in absoluteSizeOptions" :key="item.value" :label="item.label"
-                    :value="item.value">
-                    <span> {{ item.label }} </span>
-                </el-option>
-            </el-select>
+            <Select :model-value="model" @update:model-value="v => { model = v; change(v) }">
+                <SelectTrigger class="operate-unit-select h-6 text-[11px]">
+                    <SelectValue>{{ model }}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem  v-for="item in absoluteSizeOptions" :key="item.value" :value="item.value">
+                        <span> {{ item.label }} </span>
+                    </SelectItem>
+                </SelectContent>
+            </Select>
         </template>
     </operate-form-item>
 </template>
@@ -22,6 +23,7 @@
 import { ref, reactive,watch } from 'vue'
 import icon from "@/components/design/assets/icon/unit.svg?component";
 import { canvasStickerOptions } from '@/components/design/layout/canvas/index.tsx';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 const props = defineProps({
     label: {
         default: '尺寸单位'

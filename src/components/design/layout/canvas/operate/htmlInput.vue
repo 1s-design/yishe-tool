@@ -7,23 +7,25 @@
     <template #content>
       <div class="html-editor-trigger">
         <div class="html-editor-trigger__actions">
-          <el-button size="small" type="primary" plain @click="openEditor">全屏编辑</el-button>
-          <el-button size="small" @click="clearContent" :disabled="!model">清空</el-button>
+          <Button size="sm" variant="outline" class="text-primary border-primary/40 hover:bg-primary/10 hover:text-primary" @click="openEditor">全屏编辑</Button>
+          <Button size="sm" variant="outline" @click="clearContent" :disabled="!model">清空</Button>
         </div>
       </div>
     </template>
   </operate-form-item>
 
-  <el-dialog
-    v-model="dialogVisible"
-    title="编辑代码画布"
-    fullscreen
-    append-to-body
-    class="html-editor-dialog"
-    :close-on-click-modal="false"
-    @open="handleDialogOpen"
+  <Dialog
+    v-model:open="dialogVisible"
   >
-    <div class="html-editor-dialog__layout">
+    <DialogContent
+      class="html-editor-dialog max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col"
+      @interact-outside="e => e.preventDefault()"
+      @pointer-down-outside="e => e.preventDefault()"
+    >
+    <DialogHeader class="html-editor-dialog__header px-6 pt-6 pb-2 shrink-0">
+      <DialogTitle>编辑代码画布</DialogTitle>
+    </DialogHeader>
+    <div class="html-editor-dialog__layout html-editor-dialog__body">
       <div class="html-editor-dialog__main">
         <div class="html-editor-dialog__toolbar">
           <div class="html-editor-dialog__hint">
@@ -33,7 +35,7 @@
 
         <div v-if="editorError" class="html-editor-dialog__error">
           <span>{{ editorError }}</span>
-          <el-button size="small" type="primary" link @click="retryLoadEditor">重新加载</el-button>
+          <Button size="sm" variant="link" @click="retryLoadEditor">重新加载</Button>
         </div>
 
         <div v-loading="loadingEditor" class="html-editor-dialog__editor-shell">
@@ -66,7 +68,10 @@
               >
                 <div class="variable-row-left">
                   <div class="variable-header">
-                    <el-tag size="small" :type="getBadgeType(field.type)" class="type-tag">{{ field.type.toUpperCase() }}</el-tag>
+                    <Badge
+                      class="type-tag"
+                      :variant="getBadgeType(field.type) === 'danger' ? 'destructive' : getBadgeType(field.type) === 'primary' ? 'default' : getBadgeType(field.type) === 'info' ? 'secondary' : getBadgeType(field.type) === 'success' ? 'success' : 'warning'"
+                    >{{ field.type.toUpperCase() }}</Badge>
                     <span class="field-label">{{ field.label }}</span>
                   </div>
                   <div class="tokens-container">
@@ -82,15 +87,14 @@
                   </div>
                 </div>
                 <div class="variable-row-right" v-if="getFieldBoundId(field)">
-                  <el-button
-                    size="small"
-                    type="primary"
-                    plain
-                    class="configure-btn"
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    class="configure-btn text-primary border-primary/40 hover:bg-primary/10 hover:text-primary"
                     @click.stop="configureComponent(getFieldBoundId(field))"
                   >
                     配置
-                  </el-button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -112,7 +116,7 @@
               >
                 <div class="variable-row-left">
                   <div class="variable-header">
-                    <el-tag size="small" type="info" class="type-tag">{{ group.type.toUpperCase() }}</el-tag>
+                    <Badge variant="secondary" class="type-tag">{{ group.type.toUpperCase() }}</Badge>
                     <span class="field-label">{{ group.label }}</span>
                   </div>
                   <div class="tokens-container">
@@ -132,8 +136,8 @@
           </div>
 
           <!-- 语法与组件参考文档 -->
-          <div class="html-editor-dialog__variable-section" style="margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-            <div class="html-editor-dialog__variable-section-name" style="color: #1e293b; font-weight: 700;">
+          <div class="html-editor-dialog__variable-section" style="margin-top: 14px; border-top: 1px solid var(--1s-border-color); padding-top: 12px;">
+            <div class="html-editor-dialog__variable-section-name" style="color: var(--1s-text-color); font-weight: 700;">
               可插入组件
             </div>
 
@@ -158,18 +162,17 @@
       </div>
     </div>
 
-    <template #footer>
       <div class="html-editor-dialog__footer">
         <div class="html-editor-dialog__footer-tip">
           当前元素只维护一份 HTML 源码；模板库和变量绑定最终都会编译到这里。
         </div>
         <div class="html-editor-dialog__footer-actions">
-          <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" @click="handleSave">保存</el-button>
+          <Button variant="outline" @click="handleCancel">取消</Button>
+          <Button @click="handleSave">保存</Button>
         </div>
       </div>
-    </template>
-  </el-dialog>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -206,6 +209,14 @@ import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from "@co
 import { indentUnit } from "@codemirror/language";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { oneDark } from "@codemirror/theme-one-dark";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 const model = defineModel<string>({ default: "" });
 
@@ -676,7 +687,8 @@ function clearContent() {
 
 watch(dialogVisible, (visible) => {
   if (visible) {
-    refreshEditor();
+    // 程序化打开时 Dialog 不会 emit update:open，必须在这里挂载编辑器
+    handleDialogOpen();
   }
 });
 
@@ -745,8 +757,8 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .html-editor-dialog__toolbar,
 :global(.dark) .html-editor-dialog__toolbar {
-  background: #1e1e22;
-  border-color: #27272a;
+  background: var(--1s-elevated-background);
+  border-color: var(--1s-border-color);
 }
 
 .html-editor-dialog__hint {
@@ -789,8 +801,8 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .html-editor-dialog__editor-shell,
 :global(.dark) .html-editor-dialog__editor-shell {
-  border-color: #27272a;
-  background: #18181b;
+  border-color: var(--1s-border-color);
+  background: var(--1s-surface-background);
 }
 
 .html-editor-dialog__editor {
@@ -817,8 +829,8 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .html-editor-dialog__sidebar,
 :global(.dark) .html-editor-dialog__sidebar {
-  background: #18181b;
-  border-color: #27272a;
+  background: var(--1s-panel-background);
+  border-color: var(--1s-border-color);
 }
 
 .html-editor-dialog__sidebar-header {
@@ -838,8 +850,8 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .html-editor-dialog__sidebar-header,
 :global(.dark) .html-editor-dialog__sidebar-header {
-  background: #1e1e22;
-  border-bottom-color: #27272a;
+  background: var(--1s-elevated-background);
+  border-bottom-color: var(--1s-border-color);
 }
 
 .html-editor-dialog__sidebar-content {
@@ -866,8 +878,8 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .html-editor-dialog__section-header,
 :global(.dark) .html-editor-dialog__section-header {
-  background: #1e1e22;
-  border-color: #27272a;
+  background: var(--1s-elevated-background);
+  border-color: var(--1s-border-color);
 }
 
 .html-editor-dialog__variable-section {
@@ -897,9 +909,9 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .html-editor-dialog__variable-section .html-editor-dialog__variable-section-name .badge,
 :global(.dark) .html-editor-dialog__variable-section .html-editor-dialog__variable-section-name .badge {
-  background: #27272a;
-  border-color: #3f3f46;
-  color: #a1a1aa;
+  background: var(--1s-elevated-background);
+  border-color: var(--1s-border-color);
+  color: var(--1s-text-color-secondary);
 }
 
 .compact-list {
@@ -939,11 +951,11 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .html-editor-dialog__variable-row,
 :global(.dark) .html-editor-dialog__variable-row {
-  background: #1e1e22;
-  border-color: #27272a;
+  background: var(--1s-surface-background);
+  border-color: var(--1s-border-color);
 
   &:hover {
-    border-color: #fafafa;
+    border-color: var(--1s-accent-color);
   }
 }
 
@@ -1000,9 +1012,9 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .clickable-token-tag,
 :global(.dark) .clickable-token-tag {
-  background: #27272a;
-  border-color: #3f3f46;
-  color: #fafafa;
+  background: var(--1s-elevated-background);
+  border-color: var(--1s-border-color);
+  color: var(--1s-text-color);
 
   &:hover {
     color: #ffffff;
@@ -1022,8 +1034,8 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .html-editor-dialog__variable-empty,
 :global(.dark) .html-editor-dialog__variable-empty {
-  background: #1e1e22;
-  color: #a1a1aa;
+  background: var(--1s-elevated-background);
+  color: var(--1s-text-color-secondary);
 }
 
 .component-reference-list {
@@ -1049,8 +1061,8 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .doc-section,
 :global(.dark) .doc-section {
-  background: #1e1e22;
-  border-color: #27272a;
+  background: var(--1s-surface-background);
+  border-color: var(--1s-border-color);
 }
 
 .component-reference-item {
@@ -1077,9 +1089,9 @@ onBeforeUnmount(() => {
   .component-ref-token {
     font-family: monospace;
     font-size: 10px;
-    color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: var(--1s-accent-color);
+    background: var(--1s-hover-background);
+    border: 1px solid color-mix(in srgb, var(--1s-accent-color) 25%, transparent);
     padding: 1px 4px;
     border-radius: 3px;
     flex-shrink: 0;
@@ -1088,7 +1100,7 @@ onBeforeUnmount(() => {
 
 :global(html.dark) .component-reference-item:hover,
 :global(.dark) .component-reference-item:hover {
-  background: #27272a;
+  background: var(--1s-hover-background);
 }
 
 .html-editor-dialog__footer {
@@ -1109,23 +1121,15 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
-/* Fullscreen Element Plus Modal Theme Injections */
-:deep(.html-editor-dialog.el-dialog.is-fullscreen) {
+/* Fullscreen Dialog Theme Injections */
+:deep(.html-editor-dialog) {
   display: flex;
   flex-direction: column;
   height: 100vh;
   background: var(--1s-shell-background, #f4f4f5);
 }
 
-:deep(.html-editor-dialog .el-dialog) {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-height: 100vh;
-}
-
-:deep(.html-editor-dialog .el-dialog__header) {
+:deep(.html-editor-dialog .html-editor-dialog__header) {
   flex-shrink: 0;
   margin: 0;
   padding: 12px 20px;
@@ -1133,7 +1137,7 @@ onBeforeUnmount(() => {
   background: var(--1s-surface-background, #ffffff);
 }
 
-:deep(.html-editor-dialog .el-dialog__body) {
+:deep(.html-editor-dialog .html-editor-dialog__body) {
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
@@ -1142,7 +1146,7 @@ onBeforeUnmount(() => {
   height: calc(100vh - 100px);
 }
 
-:deep(.html-editor-dialog .el-dialog__footer) {
+:deep(.html-editor-dialog .html-editor-dialog__footer) {
   position: sticky;
   bottom: 0;
   z-index: 2;
@@ -1152,15 +1156,15 @@ onBeforeUnmount(() => {
   padding: 8px 20px 12px;
 }
 
-:global(html.dark) .html-editor-dialog.el-dialog.is-fullscreen,
-:global(.dark) .html-editor-dialog.el-dialog.is-fullscreen {
+:global(html.dark) .html-editor-dialog,
+:global(.dark) .html-editor-dialog {
   background: var(--1s-shell-background) !important;
 }
 
-:global(html.dark) .html-editor-dialog .el-dialog__header,
-:global(.dark) .html-editor-dialog .el-dialog__header,
-:global(html.dark) .html-editor-dialog .el-dialog__footer,
-:global(.dark) .html-editor-dialog .el-dialog__footer {
+:global(html.dark) .html-editor-dialog .html-editor-dialog__header,
+:global(.dark) .html-editor-dialog .html-editor-dialog__header,
+:global(html.dark) .html-editor-dialog .html-editor-dialog__footer,
+:global(.dark) .html-editor-dialog .html-editor-dialog__footer {
   background: var(--1s-surface-background) !important;
   border-color: var(--1s-border-color) !important;
 }

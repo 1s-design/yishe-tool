@@ -60,7 +60,7 @@ onMounted(() => {
   cursor: pointer;
   column-gap: 5px;
   &:hover{
-    background:#f6f6f6;
+    background: var(--1s-control-surface-muted);
   }
 }
 

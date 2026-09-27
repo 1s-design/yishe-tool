@@ -11,7 +11,7 @@
 <template>
   <div class="designiy-header-menu-dropdown">
     <icon-menu
-      style="width: 16px; height: 16px; color: #555; cursor: pointer"
+      style="width: 16px; height: 16px; color: var(--1s-text-color-secondary); cursor: pointer"
       @click.stop="toggle"
     ></icon-menu>
     <div v-if="showHeaderMenuDropdown" class="designiy-header-menu-dropdown-content">
@@ -46,11 +46,11 @@ onMounted(() => {
 .designiy-header-menu-dropdown {
   width: 30px;
   height: 30px;
-  background: #f1f1f1;
+  background: var(--1s-control-surface-muted);
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #000;
+  color: var(--1s-text-color);
   border-radius: 5px;
   font-size: 16px;
   position: relative;

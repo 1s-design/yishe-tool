@@ -6,8 +6,9 @@
     <template #name> {{ label }} </template>
     <template #content>
       <div class="font-selector-wrapper">
-        <el-button
-          size="small"
+        <Button
+          size="sm"
+          variant="outline"
           @click="openFontDialog"
           class="font-select-button"
         >
@@ -16,172 +17,192 @@
             <span class="font-display-name__family">{{ getFontFamilyId(model.id) }}</span>
           </span>
           <span class="font-display-name font-display-name--placeholder" v-else>请选择字体</span>
-        </el-button>
-        <!-- <el-button size="small" @click="openFontModal"> 字体库 </el-button> -->
-        <el-button
+        </Button>
+        <!-- <Button size="sm" @click="openFontModal"> 字体库 </Button> -->
+        <Button
           v-if="model"
-          size="small"
-          link
-          type="danger"
+          size="sm"
+          variant="link"
+          class="text-destructive hover:text-destructive"
           @click="clearFont"
         >
           清除
-        </el-button>
+        </Button>
       </div>
       
-      <!-- 字体选择抽屉 -->
-      <el-drawer
-        v-model="dialogVisible"
-        title="选择字体"
-        :size="1200"
-        :modal="true"
-        :with-header="true"
-        :append-to-body="true"
-        :wrapper-closable="true"
-        direction="rtl"
-        @open="handleDialogOpened"
-        @close="handleDialogClosed"
-      >
-        <div class="font-drawer-content">
-          <!-- 当前选中字体预览 -->
-          <div v-if="model" class="font-current-selected">
-            <div class="font-current-selected__label">当前选中</div>
-            <div class="font-current-selected__card">
-              <div class="font-current-selected__thumb" v-if="model.thumbnail">
-                <desimage :src="model.thumbnail" class="font-thumbnail-img"></desimage>
-              </div>
-              <div class="font-current-selected__info">
-                <div class="font-current-selected__name">{{ model.name }}</div>
-                <div class="font-current-selected__desc" v-if="model.description">{{ model.description }}</div>
-                <div class="font-current-selected__family">ID: {{ model.id }}</div>
-              </div>
+      <!-- 字体选择弹窗（全屏） -->
+      <Dialog v-model:open="dialogVisible">
+        <DialogContent
+          class="font-picker-dialog max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col"
+          @interact-outside="e => e.preventDefault()"
+          @pointer-down-outside="e => e.preventDefault()"
+        >
+          <!-- 顶部：标题 + 搜索 + 上传 -->
+          <DialogHeader class="shrink-0 px-5 py-3 border-b border-border flex flex-row items-center gap-3 space-y-0">
+            <DialogTitle class="text-sm font-semibold shrink-0">选择字体</DialogTitle>
+            <div class="relative flex-1 min-w-0 max-w-[420px]">
+              <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                v-model="searchKeyword"
+                placeholder="搜索字体名称或描述"
+                class="pl-8 h-7 text-xs"
+                @input="handleSearchInput"
+              />
+              <button
+                v-if="searchKeyword"
+                type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                @click="handleSearchClear"
+              >
+                <X class="w-3.5 h-3.5" />
+              </button>
             </div>
+            <div class="flex-1"></div>
+            <Button size="sm" variant="outline" @click="emitUpload">
+              <Download class="w-3.5 h-3.5 mr-1" />
+              上传字体
+            </Button>
+          </DialogHeader>
+
+          <!-- 当前选中条 -->
+          <div
+            v-if="pendingFont || model"
+            class="shrink-0 px-5 py-2.5 border-b border-border bg-muted/40 flex items-center gap-3"
+          >
+            <div class="text-[11px] text-muted-foreground shrink-0">当前选中</div>
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+              <div class="w-10 h-10 rounded-md overflow-hidden border border-border bg-background shrink-0">
+                <desimage
+                  v-if="(pendingFont || model)?.thumbnail"
+                  :src="(pendingFont || model)!.thumbnail"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div class="min-w-0">
+                <div class="text-xs font-medium truncate">{{ (pendingFont || model)?.name }}</div>
+                <div class="text-[11px] text-muted-foreground truncate">
+                  {{ getFontFamilyId((pendingFont || model)!.id) }}
+                </div>
+              </div>
+              <Badge v-if="isFontLoaded((pendingFont || model)!.id)" variant="success" class="shrink-0">已加载</Badge>
+            </div>
+            <Button size="sm" @click="confirmFont">使用此字体</Button>
           </div>
 
-          <!-- 搜索框 -->
-          <div class="font-search-wrapper">
-            <el-input
-              v-model="searchKeyword"
-              placeholder="搜索字体名称或描述"
-              clearable
-              @input="handleSearchInput"
-              @clear="handleSearchClear"
-            >
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-input>
-            <el-button
-              type="primary"
-              size="small"
-              plain
-              round
-              @click="emitUpload"
-              style="margin-left: 10px;"
-            >
-              快速上传
-            </el-button>
-          </div>
-
-          <!-- 字体列表 -->
-          <div ref="fontListWrapperRef" class="font-list-wrapper" v-loading="loading">
-            <div v-if="!loading && displayList.length === 0" class="font-empty">
+          <!-- 字体网格 -->
+          <div ref="fontListWrapperRef" class="flex-1 min-h-0 overflow-y-auto p-5" v-loading="loading">
+            <div v-if="!loading && displayList.length === 0" class="h-full flex items-center justify-center">
               <s1-empty>
                 <template #description>
-                  <p>无相关字体，尝试使用关键字或相关描述查找</p>
+                  <p class="text-xs text-muted-foreground">无相关字体，换个关键字试试</p>
                 </template>
               </s1-empty>
             </div>
-            
-            <div v-else class="font-list-grid">
+
+            <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3">
               <div
                 v-for="item in displayList"
                 :key="item.id"
                 :id="'font-item-' + item.id"
-                class="font-item"
-                :class="{ 
-                  'font-item-selected': model?.id === item.id,
-                  'font-item-loaded': isFontLoaded(item.id)
+                class="font-card group"
+                :class="{
+                  'font-card--selected': pendingFont?.id === item.id,
                 }"
                 @click="selectFont(item)"
+                @dblclick="applyFont(item)"
               >
-                <div class="font-item-thumbnail" v-if="item.thumbnail">
-                  <desimage :src="item.thumbnail" class="font-thumbnail-img"></desimage>
-                </div>
-                <div class="font-item-info">
-                  <div class="font-item-name">{{ item.name }}</div>
-                  <div class="font-item-desc" v-if="item.description">{{ item.description }}</div>
-                  <div class="font-item-family" @click.stop="copyFontFamily(item.id)">
-                    <span class="font-family-label">FontFamily:</span>
-                    <span class="font-family-value">{{ getFontFamilyId(item.id) }}</span>
-                    <el-icon class="font-family-copy-icon"><DocumentCopy /></el-icon>
+                <div class="font-card__thumb">
+                  <desimage
+                    v-if="item.thumbnail"
+                    :src="item.thumbnail"
+                    class="w-full h-full object-cover"
+                  />
+                  <div v-else class="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                    {{ item.name }}
+                  </div>
+                  <div class="font-card__check" v-if="pendingFont?.id === item.id">
+                    <Check class="w-3.5 h-3.5" />
+                  </div>
+                  <div class="font-card__loaded" v-if="isFontLoaded(item.id)">
+                    <Check class="w-2.5 h-2.5" />
+                    <span class="text-[10px]">已加载</span>
                   </div>
                 </div>
-                <div class="font-item-actions" @click.stop>
-                  <el-button
-                    size="small"
-                    plain
-                    @click="openFontDetail(item)"
-                    class="font-detail-btn"
+
+                <div class="font-card__body">
+                  <div class="text-xs font-medium truncate" :title="item.name">{{ item.name }}</div>
+                  <div class="text-[11px] text-muted-foreground truncate" :title="item.description">
+                    {{ item.description || '—' }}
+                  </div>
+                  <div
+                    class="font-card__family"
+                    :title="'点击复制 ' + getFontFamilyId(item.id)"
+                    @click.stop="copyFontFamily(item.id)"
                   >
-                    <el-icon><View /></el-icon>
-                    <span>详情</span>
-                  </el-button>
-                  <el-button
+                    <span class="truncate">{{ getFontFamilyId(item.id) }}</span>
+                    <Copy class="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+
+                <div class="font-card__actions" @click.stop>
+                  <Button size="xs" variant="ghost" @click="openFontDetail(item)" title="详情">
+                    <View class="w-3 h-3" />
+                  </Button>
+                  <Button
                     v-if="!isFontLoaded(item.id)"
-                    size="small"
-                    type="primary"
-                    plain
+                    size="xs"
+                    variant="ghost"
                     @click="loadFontToCanvas(item)"
-                    class="font-load-btn"
+                    title="加载到画布"
                   >
-                    <el-icon><Download /></el-icon>
-                    <span>加载到画布</span>
-                  </el-button>
-                  <el-button
-                    v-else
-                    size="small"
-                    type="success"
-                    plain
-                    disabled
-                    class="font-loaded-btn"
-                  >
-                    <el-icon><Check /></el-icon>
-                    <span>已加载</span>
-                  </el-button>
-                </div>
-                <div class="font-item-check" v-if="model?.id === item.id">
-                  <el-icon><Check /></el-icon>
-                </div>
-                <div class="font-item-loaded-badge" v-if="isFontLoaded(item.id) && model?.id !== item.id">
-                  <el-icon><Check /></el-icon>
+                    <Download class="w-3 h-3" />
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 分页 -->
-          <div class="font-pagination-wrapper">
-            <el-pagination
-              v-model:current-page="currentPage"
-              v-model:page-size="pageSize"
-              :page-sizes="[12, 24, 48, 96]"
-              :total="total"
-              layout="total, sizes, prev, pager, next"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-            />
+          <!-- 底部：分页 + 确认 -->
+          <div class="shrink-0 px-5 py-2.5 border-t border-border flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <Select :model-value="String(pageSize)" @update:model-value="v => handleSizeChange(Number(v))">
+                <SelectTrigger class="h-7 text-[11px] w-[92px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="s in [12, 24, 48, 96]" :key="s" :value="String(s)">
+                    {{ s }} 条/页
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" :disabled="currentPage <= 1" @click="handleCurrentChange(currentPage - 1)">
+                上一页
+              </Button>
+              <span class="text-xs text-muted-foreground tabular-nums">
+                {{ currentPage }} / {{ Math.max(1, Math.ceil(total / pageSize)) }}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="currentPage >= Math.max(1, Math.ceil(total / pageSize))"
+                @click="handleCurrentChange(currentPage + 1)"
+              >
+                下一页
+              </Button>
+            </div>
+            <div class="flex items-center gap-2">
+              <Button variant="outline" size="sm" @click="dialogVisible = false">取消</Button>
+              <Button size="sm" :disabled="!pendingFont" @click="confirmFont">使用此字体</Button>
+            </div>
           </div>
-        </div>
-      </el-drawer>
+        </DialogContent>
+      </Dialog>
 
-      <el-dialog
-        v-model="detailVisible"
-        :title="detailFont?.name || '字体详情'"
-        width="560px"
-        class="font-detail-dialog"
-        :append-to-body="true"
-      >
+      <Dialog :modal="false" v-model:open="detailVisible">
+        <DialogContent class="max-w-[560px] w-[560px] font-detail-dialog">
+          <DialogHeader>
+            <DialogTitle>{{ detailFont?.name || '字体详情' }}</DialogTitle>
+          </DialogHeader>
         <div v-if="detailFont" class="font-detail-content">
           <div class="font-detail-preview">
             <desimage
@@ -197,12 +218,11 @@
           <div class="font-detail-main">
             <div class="font-detail-header">
               <div class="font-detail-title">{{ detailFont.name }}</div>
-              <el-tag
-                size="small"
-                :type="isFontLoaded(detailFont.id) ? 'success' : 'info'"
+              <Badge
+                :variant="isFontLoaded(detailFont.id) ? 'success' : 'secondary'"
               >
                 {{ isFontLoaded(detailFont.id) ? '已加载' : '未加载' }}
-              </el-tag>
+              </Badge>
             </div>
 
             <div class="font-detail-desc">
@@ -218,7 +238,7 @@
                   @click="copyFontFamily(detailFont.id)"
                 >
                   <span>{{ getFontFamilyId(detailFont.id) }}</span>
-                  <el-icon><DocumentCopy /></el-icon>
+                  <Copy class="w-3 h-3" />
                 </button>
               </div>
               <div class="font-detail-row">
@@ -234,7 +254,7 @@
                   @click="copyFontUrl(detailFont.url)"
                 >
                   <span>{{ detailFont.url }}</span>
-                  <el-icon><DocumentCopy /></el-icon>
+                  <Copy class="w-3 h-3" />
                 </button>
                 <span v-else class="font-detail-value font-detail-empty-value">暂无资源地址</span>
               </div>
@@ -242,26 +262,25 @@
           </div>
         </div>
 
-        <template #footer>
           <div class="font-detail-footer">
-            <el-button @click="detailVisible = false">关闭</el-button>
-            <el-button
+            <Button variant="outline" @click="detailVisible = false">关闭</Button>
+            <Button
+              variant="outline"
               v-if="detailFont"
               :disabled="!detailFont.url || isFontLoaded(detailFont.id)"
               @click="loadFontToCanvas(detailFont)"
             >
               {{ detailFont.url ? (isFontLoaded(detailFont.id) ? '已加载' : '加载到画布') : '无资源地址' }}
-            </el-button>
-            <el-button
+            </Button>
+            <Button
               v-if="detailFont"
-              type="primary"
               @click="applyFontFromDetail"
             >
               应用字体
-            </el-button>
+            </Button>
           </div>
-        </template>
-      </el-dialog>
+        </DialogContent>
+      </Dialog>
     </template>
   </operate-form-item>
 </template>
@@ -273,9 +292,19 @@ import desimage from "@/components/image.vue";
 import { fetchFontFaceWithMessage } from "./index.ts";
 import { showUpload, showFontModal, cacheFontFamily } from "@/components/design/store";
 import { useDebounceFn } from "@vueuse/core";
-import { Loading, Search, Check, DocumentCopy, Download, View } from "@element-plus/icons-vue";
+import { Search, Check, Copy, Download, View, X } from "lucide-vue-next";
 import { getFontList } from "@/api";
 import { message } from '@/common/message';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
 interface FontItem {
   id: string;
@@ -300,6 +329,7 @@ const pageSize = ref(12);
 const total = ref(0);
 const searchKeyword = ref('');
 const detailVisible = ref(false);
+const pendingFont = ref<FontItem | null>(null);
 const detailFont = ref<FontItem | null>(null);
 const fontListWrapperRef = ref<HTMLElement | null>(null);
 
@@ -324,6 +354,7 @@ function openFontModal() {
 }
 
 function openFontDialog() {
+  pendingFont.value = model.value;
   dialogVisible.value = true;
 }
 
@@ -332,8 +363,19 @@ function clearFont() {
 }
 
 function selectFont(item: FontItem) {
+  // 点选只高亮，由「使用此字体」或双击确认，便于浏览比对
+  pendingFont.value = item;
+}
+
+function applyFont(item: FontItem) {
   model.value = item;
+  pendingFont.value = item;
   dialogVisible.value = false;
+}
+
+function confirmFont() {
+  if (!pendingFont.value) return;
+  applyFont(pendingFont.value);
 }
 
 function openFontDetail(item?: FontItem | null) {
@@ -348,7 +390,7 @@ function applyFontFromDetail() {
   if (!detailFont.value) {
     return;
   }
-  selectFont(detailFont.value);
+  applyFont(detailFont.value);
   detailVisible.value = false;
 }
 
@@ -413,6 +455,15 @@ async function copyText(value: string, successText: string) {
     document.body.removeChild(textarea);
   }
 }
+
+watch(dialogVisible, (visible) => {
+  // 程序化打开时 Dialog 不会 emit update:open，必须在这里初始化
+  if (visible) {
+    handleDialogOpened();
+  } else {
+    handleDialogClosed();
+  }
+});
 
 async function handleDialogOpened() {
   if (list.value.length === 0) {
@@ -542,7 +593,6 @@ watch(
   margin-right: 4px;
 }
 
-.font-select-button :deep(.el-button__text),
 .font-select-button :deep(span) {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -568,319 +618,131 @@ watch(
   height: 24px;
   padding: 0 4px;
   border: 0;
-  color: #606266;
+  color: var(--1s-text-color-secondary);
   font-size: 12px;
   background: transparent;
 }
 
 .font-detail-text-button:hover,
 .font-detail-text-button:focus {
-  color: #409eff;
-  background: #ecf5ff;
+  color: var(--1s-accent-color);
+  background: var(--1s-hover-background);
 }
 
-.font-drawer-content {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  overflow: hidden;
+
+/* ===== 全屏字体选择弹窗 ===== */
+.font-picker-dialog {
+  background: var(--1s-dialog-bg, var(--el-bg-color-overlay, #fff));
+  color: var(--1s-dialog-fg, inherit);
 }
 
-.font-current-selected {
-  padding: 12px 16px;
-  background: #f0f9ff;
-  border-bottom: 1px solid #e4e7ed;
-  flex-shrink: 0;
-  max-height: 120px;
-  overflow: hidden;
-}
-
-.font-current-selected__label {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.font-current-selected__card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.font-current-selected__thumb {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: #fff;
-  border: 1px solid #e4e7ed;
-}
-
-.font-current-selected__thumb .font-thumbnail-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.font-current-selected__info {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.font-current-selected__name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.font-current-selected__desc {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-}
-
-.font-current-selected__family {
-  font-size: 11px;
-  color: #b0b4bc;
-  margin-top: 2px;
-  font-family: monospace;
-}
-
-.font-search-wrapper {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  margin-bottom: 0;
-  flex-shrink: 0;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.font-search-wrapper .el-input {
-  flex: 1;
-  min-width: min(320px, 100%);
-}
-
-.font-list-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 12px;
-  min-height: 0;
-}
-
-.font-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 400px;
-}
-
-.font-list-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-  padding: 4px;
-}
-
-.font-item {
+.font-card {
   position: relative;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: #fff;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--1s-border-color, var(--el-border-color-lighter));
+  border-radius: 8px;
   overflow: hidden;
-  max-height: 260px;
-}
-
-.font-item:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.1);
-  transform: translateY(-2px);
-}
-
-.font-item-selected {
-  border-color: #409eff;
-  background: #ecf5ff;
-}
-
-.font-item-loaded {
-  border-left: 3px solid #67c23a;
-}
-
-.font-item-thumbnail {
-  width: 100%;
-  height: 80px;
-  margin-bottom: 8px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: #f5f7fa;
-}
-
-.font-thumbnail-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.font-item-info {
-  flex: 1;
-  min-height: 40px;
-  overflow: hidden;
-}
-
-.font-item-name {
-  font-weight: 500;
-  color: #303133;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-}
-
-.font-item-desc {
-  font-size: 12px;
-  color: #909399;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.4;
-  margin-bottom: 6px;
-}
-
-.font-item-family {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: #f5f7fa;
-  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 4px;
-  font-size: 11px;
+  background: var(--1s-surface-background, transparent);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.font-item-family:hover {
-  background: #e4e7ed;
+.font-card:hover {
+  border-color: var(--1s-accent-color);
+  box-shadow: var(--1s-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
 }
 
-.font-family-label {
-  color: #606266;
-  font-weight: 500;
+.font-card--selected {
+  border-color: var(--1s-accent-color);
+  box-shadow: 0 0 0 1px var(--1s-accent-color);
 }
 
-.font-family-value {
-  color: #409eff;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-  flex: 1;
+.font-card__thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--1s-control-surface-muted, var(--el-fill-color-light));
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.font-family-copy-icon {
-  color: #909399;
-  font-size: 14px;
-  flex-shrink: 0;
-  transition: color 0.2s ease;
-}
-
-.font-item-family:hover .font-family-copy-icon {
-  color: #409eff;
-}
-
-.font-item-check {
+.font-card__check {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 6px;
+  right: 6px;
   width: 20px;
   height: 20px;
-  background: #409eff;
-  color: #fff;
   border-radius: 50%;
+  background: var(--1s-accent-color);
+  color: var(--1s-surface-background, #fff);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  z-index: 2;
 }
 
-.font-item-actions {
-  margin-top: 8px;
+.font-card__loaded {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  background: color-mix(in srgb, #16a34a 18%, transparent);
+  color: #16a34a;
+}
+
+.dark .font-card__loaded {
+  background: color-mix(in srgb, #22c55e 22%, transparent);
+  color: #4ade80;
+}
+
+.font-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 10px;
+  min-width: 0;
+}
+
+.font-card__family {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: var(--1s-text-color-tertiary, var(--el-text-color-secondary));
+  cursor: copy;
+  min-width: 0;
+}
+
+.font-card__family:hover {
+  color: var(--1s-accent-color);
+}
+
+.font-card__actions {
+  position: absolute;
+  top: 6px;
+  left: 6px;
   display: flex;
   gap: 4px;
-  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
-.font-item-actions :deep(.el-button + .el-button) {
-  margin-left: 0;
+.font-card:hover .font-card__actions {
+  opacity: 1;
 }
 
-.font-detail-btn {
-  flex: 0 0 auto;
-  font-size: 12px;
-  padding: 6px 8px;
+.font-card__actions :deep(.el-button),
+.font-card__actions button {
+  background: color-mix(in srgb, var(--1s-surface-background, #fff) 88%, transparent);
+  backdrop-filter: blur(4px);
 }
 
-.font-load-btn,
-.font-loaded-btn {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 12px;
-  padding: 6px 8px;
-}
-
-.font-load-btn .el-icon,
-.font-loaded-btn .el-icon {
-  margin-right: 4px;
-}
-
-.font-item-loaded-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 20px;
-  height: 20px;
-  background: #67c23a;
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  z-index: 2;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.font-pagination-wrapper {
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px;
-  border-top: 1px solid #e4e7ed;
-  flex-shrink: 0;
-  width: 100%;
-  background: #fff;
-}
 
 .font-detail-content {
   display: flex;
@@ -892,10 +754,10 @@ watch(
 .font-detail-preview {
   width: 100%;
   height: 180px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--1s-border-color);
   border-radius: 8px;
   overflow: hidden;
-  background: #f5f7fa;
+  background: var(--1s-control-surface-muted);
 }
 
 .font-detail-thumbnail {
@@ -910,7 +772,7 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #909399;
+  color: var(--1s-text-color-tertiary);
   font-size: 13px;
 }
 
@@ -934,13 +796,13 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #303133;
+  color: var(--1s-text-color);
   font-size: 16px;
   font-weight: 600;
 }
 
 .font-detail-desc {
-  color: #606266;
+  color: var(--1s-text-color-secondary);
   font-size: 13px;
   line-height: 1.6;
   word-break: break-word;
@@ -953,7 +815,7 @@ watch(
   gap: 8px;
   padding: 12px;
   border-radius: 8px;
-  background: #f7f8fa;
+  background: var(--1s-control-surface-muted);
 }
 
 .font-detail-row {
@@ -965,13 +827,13 @@ watch(
 }
 
 .font-detail-label {
-  color: #909399;
+  color: var(--1s-text-color-tertiary);
   font-size: 12px;
 }
 
 .font-detail-value {
   min-width: 0;
-  color: #303133;
+  color: var(--1s-text-color);
   font-size: 12px;
   line-height: 1.5;
   overflow: hidden;
@@ -988,14 +850,14 @@ watch(
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: #409eff;
+  color: var(--1s-accent-color);
   cursor: pointer;
   text-align: left;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
 }
 
 .font-detail-copyable:hover {
-  background: #ecf5ff;
+  background: var(--1s-hover-background);
 }
 
 .font-detail-copyable span {
@@ -1007,7 +869,7 @@ watch(
 }
 
 .font-detail-empty-value {
-  color: #c0c4cc;
+  color: var(--1s-text-color-tertiary);
 }
 
 .font-detail-footer {
@@ -1018,15 +880,8 @@ watch(
   flex-wrap: wrap;
 }
 
-.font-detail-footer :deep(.el-button + .el-button) {
-  margin-left: 0;
-}
-
 @media (max-width: 1080px) {
-  .font-search-wrapper .el-input {
-    min-width: 100%;
   }
-}
 
 @media (max-width: 640px) {
   .font-detail-row {

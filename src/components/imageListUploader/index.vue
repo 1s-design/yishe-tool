@@ -1,31 +1,64 @@
 <template>
   <div class="image-list-uploader">
-    <el-upload
-      v-model:file-list="fileList"
-      :auto-upload="false"
-      accept="image/*"
-      list-type="picture-card"
-      :on-preview="handlePictureCardPreview"
-      :on-remove="handleRemove"
-      multiple
-      :on-change="handleChange"
-    >
-      <el-icon><Plus /></el-icon>
-    </el-upload>
+    <div class="upload-list">
+      <div
+        v-for="(item, index) in fileList"
+        :key="index"
+        class="upload-card"
+        @click="handlePictureCardPreview(item)"
+      >
+        <img :src="item.url" class="upload-card-image" alt="" />
+        <div class="upload-card-actions">
+          <ZoomIn
+            class="h-5 w-5 cursor-pointer text-white"
+            @click.stop="handlePictureCardPreview(item)"
+          />
+          <Trash2
+            class="h-5 w-5 cursor-pointer text-white"
+            @click.stop="fileList.splice(index, 1); handleRemove(item, fileList)"
+          />
+        </div>
+      </div>
+      <label class="upload-card upload-card-add">
+        <Plus class="h-6 w-6 text-muted-foreground" />
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          class="hidden"
+          @change="
+            (e) => {
+              const input = e.target as HTMLInputElement;
+              Array.from(input.files || []).forEach((f) => {
+                const item = { name: f.name, raw: f, url: objectUrl(f) };
+                fileList.push(item);
+                handleChange(item);
+              });
+              input.value = '';
+            }
+          "
+        />
+      </label>
+    </div>
   </div>
 
-  <el-dialog v-model="dialogVisible">
-    <img
-      style="width: 100%; max-height: 480px; object-fit: contain"
-      :src="dialogImageUrl"
-      alt="Preview Image"
-    />
-  </el-dialog>
+  <Dialog v-model:open="dialogVisible">
+    <DialogContent class="max-w-3xl">
+      <img
+        class="w-full max-h-[480px] object-contain"
+        :src="dialogImageUrl"
+        alt="Preview Image"
+      />
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
+const objectUrl = (f: File) => URL.createObjectURL(f)
+
 import { ref, watch } from "vue";
-import { Plus } from "@element-plus/icons-vue";
+import { Plus, ZoomIn, Trash2 } from "lucide-vue-next";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Api from "@/api";
 import { message } from '@/common/message';
 
@@ -126,10 +159,49 @@ defineExpose({
 
 <style lang="less">
 .image-list-uploader {
-  .el-upload--picture-card,
-  .el-upload-list__item {
+  .upload-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .upload-card {
     width: 108px;
     height: 108px;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .upload-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .upload-card-actions {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .upload-card:hover .upload-card-actions {
+    opacity: 1;
+  }
+
+  .upload-card-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--1s-border-color, #dcdfe6);
   }
 }
 </style>

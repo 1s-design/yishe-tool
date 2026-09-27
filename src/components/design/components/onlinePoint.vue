@@ -10,18 +10,22 @@
 -->
 
 <template>
-  <el-tooltip :content="online ? '网络连接正常' : '已断线'">
-    <div
-      class="online-point"
-      :class="online ? 'online-point-online' : 'online-point-offonline'"
-    >
-      <div @animationend="animationend" :class="{ 'online-point-effect': effect }"></div>
-    </div>
-  </el-tooltip>
+  <Tooltip>
+    <TooltipTrigger as-child>
+      <div
+        class="online-point"
+        :class="online ? 'online-point-online' : 'online-point-offonline'"
+      >
+        <div @animationend="animationend" :class="{ 'online-point-effect': effect }"></div>
+      </div>
+    </TooltipTrigger>
+    <TooltipContent>{{ online ? '网络连接正常' : '已断线' }}</TooltipContent>
+  </Tooltip>
 </template>
 
 <script setup>
 import { ref, defineProps } from "vue";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const props = defineProps(["online"]);
 

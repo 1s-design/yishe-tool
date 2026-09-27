@@ -1,39 +1,47 @@
 <template>
-  <div class="tags-input">
-    <el-popover
-      :disabled="!autocompleteTags"
-      :width="autocompleteWidth + 'px'"
-      ref="popperRef"
-      trigger="click"
-      :placement="autocompletePlacement"
-      :hide-after="0"
-    >
-      <template #reference>
+  <div class="tags-input" ref="popperRef">
+    <Popover v-if="autocompleteTags" :open="undefined">
+      <PopoverTrigger as-child>
         <vue3-tags-input
           :tags="tags"
           :validate="customValidate"
           placeholder="自定义标签"
           @on-tags-changed="handleInput"
         />
-      </template>
-      <div class="tags-input-tags">
-        <a-alert
+      </PopoverTrigger>
+      <PopoverContent
+        :side="autocompletePlacement"
+        :style="{ width: autocompleteWidth + 'px' }"
+        class="tags-input-tags"
+      >
+        <div
           v-if="showAlert"
+          class="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground"
           style="width: 100%"
-          message="点击变标签可以自动添加到输入框中"
-          type="info"
-          close-text="不再提示"
-          @close="showAlert = false"
-        />
-        <a-tag
-          :bordered="false"
+        >
+          点击变标签可以自动添加到输入框中
+          <span
+            class="ml-2 cursor-pointer text-primary underline"
+            @click="showAlert = false"
+          >不再提示</span>
+        </div>
+        <Badge
+          variant="secondary"
+          class="cursor-pointer"
           v-for="(tag, index) in autocompleteTags"
           @click="handleSelect(tag)"
         >
           {{ tag.text }}
-        </a-tag>
-      </div>
-    </el-popover>
+        </Badge>
+      </PopoverContent>
+    </Popover>
+    <vue3-tags-input
+      v-else
+      :tags="tags"
+      :validate="customValidate"
+      placeholder="自定义标签"
+      @on-tags-changed="handleInput"
+    />
   </div>
 </template>
 
@@ -41,6 +49,8 @@
 import { defineComponent, ref } from "vue";
 import Vue3TagsInput from "./src/vue3-tags-input.vue";
 import { useLocalStorage } from "@vueuse/core";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 const props = defineProps({
   // 内置的提示框
@@ -120,7 +130,7 @@ function customValidate(value) {
 .v3ti {
   min-height: 0 !important;
   background-color: #fff !important;
-  border: 1px solid #dcdfe6 !important;
+  border: 1px solid var(--1s-border-color) !important;
 }
 
 .v3ti {
@@ -137,13 +147,13 @@ function customValidate(value) {
 
 .v3ti-tag {
   font-size: 1rem;
-  background: var(--el-color-primary) !important;
+  background: var(--1s-accent-color) !important;
   height: 20px !important;
   margin: 5px 3px;
 }
 
 .v3ti--focus {
-  border: 1px solid var(--el-color-primary) !important;
+  border: 1px solid var(--1s-accent-color) !important;
   box-shadow: none !important;
 }
 

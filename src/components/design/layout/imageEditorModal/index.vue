@@ -4,15 +4,13 @@
       <div class="image-editor-modal-container">
         <div class="image-editor-modal-body">
           <div class="image-editor-close-btn-wrapper">
-            <el-button 
-              text 
-              type="primary" 
+            <Button 
+              variant="ghost"
               @click="handleClose"
-              class="image-editor-close-btn"
-              circle
+              class="image-editor-close-btn rounded-full w-8 h-8 p-0"
             >
-              <el-icon><Close></Close></el-icon>
-            </el-button>
+              <Close class="w-4 h-4"></Close>
+            </Button>
           </div>
           <KeepAlive>
             <imageEditor v-if="isOpen"></imageEditor>
@@ -25,9 +23,10 @@
 
 <script setup>
 import { computed, onUnmounted } from 'vue'
-import { Close } from '@element-plus/icons-vue'
+import { X as Close } from 'lucide-vue-next'
 import { showImageEditorModal } from '../../store'
 import imageEditor from './imageEditor.vue'
+import { Button } from '@/components/ui/button'
 
 const isOpen = computed({
   get: () => showImageEditorModal.value,

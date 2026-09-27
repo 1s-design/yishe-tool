@@ -1,7 +1,13 @@
 <template>
-    <el-scrollbar v-bind="$attrs" ref="elScrollbarRef" @scroll="scroll" style="width:100%;height:100%;">
+    <div
+      v-bind="$attrs"
+      ref="elScrollbarRef"
+      class="overflow-auto"
+      style="width:100%;height:100%;"
+      @scroll="scroll({ scrollTop: ($event.target as HTMLElement).scrollTop, scrollLeft: ($event.target as HTMLElement).scrollLeft })"
+    >
         <slot></slot>
-    </el-scrollbar>
+    </div>
 </template>
     
 <script setup lang='ts'>
@@ -30,7 +36,13 @@ const elScrollbarRef = ref()
 
 onActivated(() => {
     if(props.id){
-        elScrollbarRef.value.setScrollTop(local.value.scrollTop)
+        // 兼容原 el-scrollbar 实例的 setScrollTop 与原生元素的 scrollTop
+        const el = elScrollbarRef.value
+        if (el?.setScrollTop) {
+            el.setScrollTop(local.value.scrollTop)
+        } else if (el) {
+            el.scrollTop = local.value.scrollTop
+        }
     }
 })
 

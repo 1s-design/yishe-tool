@@ -7,21 +7,19 @@
     @click="$emit('toggle-highlight')"
   >
     <!-- Visibility checkbox -->
-    <el-checkbox
-      :model-value="guide.visible"
-      @change="$emit('toggle-visibility')"
+    <Checkbox
+      :checked="guide.visible"
+      @update:checked="$emit('toggle-visibility')"
       @click.stop
-      size="small"
     />
 
     <!-- Color picker -->
-    <el-color-picker
-      :model-value="guide.color"
-      @change="(val: string) => $emit('color-change', val)"
+    <input
+      :value="guide.color"
+      type="color"
+      class="h-6 w-6 cursor-pointer rounded border border-input bg-transparent p-0"
       @click.stop
-      size="small"
-      :predefine="predefineColors"
-      show-alpha
+      @input="(e: Event) => $emit('color-change', (e.target as HTMLInputElement).value)"
     />
 
     <!-- Preset info -->
@@ -45,21 +43,21 @@
     <div style="flex: 1" />
 
     <!-- Remove button -->
-    <el-button
-      link
-      type="danger"
-      size="small"
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      class="text-destructive hover:text-destructive"
       @click.stop="$emit('remove')"
     >
-      <el-icon size="14">
-        <CircleCloseFilled />
-      </el-icon>
-    </el-button>
+      <XCircle class="w-3.5 h-3.5" />
+    </Button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { CircleCloseFilled } from '@element-plus/icons-vue'
+import { XCircle } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { highlightedPresetId } from '../store'
 import type { CropGuide, CropPreset } from '../types'
 
@@ -140,10 +138,5 @@ const predefineColors = [
 .crop-preset-item__badge--pixel {
   background: rgba(16, 185, 129, 0.12);
   color: #10b981;
-}
-
-.crop-preset-item :deep(.el-color-picker) {
-  --el-color-picker-width: 24px;
-  --el-color-picker-height: 24px;
 }
 </style>

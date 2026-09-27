@@ -2,27 +2,22 @@
   <div class="upload-container">
     <div class="content">
     <div v-if="uploadTabType == 'local'">
-      <el-upload
+      <FileUpload
         ref="uploadRef"
         style="padding: 0"
         :disabled="!loginStore.isLogin"
         v-model:file-list="fileList"
-        drag
-        :before-remove="beforeRemove"
-        :auto-upload="false"
         :multiple="false"
-        v-bind="$attrs"
-        :on-change="fileListChange"
         :limit="999"
-        :on-exceed="handleExceed"
         :accept="Utils.const.RecourceFileAcceptString"
+        @change="fileListChange"
+        @exceed="handleExceed"
+        v-bind="$attrs"
       >
         <div class="placeholder">
           <icon-file-upload></icon-file-upload>
           <div>点击或拖拽上传, jpg,png,svg,ttf,woff,psd ,glb</div> 
         </div>
-        <template #tip>
-        </template>
 
         <template #file="{ file, url }">
           <div class="file-bar">
@@ -40,38 +35,42 @@
                   class="file-preview-thumb"
                   fit="contain"
                 ></s1-img>
-                <el-icon v-else size="32px">
-                  <component :is="fileTypeIcons[getFileSuffix(file.name)] || Document"></component>
-                </el-icon>
+                <component
+                  v-else
+                  :is="fileTypeIcons[getFileSuffix(file.name)] || FileText"
+                  class="h-8 w-8"
+                ></component>
               </button>
 
               <div style="font-size: 12px">{{ file.name }}</div>
 
               <div style="flex: 1"></div>
               <div>{{ file.displaySize }}</div>
-              <el-button @click="removeFile(file)" type="danger" link style="height: 2em"
-                ><el-icon size="2rem"> <CircleCloseFilled /> </el-icon
-              ></el-button>
+              <Button
+                @click="removeFile(file)"
+                variant="link"
+                class="text-destructive"
+                style="height: 2em"
+              >
+                <XCircle class="h-5 w-5" />
+              </Button>
             </div>
 
-            <el-form
-              :inline-message="false"
-              :show-message="false"
-              label-width="100px"
-              label-position="left"
-            >
-              <el-form-item label="资源名称">
-                <el-input v-model="file.customName" placeholder="资源名称" />
-              </el-form-item>
-              <el-form-item label="文件描述">
-                <el-input
+            <div class="file-bar-form">
+              <div class="file-bar-form-item">
+                <Label class="file-bar-form-label">资源名称</Label>
+                <Input v-model="file.customName" placeholder="资源名称" />
+              </div>
+              <div class="file-bar-form-item">
+                <Label class="file-bar-form-label">文件描述</Label>
+                <Textarea
                   v-model="file.description"
                   placeholder="文件描述"
-                  type="textarea"
-                  :autosize="{ minRows: 2, maxRows: 5 }"
+                  :rows="2"
                 />
-              </el-form-item>
-              <el-form-item label="文件标签">
+              </div>
+              <div class="file-bar-form-item">
+                <Label class="file-bar-form-label">文件标签</Label>
                 <tags-input
                   v-model="file.tags"
                   :autocompleteTags="
@@ -81,27 +80,27 @@
                   "
                   :autocompleteWidth="460"
                 ></tags-input>
-              </el-form-item>
+              </div>
 
-              <el-form-item label="是否公开资源">
-                <a-switch
-                  v-model:checked="file.isPublic"
-                  checked-children="公开"
-                  un-checked-children="私密"
-                />
-              </el-form-item>
+              <div class="file-bar-form-item">
+                <Label class="file-bar-form-label">是否公开资源</Label>
+                <div class="flex items-center gap-2">
+                  <Switch v-model:checked="file.isPublic" />
+                  <span class="text-xs text-muted-foreground">{{ file.isPublic ? '公开' : '私密' }}</span>
+                </div>
+              </div>
 
-              <el-form-item
+              <div
                 v-if="Utils.type.isImageName(file.name)"
-                label="是否作为材质文件"
+                class="file-bar-form-item"
               >
-                <a-switch
-                  v-model:checked="file.isTexture"
-                  checked-children="是"
-                  un-checked-children="否"
-                />
-              </el-form-item>
-            </el-form>
+                <Label class="file-bar-form-label">是否作为材质文件</Label>
+                <div class="flex items-center gap-2">
+                  <Switch v-model:checked="file.isTexture" />
+                  <span class="text-xs text-muted-foreground">{{ file.isTexture ? '是' : '否' }}</span>
+                </div>
+              </div>
+            </div>
 
             <template v-if="Utils.type.isFontName(file.name)">
               <div class="flex items-center justify-center" style="padding: 20px">
@@ -115,10 +114,7 @@
                   {{ file.name }}
                 </div>
               </div>
-              <a-alert
-                message="该图片会作为字体预览图，并且可以手动调整内容"
-                type="info"
-              />
+              <div class="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">该图片会作为字体预览图，并且可以手动调整内容</div>
             </template>
 
             <template v-if="Utils.type.isModelName(file.name)">
@@ -132,7 +128,7 @@
             </template>
           </div>
         </template>
-      </el-upload>
+      </FileUpload>
     </div>
 
     <div v-if="uploadTabType == 'scan'" class="flex flex-col justify-center items-center">
@@ -142,104 +138,102 @@
     </div>
 
     <div class="footer">
-      <el-button link type="danger">
+      <Button variant="link" class="text-destructive">
         {{ loginStore.isLogin ? "" : "当前未登录，请登录后再上传" }}
-      </el-button>
+      </Button>
       <div style="flex: 1"></div>
       <template v-if="uploadTabType == 'local'">
-        <!-- <el-button round :icon="Link" @click="showLinkUploadModal = true">
+        <!-- <Button class="rounded-full" @click="showLinkUploadModal = true">
           链接上传
-        </el-button>
-        <el-button round @click="uploadTabType = 'scan'" :icon="Iphone">
+        </Button>
+        <Button class="rounded-full" @click="uploadTabType = 'scan'">
           手机扫码上传
-        </el-button> -->
-        <el-button
-          type="primary"
-          round
+        </Button> -->
+        <Button
+          class="rounded-full"
           @click="doUpload"
-          :loading="loading"
-          :icon="UploadFilled"
-          :disabled="fileList.length == 0"
+          :disabled="loading || fileList.length == 0"
         >
+          <UploadCloud class="h-4 w-4 mr-1" />
           {{ fileList.length ? `上传该文件` : "选择文件" }}
-        </el-button>
+        </Button>
       </template>
       <template v-if="uploadTabType == 'scan'">
-        <el-button round @click="uploadTabType = 'local'"> 返回本地上传 </el-button>
+        <Button class="rounded-full" @click="uploadTabType = 'local'"> 返回本地上传 </Button>
       </template>
     </div>
   </div>
 
-  <a-modal
-    v-model:open="showLinkUploadModal"
-    centered
-    title="链接上传"
-    @ok="linkUploadOk"
-    :confirmLoading="linkUploadConfirmLoading"
-  >
-    <a-textarea
-      placeholder="请输入文件地址"
-      v-model:value="linkUploadUrl"
-      type="textarea"
-      auto-size
-    >
-    </a-textarea>
-    <p>请确保输入完成的地址，以防止加载失败，目前只支持图片和字体类型</p>
-  </a-modal>
+  <Dialog :modal="false" v-model:open="showLinkUploadModal">
+    <DialogContent class="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>链接上传</DialogTitle>
+      </DialogHeader>
+      <Textarea
+        placeholder="请输入文件地址"
+        v-model="linkUploadUrl"
+        auto-size
+      ></Textarea>
+      <p>请确保输入完成的地址，以防止加载失败，目前只支持图片和字体类型</p>
+      <DialogFooter>
+        <Button variant="ghost" size="sm" @click="showLinkUploadModal = false">取消</Button>
+        <Button size="sm" :disabled="linkUploadConfirmLoading" @click="linkUploadOk">确定</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
-  <a-modal
-    v-model:open="previewModalOpen"
-    :title="previewFile?.name || '文件预览'"
-    width="100vw"
-    :footer="null"
-    centered
-    destroy-on-close
-    wrap-class-name="file-preview-fullscreen-modal"
-    :body-style="{ padding: 0 }"
-  >
-    <div class="file-preview-shell" v-if="previewFile">
-      <img
-        v-if="previewKind === 'image'"
-        :src="previewFile.url"
-        class="file-preview-image"
-        :alt="previewFile.name"
-      />
-      <iframe
-        v-else-if="previewKind === 'pdf' || previewKind === 'text'"
-        :src="previewFile.url"
-        class="file-preview-frame"
-        :title="previewFile.name"
-      ></iframe>
-      <video
-        v-else-if="previewKind === 'video'"
-        :src="previewFile.url"
-        class="file-preview-media"
-        controls
-      ></video>
-      <audio
-        v-else-if="previewKind === 'audio'"
-        :src="previewFile.url"
-        class="file-preview-audio"
-        controls
-      ></audio>
-      <div v-else-if="previewKind === 'model'" class="file-preview-model">
-        <base-gltf-viewer :src="previewFile.url"></base-gltf-viewer>
-      </div>
-      <div v-else class="file-preview-fallback">
-        <el-icon size="80px">
-          <component :is="fileTypeIcons[getFileSuffix(previewFile.name)] || Document"></component>
-        </el-icon>
-        <div class="file-preview-fallback-name">{{ previewFile.name }}</div>
-        <div class="file-preview-fallback-meta">
-          {{ getFileSuffix(previewFile.name).toUpperCase() || 'FILE' }}
-          <span v-if="previewFile.displaySize"> · {{ previewFile.displaySize }}</span>
+  <Dialog :modal="false" v-model:open="previewModalOpen">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col">
+      <DialogHeader class="px-5 py-3 border-b border-border flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogTitle class="text-sm font-semibold">{{ previewFile?.name || '文件预览' }}</DialogTitle>
+      </DialogHeader>
+      <div class="flex-1 overflow-auto min-h-0">
+        <div class="file-preview-shell" v-if="previewFile">
+          <img
+            v-if="previewKind === 'image'"
+            :src="previewFile.url"
+            class="file-preview-image"
+            :alt="previewFile.name"
+          />
+          <iframe
+            v-else-if="previewKind === 'pdf' || previewKind === 'text'"
+            :src="previewFile.url"
+            class="file-preview-frame"
+            :title="previewFile.name"
+          ></iframe>
+          <video
+            v-else-if="previewKind === 'video'"
+            :src="previewFile.url"
+            class="file-preview-media"
+            controls
+          ></video>
+          <audio
+            v-else-if="previewKind === 'audio'"
+            :src="previewFile.url"
+            class="file-preview-audio"
+            controls
+          ></audio>
+          <div v-else-if="previewKind === 'model'" class="file-preview-model">
+            <base-gltf-viewer :src="previewFile.url"></base-gltf-viewer>
+          </div>
+          <div v-else class="file-preview-fallback">
+            <component
+              :is="fileTypeIcons[getFileSuffix(previewFile.name)] || FileText"
+              class="h-20 w-20"
+            ></component>
+            <div class="file-preview-fallback-name">{{ previewFile.name }}</div>
+            <div class="file-preview-fallback-meta">
+              {{ getFileSuffix(previewFile.name).toUpperCase() || 'FILE' }}
+              <span v-if="previewFile.displaySize"> · {{ previewFile.displaySize }}</span>
+            </div>
+            <a :href="previewFile.url" :download="previewFile.name" class="file-preview-download">
+              下载文件
+            </a>
+          </div>
         </div>
-        <a :href="previewFile.url" :download="previewFile.name" class="file-preview-download">
-          下载文件
-        </a>
       </div>
-    </div>
-  </a-modal>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -248,16 +242,7 @@ import { message } from '@/common/message';
 import Api, { uploadManyFile, createSticker, uploadFile } from "@/api";
 import { uploadToCOS } from "@/api/cos";
 import { showUpload } from "@/components/design/store.ts";
-import {
-  UploadFilled,
-  CircleCloseFilled,
-  QuestionFilled,
-  View,
-  Warning,
-  Iphone,
-  Link,
-  Document,
-} from "@element-plus/icons-vue";
+import { FileText, XCircle, UploadCloud } from "lucide-vue-next";
 import iconFileUpload from "@/icon/file-upload.svg";
 import iconImg from "@/icon/fileType/img.svg";
 
@@ -276,7 +261,7 @@ import {} from "@/components/design/utils/utils";
 import Utils from "@/common/utils";
 import { useLoginStatusStore } from "@/store/stores/login";
 import { filesize } from "filesize";
-import { genFileId } from "element-plus";
+import { genFileId } from "@/components/ui/file-upload";
 import { uploadRef } from "./index";
 import baseGltfViewer from "@/components/model/baseGltfViewer/index.vue";
 import { fetchFile } from "@/api";
@@ -284,6 +269,19 @@ import { apiInstance } from "@/api/apiInstance";
 
 import { saveAs } from "file-saver";
 import { uploadFont } from "@/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { FileUpload } from '@/components/ui/file-upload';
 const loginStore = useLoginStatusStore();
 
 /*
@@ -658,8 +656,8 @@ async function doUpload() {
   justify-content: center;
 }
 
-:deep .el-upload-dragger {
-  background: #fff !important;
+:deep .file-upload-trigger {
+  background: var(--1s-surface-background) !important;
 }
 
 .tip {
@@ -698,7 +696,7 @@ async function doUpload() {
   padding: 4px;
   border: 1px solid #ececec;
   border-radius: 6px;
-  background: #fafafa;
+  background: var(--1s-surface-background);
   color: #555;
   display: inline-flex;
   align-items: center;
@@ -708,8 +706,8 @@ async function doUpload() {
 }
 
 .file-preview-trigger:hover {
-  border-color: var(--el-color-primary);
-  color: var(--el-color-primary);
+  border-color: var(--1s-color-primary, #409eff);
+  color: var(--1s-color-primary, #409eff);
 }
 
 .file-preview-thumb {
@@ -721,11 +719,11 @@ async function doUpload() {
   display: flex;
   align-items: center;
   padding: 3rem 1rem 1rem 1rem;
-  background: #fff;
+  background: var(--1s-surface-background);
   border-top: 1px solid #f0f0f0;
 }
 
-:deep(.el-upload-list) {
+:deep(.file-upload-list) {
   max-height: 420px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -735,121 +733,108 @@ async function doUpload() {
   }
 }
 
-:deep(.el-upload-list__item:hover) {
+:deep(.file-upload-item:hover) {
   // background-color: #fafafa;
   background-color: transparent;
+}
+
+.file-bar-form {
+  display: flex;
+  flex-direction: column;
+  column-gap: 1em;
+  row-gap: 12px;
+  width: 100%;
+}
+
+.file-bar-form-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 1em;
+}
+
+.file-bar-form-label {
+  width: 100px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--1s-text-color-secondary);
+  text-align: left;
 }
 
 .file-bar-font-preview {
   min-width: 100px;
   font-size: 48px;
   line-height: 64px;
-  color: #000;
+  color: var(--1s-text-color);
   background: transparent;
   padding: 0;
 }
 </style>
 
 <style lang="less">
-.file-preview-fullscreen-modal {
-  .ant-modal {
-    top: 0;
-    max-width: 100vw;
-    width: 100vw !important;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-  }
+.file-preview-shell {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--1s-control-surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .ant-modal-content {
-    height: 100vh;
-    border-radius: 0;
-    overflow: hidden;
-  }
+.file-preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
 
-  .ant-modal-header {
-    height: 48px;
-    margin: 0;
-    padding: 0 48px 0 18px;
-    display: flex;
-    align-items: center;
-  }
+.file-preview-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--1s-surface-background);
+}
 
-  .ant-modal-title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.file-preview-media {
+  width: min(100%, 1200px);
+  max-height: 100%;
+}
 
-  .ant-modal-body {
-    height: calc(100vh - 48px);
-    overflow: hidden;
-  }
+.file-preview-audio {
+  width: min(720px, calc(100% - 48px));
+}
 
-  .file-preview-shell {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    background: var(--1s-control-surface-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.file-preview-model {
+  width: 100%;
+  height: 100%;
+}
 
-  .file-preview-image {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-  }
+.file-preview-fallback {
+  color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
 
-  .file-preview-frame {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    background: #fff;
-  }
+.file-preview-fallback-name {
+  max-width: min(680px, calc(100vw - 48px));
+  overflow-wrap: anywhere;
+  font-size: 18px;
+  font-weight: 600;
+}
 
-  .file-preview-media {
-    width: min(100%, 1200px);
-    max-height: 100%;
-  }
+.file-preview-fallback-meta {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+}
 
-  .file-preview-audio {
-    width: min(720px, calc(100% - 48px));
-  }
-
-  .file-preview-model {
-    width: 100%;
-    height: 100%;
-  }
-
-  .file-preview-fallback {
-    color: #f5f5f5;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    padding: 24px;
-    text-align: center;
-  }
-
-  .file-preview-fallback-name {
-    max-width: min(680px, calc(100vw - 48px));
-    overflow-wrap: anywhere;
-    font-size: 18px;
-    font-weight: 600;
-  }
-
-  .file-preview-fallback-meta {
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 13px;
-  }
-
-  .file-preview-download {
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.38);
-    border-radius: 6px;
-    padding: 7px 14px;
-  }
+.file-preview-download {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 6px;
+  padding: 7px 14px;
 }
 </style>

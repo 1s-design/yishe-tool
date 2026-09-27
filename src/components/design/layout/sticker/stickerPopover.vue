@@ -1,56 +1,37 @@
 <template>
-  <el-popover placement="auto" width="auto" trigger="click">
-    <template #reference>
+  <Popover>
+    <PopoverTrigger as-child>
       <slot></slot>
-    </template>
-    <div class="container">
-      <el-descriptions :column="2" size="small">
-        <template #title> 贴纸信息 </template>
-        <template #extra> </template>
-        <el-descriptions-item label="名称">{{
-          stickerInfo.name || "未命名"
-        }}</el-descriptions-item>
-        <el-descriptions-item label="类型">
-          {{ getStickerTypeLabel(stickerInfo.type) || "无" }}
-        </el-descriptions-item>
-        <el-descriptions-item label="编码" v-if="stickerInfo.code">
-          <code class="code-text">{{ stickerInfo.code }}</code>
-        </el-descriptions-item>
-        <el-descriptions-item :label="stickerInfo.code ? '上传者' : '上传者'">{{
-          stickerInfo.uploader?.account || "未知"
-        }}</el-descriptions-item>
-        <el-descriptions-item label="上传时间" :span="2" v-if="!stickerInfo.code">
-          {{ stickerInfo.createTime }}
-        </el-descriptions-item>
-        <el-descriptions-item label="上传时间" :span="2" v-if="stickerInfo.code">
-          {{ stickerInfo.createTime }}
-        </el-descriptions-item>
-        <el-descriptions-item label="描述" :span="2">
-          {{ stickerInfo.description || "无" }}
-        </el-descriptions-item>
-        <el-descriptions-item label="关键字" :span="2">
-          {{ stickerInfo.keywords || "无" }}
-        </el-descriptions-item>
-
-        <!-- 3D 贴纸使用链路已停用，暂不展示"使用该贴纸"。 -->
-        <!-- <el-descriptions-item :span="2">
-          <el-button style="flex: 1" class="w-full" @click="use" type="primary">
-            使用该贴纸
-          </el-button>
-        </el-descriptions-item> -->
-        <el-descriptions-item :span="2" v-if="stickerInfo.type == 'composition'">
-          <el-button
-            style="flex: 1"
-            class="w-full"
-            @click="useInCanvasSticker"
-            type="primary"
-          >
-            在贴纸制作中使用
-          </el-button>
-        </el-descriptions-item>
-      </el-descriptions>
-    </div>
-  </el-popover>
+    </PopoverTrigger>
+    <PopoverContent class="w-[300px] p-3" align="start">
+      <div class="container">
+        <div class="text-xs font-semibold mb-2">贴纸信息</div>
+        <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+          <div class="text-muted-foreground">名称</div>
+          <div>{{ stickerInfo.name || "未命名" }}</div>
+          <div class="text-muted-foreground">类型</div>
+          <div>{{ getStickerTypeLabel(stickerInfo.type) || "无" }}</div>
+          <template v-if="stickerInfo.code">
+            <div class="text-muted-foreground">编码</div>
+            <div><code class="code-text">{{ stickerInfo.code }}</code></div>
+          </template>
+          <div class="text-muted-foreground">上传者</div>
+          <div>{{ stickerInfo.uploader?.account || "未知" }}</div>
+          <div class="text-muted-foreground">上传时间</div>
+          <div class="col-span-1">{{ stickerInfo.createTime }}</div>
+          <div class="text-muted-foreground">描述</div>
+          <div>{{ stickerInfo.description || "无" }}</div>
+          <div class="text-muted-foreground">关键字</div>
+          <div>{{ stickerInfo.keywords || "无" }}</div>
+          <div v-if="stickerInfo.type == 'composition'" class="col-span-2 mt-1">
+            <Button class="w-full" size="sm" @click="useInCanvasSticker">
+              在贴纸制作中使用
+            </Button>
+          </div>
+        </div>
+      </div>
+    </PopoverContent>
+  </Popover>
 </template>
 <script setup lang="ts">
 // 3D 贴纸使用链路已停用，保留代码方便后续恢复。
@@ -59,6 +40,12 @@ import { getStickerTypeLabel } from "./index";
 import { canvasStickerOptions } from "../canvas";
 import { message } from '@/common/message';
 import { restoreAgentDesignProvenance } from "@/ai/design-provenance";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 const props = defineProps({
   stickerInfo: {
@@ -95,7 +82,7 @@ function useInCanvasSticker() {
   border-radius: 3px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--el-color-primary);
+  color: hsl(var(--primary));
   letter-spacing: 0.5px;
 }
 </style>

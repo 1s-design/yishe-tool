@@ -1,71 +1,68 @@
 <template>
   <div class="designiy-scene-control">
-    <!-- <el-color-picker
-      show-alpha
-      size="small"
-      v-model="bgColor"
-      color-format="rgb"
-      :predefine="predefineColors"
-    /> -->
+    <!-- 背景色选择（原 color-picker，暂未启用） -->
 
-    <el-form>
-      <el-form-item label="画板背景">
-        <el-radio-group v-model="selectedCanvasBackgroundId">
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <Label>画板背景</Label>
+        <RadioGroup v-model="selectedCanvasBackgroundId">
           <div class="background-options">
-            <el-radio
+            <div
               v-for="item in builtInCanvasBackgrounds"
               :key="item.id"
-              :label="item.id"
+              class="background-option"
+              @click="selectedCanvasBackgroundId = item.id"
             >
-              <div class="background-option">
-                <div
-                  class="background-preview"
-                  :style="{ background: item.backgroundCss }"
-                ></div>
-                <span class="background-name">{{ item.name }}</span>
-              </div>
-            </el-radio>
+              <RadioGroupItem :value="item.id" />
+              <div
+                class="background-preview"
+                :style="{ background: item.backgroundCss }"
+              ></div>
+              <span class="background-name">{{ item.name }}</span>
+            </div>
           </div>
-        </el-radio-group>
+        </RadioGroup>
         <div class="background-tip">
           该颜色只作为辅助，不会真实渲染到画布，也不会影响导出的截图
         </div>
-      </el-form-item>
+      </div>
 
-      <el-form-item label="画布背景色">
+      <div class="flex flex-col gap-1.5">
+        <Label>画布背景色</Label>
         <div class="canvas-background-control">
-          <el-color-picker
-            v-model="canvasBackgroundColor"
-            show-alpha
-            :predefine="predefineBackgroundColors"
-            @change="handleBackgroundColorChange"
-            @active-change="handleActiveColorChange"
+          <input
+            type="color"
+            class="canvas-background-color-input"
+            :value="canvasBackgroundColor"
+            @input="canvasBackgroundColor = $event.target.value; handleActiveColorChange($event.target.value)"
+            @change="handleBackgroundColorChange($event.target.value)"
           />
           <span class="background-tip">此颜色会真实渲染到画布背景</span>
         </div>
-      </el-form-item>
+      </div>
 
-      <el-form-item label="画布背景图">
-        <el-radio-group v-model="selectedBackgroundImageId">
+      <div class="flex flex-col gap-1.5">
+        <Label>画布背景图</Label>
+        <RadioGroup v-model="selectedBackgroundImageId">
           <div class="background-image-options">
-            <el-radio
+            <div
               v-for="item in builtInCanvasBackgroundImages"
               :key="item.id"
-              :label="item.id"
+              class="background-image-option"
+              @click="selectedBackgroundImageId = item.id"
             >
-              <div class="background-image-option">
-                <div
-                  class="background-image-preview"
-                  :style="{ backgroundImage: `url(${item.url})` }"
-                ></div>
-                <span class="background-image-name">{{ item.name }}</span>
-              </div>
-            </el-radio>
+              <RadioGroupItem :value="item.id" />
+              <div
+                class="background-image-preview"
+                :style="{ backgroundImage: `url(${item.url})` }"
+              ></div>
+              <span class="background-image-name">{{ item.name }}</span>
+            </div>
           </div>
-        </el-radio-group>
+        </RadioGroup>
         <div class="background-tip">选择背景图会覆盖背景色设置</div>
-      </el-form-item>
-    </el-form>
+      </div>
+    </div>
   </div>
 </template>
 <script setup>
@@ -82,6 +79,8 @@ import {
   builtInCanvasBackgroundImages,
 } from "../../store.ts";
 import Color from "color";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const predefineColors = ref(["#ffffff", "#dddddd", "#333333", "#555555"]);
 
@@ -191,7 +190,7 @@ function useCurrentBackground(item) {
 .designiy-scene-control {
   .background-tip {
     font-size: 11px;
-    color: #999;
+    color: var(--1s-text-color-tertiary);
     margin-top: 4px;
     line-height: 1.2;
   }
@@ -221,6 +220,16 @@ function useCurrentBackground(item) {
   .canvas-background-control {
     display: flex;
     align-items: center;
+  }
+
+  .canvas-background-color-input {
+    width: 32px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    background: transparent;
+    cursor: pointer;
   }
 
   .background-image-options {

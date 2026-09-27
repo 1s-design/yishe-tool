@@ -66,49 +66,49 @@
                 <menu-item>
                   <template #title> 顶部主导航栏 </template>
                   <template #suffix>
-                    <el-switch v-model="showHeader" size="small" />
+                    <Switch v-model:checked="showHeader" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 顶部副导航栏 </template>
                   <template #suffix>
-                    <el-switch v-model="showSubHeader" size="small" />
+                    <Switch v-model:checked="showSubHeader" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 左侧菜单 </template>
                   <template #suffix>
-                    <el-switch v-model="showLeftMenu" size="small" />
+                    <Switch v-model:checked="showLeftMenu" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 底部操作栏 </template>
                   <template #suffix>
-                    <el-switch v-model="showBottomMenu" size="small" />
+                    <Switch v-model:checked="showBottomMenu" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 选择模型 </template>
                   <template #suffix>
-                    <el-switch v-model="showBaseModelSelect" size="small" />
+                    <Switch v-model:checked="showBaseModelSelect" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 操作贴纸 </template>
                   <template #suffix>
-                    <el-switch v-model="showDecalControl" size="small" />
+                    <Switch v-model:checked="showDecalControl" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 显示工作台 </template>
                   <template #suffix>
-                    <el-switch v-model="showWorkspace" size="small" />
+                    <Switch v-model:checked="showWorkspace" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 字体列表 </template>
                   <template #suffix>
-                    <el-switch v-model="showFontModal" size="small" />
+                    <Switch v-model:checked="showFontModal" />
                   </template>
                 </menu-item>
               </menu-main>
@@ -121,19 +121,19 @@
                 <menu-item>
                   <template #title> 工作台 </template>
                   <template #suffix>
-                    <el-switch v-model="showWorkspace" size="small" />
+                    <Switch v-model:checked="showWorkspace" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 当前操作的模型信息 </template>
                   <template #suffix>
-                    <el-switch v-model="showModelInfo" size="small" />
+                    <Switch v-model:checked="showModelInfo" />
                   </template>
                 </menu-item>
                 <menu-item>
                   <template #title> 已使用的贴纸 </template>
                   <template #suffix>
-                    <el-switch v-model="showDecalList" size="small" />
+                    <Switch v-model:checked="showDecalList" />
                   </template>
                 </menu-item>
               </menu-main>
@@ -172,6 +172,7 @@ import iconView from "@/icon/view.svg?component";
 import iconUpload from "@/icon/upload-normal.svg?component";
 import iconScreenshot from "@/icon/screenshot.svg?component";
 import iconJump from "@/icon/jump.svg?component";
+import { Switch } from "@/components/ui/switch";
 </script>
 
 <style></style>

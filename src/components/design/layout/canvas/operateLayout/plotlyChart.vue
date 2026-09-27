@@ -1,57 +1,69 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="data" title="数据">
-      <operate-form-item>
-        <template #name>Data (JSON 数组)</template>
-        <template #content>
-          <el-input
-            v-model="dataJson"
-            type="textarea"
-            :rows="10"
-            resize="vertical"
-            spellcheck="false"
-            placeholder='[{"x": [1,2,3,4], "y": [10,15,13,17], "type": "scatter"}]'
-            class="plotly-json-input"
-          ></el-input>
-          <div v-if="dataError" class="plotly-error">{{ dataError }}</div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
+  >
+    <AccordionItem value="data">
+      <AccordionTrigger>数据</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>Data (JSON 数组)</template>
+          <template #content>
+            <Textarea
+              v-model="dataJson"
+              :rows="10"
+              class="plotly-json-input resize-y"
+              spellcheck="false"
+              placeholder='[{"x": [1,2,3,4], "y": [10,15,13,17], "type": "scatter"}]'
+            ></Textarea>
+            <div v-if="dataError" class="plotly-error">{{ dataError }}</div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="layout" title="布局配置">
-      <operate-form-item>
-        <template #name>Layout (JSON)</template>
-        <template #content>
-          <el-input
-            v-model="layoutJson"
-            type="textarea"
-            :rows="8"
-            resize="vertical"
-            spellcheck="false"
-            placeholder='{"title": "My Chart", "xaxis": {"title": "X"}, "yaxis": {"title": "Y"}}'
-            class="plotly-json-input"
-          ></el-input>
-          <div v-if="layoutError" class="plotly-error">{{ layoutError }}</div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+    <AccordionItem value="layout">
+      <AccordionTrigger>布局配置</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>Layout (JSON)</template>
+          <template #content>
+            <Textarea
+              v-model="layoutJson"
+              :rows="8"
+              class="plotly-json-input resize-y"
+              spellcheck="false"
+              placeholder='{"title": "My Chart", "xaxis": {"title": "X"}, "yaxis": {"title": "Y"}}'
+            ></Textarea>
+            <div v-if="layoutError" class="plotly-error">{{ layoutError }}</div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      />
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        />
 
-      <operateItemBackgroundColor
-        v-model="currentOperatingCanvasChild.backgroundColor"
-      />
-    </el-collapse-item>
+        <operateItemBackgroundColor
+          v-model="currentOperatingCanvasChild.backgroundColor"
+        />
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-    </el-collapse-item>
-  </el-collapse>
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -59,6 +71,13 @@ import { ref, computed } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Textarea } from "@/components/ui/textarea";
 import { currentOperatingCanvasChild } from "../index.tsx";
 
 const activeNames = ref(["data", "layout", "basic", "common"]);
@@ -113,7 +132,7 @@ const layoutJson = computed({
 </script>
 
 <style scoped>
-.plotly-json-input :deep(.el-textarea__inner) {
+.plotly-json-input {
   font-family: Consolas, Monaco, "Courier New", monospace;
   font-size: 13px;
   line-height: 1.55;

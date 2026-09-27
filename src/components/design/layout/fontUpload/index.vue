@@ -1,55 +1,64 @@
 <template>
   <div class="designiy-font-upload">
-    <el-upload
+    <div
       class="designiy-font-upload-main"
-      :auto-upload="false"
-      :show-file-list="false"
-      v-model:file-list="files"
-      :limit="1"
-      :on-exceed="handleExceed"
-      ref="upload"
-      accept="ttf"
-      :disabled="files[0]"
-      drag
+      @dragover.prevent
+      @drop.prevent="handleDrop"
     >
       <input
-        v-if="files[0]"
-        ref="previewEl"
-        class="designiy-font-upload-preview"
-        contenteditable="true"
-        v-model="name"
+        ref="fileInput"
+        type="file"
+        accept=".ttf"
+        class="hidden"
+        :disabled="files[0]"
+        @change="handleFileChange"
       />
+      <div
+        class="designiy-font-upload-dragger"
+        @click="!files[0] && fileInput && fileInput.click()"
+      >
+        <input
+          v-if="files[0]"
+          ref="previewEl"
+          class="designiy-font-upload-preview"
+          contenteditable="true"
+          v-model="name"
+        />
 
-      <div v-else class="designiy-font-upload-placeholder">
-        <icon-upload style="width: 20px; height: 20px"></icon-upload>
-        <div style="font-size: 12px">点击或拖拽文件上传</div>
+        <div v-else class="designiy-font-upload-placeholder">
+          <icon-upload style="width: 20px; height: 20px"></icon-upload>
+          <div style="font-size: 12px">点击或拖拽文件上传</div>
+        </div>
       </div>
-    </el-upload>
-    <el-divider content-position="right">
-      <span style="font-size: 10px; color: #999; font-weight: 400"
+    </div>
+    <div class="flex items-center gap-2">
+      <Separator class="flex-1" />
+      <span style="font-size: 10px; color: var(--1s-text-color-tertiary); font-weight: 400"
         >支持类型 ttf woff</span
       >
-    </el-divider>
-    <el-input
+    </div>
+    <Input
       v-model="name"
       placeholder="定义字体名称"
-      style="font-size: 10px"
-    ></el-input>
-    <el-input
-      type="textarea"
+      class="text-[10px]"
+    />
+    <Textarea
       placeholder="定义字体描述"
-      style="font-size: 10px"
-    ></el-input>
+      class="text-[10px]"
+    />
     <div class="designiy-font-upload-footer">
-      <el-button size="small" @click="clear" text> 清除 </el-button>
-      <el-button size="small" type="primary" @click="submit"> 上传 </el-button>
+      <Button size="sm" variant="ghost" @click="clear"> 清除 </Button>
+      <Button size="sm" variant="default" @click="submit"> 上传 </Button>
     </div>
   </div>
 </template>
 <script setup>
 import { ref, reactive, watch, computed, shallowRef, nextTick } from "vue";
-import { Plus } from "@element-plus/icons-vue";
-import { genFileId } from "element-plus";
+import { Plus } from 'lucide-vue-next'
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import iconUpload from "@/icon/upload-normal.svg?component";
 
 import { toPng, toJpeg, toBlob, toPixelData, toSvg } from "html-to-image";
@@ -58,7 +67,7 @@ import { uploadFont } from "@/api";
 import { base64ToFile } from "../../../../common/transform/base64ToFile";
 
 const files = ref([]);
-const upload = ref();
+const fileInput = ref();
 const previewEl = ref();
 const name = ref();
 
@@ -68,6 +77,7 @@ var id = 0;
 watch(files, async (files) => {
   await nextTick();
   const file = files[0];
+  if (!file) return;
   name.value = file.name;
   previewEl.value.innerHTML = file.name;
   let fontId = id++;
@@ -82,14 +92,21 @@ watch(files, async (files) => {
   previewEl.value.style.fontFamily = ` font${fontId++}`;
 });
 
-function handleExceed(files) {
-  upload.value.clearFiles();
-  const file = files[0];
-  upload.value.handleStart(file);
+function handleFileChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  files.value = [{ name: file.name, raw: file }];
+  e.target.value = "";
+}
+
+function handleDrop(e) {
+  const file = e.dataTransfer.files[0];
+  if (!file || files.value[0]) return;
+  files.value = [{ name: file.name, raw: file }];
 }
 
 function clear() {
-  upload.value.clearFiles();
+  files.value = [];
 }
 
 async function submit() {
@@ -112,16 +129,14 @@ async function submit() {
 }
 
 .designiy-font-upload-main {
-  .el-upload-dragger {
+  .designiy-font-upload-dragger {
     width: 480px;
     height: 160px;
     display: flex;
     justify-content: center;
     align-items: center;
-  }
-
-  .el-upload-dragger {
     padding: 0;
+    cursor: pointer;
   }
 }
 
@@ -143,6 +158,6 @@ async function submit() {
 .designiy-font-upload-preview {
   outline-style: none;
   font-size: 40px;
-  color: #000;
+  color: var(--1s-text-color);
 }
 </style>

@@ -4,14 +4,10 @@
 
     <div style="position: relative; height: calc(100% - 64px)">
       <div class="to-top btn" v-show="!arrivedState.top" @click="goTop">
-        <el-icon>
-          <ArrowUpBold />
-        </el-icon>
+        <ArrowUp class="w-3.5 h-3.5" />
       </div>
       <div class="to-bottom btn" v-show="!arrivedState.bottom" @click="goBottom">
-        <el-icon>
-          <ArrowDownBold />
-        </el-icon>
+        <ArrowDown class="w-3.5 h-3.5" />
       </div>
       <div
         class="scroller flex flex-col hide-scrollbar items-center"
@@ -32,7 +28,9 @@
     </div>
 
     <div style="height: 64px" class="flex items-center justify-center">
-      <el-button :icon="CloseBold" circle @click="showDecalList = false"></el-button>
+      <Button variant="outline" size="icon-sm" class="rounded-full" @click="showDecalList = false">
+        <X class="w-3.5 h-3.5" />
+      </Button>
     </div>
   </div>
 </template>
@@ -46,13 +44,8 @@ import {
 } from "../../store";
 import { computed, reactive } from "vue";
 import { useScroll } from "@vueuse/core";
-import {
-  Plus,
-  Close,
-  ArrowUpBold,
-  ArrowDownBold,
-  CloseBold,
-} from "@element-plus/icons-vue";
+import { Plus, X, ArrowUp, ArrowDown } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button';
 import unUploadIcon from "@/icon/un-upload.svg?component";
 
 const scrollRef = ref();

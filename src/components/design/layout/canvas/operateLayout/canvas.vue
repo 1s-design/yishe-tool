@@ -1,6 +1,8 @@
 <template>
-  <el-collapse v-model="canvasCollapseActives">
-    <el-collapse-item name="1" title="画布配置">
+  <Accordion type="multiple" :model-value="canvasCollapseActives" @update:model-value="v => canvasCollapseActives = v as string[]">
+    <AccordionItem value="1">
+      <AccordionTrigger>画布配置</AccordionTrigger>
+      <AccordionContent>
       <operateItemAbsoluteSize
         label="画布尺寸(px)"
         v-model:width="currentOperatingCanvasChild.width"
@@ -25,8 +27,11 @@
       <operateAspectRatio @change="aspectRatioChange"></operateAspectRatio>
 
       <!-- <operateItemSwitch label="显示真实大小" v-model="canvasStickerOptions.showCanvasRealSize"></operateItemSwitch> -->
-    </el-collapse-item>
-    <el-collapse-item name="2" title="画布属性">
+      </AccordionContent>
+    </AccordionItem>
+    <AccordionItem value="2">
+      <AccordionTrigger>画布属性</AccordionTrigger>
+      <AccordionContent>
       <operateItemColor
         label="画布背景颜色"
         tooltip="画布背景颜色"
@@ -39,16 +44,20 @@
         v-model="currentOperatingCanvasChild.fontSize"
       >
       </operateItemFontSize>
-    </el-collapse-item>
-    <el-collapse-item name="4" title="画布滤镜效果">
+      </AccordionContent>
+    </AccordionItem>
+    <AccordionItem value="4">
+      <AccordionTrigger>画布滤镜效果</AccordionTrigger>
+      <AccordionContent>
       <operateItemFilterGroup
         v-model="currentOperatingCanvasChild.filter"
       ></operateItemFilterGroup>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
     <operateItemClipPath
       v-model="currentOperatingCanvasChild.clipPath"
     ></operateItemClipPath>
-  </el-collapse>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -61,6 +70,12 @@ import {
   watchEffect,
   nextTick,
 } from "vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import operateAspectRatio from "@/components/design/layout/canvas/operate/aspectRatio.vue";
 import operateCanvasSizePresets from "@/components/design/layout/canvas/operate/size/canvasSizePresets.vue";
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";

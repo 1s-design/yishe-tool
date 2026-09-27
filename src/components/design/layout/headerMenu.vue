@@ -157,7 +157,7 @@
 <script setup>
 import { getBaseModel, getBaseSkybox } from "@/api/index.ts";
 import { ref, defineEmits, defineProps, computed, onMounted, watch } from "vue";
-import { ElMessageBox } from "element-plus";
+import { confirm as uiConfirm } from '@/components/ui/confirm';
 import {
   canvasBgColor,
   canvasBgOpacity,
@@ -186,20 +186,14 @@ import {
 } from "@/components/design/layout/canvas/index.tsx";
 
 import { openFileModal } from "@/components/design/layout/upload/index.tsx";
-import { Share, UploadFilled } from "@element-plus/icons-vue";
+
 import userAvatar from "@/components/user/userAvatar.vue";
 import headerMenuDropdown from "./headerMenuDropdown/index.vue";
 import { onShortcutTrigger } from "../shortcut/index";
 import iconHelp from "@/icon/help.svg?component";
 import { useLoginStatusStore } from "@/store/stores/login";
 import { useDateFormat, useNow } from "@vueuse/core";
-import {
-  LoadingOutlined,
-  CheckOutlined,
-  ExclamationCircleOutlined,
-  CheckCircleOutlined,
-  EyeOutlined,
-} from "@ant-design/icons-vue";
+import { AlertCircle, Check, CheckCircle2, Eye, Loader2, Share, Upload } from 'lucide-vue-next';
 import { useRouter } from "vue-router";
 import { useFileDialog } from "@vueuse/core";
 import { openLoginDialog } from "@/modules/main/view/user/login/index.tsx";
@@ -319,21 +313,14 @@ function handleConvertToCreateNew() {
 function remove(file) {}
 
 function confirmExitEditMode() {
-  ElMessageBox.confirm(
-    '退出编辑模式后，所有改动不会影响到已保存的模型，截图也不会关联到该模型。确定要退出吗？',
-    '确认退出编辑模式',
-    {
-      confirmButtonText: '确定退出',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  )
-    .then(() => {
-      exitEditMode();
-    })
-    .catch(() => {
-      // 用户取消退出
-    });
+  uiConfirm({
+    title: '确认退出编辑模式',
+    description: '退出编辑模式后，所有改动不会影响到已保存的模型，截图也不会关联到该模型。确定要退出吗？',
+    okText: '确定退出',
+    cancelText: '取消',
+  }).then((ok) => {
+    if (ok) exitEditMode();
+  });
 }
 
 </script>
@@ -486,7 +473,7 @@ function confirmExitEditMode() {
   }
 
   .header-action-dot {
-    background: #ffffff;
+    background: var(--1s-surface-background);
   }
 }
 
@@ -535,9 +522,6 @@ function confirmExitEditMode() {
 }
 
 :deep(.el-switch) {
-  --el-switch-height: 18px;
-  --el-switch-width: 34px;
-  --el-switch-border-radius: 999px;
 }
 
 :deep(.el-switch__label) {
@@ -722,8 +706,8 @@ function confirmExitEditMode() {
   border: 1px solid var(--1s-border-color-strong, #d9d9d9);
 
   &:hover {
-    border-color: #6c5ce7;
-    color: #6c5ce7;
+    border-color: var(--1s-accent-color);
+    color: var(--1s-accent-color);
   }
 
   .auto-create-label {
@@ -740,20 +724,21 @@ function confirmExitEditMode() {
   height: 7px;
   flex: 0 0 7px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--1s-surface-background);
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
   animation: auto-create-dot-pulse 1.2s ease-in-out infinite;
 }
 
 .auto-create-btn--running {
-  border-color: #6c5ce7;
-  background: #6c5ce7;
-  box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.14);
+  border-color: var(--1s-accent-color);
+  background: var(--1s-accent-color);
+  box-shadow: 0 0 0 2px var(--1s-hover-background);
   animation: auto-create-running-pulse 1.8s ease-in-out infinite;
 
   &:hover {
-    border-color: #5b4cdb;
-    background: #5b4cdb;
+    border-color: var(--1s-accent-color);
+    background: var(--1s-accent-color);
+    filter: brightness(0.92);
   }
 
   .auto-create-label {
@@ -783,8 +768,8 @@ function confirmExitEditMode() {
 }
 
 @keyframes auto-create-running-pulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.12); }
-  50% { box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.2); }
+  0%, 100% { box-shadow: 0 0 0 2px var(--1s-hover-background); }
+  50% { box-shadow: 0 0 0 4px var(--1s-hover-background); }
 }
 
 .screen-share-btn--active {

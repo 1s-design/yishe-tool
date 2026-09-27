@@ -8,22 +8,23 @@
 -->
 <template>
   <div class="video-clip-panel">
-    <el-form>
-      <el-form-item label="导出图片">
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <Label>导出图片</Label>
         <div>
           <!-- 角度选择器 -->
           <div class="mb-3">
             <!-- 快速选择按钮 -->
             <div class="flex flex-wrap gap-1 mb-3">
-              <el-button size="small" type="primary" plain @click="selectDefaultAngles">
+              <Button size="sm" variant="outline" @click="selectDefaultAngles">
                 默认(前后左右)
-              </el-button>
-              <el-button size="small" type="primary" plain @click="selectAllAngles">
+              </Button>
+              <Button size="sm" variant="outline" @click="selectAllAngles">
                 全选
-              </el-button>
-              <el-button size="small" type="primary" plain @click="clearAllAngles">
+              </Button>
+              <Button size="sm" variant="outline" @click="clearAllAngles">
                 清空
-              </el-button>
+              </Button>
             </div>
 
             <div class="flex flex-wrap justify-center gap-2">
@@ -48,24 +49,24 @@
 
           <!-- 导出按钮 -->
           <div class="flex gap-2">
-            <el-button
-              class="w-full"
-              type="primary"
-              round
+            <Button
+              class="w-full rounded-full"
               :disabled="selectedAngles.length === 0"
               @click="handleExportImages"
             >
               下载多角度图 ({{ selectedAngles.length }}张)
-            </el-button>
+            </Button>
           </div>
         </div>
-      </el-form-item>
+      </div>
 
-      <el-form-item label="执行动画">
+      <div class="flex flex-col gap-1.5">
+        <Label>执行动画</Label>
         <div>
           <div class="flex flex-wrap" style="gap: 8px">
-            <a-button
-              size="small"
+            <Button
+              size="sm"
+              variant="outline"
               v-for="item in animations"
               class="cursor-pointer round"
               :class="{ 'disabled-button': isAnimationRunning }"
@@ -73,42 +74,44 @@
               @click="item.handle"
             >
               {{ item.title }}
-            </a-button>
+            </Button>
           </div>
 
           <div>
-            <el-switch v-model="isRecordingEnabled" size="small" />
+            <Switch v-model:checked="isRecordingEnabled" />
             <div class="text-xs text-gray-500 mt-1">开启后执行动画时会自动录制视频</div>
           </div>
         </div>
-      </el-form-item>
+      </div>
 
-      <el-form-item label="录制视频">
+      <div class="flex flex-col gap-1.5">
+        <Label>录制视频</Label>
         <div class="flex items-center gap-2">
-          <el-button
-            type="primary"
-            round
+          <Button
+            class="rounded-full"
             :class="{ recording: isRecording }"
             @click="handleRecord"
           >
             {{ isRecording ? `录制中 ${timeCount}s` : "开始录制" }}
-          </el-button>
+          </Button>
         </div>
-      </el-form-item>
+      </div>
 
-      <!-- <el-form-item label="调整视图">
+      <!-- <div class="flex flex-col gap-1.5">
+        <Label>调整视图</Label>
         <div class="flex flex-wrap" style="gap: 8px">
-          <a-button
-            size="small"
+          <Button
+            size="sm"
+            variant="outline"
             v-for="item in modelControllerViewSetterOptions"
             class="cursor-pointer round"
             @click="item.handle"
           >
             {{ item.name }}
-          </a-button>
+          </Button>
         </div>
-      </el-form-item> -->
-    </el-form>
+      </div> -->
+    </div>
   </div>
 </template>
 
@@ -119,7 +122,6 @@ import { selectedAngles } from '../../store';
 import gsap from "gsap";
 import { message } from '@/common/message';
 import { saveAs } from "file-saver";
-import { QuestionFilled } from "@element-plus/icons-vue";
 import {
   isRecordingEnabled,
   animations,
@@ -129,6 +131,9 @@ import {
   isAnimationRunning,
   stopAllAnimations,
 } from "./index.ts";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 // 录制相关状态
 const isRecording = ref(false);
@@ -286,10 +291,10 @@ const handleRecordedVideo = async (blob: any) => {
   padding: 4px 8px;
   border-radius: 4px;
   background-color: #f5f5f5;
-  color: #333;
+  color: var(--1s-text-color);
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--1s-border-color);
   font-size: 12px;
   user-select: none;
 }
@@ -300,9 +305,9 @@ const handleRecordedVideo = async (blob: any) => {
 }
 
 .custom-checkbox.selected {
-  background-color: #409eff;
+  background-color: var(--1s-accent-color);
   color: white;
-  border-color: #409eff;
+  border-color: var(--1s-accent-color);
   box-shadow: 0 2px 4px rgba(64, 158, 255, 0.3);
 }
 

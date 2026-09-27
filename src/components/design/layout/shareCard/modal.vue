@@ -1,25 +1,22 @@
 <template>
-  <a-modal
-    v-model:open="showShareCardModal"
-    width="540px"
-    title="分享卡片"
-    style="min-width: 540px"
-    :footer="null"
-    centered
-    :destroyOnClose="true"
-  >
-    <div
-      style="height: 640px; overflow: auto; row-gap: 24px"
-      class="flex flex-col justify-center items-center"
-    >
-      <shareCard ref="shareCardRef" :info="shareCardCustomModelInfo"></shareCard>
+  <Dialog :modal="false" v-model:open="showShareCardModal">
+    <DialogContent class="max-w-[540px] w-[540px]">
+      <DialogHeader>
+        <DialogTitle>分享卡片</DialogTitle>
+      </DialogHeader>
+      <div
+        style="height: 640px; overflow: auto; row-gap: 24px"
+        class="flex flex-col justify-center items-center"
+      >
+        <shareCard ref="shareCardRef" :info="shareCardCustomModelInfo"></shareCard>
 
-      <div>
-        <el-button @click="copy" round> 复制链接 </el-button>
-        <el-button @click="download" round> 下载卡片 </el-button>
+        <div>
+          <Button class="rounded-full" @click="copy"> 复制链接 </Button>
+          <Button class="rounded-full" @click="download"> 下载卡片 </Button>
+        </div>
       </div>
-    </div>
-  </a-modal>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -32,6 +29,13 @@ import {
 import { ref, unref } from "vue";
 import shareCard from "./shareCard.vue";
 import { message } from '@/common/message';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const shareCardRef = ref();
 

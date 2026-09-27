@@ -1,10 +1,10 @@
 <template>
-  <el-collapse v-model="qrcodeCollapseActives">
-    <el-collapse-item name="1">
-      <template #title>
+  <Accordion type="multiple" :model-value="qrcodeCollapseActives" @update:model-value="v => qrcodeCollapseActives = v as string[]">
+    <AccordionItem value="1">
+      <AccordionTrigger>
         <div class="title">基本配置</div>
-      </template>
-
+      </AccordionTrigger>
+      <AccordionContent>
       <operateItemTextContent
         label="二维码内容"
         v-model="currentOperatingCanvasChild.qrcodeContent"
@@ -36,13 +36,14 @@
 
       <operateItemBorderRadius v-model="currentOperatingCanvasChild.borderRadius">
       </operateItemBorderRadius>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="2">
-      <template #title>
+    <AccordionItem value="2">
+      <AccordionTrigger>
         <div class="title">二维码配置</div>
-      </template>
-
+      </AccordionTrigger>
+      <AccordionContent>
       <operateItemQrcodeErrorCorrectionLevel
         v-model="currentOperatingCanvasChild.errorCorrectionLevel"
       >
@@ -51,29 +52,44 @@
       <operateItemQrcodeType
         v-model="currentOperatingCanvasChild.qrcodeDotType"
       ></operateItemQrcodeType>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
       <operateItemCommonGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemCommonGroup>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="3">
-      <template #title>
+    <AccordionItem value="3">
+      <AccordionTrigger>
         <div class="title">定位点样式</div>
-      </template>
-    </el-collapse-item>
-    <el-collapse-item name="4">
-      <template #title>
+      </AccordionTrigger>
+      <AccordionContent>
+      </AccordionContent>
+    </AccordionItem>
+    <AccordionItem value="4">
+      <AccordionTrigger>
         <div class="title">中心图片设置</div>
-      </template>
-    </el-collapse-item>
-  </el-collapse>
+      </AccordionTrigger>
+      <AccordionContent>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
+
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";

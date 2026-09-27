@@ -5,35 +5,32 @@
     </template>
     <template #name> 常用尺寸比例 </template>
     <template #content>
-      <el-button
-        size="small"
-        class="w-full !h-6 !text-[11px] !font-medium"
+      <Button
+        size="sm"
+        variant="outline"
+        class="w-full h-6 text-[11px] font-medium"
         @click="dialogVisible = true"
       >
         选择常用预设比例
-      </el-button>
+      </Button>
     </template>
   </operate-form-item>
 
-  <el-dialog
-    v-model="dialogVisible"
-    title="选择常用尺寸比例"
-    fullscreen
-    append-to-body
-    class="size-presets-dialog"
-  >
+  <Dialog :modal="false" v-model:open="dialogVisible">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col size-presets-dialog">
+      <DialogHeader class="px-6 pt-6 pb-2 shrink-0">
+        <DialogTitle>选择常用尺寸比例</DialogTitle>
+      </DialogHeader>
     <div class="preset-container">
       <div class="preset-search">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索商品、用途、比例或尺寸，例如：鼠标垫 / 16:9 / 1080x1920"
-          clearable
-          class="preset-search-input"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
+        <div class="preset-search-input relative">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            v-model="searchKeyword"
+            placeholder="搜索商品、用途、比例或尺寸，例如：鼠标垫 / 16:9 / 1080x1920"
+            class="pl-8"
+          />
+        </div>
         <div class="preset-search-meta">共 {{ matchedCount }} 个结果</div>
       </div>
 
@@ -91,16 +88,15 @@
         </div>
       </div>
     </div>
-  </el-dialog>
+    </DialogContent>
+  </Dialog>
 
   <!-- 比例尺寸选择弹窗 -->
-  <el-dialog
-    v-model="ratioDialogVisible"
-    :title="`设置尺寸 - ${currentRatio?.display} ${currentRatio?.name || ''}`"
-    width="480px"
-    append-to-body
-    class="ratio-size-dialog"
-  >
+  <Dialog :modal="false" v-model:open="ratioDialogVisible">
+    <DialogContent class="max-w-[480px] w-[480px] ratio-size-dialog">
+      <DialogHeader>
+        <DialogTitle>{{ `设置尺寸 - ${currentRatio?.display} ${currentRatio?.name || ''}` }}</DialogTitle>
+      </DialogHeader>
     <div class="ratio-dialog-content" v-if="currentRatio">
       <div class="ratio-dialog-desc">
         {{ currentRatio.description }} · {{ currentRatio.usage }}
@@ -109,25 +105,24 @@
       <div class="ratio-dialog-section">
         <div class="section-label">选择宽度</div>
         <div class="width-quick-btns">
-          <el-button
+          <Button
             v-for="w in quickWidths"
             :key="w"
-            size="small"
-            :type="customWidth === w ? 'primary' : 'default'"
+            size="sm"
+            :variant="customWidth === w ? 'default' : 'outline'"
             @click="customWidth = w; updateCustomHeight()"
           >
             {{ w }}
-          </el-button>
+          </Button>
         </div>
         <div class="custom-width-group">
           <span class="width-label">自定义</span>
-          <el-input-number
-            v-model="customWidth"
+          <Input
+            type="number"
+            v-model.number="customWidth"
             :min="100"
             :max="20000"
             :step="10"
-            :precision="0"
-            controls-position="right"
             class="custom-width-input"
             @input="updateCustomHeight"
           />
@@ -145,16 +140,25 @@
       </div>
     </div>
 
-    <template #footer>
-      <el-button @click="ratioDialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="handleRatioConfirm">确认使用</el-button>
-    </template>
-  </el-dialog>
+      <div class="flex items-center justify-end gap-2 pt-4">
+        <Button variant="outline" @click="ratioDialogVisible = false">取消</Button>
+        <Button @click="handleRatioConfirm">确认使用</Button>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Search, Setting } from "@element-plus/icons-vue";
+import { Search, Settings as Setting } from "lucide-vue-next";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import operateFormItem from "../operateFormItem.vue";
 import { getAllRatios } from "../../crop/ratioData";
 import type { RatioOption } from "../../crop/ratioData";
@@ -684,8 +688,8 @@ function getRatioStyle(item: SizeOption) {
     width: `${w}px`,
     height: `${h}px`,
     borderRadius: "2px",
-    backgroundColor: "#e4e7ed",
-    border: "1px solid #dcdfe6",
+    backgroundColor: "var(--1s-control-surface-muted)",
+    border: "1px solid var(--1s-border-color)",
     transition: "all 0.2s ease",
   };
 }
@@ -724,8 +728,8 @@ function handleSelect(item: SizeOption) {
 
 :global(html.dark) .preset-search,
 :global(.dark) .preset-search {
-  background: rgba(24, 24, 27, 0.95);
-  border-bottom-color: #27272a;
+  background: color-mix(in srgb, var(--1s-surface-background) 95%, transparent);
+  border-bottom-color: var(--1s-border-color);
 }
 
 .preset-search-input {
@@ -805,14 +809,14 @@ function handleSelect(item: SizeOption) {
 
 :global(html.dark) .ratio-card,
 :global(.dark) .ratio-card {
-  background-color: #1e1e22;
-  border-color: #27272a;
+  background-color: var(--1s-elevated-background);
+  border-color: var(--1s-border-color);
 }
 
 :global(html.dark) .ratio-card:hover,
 :global(.dark) .ratio-card:hover {
-  background-color: #27272a;
-  border-color: #3f3f46;
+  background-color: var(--1s-hover-background);
+  border-color: var(--1s-border-color-strong);
 }
 
 .ratio-preview {
@@ -832,8 +836,8 @@ function handleSelect(item: SizeOption) {
 
 :global(html.dark) .ratio-inner,
 :global(.dark) .ratio-inner {
-  background-color: #27272a;
-  border-color: #3f3f46;
+  background-color: var(--1s-surface-background);
+  border-color: var(--1s-border-color-strong);
 }
 
 .ratio-info {
@@ -896,14 +900,14 @@ function handleSelect(item: SizeOption) {
 
 :global(html.dark) .preset-card,
 :global(.dark) .preset-card {
-  background-color: #1e1e22;
-  border-color: #27272a;
+  background-color: var(--1s-elevated-background);
+  border-color: var(--1s-border-color);
 }
 
 :global(html.dark) .preset-card:hover,
 :global(.dark) .preset-card:hover {
-  background-color: #27272a;
-  border-color: #3f3f46;
+  background-color: var(--1s-hover-background);
+  border-color: var(--1s-border-color-strong);
 }
 
 .preview-box {
@@ -923,8 +927,8 @@ function handleSelect(item: SizeOption) {
 
 :global(html.dark) .aspect-ratio-box,
 :global(.dark) .aspect-ratio-box {
-  background-color: #27272a !important;
-  border-color: #3f3f46 !important;
+  background-color: var(--1s-surface-background) !important;
+  border-color: var(--1s-border-color-strong) !important;
 }
 
 .preset-info {
@@ -976,9 +980,9 @@ function handleSelect(item: SizeOption) {
 
 :global(html.dark) .preset-tags .tag,
 :global(.dark) .preset-tags .tag {
-  background-color: #27272a;
-  border-color: #3f3f46;
-  color: #a1a1aa;
+  background-color: var(--1s-surface-background);
+  border-color: var(--1s-border-color);
+  color: var(--1s-text-color-secondary);
 }
 
 @media (max-width: 768px) {
@@ -1058,8 +1062,8 @@ function handleSelect(item: SizeOption) {
 
 :global(html.dark) .ratio-dialog-result,
 :global(.dark) .ratio-dialog-result {
-  background-color: #1e1e22;
-  border-color: #27272a;
+  background-color: var(--1s-elevated-background);
+  border-color: var(--1s-border-color);
 }
 
 .result-display {

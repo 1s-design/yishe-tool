@@ -1,143 +1,158 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="source" title="分子结构">
-      <operate-form-item>
-        <template #name>输入类型</template>
-        <template #content>
-          <el-select
-            v-model="currentOperatingCanvasChild.inputType"
-            size="small"
-          >
-            <el-option label="SMILES" value="smiles"></el-option>
-            <el-option label="MolBlock" value="molblock"></el-option>
-          </el-select>
-        </template>
-      </operate-form-item>
-
-      <operate-form-item>
-        <template #name>源码</template>
-        <template #content>
-          <div class="molecule-source-editor">
-            <div class="molecule-source-editor__toolbar">
-              <el-popover
-                v-model:visible="aiPopoverVisible"
-                trigger="click"
-                placement="right-start"
-                width="340"
-              >
-                <div class="molecule-ai-popover">
-                  <el-input
-                    v-model="aiPrompt"
-                    type="textarea"
-                    :rows="4"
-                    resize="vertical"
-                    spellcheck="false"
-                    :disabled="aiLoading"
-                    placeholder="描述分子，例如：阿司匹林、苯环、咖啡因"
-                    @keydown.enter.ctrl="generateMoleculeByAi"
-                  ></el-input>
-
-                  <div class="molecule-ai-popover__actions">
-                    <el-button size="small" @click="aiPopoverVisible = false"
-                      >取消</el-button
-                    >
-                    <el-button
-                      size="small"
-                      type="primary"
-                      :loading="aiLoading"
-                      :disabled="!aiPrompt.trim() || aiLoading"
-                      @click="generateMoleculeByAi"
-                    >
-                      确定
-                    </el-button>
-                  </div>
-
-                  <div v-if="aiError" class="molecule-error">{{ aiError }}</div>
-                </div>
-
-                <template #reference>
-                  <el-button size="small" type="primary" plain
-                    >AI 生成 SMILES</el-button
-                  >
-                </template>
-              </el-popover>
-            </div>
-
-            <el-input
-              v-model="currentOperatingCanvasChild.source"
-              type="textarea"
-              :rows="6"
-              resize="vertical"
-              spellcheck="false"
-              :placeholder="
-                currentOperatingCanvasChild.inputType === 'molblock'
-                  ? '粘贴 MolBlock 格式...'
-                  : 'c1ccccc1 (苯)'
-              "
-              class="molecule-source-editor__input"
-            ></el-input>
-          </div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
-
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      ></operateItemSize>
-    </el-collapse-item>
-
-    <el-collapse-item name="style" title="样式">
-      <operateItemBackgroundColor
-        v-model="currentOperatingCanvasChild.backgroundColor"
-      ></operateItemBackgroundColor>
-    </el-collapse-item>
-
-    <el-collapse-item name="config" title="Draw Options">
-      <operate-form-item>
-        <template #name>渲染配置</template>
-        <template #content>
-          <el-button size="small" type="primary" @click="openConfigDialog"
-            >编辑配置</el-button
-          >
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
-
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup
-        v-model="currentOperatingCanvasChild"
-      ></operateItemCommonGroup>
-    </el-collapse-item>
-  </el-collapse>
-
-  <el-dialog
-    v-model="configDialogVisible"
-    title="编辑 RDKit Draw Options"
-    fullscreen
-    append-to-body
-    destroy-on-close
-    class="molecule-config-dialog"
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
   >
-    <div class="molecule-config-editor">
-      <el-input
-        v-model="configText"
-        type="textarea"
-        spellcheck="false"
-        resize="none"
-        placeholder='{"width":350,"height":350}'
-      ></el-input>
-      <div v-if="configError" class="molecule-error">{{ configError }}</div>
-    </div>
+    <AccordionItem value="source">
+      <AccordionTrigger>分子结构</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>输入类型</template>
+          <template #content>
+            <Select v-model="currentOperatingCanvasChild.inputType">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="smiles">SMILES</SelectItem>
+                <SelectItem value="molblock">MolBlock</SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
 
-    <template #footer>
-      <el-button @click="configDialogVisible = false">取消</el-button>
-      <el-button @click="formatConfigText">格式化</el-button>
-      <el-button type="primary" @click="confirmConfigText">应用配置</el-button>
-    </template>
-  </el-dialog>
+        <operate-form-item>
+          <template #name>源码</template>
+          <template #content>
+            <div class="molecule-source-editor">
+              <div class="molecule-source-editor__toolbar">
+                <Popover v-model:open="aiPopoverVisible">
+                  <PopoverTrigger as-child>
+                    <Button size="sm" variant="outline" @click.stop
+                      >AI 生成 SMILES</Button
+                    >
+                  </PopoverTrigger>
+                  <PopoverContent side="right" align="start" class="w-[340px]">
+                    <div class="molecule-ai-popover">
+                      <Textarea
+                        v-model="aiPrompt"
+                        :rows="4"
+                        class="resize-y"
+                        spellcheck="false"
+                        :disabled="aiLoading"
+                        placeholder="描述分子，例如：阿司匹林、苯环、咖啡因"
+                        @keydown.enter.ctrl="generateMoleculeByAi"
+                      ></Textarea>
+
+                      <div class="molecule-ai-popover__actions">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          @click="aiPopoverVisible = false"
+                          >取消</Button
+                        >
+                        <Button
+                          size="sm"
+                          variant="default"
+                          :disabled="!aiPrompt.trim() || aiLoading"
+                          @click="generateMoleculeByAi"
+                        >
+                          确定
+                        </Button>
+                      </div>
+
+                      <div v-if="aiError" class="molecule-error">{{ aiError }}</div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <Textarea
+                v-model="currentOperatingCanvasChild.source"
+                :rows="6"
+                class="molecule-source-editor__input resize-y"
+                spellcheck="false"
+                :placeholder="
+                  currentOperatingCanvasChild.inputType === 'molblock'
+                    ? '粘贴 MolBlock 格式...'
+                    : 'c1ccccc1 (苯)'
+                "
+              ></Textarea>
+            </div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        ></operateItemSize>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="style">
+      <AccordionTrigger>样式</AccordionTrigger>
+      <AccordionContent>
+        <operateItemBackgroundColor
+          v-model="currentOperatingCanvasChild.backgroundColor"
+        ></operateItemBackgroundColor>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="config">
+      <AccordionTrigger>Draw Options</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>渲染配置</template>
+          <template #content>
+            <Button size="sm" variant="default" @click="openConfigDialog"
+              >编辑配置</Button
+            >
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup
+          v-model="currentOperatingCanvasChild"
+        ></operateItemCommonGroup>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
+
+  <Dialog :modal="false" v-model:open="configDialogVisible">
+    <DialogContent
+      class="molecule-config-dialog max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none grid-rows-[auto_1fr_auto]"
+    >
+      <DialogHeader>
+        <DialogTitle>编辑 RDKit Draw Options</DialogTitle>
+      </DialogHeader>
+      <div class="molecule-config-editor">
+        <Textarea
+          v-model="configText"
+          class="molecule-config-editor__input resize-none"
+          spellcheck="false"
+          placeholder='{"width":350,"height":350}'
+        ></Textarea>
+        <div v-if="configError" class="molecule-error">{{ configError }}</div>
+      </div>
+
+      <DialogFooter>
+        <Button size="sm" variant="outline" @click="configDialogVisible = false">取消</Button>
+        <Button size="sm" variant="outline" @click="formatConfigText">格式化</Button>
+        <Button size="sm" variant="default" @click="confirmConfigText">应用配置</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -145,6 +160,33 @@ import { ref, watch } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { currentOperatingCanvasChild } from "../index.tsx";
 import { generateMoleculeSmiles } from "../children/aiMoleculeService";
 
@@ -330,10 +372,6 @@ watch(
   display: flex;
   justify-content: flex-end;
   gap: 4px;
-
-  :deep(.el-button + .el-button) {
-    margin-left: 0;
-  }
 }
 
 .molecule-error {
@@ -342,22 +380,21 @@ watch(
   line-height: 1.4;
 }
 
-.molecule-source-editor__input :deep(.el-textarea__inner) {
+.molecule-source-editor__input {
   font-family: Consolas, Monaco, "Courier New", monospace;
   font-size: 13px;
   line-height: 1.55;
 }
 
 .molecule-config-editor {
-  height: calc(100vh - 142px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-height: 0;
 }
 
-.molecule-config-editor :deep(.el-textarea),
-.molecule-config-editor :deep(.el-textarea__inner) {
+.molecule-config-editor__input {
   flex: 1;
   min-height: 0;
   height: 100%;

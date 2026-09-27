@@ -6,16 +6,14 @@
     :infinite-scroll-disabled="disabled"
   >
     <div class="designiy-text-sticker-item" v-for="item in data">
-      <el-image
+      <img
         @load="load($event, item)"
         :src="item.preview_img"
-        style="width: 100%; height: 100%; padding: 10px"
-        fit="contain"
-        lazy
-      >
-        <template #placeholder> </template>
-        <template #error> </template>
-      </el-image>
+        class="w-full h-full object-contain"
+        style="padding: 10px"
+        loading="lazy"
+        alt=""
+      />
     </div>
   </div>
 </template>

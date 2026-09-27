@@ -7,7 +7,7 @@
     >
       <!-- 关闭按钮 -->
       <button class="crop-guide-overlay__close" @click="showCropGuideModal = false">
-        <el-icon :size="20"><Close /></el-icon>
+        <X class="w-5 h-5" />
       </button>
 
       <!-- 主体 -->
@@ -17,24 +17,24 @@
           <div class="crop-guide-fullscreen__preview-header">
             <span class="crop-guide-fullscreen__preview-title">画布预览</span>
             <div class="crop-guide-fullscreen__canvas-size">
-              <el-input-number
-                v-model="canvasWidthInput"
+              <Input
+                type="number"
+                :model-value="canvasWidthInput"
                 :min="100"
                 :max="10000"
                 :step="100"
-                size="small"
-                controls-position="right"
-                @change="onCanvasSizeChange"
+                class="h-6 text-[11px] w-24"
+                @update:model-value="v => { canvasWidthInput = Number(v); onCanvasSizeChange(); }"
               />
               <span class="crop-guide-fullscreen__canvas-x">×</span>
-              <el-input-number
-                v-model="canvasHeightInput"
+              <Input
+                type="number"
+                :model-value="canvasHeightInput"
                 :min="100"
                 :max="10000"
                 :step="100"
-                size="small"
-                controls-position="right"
-                @change="onCanvasSizeChange"
+                class="h-6 text-[11px] w-24"
+                @update:model-value="v => { canvasHeightInput = Number(v); onCanvasSizeChange(); }"
               />
               <span class="crop-guide-fullscreen__canvas-unit">px</span>
             </div>
@@ -74,9 +74,9 @@
         <!-- 右侧：设置面板 -->
         <div class="crop-guide-fullscreen__panel">
           <div class="crop-guide-fullscreen__panel-header">
-            <el-button size="small" type="primary" @click="showCropGuideModal = false">
+            <Button size="sm" variant="default" @click="showCropGuideModal = false">
               完成
-            </el-button>
+            </Button>
             <span class="crop-guide-fullscreen__panel-title">裁剪参考线设置</span>
           </div>
 
@@ -84,33 +84,32 @@
             <!-- 开关 -->
             <div class="crop-guide-modal__toggles">
               <div class="crop-guide-modal__toggle-row">
-                <el-switch v-model="showCropGuides" size="small" />
+                <Switch v-model:checked="showCropGuides" />
                 <span class="crop-guide-modal__toggle-label">显示裁切框</span>
               </div>
               <div class="crop-guide-modal__toggle-row">
-                <el-switch v-model="showSafeZone" size="small" />
+                <Switch v-model:checked="showSafeZone" />
                 <span class="crop-guide-modal__toggle-label">显示安全区域</span>
               </div>
               <div class="crop-guide-modal__toggle-row">
-                <el-switch v-model="showCropLabels" size="small" />
+                <Switch v-model:checked="showCropLabels" />
                 <span class="crop-guide-modal__toggle-label">显示标签</span>
               </div>
             </div>
 
-            <el-divider />
+            <Separator class="my-3" />
 
             <!-- 当前参考线列表 -->
             <div class="crop-guide-modal__section">
               <div class="crop-guide-modal__section-title">
                 当前参考线
-                <el-tag
+                <Badge
                   v-if="cropGuides.length > 0"
-                  size="small"
-                  type="info"
+                  variant="secondary"
                   style="margin-left: 8px"
                 >
                   {{ cropGuides.length }}
-                </el-tag>
+                </Badge>
               </div>
               <div v-if="cropGuides.length === 0" class="crop-guide-modal__empty">
                 暂无参考线，请从下方添加。添加多个比例后会自动计算安全区域。
@@ -129,7 +128,7 @@
               </div>
             </div>
 
-            <el-divider />
+            <Separator class="my-3" />
 
             <!-- 安全区域信息 -->
             <div v-if="showSafeZone" class="crop-guide-modal__section">
@@ -155,7 +154,7 @@
                   </span>
                 </div>
                 <div class="crop-guide-modal__safezone-hint">
-                  <el-icon><InfoFilled /></el-icon>
+                  <Info class="w-3.5 h-3.5 shrink-0" />
                   <span v-if="hasPixelConstraints">
                     安全区域同时满足比例和像素约束，主要内容应放在该区域内以确保所有尺寸下都完整显示。
                   </span>
@@ -168,7 +167,7 @@
                 v-else-if="cropGuides.filter(g => g.visible).length > 1"
                 class="crop-guide-modal__safezone-warn"
               >
-                <el-icon><WarningFilled /></el-icon>
+                <AlertTriangle class="w-3.5 h-3.5 shrink-0" />
                 <span v-if="pixelConstraintFulfilled === false">
                   当前画布尺寸不满足像素约束要求，请增大画布尺寸。
                 </span>
@@ -180,7 +179,7 @@
                 v-else-if="cropGuides.filter(g => g.visible).length <= 1"
                 class="crop-guide-modal__safezone-hint"
               >
-                <el-icon><InfoFilled /></el-icon>
+                <Info class="w-3.5 h-3.5 shrink-0" />
                 需要至少两个可见的参考线才能计算安全区域。
               </div>
             </div>
@@ -208,7 +207,7 @@
                       {{ (currentSafeAreaRatio * 100).toFixed(1) }}%
                     </span>
                   </div>
-                  <el-icon class="crop-guide-modal__optimal-arrow"><Right /></el-icon>
+                  <ChevronRight class="crop-guide-modal__optimal-arrow" />
                   <div class="crop-guide-modal__optimal-stat">
                     <span class="crop-guide-modal__optimal-label">最优安全区</span>
                     <span class="crop-guide-modal__optimal-value optimal">
@@ -216,23 +215,23 @@
                     </span>
                   </div>
                 </div>
-                <el-button
+                <Button
                   v-if="!isUsingOptimalRatio"
-                  type="primary"
-                  size="small"
+                  variant="default"
+                  size="sm"
                   class="crop-guide-modal__optimal-btn"
                   @click="applyOptimalRatio"
                 >
                   调整画布到最优比例
-                </el-button>
+                </Button>
                 <div v-else class="crop-guide-modal__optimal-done">
-                  <el-icon><Check /></el-icon>
+                  <Check class="w-3.5 h-3.5" />
                   已是最优比例
                 </div>
               </div>
             </div>
 
-            <el-divider />
+            <Separator class="my-3" />
 
             <!-- 添加参考线 -->
             <div class="crop-guide-modal__section">
@@ -242,16 +241,17 @@
               <div class="crop-guide-modal__quick-add">
                 <div class="crop-guide-modal__quick-title">常用比例</div>
                 <div class="crop-guide-modal__quick-grid">
-                  <el-button
+                  <Button
                     v-for="preset in quickPresets"
                     :key="preset.id"
-                    size="small"
-                    round
+                    size="sm"
+                    variant="outline"
+                    class="rounded-full"
                     :disabled="isAdded(preset.id)"
                     @click="addCropGuide(preset)"
                   >
                     {{ preset.name }}
-                  </el-button>
+                  </Button>
                 </div>
               </div>
 
@@ -259,16 +259,17 @@
               <div class="crop-guide-modal__quick-add">
                 <div class="crop-guide-modal__quick-title">常用像素尺寸 (px)</div>
                 <div class="crop-guide-modal__quick-grid">
-                  <el-button
+                  <Button
                     v-for="preset in pixelQuickPresets"
                     :key="preset.id"
-                    size="small"
-                    round
+                    size="sm"
+                    variant="outline"
+                    class="rounded-full"
                     :disabled="isAdded(preset.id)"
                     @click="addCropGuide(preset)"
                   >
                     {{ preset.name }}
-                  </el-button>
+                  </Button>
                 </div>
               </div>
 
@@ -283,12 +284,10 @@
                     class="crop-guide-modal__category-header"
                     @click="toggleCategory(category.label)"
                   >
-                    <el-icon
+                    <ArrowRight
                       class="crop-guide-modal__category-icon"
                       :class="{ 'is-expanded': expandedCategories.includes(category.label) }"
-                    >
-                      <ArrowRight />
-                    </el-icon>
+                    />
                     <span class="crop-guide-modal__category-label">{{ category.label }}</span>
                     <span class="crop-guide-modal__category-desc">{{ category.description }}</span>
                   </div>
@@ -296,18 +295,18 @@
                     v-if="expandedCategories.includes(category.label)"
                     class="crop-guide-modal__category-grid"
                   >
-                    <el-button
+                    <Button
                       v-for="preset in category.presets"
                       :key="preset.id"
-                      size="small"
-                      :type="isAdded(preset.id) ? 'info' : 'default'"
+                      size="sm"
+                      :variant="isAdded(preset.id) ? 'secondary' : 'default'"
                       :disabled="isAdded(preset.id)"
-                      round
+                      class="rounded-full"
                       @click="addCropGuide(preset)"
                     >
                       {{ preset.name }}
                       <span class="crop-guide-modal__preset-ratio">{{ preset.display }}</span>
-                    </el-button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -316,39 +315,39 @@
               <div class="crop-guide-modal__custom">
                 <div class="crop-guide-modal__custom-title">自定义</div>
                 <div class="crop-guide-modal__custom-row">
-                  <el-input-number
-                    v-model="customWidth"
+                  <Input
+                    type="number"
+                    :model-value="customWidth"
                     :min="1"
                     :max="9999"
-                    size="small"
-                    controls-position="right"
+                    class="h-6 text-[11px] w-24"
                     placeholder="宽"
+                    @update:model-value="v => (customWidth = Number(v))"
                   />
                   <span class="crop-guide-modal__custom-x">:</span>
-                  <el-input-number
-                    v-model="customHeight"
+                  <Input
+                    type="number"
+                    :model-value="customHeight"
                     :min="1"
                     :max="9999"
-                    size="small"
-                    controls-position="right"
+                    class="h-6 text-[11px] w-24"
                     placeholder="高"
+                    @update:model-value="v => (customHeight = Number(v))"
                   />
-                  <el-button
-                    size="small"
-                    type="primary"
+                  <Button
+                    size="sm"
+                    variant="default"
                     :disabled="!customWidth || !customHeight"
                     @click="addCustom"
                   >
                     添加
-                  </el-button>
+                  </Button>
                 </div>
                 <div class="crop-guide-modal__custom-row">
-                  <el-input
+                  <Input
                     v-model="customName"
-                    size="small"
+                    class="h-6 text-[11px] flex-1"
                     placeholder="自定义名称 (可选)"
-                    clearable
-                    style="flex: 1"
                   />
                 </div>
               </div>
@@ -362,7 +361,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, type CSSProperties } from 'vue'
-import { WarningFilled, InfoFilled, ArrowRight, Right, Check, Close } from '@element-plus/icons-vue'
+import { AlertTriangle, ArrowRight, Check, ChevronRight, Info, X } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 import CropPresetItem from './CropPresetItem.vue'
 import {
   cropPresets,

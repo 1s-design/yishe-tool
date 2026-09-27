@@ -132,7 +132,7 @@
     </div>
 
     <!-- 创建 / 编辑弹窗 -->
-    <Dialog v-model:open="showFormModal">
+    <Dialog :modal="false" v-model:open="showFormModal">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{{ isEdit ? '编辑文案句子' : '添加文案句子' }}</DialogTitle>

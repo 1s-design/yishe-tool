@@ -2,30 +2,30 @@
   <div class="sticker-selector">
     <div class="search-wrapper">
       <div class="search-input-row">
-        <el-input
-          v-model="searchText"
-          placeholder="搜索贴纸名称或编码"
-          clearable
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-button
+        <div class="relative w-full">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            v-model="searchText"
+            placeholder="搜索贴纸名称或编码"
+            class="pl-8"
+            @keyup.enter="handleSearch"
+          />
+        </div>
+        <Button
           @click="handleSearch"
-          type="primary"
-          :loading="loading"
+          :disabled="loading"
           class="search-btn"
         >
-          搜索
-        </el-button>
+          <span v-if="loading">加载中...</span>
+          <span v-else>搜索</span>
+        </Button>
       </div>
     </div>
 
-    <div class="sticker-list" v-loading="loading" element-loading-text="加载中...">
-      <div v-if="!loading && list.length === 0" class="empty">
-        <el-icon :size="48" class="empty-icon"><Picture /></el-icon>
+    <div class="sticker-list">
+      <div v-if="loading" class="loading-state">加载中...</div>
+      <div v-else-if="list.length === 0" class="empty">
+        <Picture class="empty-icon w-12 h-12" />
         <div class="empty-text">暂无贴纸</div>
       </div>
       <div v-else class="list-grid">
@@ -49,24 +49,37 @@
     </div>
 
     <div class="pagination-wrapper" v-if="total > 0">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 30, 50]"
-        :total="total"
-        layout="prev, pager, next"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        small
-      />
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="currentPage <= 1"
+          @click="handleCurrentChange(currentPage - 1)"
+        >
+          上一页
+        </Button>
+        <div class="text-xs text-muted-foreground">
+          {{ currentPage }} / {{ Math.max(1, Math.ceil(total / pageSize)) }}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="currentPage >= Math.max(1, Math.ceil(total / pageSize))"
+          @click="handleCurrentChange(currentPage + 1)"
+        >
+          下一页
+        </Button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
-import { Search, Picture } from '@element-plus/icons-vue'
+import { Search, Image as Picture } from 'lucide-vue-next'
 import { getStickerList } from '@/api'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const emit = defineEmits(['select'])
 
@@ -173,7 +186,7 @@ getList()
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: var(--el-color-primary);
+    border-color: var(--1s-accent-color);
   }
 }
 
@@ -241,6 +254,13 @@ getList()
     color: var(--1s-text-color-secondary, #999);
     font-size: 14px;
   }
+}
+
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--1s-text-color-secondary, #999);
+  font-size: 14px;
 }
 
 .pagination-wrapper {

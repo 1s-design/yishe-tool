@@ -1,65 +1,94 @@
 <template>
-  <a-modal
-    v-model:open="visible"
-    :centered="true"
-    :destroyOnClose="true"
-    width="800px"
-    title="选择句子"
-    :footer="null"
-  >
-    <div class="sentence-selector">
-      <!-- 搜索框 -->
-      <div class="mb-4">
-        <el-input
-          v-model="searchText"
-          placeholder="搜索句子内容"
-          clearable
-          @input="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
-
-      <!-- 句子列表 -->
-      <div class="sentence-list max-h-[400px] overflow-y-auto">
-        <div
-          v-for="item in filteredList"
-          :key="item.id"
-          class="sentence-item p-3 border border-gray-200 rounded-lg mb-2 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
-          @click="selectSentence(item)"
-        >
-          <div class="text-lg font-medium text-gray-800 mb-1">
-            {{ item.content }}
+  <Dialog :modal="false" v-model:open="visible">
+    <DialogContent class="max-w-[800px] w-[800px]">
+      <DialogHeader>
+        <DialogTitle>选择句子</DialogTitle>
+      </DialogHeader>
+      <div class="sentence-selector">
+        <!-- 搜索框 -->
+        <div class="mb-4">
+          <div class="relative">
+            <Search class="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              v-model="searchText"
+              placeholder="搜索句子内容"
+              class="pl-7"
+              @input="handleSearch"
+            />
           </div>
-          <div v-if="item.description" class="text-sm text-gray-600">
-            {{ item.description }}
+        </div>
+
+        <!-- 句子列表 -->
+        <div class="sentence-list max-h-[400px] overflow-y-auto">
+          <div
+            v-for="item in filteredList"
+            :key="item.id"
+            class="sentence-item p-3 border border-gray-200 rounded-lg mb-2 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            @click="selectSentence(item)"
+          >
+            <div class="text-lg font-medium text-gray-800 mb-1">
+              {{ item.content }}
+            </div>
+            <div v-if="item.description" class="text-sm text-gray-600">
+              {{ item.description }}
+            </div>
+          </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="mt-4 flex items-center justify-between gap-2">
+          <div class="text-xs text-muted-foreground">
+            共 {{ total }} 条
+          </div>
+          <div class="flex items-center gap-2">
+            <Select :model-value="String(pageSize)" @update:model-value="v => handleSizeChange(Number(v))">
+              <SelectTrigger class="h-6 text-[11px] w-[90px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="s in [10, 20, 30]" :key="s" :value="String(s)">
+                  {{ s }} 条/页
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              :disabled="currentPage <= 1"
+              @click="handleCurrentChange(currentPage - 1)"
+            >
+              上一页
+            </Button>
+            <span class="text-xs text-muted-foreground">{{ currentPage }} / {{ Math.max(1, Math.ceil(total / pageSize)) }}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              :disabled="currentPage >= Math.max(1, Math.ceil(total / pageSize))"
+              @click="handleCurrentChange(currentPage + 1)"
+            >
+              下一页
+            </Button>
           </div>
         </div>
       </div>
-
-      <!-- 分页 -->
-      <div class="mt-4 flex justify-end">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 30]"
-          :total="total"
-          layout="total, sizes, prev, pager, next"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
-  </a-modal>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { Search } from '@element-plus/icons-vue';
+import { Search } from 'lucide-vue-next';
 import Api from '@/api';
 import { message } from '@/common/message';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 const props = defineProps<{
   visible: boolean;

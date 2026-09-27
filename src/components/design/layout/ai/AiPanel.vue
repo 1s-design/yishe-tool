@@ -1110,7 +1110,7 @@ function parseResult(content: string) {
 
 /* Empty state */
 .ai-panel-empty-icon {
-  background: linear-gradient(135deg, rgba(11, 87, 208, 0.08), var(--1s-control-surface-muted));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--1s-accent-color) 8%, transparent), var(--1s-control-surface-muted));
   border-color: var(--1s-border-color);
   color: var(--1s-accent-color);
 }
@@ -1129,7 +1129,7 @@ function parseResult(content: string) {
   box-shadow: var(--1s-shadow-xs);
 }
 .ai-panel-quick-dot {
-  background-color: rgba(11, 87, 208, 0.4);
+  background-color: color-mix(in srgb, var(--1s-accent-color) 40%, transparent);
 }
 
 /* Text colors */
@@ -1210,7 +1210,7 @@ function parseResult(content: string) {
 }
 .ai-panel-option-btn {
   border-color: rgba(245, 158, 11, 0.4);
-  background-color: #ffffff;
+  background-color: var(--1s-control-surface-background);
   color: #78350f;
 }
 .ai-panel-option-btn:hover {
@@ -1218,13 +1218,13 @@ function parseResult(content: string) {
 }
 .ai-panel-input {
   border-color: var(--1s-border-color);
-  background-color: #ffffff;
+  background-color: var(--1s-control-surface-background);
   color: var(--1s-text-color);
 }
 .ai-panel-input:focus {
   outline: none;
   border-color: var(--1s-accent-color);
-  box-shadow: 0 0 0 2px rgba(11, 87, 208, 0.15);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-accent-color) 15%, transparent);
 }
 .ai-panel-send-btn {
   background-color: var(--1s-accent-color);
@@ -1324,7 +1324,7 @@ function parseResult(content: string) {
 }
 .ai-input-box:focus-within {
   border-color: var(--1s-accent-color);
-  box-shadow: 0 0 0 2px rgba(11, 87, 208, 0.12);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-accent-color) 12%, transparent);
 }
 :global(html.dark) .ai-input-box:focus-within,
 :global(.dark) .ai-input-box:focus-within,

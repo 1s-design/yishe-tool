@@ -3,39 +3,31 @@
     <div class="menu">
       <div class="flex justify-between w-full">
         <div style="flex: 1"></div>
-        <el-button @click="refresh" link type="primary">
-          <el-icon><Refresh /></el-icon>
+        <Button variant="link" size="sm" @click="refresh">
+          <RefreshCw class="h-3.5 w-3.5 mr-1" />
           刷新
-        </el-button>
+        </Button>
       </div>
       <div class="search">
-        <el-input
-          v-model="stickerSearchQueryParams.searchText"
-          placeholder="搜索贴纸名称或编码"
-          clearable
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon>
-              <Search />
-            </el-icon>
-          </template>
-          <template #suffix>
-            <el-button
-              @click="handleSearch"
-              type="primary"
-              size="small"
-              :loading="loading"
-            >
-              搜索
-            </el-button>
-          </template>
-        </el-input>
+        <div class="flex items-center gap-1 w-full">
+          <div class="relative flex-1">
+            <Search class="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              v-model="stickerSearchQueryParams.searchText"
+              placeholder="搜索贴纸名称或编码"
+              class="pl-7 h-7"
+              @keyup.enter="handleSearch"
+            />
+          </div>
+          <Button size="sm" class="h-7" :disabled="loading" @click="handleSearch">
+            搜索
+          </Button>
+        </div>
       </div>
     </div>
     <div class="scroll-list" :class="{ 'loading-wave': loading }">
       <div v-if="!loading && list.length === 0" class="empty">
-        <el-icon :size="48" class="empty-icon"><Picture /></el-icon>
+        <ImageIcon :size="48" class="empty-icon" />
         <div class="empty-text">暂无贴纸</div>
         <div class="empty-hint">试试其他搜索关键词</div>
       </div>
@@ -57,31 +49,30 @@
           <sticker-popover :stickerInfo="item">
             <div class="bar">
               <div class="title text-ellipsis">{{ item.name || "未命名" }}</div>
-              <el-icon>
-                <ArrowRight />
-              </el-icon>
+              <ArrowRight class="h-3.5 w-3.5" />
             </div>
           </sticker-popover>
         </div>
       </div>
     </div>
     <div class="pagination-wrapper" v-if="total > 0">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 30, 50]"
-        :total="total"
-        layout="prev, pager, next"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        small
-      />
+      <div class="flex items-center gap-1">
+        <Button variant="outline" size="icon-xs" :disabled="currentPage <= 1" @click="handleCurrentChange(currentPage - 1)">
+          ‹
+        </Button>
+        <span class="text-[11px] text-muted-foreground px-1">{{ currentPage }} / {{ Math.max(1, Math.ceil(total / pageSize)) }}</span>
+        <Button variant="outline" size="icon-xs" :disabled="currentPage >= Math.ceil(total / pageSize)" @click="handleCurrentChange(currentPage + 1)">
+          ›
+        </Button>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="tsx">
 import { ref, watch } from "vue";
-import { Search, ArrowRight, Refresh, Picture } from "@element-plus/icons-vue";
+import { Search, ArrowRight, RefreshCw, Image as ImageIcon } from "lucide-vue-next";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getStickerList } from "@/api";
 import stickerPopover from "./stickerPopover.vue";
 import { currentModelController } from "@/components/design/store";
@@ -261,7 +252,7 @@ getList();
   transition: border-color 0.2s, box-shadow 0.2s;
 
   &:hover {
-    border-color: var(--el-color-primary);
+    border-color: hsl(var(--primary));
     box-shadow: var(--1s-shadow-sm);
   }
 }
@@ -326,12 +317,6 @@ getList();
     cursor: pointer;
   }
 
-  .el-icon {
-    height: 1em;
-    line-height: 1em;
-    flex-shrink: 0;
-  }
-
   .title {
     flex: 1;
     min-width: 0;
@@ -374,38 +359,6 @@ getList();
   border-top: 1px solid var(--1s-border-color);
   background: var(--1s-panel-background);
 
-  :deep(.el-pagination) {
-    justify-content: center;
-
-    .el-pagination__sizes,
-    .el-pagination__total {
-      display: none;
-    }
-
-    .btn-prev,
-    .btn-next {
-      margin: 0 4px;
-    }
-
-    .el-pager {
-      li {
-        min-width: 28px;
-        height: 28px;
-        line-height: 28px;
-        font-size: 12px;
-        border-radius: 4px;
-
-        &.is-active {
-          background: var(--el-color-primary);
-          color: #fff;
-        }
-
-        &:hover {
-          color: var(--el-color-primary);
-        }
-      }
-    }
-  }
 }
 
 </style>

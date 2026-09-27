@@ -1,85 +1,102 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="chartType" title="图表类型">
-      <operate-form-item>
-        <template #name>图表类型</template>
-        <template #content>
-          <el-select
-            v-model="currentOperatingCanvasChild.chartType"
-            size="small"
-            placeholder="选择图表类型"
-          >
-            <el-option
-              v-for="item in chartTypes"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
+  >
+    <AccordionItem value="chartType">
+      <AccordionTrigger>图表类型</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>图表类型</template>
+          <template #content>
+            <Select v-model="currentOperatingCanvasChild.chartType">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue placeholder="选择图表类型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="item in chartTypes"
+                  :key="item.value"
+                  :value="item.value"
+                >
+                  {{ item.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="data" title="数据">
-      <operate-form-item>
-        <template #name>数据 (JSON)</template>
-        <template #content>
-          <el-input
-            v-model="dataJson"
-            type="textarea"
-            :rows="10"
-            resize="vertical"
-            spellcheck="false"
-            placeholder='{
+    <AccordionItem value="data">
+      <AccordionTrigger>数据</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>数据 (JSON)</template>
+          <template #content>
+            <Textarea
+              v-model="dataJson"
+              :rows="10"
+              class="chartjs-json-input resize-vertical"
+              spellcheck="false"
+              placeholder='{
   "labels": ["A", "B", "C"],
   "datasets": [{
     "label": "Sample",
     "data": [10, 20, 30]
   }]
 }'
-            class="chartjs-json-input"
-          ></el-input>
-          <div v-if="dataError" class="chartjs-error">{{ dataError }}</div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+            />
+            <div v-if="dataError" class="chartjs-error">{{ dataError }}</div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="options" title="配置">
-      <operate-form-item>
-        <template #name>配置 (JSON)</template>
-        <template #content>
-          <el-input
-            v-model="optionsJson"
-            type="textarea"
-            :rows="8"
-            resize="vertical"
-            spellcheck="false"
-            placeholder='{"plugins": {"legend": {"position": "top"}}}'
-            class="chartjs-json-input"
-          ></el-input>
-          <div v-if="optionsError" class="chartjs-error">
-            {{ optionsError }}
-          </div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+    <AccordionItem value="options">
+      <AccordionTrigger>配置</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>配置 (JSON)</template>
+          <template #content>
+            <Textarea
+              v-model="optionsJson"
+              :rows="8"
+              class="chartjs-json-input resize-vertical"
+              spellcheck="false"
+              placeholder='{"plugins": {"legend": {"position": "top"}}}'
+            />
+            <div v-if="optionsError" class="chartjs-error">
+              {{ optionsError }}
+            </div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      />
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        />
 
-      <operateItemBackgroundColor
-        v-model="currentOperatingCanvasChild.backgroundColor"
-      />
-    </el-collapse-item>
+        <operateItemBackgroundColor
+          v-model="currentOperatingCanvasChild.backgroundColor"
+        />
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-    </el-collapse-item>
-  </el-collapse>
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -87,6 +104,20 @@ import { ref, computed } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { currentOperatingCanvasChild } from "../index.tsx";
 import { CHART_TYPES } from "../children/chartjs.tsx";
 
@@ -144,7 +175,7 @@ const optionsJson = computed({
 </script>
 
 <style scoped>
-.chartjs-json-input :deep(.el-textarea__inner) {
+.chartjs-json-input {
   font-family: Consolas, Monaco, "Courier New", monospace;
   font-size: 13px;
   line-height: 1.55;

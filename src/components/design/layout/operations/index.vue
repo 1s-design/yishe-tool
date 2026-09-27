@@ -43,43 +43,50 @@
           </label>
           <div class="ops-param__desc" v-if="param.description">{{ param.description }}</div>
 
-          <el-select
+          <Select
             v-if="param.type === 'select'"
-            v-model="formValues[activeOp.id][param.name]"
-            size="default"
-            style="width: 100%"
+            :model-value="formValues[activeOp.id][param.name] === '' || formValues[activeOp.id][param.name] === undefined ? '__empty__' : String(formValues[activeOp.id][param.name])"
+            @update:model-value="v => formValues[activeOp.id][param.name] = (v === '__empty__' ? '' : v)"
           >
-            <el-option
-              v-for="opt in param.options"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
+            <SelectTrigger class="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="opt in param.options"
+                :key="opt.value"
+                :value="opt.value === '' ? '__empty__' : String(opt.value)"
+              >
+                {{ opt.label }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
-          <el-color-picker
+          <input
             v-else-if="param.type === 'color'"
             v-model="formValues[activeOp.id][param.name]"
+            type="color"
+            class="h-6 w-8 cursor-pointer rounded border border-input bg-transparent p-0"
           />
 
-          <el-switch
+          <Switch
             v-else-if="param.type === 'boolean'"
-            v-model="formValues[activeOp.id][param.name]"
+            v-model:checked="formValues[activeOp.id][param.name]"
           />
 
-          <el-input-number
+          <Input
             v-else-if="param.type === 'number'"
-            v-model="formValues[activeOp.id][param.name]"
-            size="default"
+            type="number"
+            :model-value="formValues[activeOp.id][param.name]"
             :min="param.min"
             :max="param.max"
-            style="width: 100%"
+            class="w-full"
+            @update:model-value="v => formValues[activeOp.id][param.name] = Number(v)"
           />
 
-          <el-input
+          <Input
             v-else
             v-model="formValues[activeOp.id][param.name]"
-            size="default"
             :placeholder="param.description"
           />
         </div>
@@ -93,14 +100,14 @@
         >
           {{ lastResult.message }}
         </div>
-        <el-button
-          type="primary"
-          size="large"
-          :loading="executing"
+        <Button
+          variant="default"
+          size="lg"
+          :disabled="executing"
           @click="handleExecute(activeOp)"
         >
           执行操作
-        </el-button>
+        </Button>
       </div>
     </div>
   </div>
@@ -117,6 +124,16 @@ import {
   createDesignOperationContext,
 } from '@/operations'
 import type { OperationListItem, OperationResult } from '@/operations'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 
 const operations = ref<OperationListItem[]>([])
 const groups = ref<string[]>([])
@@ -329,7 +346,7 @@ async function handleExecute(op: OperationListItem) {
   }
 
   &--fail {
-    background: #fff2f0;
+    background: color-mix(in srgb, var(--el-color-danger) 10%, transparent);
     border: 1px solid #ffccc7;
     color: #ff4d4f;
   }

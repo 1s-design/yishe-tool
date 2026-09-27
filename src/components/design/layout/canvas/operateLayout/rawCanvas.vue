@@ -1,21 +1,33 @@
 <template>
-    <el-collapse v-model="rawCanvasCollapseActives">
-        <el-collapse-item name="1" title="基础属性">
+    <Accordion type="multiple" :model-value="rawCanvasCollapseActives" @update:model-value="v => rawCanvasCollapseActives = v as string[]">
+        <AccordionItem value="1">
+            <AccordionTrigger>基础属性</AccordionTrigger>
+            <AccordionContent>
             <operateItemSize label="尺寸" v-model:width="currentOperatingCanvasChild.width"
                 v-model:height="currentOperatingCanvasChild.height">
             </operateItemSize>
-        </el-collapse-item>
-        <el-collapse-item name="2">
-            <template #title>
+            </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="2">
+            <AccordionTrigger>
                 <div class="title">通用属性</div>
-            </template>
+            </AccordionTrigger>
+            <AccordionContent>
             <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-        </el-collapse-item>
-    </el-collapse>
+            </AccordionContent>
+        </AccordionItem>
+    </Accordion>
 </template>
     
 <script setup lang='ts'>
 import { ref } from "vue";
+
+import {
+    Accordion,
+    AccordionItem,
+    AccordionTrigger,
+    AccordionContent,
+} from "@/components/ui/accordion";
 
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemCommonGroup from '@/components/design/layout/canvas/operate/commonGroup.vue';

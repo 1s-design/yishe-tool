@@ -1,76 +1,90 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="data" title="节点和边">
-      <operate-form-item>
-        <template #name>布局方向</template>
-        <template #content>
-          <el-select v-model="currentOperatingCanvasChild.rankdir" size="small">
-            <el-option label="从上到下 (TB)" value="TB" />
-            <el-option label="从左到右 (LR)" value="LR" />
-            <el-option label="从下到上 (BT)" value="BT" />
-            <el-option label="从右到左 (RL)" value="RL" />
-          </el-select>
-        </template>
-      </operate-form-item>
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
+  >
+    <AccordionItem value="data">
+      <AccordionTrigger>节点和边</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>布局方向</template>
+          <template #content>
+            <Select v-model="currentOperatingCanvasChild.rankdir">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TB">从上到下 (TB)</SelectItem>
+                <SelectItem value="LR">从左到右 (LR)</SelectItem>
+                <SelectItem value="BT">从下到上 (BT)</SelectItem>
+                <SelectItem value="RL">从右到左 (RL)</SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>节点数据</template>
-        <template #content>
-          <el-input
-            v-model="nodesJson"
-            type="textarea"
-            :rows="6"
-            resize="vertical"
-            spellcheck="false"
-            placeholder='[
+        <operate-form-item>
+          <template #name>节点数据</template>
+          <template #content>
+            <Textarea
+              v-model="nodesJson"
+              :rows="6"
+              class="dagre-graph-json-input resize-vertical"
+              spellcheck="false"
+              placeholder='[
   {"id": "a", "label": "A"},
   {"id": "b", "label": "B"}
 ]'
-            class="dagre-graph-json-input"
-          ></el-input>
-          <div v-if="nodesJsonError" class="dagre-graph-json-error">
-            {{ nodesJsonError }}
-          </div>
-        </template>
-      </operate-form-item>
+            />
+            <div v-if="nodesJsonError" class="dagre-graph-json-error">
+              {{ nodesJsonError }}
+            </div>
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>边数据</template>
-        <template #content>
-          <el-input
-            v-model="edgesJson"
-            type="textarea"
-            :rows="6"
-            resize="vertical"
-            spellcheck="false"
-            placeholder='[
+        <operate-form-item>
+          <template #name>边数据</template>
+          <template #content>
+            <Textarea
+              v-model="edgesJson"
+              :rows="6"
+              class="dagre-graph-json-input resize-vertical"
+              spellcheck="false"
+              placeholder='[
   {"from": "a", "to": "b"}
 ]'
-            class="dagre-graph-json-input"
-          ></el-input>
-          <div v-if="edgesJsonError" class="dagre-graph-json-error">
-            {{ edgesJsonError }}
-          </div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+            />
+            <div v-if="edgesJsonError" class="dagre-graph-json-error">
+              {{ edgesJsonError }}
+            </div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      />
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        />
 
-      <operateItemBackgroundColor
-        v-model="currentOperatingCanvasChild.backgroundColor"
-      />
-    </el-collapse-item>
+        <operateItemBackgroundColor
+          v-model="currentOperatingCanvasChild.backgroundColor"
+        />
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-    </el-collapse-item>
-  </el-collapse>
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -78,6 +92,20 @@ import { ref, computed } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { currentOperatingCanvasChild } from "../index.tsx";
 
 const activeNames = ref(["data", "basic", "common"]);
@@ -135,7 +163,7 @@ const edgesJson = computed({
 </script>
 
 <style scoped>
-.dagre-graph-json-input :deep(.el-textarea__inner) {
+.dagre-graph-json-input {
   font-family: Consolas, Monaco, "Courier New", monospace;
   font-size: 13px;
   line-height: 1.55;

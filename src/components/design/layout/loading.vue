@@ -20,7 +20,7 @@ const loadingTextStyle = {
   '--design-loading-duration': '3s'
 }
 
-const loadingText = publicAppConfig.shortName;
+const loadingText = `${publicAppConfig.shortName}...`;
 const loadingLabel = `${publicAppConfig.shortName} loading`;
 </script>
 
@@ -56,47 +56,39 @@ const loadingLabel = `${publicAppConfig.shortName} loading`;
 .design-loading-shell__text {
   display: flex;
   align-items: center;
-  min-height: 24px;
+  min-height: 1.5rem;
 }
 
 .design-loading-shell__text p {
+  --design-loading-duration: 3s;
+
   position: relative;
   margin: 0;
   color: var(--design-loading-text);
-  font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
-  font-size: clamp(16px, 1.6vw, 18.4px);
-  font-weight: 500;
-  letter-spacing: -0.03em;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.04em;
   line-height: 1.2;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  -webkit-mask-size: 250% 100%;
+  mask-size: 250% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: design-loading-mask var(--design-loading-duration) linear infinite;
 }
 
-.design-loading-shell__text p::after {
-  position: absolute;
-  left: calc(100% + 0.08em);
-  animation: design-loading-dots var(--design-loading-duration) infinite linear;
-  color: var(--design-loading-text);
-  content: "";
-}
-
-@keyframes design-loading-dots {
+@keyframes design-loading-mask {
   0% {
-    content: "";
-  }
-
-  10% {
-    content: ".";
-  }
-
-  40% {
-    content: "..";
-  }
-
-  70% {
-    content: "...";
+    -webkit-mask-position: 150% 0;
+    mask-position: 150% 0;
   }
 
   100% {
-    content: "";
+    -webkit-mask-position: -150% 0;
+    mask-position: -150% 0;
   }
 }
 
@@ -111,11 +103,11 @@ const loadingLabel = `${publicAppConfig.shortName} loading`;
   }
 
   .design-loading-shell__text {
-    min-height: 22.4px;
+    min-height: 1.4rem;
   }
 
   .design-loading-shell__text p {
-    font-size: 15.2px;
+    font-size: 0.95rem;
   }
 }
 </style>

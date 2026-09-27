@@ -6,15 +6,20 @@
       </template>
       <template #name> 铺图方式 </template>
       <template #content>
-        <el-select v-model="printEffect.fillMode" size="small" style="width: 150px">
-          <el-option
-            v-for="item in ImageFillModeOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          >
-          </el-option>
-        </el-select>
+        <Select v-model="printEffect.fillMode">
+          <SelectTrigger class="h-6 text-[11px]" style="width: 150px">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem
+              v-for="item in ImageFillModeOptions"
+              :key="item.value"
+              :value="item.value"
+            >
+              <span> {{ item.label }} </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </template>
     </operate-form-item>
 
@@ -27,19 +32,20 @@
         <template #content>
           <div class="image-print-row">
             <span class="mini-label">方向</span>
-            <el-select
-              v-model="printEffect.pattern.repeatMode"
-              size="small"
-              style="width: 110px"
-            >
-              <el-option
-                v-for="item in ImagePatternRepeatOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              >
-              </el-option>
-            </el-select>
+            <Select v-model="printEffect.pattern.repeatMode">
+              <SelectTrigger class="h-6 text-[11px]" style="width: 110px">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="item in ImagePatternRepeatOptions"
+                  :key="item.value"
+                  :value="item.value"
+                >
+                  <span> {{ item.label }} </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <span class="mini-label">宽度</span>
             <size-input
               v-model="printEffect.pattern.tileWidth.value"
@@ -84,6 +90,7 @@
 
 <script setup lang="ts">
 import { computed, watchEffect } from "vue";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import iconBackground from "@/components/design/assets/icon/background-image.svg?component";
 import iconSize from "@/components/design/assets/icon/size.svg?component";
 import iconPosition from "@/components/design/assets/icon/position.svg?component";

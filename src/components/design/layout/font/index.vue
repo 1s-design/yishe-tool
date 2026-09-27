@@ -7,20 +7,16 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <a-modal 
-    v-model:open="showFontModal" 
-    title="字体库" 
-    width="100%" 
-    class="font-a-modal" 
-    @ok="handleOk" 
-    :footer="null" 
-    :centered="true" 
-    wrap-class-name="full-modal"
-    @afterOpen="onAfterOpen"
-    @afterClose="onAfterClose"
-  >
-    <page></page>
-  </a-modal>
+  <Dialog :modal="false" v-model:open="showFontModal">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col">
+      <DialogHeader class="px-5 py-3 border-b border-border flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogTitle class="text-sm font-semibold">字体库</DialogTitle>
+      </DialogHeader>
+      <div class="flex-1 overflow-auto min-h-0">
+        <page></page>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 <script setup>
 import { ref, onBeforeMount } from "vue";
@@ -30,6 +26,12 @@ import { showFontModal } from "../../store.ts";
 import { usePaging } from "@/hooks/data/paging.ts";
 import Utils from '@/common/utils'
 import page from './page.vue'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
  
 function handleOk(){
   
@@ -48,27 +50,5 @@ function onAfterClose() {
 .font-a-modal {
   overflow:hidden;
   z-index: 10000 !important;
-}
-
-.full-modal {
-  .ant-modal {
-    max-width: 100%;
-    top: 0;
-    padding-bottom: 0;
-    margin: 0;
-    z-index: 10000 !important;
-  }
-  .ant-modal-content {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh);
-  }
-  .ant-modal-body {
-    flex: 1;
-    max-height: calc(100vh - 80px);
-  }
-  .ant-modal-mask {
-    z-index: 9999 !important;
-  }
 }
 </style>

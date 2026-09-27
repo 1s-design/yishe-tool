@@ -11,7 +11,12 @@
 <template>
   <div class="user-avatar-form">
     <div class="flex" style="padding: 10px 0; border-bottom: 2px solid #f8f8f8">
-      <el-avatar style="flex-shrink: 0" shape="circle" :src="avatar" />
+      <Avatar style="flex-shrink: 0" class="h-10 w-10 rounded-full">
+        <AvatarImage :src="avatar" />
+        <AvatarFallback class="text-xs">
+          {{ (userInfo.name || userInfo.account || '?').slice(0, 2).toUpperCase() }}
+        </AvatarFallback>
+      </Avatar>
       <div
         style="margin-left: 1em; flex-direction: column; flex: 1"
         class="flex justify-around"
@@ -43,6 +48,7 @@ import iconLogout from "@/icon/user/logout.svg?component";
 import iconSaved from "@/icon/user/saved.svg?component";
 import { Modal } from '@/common/message';
 import Utils from "@/common/utils";
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 let router = useRouter();
 
 // 顶部头像

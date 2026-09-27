@@ -1,21 +1,24 @@
 <template>
   <div class="flex items-center">
-    <el-tooltip content="录制画布模型内容">
-      <el-button @click="handleRecord" link>
-        <icon
-          style="width: 20px; height: 20px; margin: 4px"
-          :class="{
-            red: isRecording,
-            pulse: isRecording,
-          }"
-        ></icon>
-        <div v-if="!isRecording && !(countdown > 0)">点击录制</div>
-        <div v-if="isRecording" :class="{ red: isRecording }">
-          录制中 {{ timeCount }} s 点击结束
-        </div>
-        <div v-if="countdown > 0">倒计时: {{ countdown }} 点击取消</div>
-      </el-button>
-    </el-tooltip>
+    <Tooltip>
+      <TooltipTrigger as-child>
+        <Button variant="link" @click="handleRecord">
+          <icon
+            style="width: 20px; height: 20px; margin: 4px"
+            :class="{
+              red: isRecording,
+              pulse: isRecording,
+            }"
+          ></icon>
+          <div v-if="!isRecording && !(countdown > 0)">点击录制</div>
+          <div v-if="isRecording" :class="{ red: isRecording }">
+            录制中 {{ timeCount }} s 点击结束
+          </div>
+          <div v-if="countdown > 0">倒计时: {{ countdown }} 点击取消</div>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>录制画布模型内容</TooltipContent>
+    </Tooltip>
   </div>
 </template>
 
@@ -25,6 +28,8 @@ import icon from "./record.svg?component";
 import { currentModelController } from "@/components/design/store";
 import { message } from '@/common/message';
 import { saveAs } from "file-saver";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 // 是否正在录制
 const isRecording = ref(false);

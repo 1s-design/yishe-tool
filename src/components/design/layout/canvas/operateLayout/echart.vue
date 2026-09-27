@@ -1,105 +1,126 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="ai" title="AI 生成">
-      <div class="echart-ai-generator">
-        <el-input
-          v-model="aiPrompt"
-          type="textarea"
-          :rows="4"
-          resize="vertical"
-          spellcheck="false"
-          :disabled="aiLoading"
-          placeholder="描述你想生成的图表，例如：生成一个粉色主题的月度销售折线图，包含 6 个月数据"
-          @keydown.enter.ctrl="generateOptionByAi"
-        ></el-input>
-
-        <div class="echart-ai-generator__actions">
-          <el-button
-            size="small"
-            type="primary"
-            :loading="aiLoading"
-            :disabled="!aiPrompt.trim() || aiLoading"
-            @click="generateOptionByAi"
-          >
-            生成配置
-          </el-button>
-          <el-button
-            size="small"
-            :disabled="aiLoading || !hasOption"
-            @click="openOptionDialog"
-          >
-            查看 JSON
-          </el-button>
-        </div>
-
-        <div v-if="aiError" class="echart-option-error">{{ aiError }}</div>
-      </div>
-    </el-collapse-item>
-
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      ></operateItemSize>
-
-      <operate-form-item>
-        <template #name>渲染器</template>
-        <template #content>
-          <el-select v-model="echartsOptions.renderer" size="small">
-            <el-option label="Canvas" value="canvas"></el-option>
-            <el-option label="SVG" value="svg"></el-option>
-          </el-select>
-        </template>
-      </operate-form-item>
-
-      <operate-form-item>
-        <template #name>主题</template>
-        <template #content>
-          <el-input v-model="echartsOptions.theme" size="small" placeholder="默认主题"></el-input>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
-
-    <el-collapse-item name="option" title="Option">
-      <operate-form-item>
-        <template #name>JSON 配置</template>
-        <template #content>
-          <el-button size="small" type="primary" @click="openOptionDialog">编辑配置</el-button>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
-
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-    </el-collapse-item>
-  </el-collapse>
-
-  <el-dialog
-    v-model="optionDialogVisible"
-    title="编辑 ECharts Option"
-    fullscreen
-    append-to-body
-    destroy-on-close
-    class="echart-option-dialog"
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
   >
-    <div class="echart-option-editor">
-      <el-input
-        v-model="optionText"
-        type="textarea"
-        spellcheck="false"
-        resize="none"
-        placeholder="{ title: { text: '销量趋势' }, xAxis: {}, yAxis: {}, series: [] }"
-      ></el-input>
-      <div v-if="optionError" class="echart-option-error">{{ optionError }}</div>
-    </div>
+    <AccordionItem value="ai">
+      <AccordionTrigger>AI 生成</AccordionTrigger>
+      <AccordionContent>
+        <div class="echart-ai-generator">
+          <Textarea
+            v-model="aiPrompt"
+            :rows="4"
+            class="resize-vertical"
+            spellcheck="false"
+            :disabled="aiLoading"
+            placeholder="描述你想生成的图表，例如：生成一个粉色主题的月度销售折线图，包含 6 个月数据"
+            @keydown.enter.ctrl="generateOptionByAi"
+          />
 
-    <template #footer>
-      <el-button @click="optionDialogVisible = false">取消</el-button>
-      <el-button @click="formatOptionText">格式化</el-button>
-      <el-button type="primary" @click="confirmOptionText">应用配置</el-button>
-    </template>
-  </el-dialog>
+          <div class="echart-ai-generator__actions">
+            <Button
+              size="sm"
+              :disabled="!aiPrompt.trim() || aiLoading"
+              @click="generateOptionByAi"
+            >
+              生成配置
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              :disabled="aiLoading || !hasOption"
+              @click="openOptionDialog"
+            >
+              查看 JSON
+            </Button>
+          </div>
+
+          <div v-if="aiError" class="echart-option-error">{{ aiError }}</div>
+        </div>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        ></operateItemSize>
+
+        <operate-form-item>
+          <template #name>渲染器</template>
+          <template #content>
+            <Select v-model="echartsOptions.renderer">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="canvas">Canvas</SelectItem>
+                <SelectItem value="svg">SVG</SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
+
+        <operate-form-item>
+          <template #name>主题</template>
+          <template #content>
+            <Input
+              v-model="echartsOptions.theme"
+              class="h-6 text-[11px]"
+              placeholder="默认主题"
+            />
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="option">
+      <AccordionTrigger>Option</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>JSON 配置</template>
+          <template #content>
+            <Button size="sm" @click="openOptionDialog">编辑配置</Button>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
+
+  <Dialog :modal="false" v-model:open="optionDialogVisible">
+    <DialogContent class="echart-option-dialog max-w-none h-screen w-screen rounded-none">
+      <DialogHeader>
+        <DialogTitle>编辑 ECharts Option</DialogTitle>
+      </DialogHeader>
+
+      <div class="echart-option-editor">
+        <Textarea
+          v-model="optionText"
+          class="resize-none"
+          spellcheck="false"
+          placeholder="{ title: { text: '销量趋势' }, xAxis: {}, yAxis: {}, series: [] }"
+        />
+        <div v-if="optionError" class="echart-option-error">{{ optionError }}</div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" @click="optionDialogVisible = false">取消</Button>
+        <Button variant="outline" @click="formatOptionText">格式化</Button>
+        <Button @click="confirmOptionText">应用配置</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -107,6 +128,29 @@ import * as echarts from 'echarts'
 import { computed, ref, watch } from 'vue'
 import operateItemSize from '@/components/design/layout/canvas/operate/size/relativeSize.vue'
 import operateItemCommonGroup from '@/components/design/layout/canvas/operate/commonGroup.vue'
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { canvasStickerOptionsOnlyChild, currentOperatingCanvasChild } from '../index.tsx'
 import {
   ensureEchartOptions,
@@ -300,10 +344,6 @@ watch(
   display: flex;
   justify-content: flex-end;
   gap: 4px;
-
-  :deep(.el-button + .el-button) {
-    margin-left: 0;
-  }
 }
 
 .echart-option-editor {
@@ -319,8 +359,7 @@ watch(
   line-height: 1.4;
 }
 
-.echart-option-editor :deep(.el-textarea),
-.echart-option-editor :deep(.el-textarea__inner) {
+.echart-option-editor :deep(textarea) {
   height: 100%;
   font-family: Consolas, Monaco, "Courier New", monospace;
   font-size: 13px;

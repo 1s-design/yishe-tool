@@ -13,7 +13,7 @@
     <Tooltip>
       <TooltipTrigger as-child>
         <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="openEyeDropper">
-          <BgColorsOutlined class="text-sm" />
+          <Palette class="text-sm" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">拾色器</TooltipContent>
@@ -22,7 +22,7 @@
     <Tooltip>
       <TooltipTrigger as-child>
         <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="takeshot">
-          <CameraOutlined class="text-sm" />
+          <Camera class="text-sm" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">保存当前模型截图</TooltipContent>
@@ -31,7 +31,7 @@
     <Tooltip>
       <TooltipTrigger as-child>
         <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="showScreenshotDrawer = true">
-          <PictureOutlined class="text-sm" />
+          <Image class="text-sm" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">查看所有截图</TooltipContent>
@@ -40,7 +40,7 @@
     <Tooltip>
       <TooltipTrigger as-child>
         <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="isFullScreen = !isFullScreen">
-          <ExpandOutlined class="text-sm" />
+          <Maximize2 class="text-sm" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">{{ isFullScreen ? '退出全屏' : '进入全屏' }}</TooltipContent>
@@ -49,7 +49,7 @@
     <Tooltip>
       <TooltipTrigger as-child>
         <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-destructive" @click="currentModelController.removeDecals()">
-          <DeleteOutlined class="text-sm" />
+          <Trash2 class="text-sm" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">移除当前所有贴纸</TooltipContent>
@@ -58,7 +58,7 @@
     <Tooltip>
       <TooltipTrigger as-child>
         <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="doBuiltInAnimations">
-          <VideoCameraOutlined class="text-sm" />
+          <Video class="text-sm" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">执行内置动画</TooltipContent>
@@ -82,7 +82,7 @@
     <Tooltip>
       <TooltipTrigger as-child>
         <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="showCropGuideModal = true">
-          <ScissorOutlined class="text-sm" />
+          <Scissors class="text-sm" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top">裁剪参考线</TooltipContent>
@@ -100,15 +100,7 @@ import {
   saveScreenshot,
   showScreenshotDrawer,
 } from "../store";
-import {
-  ScissorOutlined,
-  BgColorsOutlined,
-  CameraOutlined,
-  PictureOutlined,
-  ExpandOutlined,
-  DeleteOutlined,
-  VideoCameraOutlined,
-} from "@ant-design/icons-vue";
+import { Camera, Image, Maximize2, Palette, Scissors, Trash2, Video } from 'lucide-vue-next';
 import { Sparkles } from "lucide-vue-next";
 import { useEyeDropper } from "@vueuse/core";
 import { toast } from '@/components/ui/toast';

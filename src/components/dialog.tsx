@@ -1,8 +1,5 @@
 
-
-import { createApp, h, ref } from 'vue';
-import { ElDialog } from 'element-plus';
-
+import { ref } from 'vue';
 
 export const globalDialogAttrs = ref({
     modelValue: true
@@ -11,4 +8,3 @@ export const globalDialogAttrs = ref({
 export function showDialog(options) {
 
 }
-

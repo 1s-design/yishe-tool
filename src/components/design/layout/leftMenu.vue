@@ -159,7 +159,7 @@
             @click="setActiveMenu(menuItems.videoClip)"
           >
             <div class="menu-bar-item-icon">
-              <VideoCameraOutlined />
+              <Video />
             </div>
             <span>图像导出</span>
           </div>
@@ -188,7 +188,7 @@
             :class="{ 'menu-bar-item-focus': showOperationsModal }"
             @click="showOperationsModal = !showOperationsModal"
           >
-            <div class="menu-bar-item-icon"><ThunderboltOutlined /></div>
+            <div class="menu-bar-item-icon"><Zap /></div>
             <span>操作</span>
           </div>
         </TooltipTrigger>
@@ -202,7 +202,7 @@
             :class="{ 'menu-bar-item-focus': isAiPanelOpen }"
             @click="isAiPanelOpen = !isAiPanelOpen"
           >
-            <div class="menu-bar-item-icon"><RobotOutlined /></div>
+            <div class="menu-bar-item-icon"><Bot /></div>
             <span>AI</span>
           </div>
         </TooltipTrigger>
@@ -234,7 +234,7 @@
             :class="{ 'menu-bar-item-focus': showCanvasStructure }"
             @click="showCanvasStructure = !showCanvasStructure"
           >
-            <div class="menu-bar-item-icon"><CodeOutlined /></div>
+            <div class="menu-bar-item-icon"><Code2 /></div>
             <span>数据</span>
           </div>
         </TooltipTrigger>
@@ -268,7 +268,7 @@ import {
   clearAllMenus,
 } from "../store";
 import { isAiPanelOpen, pendingPromptInput } from "@/ai/store";
-import { RobotOutlined } from "@ant-design/icons-vue";
+import { Bot, Video, Zap, Code2 } from 'lucide-vue-next';
 import { ref } from "vue";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import DesignPromptPicker from "./ai/DesignPromptPicker.vue";
@@ -297,11 +297,6 @@ import iconSvgCanvas from "@/components/design/assets/icon/svg-canvas.svg?compon
 import iconCanvas from "@/components/design/assets/icon/canvas.svg?component";
 import iconProject from "@/components/design/assets/icon/project.svg?component";
 import Utils from "@/common/utils";
-import {
-  VideoCameraOutlined,
-  ThunderboltOutlined,
-  CodeOutlined,
-} from "@ant-design/icons-vue";
 import desimage from "@/components/image.vue";
 import { DESIGN_3D_ENABLED } from "../featureFlags";
 

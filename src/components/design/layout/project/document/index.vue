@@ -152,7 +152,7 @@
     </div>
 
     <!-- 创建 / 编辑模态框 -->
-    <Dialog v-model:open="showFormModal">
+    <Dialog :modal="false" v-model:open="showFormModal">
       <DialogContent class="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{{ isEdit ? '编辑文档' : '添加文档' }}</DialogTitle>

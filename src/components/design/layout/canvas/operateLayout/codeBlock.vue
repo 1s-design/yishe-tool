@@ -1,217 +1,246 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="source" title="代码">
-      <operate-form-item>
-        <template #name>源码</template>
-        <template #content>
-          <div class="code-block-source-editor">
-            <div class="code-block-source-editor__toolbar">
-              <el-popover
-                v-model:visible="aiPopoverVisible"
-                trigger="click"
-                placement="right-start"
-                width="340"
-              >
-                <div class="code-block-ai-popover">
-                  <el-input
-                    v-model="aiPrompt"
-                    type="textarea"
-                    :rows="4"
-                    resize="vertical"
-                    spellcheck="false"
-                    :disabled="aiLoading"
-                    placeholder="描述代码，例如：写一个 Vue 组合式函数，处理倒计时"
-                    @keydown.enter.ctrl="generateCodeByAi"
-                  ></el-input>
-
-                  <div class="code-block-ai-popover__actions">
-                    <el-button size="small" @click="aiPopoverVisible = false">取消</el-button>
-                    <el-button
-                      size="small"
-                      type="primary"
-                      :loading="aiLoading"
-                      :disabled="!aiPrompt.trim() || aiLoading"
-                      @click="generateCodeByAi"
-                    >
-                      确定
-                    </el-button>
-                  </div>
-
-                  <div v-if="aiError" class="code-block-error">{{ aiError }}</div>
-                </div>
-
-                <template #reference>
-                  <el-button size="small" type="primary" plain>AI</el-button>
-                </template>
-              </el-popover>
-            </div>
-
-            <el-input
-              v-model="currentOperatingCanvasChild.source"
-              type="textarea"
-              :rows="10"
-              resize="vertical"
-              spellcheck="false"
-              placeholder="const message = 'Hello Shiki'"
-              class="code-block-source-editor__input"
-            ></el-input>
-          </div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
-
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      ></operateItemSize>
-
-      <operate-form-item>
-        <template #name>语言</template>
-        <template #content>
-          <el-select
-            v-model="currentOperatingCanvasChild.language"
-            size="small"
-            filterable
-            allow-create
-          >
-            <el-option
-              v-for="lang in CODE_BLOCK_LANGUAGES"
-              :key="lang"
-              :label="lang"
-              :value="lang"
-            ></el-option>
-          </el-select>
-        </template>
-      </operate-form-item>
-
-      <operate-form-item>
-        <template #name>主题</template>
-        <template #content>
-          <el-select
-            v-model="currentOperatingCanvasChild.theme"
-            size="small"
-            filterable
-            allow-create
-          >
-            <el-option
-              v-for="theme in CODE_BLOCK_THEMES"
-              :key="theme"
-              :label="theme"
-              :value="theme"
-            ></el-option>
-          </el-select>
-        </template>
-      </operate-form-item>
-
-      <operate-form-item>
-        <template #name>文件名</template>
-        <template #content>
-          <el-input v-model="currentOperatingCanvasChild.filename" size="small" placeholder="example.ts"></el-input>
-        </template>
-      </operate-form-item>
-
-      <operate-form-item>
-        <template #name>显示项</template>
-        <template #content>
-          <div class="code-block-switches">
-            <el-checkbox v-model="currentOperatingCanvasChild.showHeader" size="small">标题栏</el-checkbox>
-            <el-checkbox v-model="currentOperatingCanvasChild.showLineNumbers" size="small">行号</el-checkbox>
-            <el-checkbox v-model="currentOperatingCanvasChild.wrap" size="small">换行</el-checkbox>
-          </div>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
-
-    <el-collapse-item name="style" title="样式">
-      <operateItemFontSize
-        label="代码字号"
-        v-model="currentOperatingCanvasChild.fontSize"
-      ></operateItemFontSize>
-      <operateItemFontFamily
-        label="代码字体"
-        v-model="currentOperatingCanvasChild.fontFamilyInfo"
-      ></operateItemFontFamily>
-      <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor"></operateItemBackgroundColor>
-
-      <operate-form-item>
-        <template #name>行高</template>
-        <template #content>
-          <el-input-number
-            v-model="currentOperatingCanvasChild.lineHeight"
-            size="small"
-            :min="0.8"
-            :max="3"
-            :step="0.05"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
-
-      <operate-form-item>
-        <template #name>内边距</template>
-        <template #content>
-          <el-input-number
-            v-model="currentOperatingCanvasChild.padding.value"
-            size="small"
-            :min="0"
-            :max="1000"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
-
-      <operate-form-item>
-        <template #name>圆角</template>
-        <template #content>
-          <el-input-number
-            v-model="currentOperatingCanvasChild.borderRadius.value"
-            size="small"
-            :min="0"
-            :max="1000"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
-
-    <el-collapse-item name="config" title="Config">
-      <operate-form-item>
-        <template #name>原生配置</template>
-        <template #content>
-          <el-button size="small" type="primary" @click="openConfigDialog">编辑配置</el-button>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
-
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-    </el-collapse-item>
-  </el-collapse>
-
-  <el-dialog
-    v-model="configDialogVisible"
-    title="编辑 Shiki Config"
-    fullscreen
-    append-to-body
-    destroy-on-close
-    class="code-block-config-dialog"
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
   >
-    <div class="code-block-config-editor">
-      <el-input
-        v-model="configText"
-        type="textarea"
-        spellcheck="false"
-        resize="none"
-        placeholder="{ transformers: [] }"
-      ></el-input>
-      <div v-if="configError" class="code-block-error">{{ configError }}</div>
-    </div>
+    <AccordionItem value="source">
+      <AccordionTrigger>代码</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>源码</template>
+          <template #content>
+            <div class="code-block-source-editor">
+              <div class="code-block-source-editor__toolbar">
+                <Popover v-model:open="aiPopoverVisible">
+                  <PopoverTrigger as-child>
+                    <Button size="sm" variant="outline">AI</Button>
+                  </PopoverTrigger>
+                  <PopoverContent side="right" align="start" class="w-[340px]">
+                    <div class="code-block-ai-popover">
+                      <Textarea
+                        v-model="aiPrompt"
+                        :rows="4"
+                        class="resize-vertical"
+                        spellcheck="false"
+                        :disabled="aiLoading"
+                        placeholder="描述代码，例如：写一个 Vue 组合式函数，处理倒计时"
+                        @keydown.enter.ctrl="generateCodeByAi"
+                      />
 
-    <template #footer>
-      <el-button @click="configDialogVisible = false">取消</el-button>
-      <el-button @click="formatConfigText">格式化</el-button>
-      <el-button type="primary" @click="confirmConfigText">应用配置</el-button>
-    </template>
-  </el-dialog>
+                      <div class="code-block-ai-popover__actions">
+                        <Button size="sm" variant="outline" @click="aiPopoverVisible = false">取消</Button>
+                        <Button
+                          size="sm"
+                          :disabled="!aiPrompt.trim() || aiLoading"
+                          @click="generateCodeByAi"
+                        >
+                          确定
+                        </Button>
+                      </div>
+
+                      <div v-if="aiError" class="code-block-error">{{ aiError }}</div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <Textarea
+                v-model="currentOperatingCanvasChild.source"
+                :rows="10"
+                class="code-block-source-editor__input resize-vertical"
+                spellcheck="false"
+                placeholder="const message = 'Hello Shiki'"
+              />
+            </div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        ></operateItemSize>
+
+        <operate-form-item>
+          <template #name>语言</template>
+          <template #content>
+            <Select v-model="currentOperatingCanvasChild.language">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="lang in CODE_BLOCK_LANGUAGES"
+                  :key="lang"
+                  :value="lang"
+                >
+                  {{ lang }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
+
+        <operate-form-item>
+          <template #name>主题</template>
+          <template #content>
+            <Select v-model="currentOperatingCanvasChild.theme">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="theme in CODE_BLOCK_THEMES"
+                  :key="theme"
+                  :value="theme"
+                >
+                  {{ theme }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
+
+        <operate-form-item>
+          <template #name>文件名</template>
+          <template #content>
+            <Input
+              v-model="currentOperatingCanvasChild.filename"
+              class="h-6 text-[11px]"
+              placeholder="example.ts"
+            />
+          </template>
+        </operate-form-item>
+
+        <operate-form-item>
+          <template #name>显示项</template>
+          <template #content>
+            <div class="code-block-switches">
+              <div class="flex items-center gap-1.5">
+                <Checkbox v-model:checked="currentOperatingCanvasChild.showHeader" id="code-block-show-header" />
+                <Label for="code-block-show-header">标题栏</Label>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <Checkbox v-model:checked="currentOperatingCanvasChild.showLineNumbers" id="code-block-show-line-numbers" />
+                <Label for="code-block-show-line-numbers">行号</Label>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <Checkbox v-model:checked="currentOperatingCanvasChild.wrap" id="code-block-wrap" />
+                <Label for="code-block-wrap">换行</Label>
+              </div>
+            </div>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="style">
+      <AccordionTrigger>样式</AccordionTrigger>
+      <AccordionContent>
+        <operateItemFontSize
+          label="代码字号"
+          v-model="currentOperatingCanvasChild.fontSize"
+        ></operateItemFontSize>
+        <operateItemFontFamily
+          label="代码字体"
+          v-model="currentOperatingCanvasChild.fontFamilyInfo"
+        ></operateItemFontFamily>
+        <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor"></operateItemBackgroundColor>
+
+        <operate-form-item>
+          <template #name>行高</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="currentOperatingCanvasChild.lineHeight"
+              :min="0.8"
+              :max="3"
+              :step="0.05"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (currentOperatingCanvasChild.lineHeight = Number(v))"
+            />
+          </template>
+        </operate-form-item>
+
+        <operate-form-item>
+          <template #name>内边距</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="currentOperatingCanvasChild.padding.value"
+              :min="0"
+              :max="1000"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (currentOperatingCanvasChild.padding.value = Number(v))"
+            />
+          </template>
+        </operate-form-item>
+
+        <operate-form-item>
+          <template #name>圆角</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="currentOperatingCanvasChild.borderRadius.value"
+              :min="0"
+              :max="1000"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (currentOperatingCanvasChild.borderRadius.value = Number(v))"
+            />
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="config">
+      <AccordionTrigger>Config</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>原生配置</template>
+          <template #content>
+            <Button size="sm" @click="openConfigDialog">编辑配置</Button>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
+
+  <Dialog :modal="false" v-model:open="configDialogVisible">
+    <DialogContent class="code-block-config-dialog max-w-none h-screen w-screen rounded-none">
+      <DialogHeader>
+        <DialogTitle>编辑 Shiki Config</DialogTitle>
+      </DialogHeader>
+
+      <div class="code-block-config-editor">
+        <Textarea
+          v-model="configText"
+          class="resize-none"
+          spellcheck="false"
+          placeholder="{ transformers: [] }"
+        />
+        <div v-if="configError" class="code-block-error">{{ configError }}</div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" @click="configDialogVisible = false">取消</Button>
+        <Button variant="outline" @click="formatConfigText">格式化</Button>
+        <Button @click="confirmConfigText">应用配置</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -221,6 +250,36 @@ import operateItemCommonGroup from '@/components/design/layout/canvas/operate/co
 import operateItemFontSize from '@/components/design/layout/canvas/operate/fontSize.vue'
 import operateItemFontFamily from '@/components/design/layout/canvas/operate/fontFamily/fontFamily.vue'
 import operateItemBackgroundColor from '@/components/design/layout/canvas/operate/backgroundColor.vue'
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { currentOperatingCanvasChild } from '../index.tsx'
 import { CODE_BLOCK_LANGUAGES, CODE_BLOCK_THEMES } from '../children/codeBlock'
 import { generateCodeBlockSource } from '../children/aiCodeBlockService'
@@ -393,10 +452,6 @@ watch(
   display: flex;
   justify-content: flex-end;
   gap: 4px;
-
-  :deep(.el-button + .el-button) {
-    margin-left: 0;
-  }
 }
 
 .code-block-error {
@@ -411,8 +466,8 @@ watch(
   flex-wrap: wrap;
 }
 
-.code-block-source-editor__input :deep(.el-textarea__inner),
-.code-block-config-editor :deep(.el-textarea__inner) {
+.code-block-source-editor__input,
+.code-block-config-editor :deep(textarea) {
   font-family: Consolas, Monaco, "Courier New", monospace;
   font-size: 13px;
   line-height: 1.55;
@@ -426,8 +481,7 @@ watch(
   min-height: 0;
 }
 
-.code-block-config-editor :deep(.el-textarea),
-.code-block-config-editor :deep(.el-textarea__inner) {
+.code-block-config-editor :deep(textarea) {
   flex: 1;
   min-height: 0;
   height: 100%;

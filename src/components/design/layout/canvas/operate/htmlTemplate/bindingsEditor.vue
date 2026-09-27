@@ -7,7 +7,7 @@
           {{ templateMeta?.name || "已启用模板" }} 的资源和文案在这里统一替换。
         </div>
       </div>
-      <el-button link type="primary" @click="resetBindings">重置默认值</el-button>
+      <Button variant="link" @click="resetBindings">重置默认值</Button>
     </div>
 
     <template v-for="field in bindingFields" :key="field.key">
@@ -21,19 +21,18 @@
         <template #name> {{ field.label }} </template>
         <template #content>
           <div class="html-template-bindings__input">
-            <el-input
+            <Input
               v-if="field.type === 'text'"
               :model-value="getFieldValue(field)"
-              size="small"
+              class="h-6 text-[11px]"
               :placeholder="field.placeholder || '请输入内容'"
               @update:model-value="updateFieldValue(field, $event)"
             />
-            <el-input
+            <Textarea
               v-else
               :model-value="getFieldValue(field)"
-              type="textarea"
               :rows="field.rows || 3"
-              resize="none"
+              class="resize-none"
               :placeholder="field.placeholder || '请输入内容'"
               @update:model-value="updateFieldValue(field, $event)"
             />
@@ -77,15 +76,15 @@
         <template #name> {{ field.label }} </template>
         <template #content>
           <div class="html-template-bindings__child-controls">
-            <el-button
+            <Button
               v-if="getFieldValue(field)?.id"
-              size="small"
-              type="primary"
-              plain
+              size="sm"
+              variant="outline"
+              class="text-primary border-primary/40 hover:bg-primary/10 hover:text-primary"
               @click="selectBoundElement(getFieldValue(field).id)"
             >
               配置此组件
-            </el-button>
+            </Button>
             <span v-else style="font-size: 11px; color: #94a3b8;">未绑定组件</span>
           </div>
         </template>
@@ -117,7 +116,9 @@ import operateItemColor from "@/components/design/layout/canvas/operate/color/in
 import operateItemImageSelect from "@/components/design/layout/canvas/operate/imageSelect/index.vue";
 import operateItemFontFamily from "@/components/design/layout/canvas/operate/fontFamily/fontFamily.vue";
 import operateItemHtmlInput from "@/components/design/layout/canvas/operate/htmlInput.vue";
-import { ArrowDown } from "@element-plus/icons-vue";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   canvasStickerOptions,
   currentOperatingCanvasChildId,

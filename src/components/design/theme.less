@@ -94,16 +94,16 @@ body.designiy-dark {
 
 .designiy.light,
 body.designiy-light {
-    --1s-shell-background: #f8f9fa;
-    --1s-canvas-shell-background: #f0f4f9;
-    --1s-surface-background: #ffffff;
+    --1s-shell-background: var(--1s-control-surface-muted);
+    --1s-canvas-shell-background: var(--1s-control-surface-muted);
+    --1s-surface-background: var(--1s-surface-background);
     --1s-panel-background: #f3f6fb;
     --1s-elevated-background: #e9eef6;
 
-    --1s-text-color: #1f1f1f;
+    --1s-text-color: var(--1s-text-color);
     --1s-text-color-secondary: #444746;
     --1s-text-color-tertiary: #747775;
-    --1s-icon-color: #444746;
+    --1s-icon-color: var(--1s-text-color-secondary);
 
     --1s-border-color: rgba(0, 0, 0, 0.12);
     --1s-border-color-strong: rgba(0, 0, 0, 0.2);
@@ -129,7 +129,7 @@ body.designiy-light {
     --1s-checkerboard-cell-mini-dark: #e5e8ec;
     --1s-left-menu-background-color: #f0f4f9;
     --1s-left-menu-container-background-color: #ffffff;
-    --1s-control-surface-background: #ffffff;
+    --1s-control-surface-background: var(--1s-surface-background);
     --1s-control-surface-muted: #f0f4f9;
     --1s-control-border-color: rgba(0, 0, 0, 0.16);
     --1s-control-hover-background: rgba(11, 87, 208, 0.08);

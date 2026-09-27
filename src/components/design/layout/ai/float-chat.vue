@@ -7,21 +7,21 @@
           <span v-if="isProcessing" class="ai-float-chat__typing"
             >思考中...</span
           >
-          <el-button
-            link
-            size="small"
+          <Button
+            variant="link"
+            size="icon-sm"
             @click="clearChat"
             class="ai-float-chat__clear-btn"
           >
-            <DeleteOutlined />
-          </el-button>
+            <Trash2 />
+          </Button>
         </div>
 
         <div class="ai-float-chat__messages" ref="messagesRef">
           <!-- 调试信息 -->
           <div
             style="
-              background: #f0f0f0;
+              background: var(--1s-control-surface-muted);
               padding: 8px;
               font-size: 12px;
               margin-bottom: 8px;
@@ -51,7 +51,7 @@
             <!-- 调试：显示每条消息 -->
             <div
               style="
-                background: #e8f5e9;
+                background: var(--1s-control-surface-muted);
                 padding: 4px 8px;
                 font-size: 11px;
                 margin: 4px 0;
@@ -78,14 +78,13 @@
                   {{ msg.content }}
                 </div>
                 <div v-if="msg.tool_calls?.length" class="ai-float-chat__tools">
-                  <el-tag
+                  <Badge
                     v-for="call in msg.tool_calls"
                     :key="call.id"
-                    size="small"
-                    type="info"
+                    variant="secondary"
                   >
                     🔧 {{ formatToolName(call.function.name) }}
-                  </el-tag>
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -122,66 +121,66 @@
         </div>
 
         <!-- 人工介入弹窗 -->
-        <el-dialog
-          v-model="showInteraction"
-          :title="interactionData?.question || '请选择'"
-          width="360px"
-          :close-on-click-modal="false"
-          append-to-body
+        <Dialog
+          :open="showInteraction"
+          @update:open="v => (showInteraction = v)"
         >
-          <div
-            v-if="interactionData?.options?.length"
-            class="interaction-options"
-          >
+          <DialogContent class="max-w-[360px] w-[360px]" @pointer-down-outside.prevent>
+            <DialogHeader>
+              <DialogTitle>{{ interactionData?.question || '请选择' }}</DialogTitle>
+            </DialogHeader>
             <div
-              v-for="opt in interactionData.options"
-              :key="opt"
-              class="option-btn"
-              @click="submitInteraction(opt)"
+              v-if="interactionData?.options?.length"
+              class="interaction-options"
             >
-              {{ opt }}
+              <div
+                v-for="opt in interactionData.options"
+                :key="opt"
+                class="option-btn"
+                @click="submitInteraction(opt)"
+              >
+                {{ opt }}
+              </div>
             </div>
-          </div>
-          <el-divider v-if="interactionData?.options?.length">或者</el-divider>
-          <el-input
-            v-model="customAnswer"
-            placeholder="输入你的回答..."
-            @keydown.enter="submitInteraction(customAnswer)"
-          />
-          <template #footer>
-            <el-button
-              type="primary"
-              :disabled="!customAnswer.trim()"
-              @click="submitInteraction(customAnswer)"
-            >
-              确定
-            </el-button>
-          </template>
-        </el-dialog>
+            <div v-if="interactionData?.options?.length" class="flex items-center gap-2">
+              <Separator class="flex-1" />
+              <span class="text-xs text-muted-foreground">或者</span>
+              <Separator class="flex-1" />
+            </div>
+            <Input
+              v-model="customAnswer"
+              placeholder="输入你的回答..."
+              @keydown.enter="submitInteraction(customAnswer)"
+            />
+            <DialogFooter>
+              <Button
+                :disabled="!customAnswer.trim()"
+                @click="submitInteraction(customAnswer)"
+              >
+                确定
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <!-- 输入区域 -->
         <div class="ai-float-chat__input-area">
-          <el-input
+          <Input
             v-model="inputText"
             placeholder="描述你想要的设计..."
             :disabled="isProcessing"
             @keydown.enter.exact.prevent="handleSend"
             @compositionstart="isComposing = true"
             @compositionend="isComposing = false"
-            clearable
           />
-          <el-button
-            type="primary"
-            :loading="isProcessing"
-            :disabled="!inputText.trim()"
+          <Button
+            :disabled="isProcessing || !inputText.trim()"
             @click="handleSend"
-            circle
-            size="small"
+            size="icon-sm"
+            class="rounded-full"
           >
-            <template #icon>
-              <SendOutlined />
-            </template>
-          </el-button>
+            <Send />
+          </Button>
         </div>
       </div>
     </transition>
@@ -192,7 +191,7 @@
       :class="{ 'ai-float-chat__trigger--active': open }"
     >
       <div class="ai-float-chat__trigger-mark">
-        <RobotOutlined />
+        <Bot />
       </div>
     </div>
   </div>
@@ -200,11 +199,18 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch, onMounted, onUnmounted } from "vue";
+import { Bot, Trash2, Send } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import {
-  DeleteOutlined,
-  RobotOutlined,
-  SendOutlined,
-} from "@ant-design/icons-vue";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { designAgent } from "@/ai/langgraph";
 import type { AgentInteraction } from "@/ai/langgraph";
 
@@ -343,15 +349,11 @@ watch(() => messages.value.length, scrollToBottom);
   width: 36px;
   height: 36px;
   padding: 0;
-  border: 1px solid rgba(102, 126, 234, 0.34);
+  border: 1px solid var(--1s-border-color);
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.96),
-    rgba(246, 248, 255, 0.94)
-  );
+  background: var(--1s-elevated-background);
   box-shadow: 0 14px 34px rgba(37, 47, 88, 0.18);
-  color: #26315f;
+  color: var(--1s-text-color);
   cursor: pointer;
   transition:
     transform 0.22s ease,
@@ -365,7 +367,7 @@ watch(() => messages.value.length, scrollToBottom);
 
   &:hover {
     transform: translateY(-2px);
-    border-color: rgba(102, 126, 234, 0.6);
+    border-color: var(--1s-accent-color);
     box-shadow: 0 18px 42px rgba(37, 47, 88, 0.24);
   }
 
@@ -412,13 +414,13 @@ watch(() => messages.value.length, scrollToBottom);
   display: flex;
   align-items: center;
   padding: 12px 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-  color: #1f2937;
+  background: var(--1s-panel-background);
+  color: var(--1s-text-color);
   font-size: 14px;
   font-weight: 700;
   gap: 8px;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+  border-bottom: 1px solid var(--1s-border-color);
 }
 
 .ai-float-chat__typing {
@@ -429,10 +431,10 @@ watch(() => messages.value.length, scrollToBottom);
 
 .ai-float-chat__clear-btn {
   margin-left: auto;
-  color: #64748b !important;
+  color: var(--1s-text-color-secondary) !important;
 
   &:hover {
-    color: #1f2937 !important;
+    color: var(--1s-text-color) !important;
   }
 }
 
@@ -451,7 +453,7 @@ watch(() => messages.value.length, scrollToBottom);
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #999;
+  color: var(--1s-text-color-tertiary);
   font-size: 13px;
   gap: 12px;
 }
@@ -477,15 +479,15 @@ watch(() => messages.value.length, scrollToBottom);
 
 .ai-float-chat__quick {
   padding: 4px 10px;
-  background: #f0f2f5;
+  background: var(--1s-control-surface-muted);
   border-radius: 12px;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  color: #333;
+  color: var(--1s-text-color);
 
   &:hover {
-    background: #e8eaed;
+    background: var(--1s-hover-background);
   }
 }
 
@@ -520,8 +522,8 @@ watch(() => messages.value.length, scrollToBottom);
   }
 
   .ai-float-chat__msg--ai & {
-    background: #f0f2f5;
-    color: #333;
+    background: var(--1s-control-surface-muted);
+    color: var(--1s-text-color);
     border-bottom-left-radius: 4px;
   }
 }
@@ -542,10 +544,10 @@ watch(() => messages.value.length, scrollToBottom);
   align-items: center;
   gap: 4px;
   padding: 3px 10px;
-  background: #f5f5f5;
+  background: var(--1s-control-surface-muted);
   border-radius: 12px;
   font-size: 11px;
-  color: #666;
+  color: var(--1s-text-color-secondary);
 
   .success {
     color: #52c41a;
@@ -564,7 +566,7 @@ watch(() => messages.value.length, scrollToBottom);
 .ai-float-chat__dot {
   width: 6px;
   height: 6px;
-  background: #999;
+  background: var(--1s-text-color-tertiary);
   border-radius: 50%;
   animation: dotPulse 1.4s infinite ease-in-out;
 
@@ -608,8 +610,8 @@ watch(() => messages.value.length, scrollToBottom);
 
 .option-btn {
   padding: 10px 14px;
-  background: #f5f5f5;
-  border: 1px solid #e8e8e8;
+  background: var(--1s-control-surface-muted);
+  border: 1px solid var(--1s-border-color);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -617,8 +619,8 @@ watch(() => messages.value.length, scrollToBottom);
   font-size: 13px;
 
   &:hover {
-    border-color: #667eea;
-    background: #f0f2ff;
+    border-color: var(--1s-accent-color);
+    background: var(--1s-hover-background);
   }
 }
 

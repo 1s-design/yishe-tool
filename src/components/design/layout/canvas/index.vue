@@ -10,103 +10,92 @@
     >
       <canvass></canvass>
       <div class="canvas-preview-badge-overlay">
-        <el-tooltip
-          :hide-after="0"
-          content="在中央工作区开启大画布全屏显示与高精度实时编辑"
-          placement="bottom"
-        >
-          <button
-            class="canvas-expand-pill-btn"
-            @click="showMainCanvas = true"
-          >
-            <el-icon :size="11"><FullScreen /></el-icon>
-            <span>大画布</span>
-          </button>
-        </el-tooltip>
+        <Tooltip :delay-duration="0">
+          <TooltipTrigger as-child>
+            <button
+              class="canvas-expand-pill-btn"
+              @click="showMainCanvas = true"
+            >
+              <Maximize2 class="w-2.5 h-2.5" />
+              <span>大画布</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">在中央工作区开启大画布全屏显示与高精度实时编辑</TooltipContent>
+        </Tooltip>
       </div>
     </div>
 
     <!-- 顶部动作工具栏 -->
     <div class="canvas-actions-panel">
       <div class="canvas-actions-panel__row">
-        <el-button
+        <Button
           class="canvas-action-button canvas-action-button--primary"
-          type="primary"
-          size="small"
+          variant="default"
+          size="sm"
           @click="handleUploadClick"
           :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
         >
-          <el-icon :size="12" class="mr-0.5"><Check /></el-icon>
+          <Check class="w-3 h-3 mr-0.5" />
           {{ currentEditingCustomStickerId ? '保存修改' : '保存作品' }}
-        </el-button>
+        </Button>
 
-        <el-button
+        <Button
           v-if="shouldUpdateCanvasSticker && !isUpdatingSticker"
           class="canvas-action-button update-required"
-          plain
-          size="small"
+          variant="outline"
+          size="sm"
           @click="genSticker"
-          :loading="isUpdatingSticker"
+          :disabled="isUpdatingSticker"
         >
           更新贴纸
-        </el-button>
-        <el-button
+        </Button>
+        <Button
           v-else
           class="canvas-action-button"
-          plain
-          size="small"
+          variant="outline"
+          size="sm"
           @click="genSticker"
-          :loading="isUpdatingSticker"
           :disabled="isUpdatingSticker"
         >
           {{ isUpdatingSticker ? '更新中...' : '已更新' }}
-        </el-button>
+        </Button>
 
-        <el-button
+        <Button
           class="canvas-action-button"
-          plain
-          size="small"
+          variant="outline"
+          size="sm"
           @click="exportPng"
           :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
         >
           导出
-        </el-button>
+        </Button>
 
-        <el-popconfirm
-          title="确定清空画布所有图层？"
-          confirm-button-text="清空"
-          cancel-button-text="取消"
-          @confirm="clearCanvasChildren"
+        <Button
+          class="canvas-action-button text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+          variant="outline"
+          size="sm"
+          @click="confirm({ title: '确定清空画布所有图层？', okText: '清空', cancelText: '取消' }).then((ok) => ok && clearCanvasChildren())"
         >
-          <template #reference>
-            <el-button
-              class="canvas-action-button"
-              plain
-              size="small"
-              type="danger"
-            >
-              清空
-            </el-button>
-          </template>
-        </el-popconfirm>
+          清空
+        </Button>
 
-        <a-dropdown arrow placement="bottom">
-          <div class="canvas-actions-panel__dropdown-trigger">
-            <el-button class="canvas-action-button canvas-action-button--more" plain size="small">
-              •••
-            </el-button>
-          </div>
-          <template #overlay>
-            <a-menu>
-              <a-menu-item @click="exportTrimmedPng">
-                自动去除空白边框导出
-              </a-menu-item>
-              <a-menu-item @click="consoleStikcerOptions">
-                在控制台打印贴纸信息
-              </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <div class="canvas-actions-panel__dropdown-trigger">
+              <Button class="canvas-action-button canvas-action-button--more" variant="outline" size="sm">
+                •••
+              </Button>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem @select="exportTrimmedPng">
+              自动去除空白边框导出
+            </DropdownMenuItem>
+            <DropdownMenuItem @select="consoleStikcerOptions">
+              在控制台打印贴纸信息
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
 
@@ -117,71 +106,63 @@
         <span class="canvas-layer-count">({{ canvasStickerOptions.children?.length || 0 }})</span>
       </div>
       <div class="canvas-layer-selector__row">
-        <el-select
-          v-model="currentOperatingCanvasChildId"
-          size="small"
+        <Select
+          :model-value="String(currentOperatingCanvasChildId)"
+          @update:model-value="v => (currentOperatingCanvasChildId = v)"
           class="canvas-layer-select"
         >
-          <template #label="{ label }">
+          <SelectTrigger class="h-6 text-[11px]">
             <div class="canvas-layer-selected-text">
               <span class="canvas-layer-dot" />
               <span>{{ canvasChildLabelMap[currentOperatingCanvasChild.type] }}</span>
             </div>
-          </template>
+          </SelectTrigger>
 
-          <template v-for="(item, index) in canvasStickerOptions.children" :key="item.id">
-            <el-option
-              class="canvas-child-select-option"
-              :value="item.id"
-              :label="canvasChildLabelMap[item.type]"
-            >
-              <div
-                class="canvas-layer-option-item"
-                @mouseenter="optionMouseenter(item)"
-                @mouseleave="optionMouseleave(item)"
+          <SelectContent>
+            <template v-for="(item, index) in canvasStickerOptions.children" :key="item.id">
+              <SelectItem
+                class="canvas-child-select-option"
+                :value="String(item.id)"
               >
-                <span>{{ canvasChildLabelMap[item.type] }}</span>
-                <div style="flex: 1"></div>
-                <el-button
-                  v-if="item.type !== 'canvas' && item.type !== 'html' && item.id !== 'this_is_html_id'"
-                  link
-                  type="danger"
-                  size="small"
-                  @click.stop="remove(item.id)"
+                <div
+                  class="canvas-layer-option-item"
+                  @mouseenter="optionMouseenter(item)"
+                  @mouseleave="optionMouseleave(item)"
                 >
-                  <el-icon size="12">
-                    <CircleCloseFilled></CircleCloseFilled>
-                  </el-icon>
-                </el-button>
-              </div>
-            </el-option>
-          </template>
-        </el-select>
+                  <span>{{ canvasChildLabelMap[item.type] }}</span>
+                  <div style="flex: 1"></div>
+                  <Button
+                    v-if="item.type !== 'canvas' && item.type !== 'html' && item.id !== 'this_is_html_id'"
+                    variant="ghost"
+                    size="icon-xs"
+                    class="text-destructive hover:text-destructive"
+                    @click.stop="remove(item.id)"
+                  >
+                    <XCircle class="w-3 h-3"></XCircle>
+                  </Button>
+                </div>
+              </SelectItem>
+            </template>
+          </SelectContent>
+        </Select>
 
         <!-- 当前选中图层的快捷删除按钮 (画布与主代码画布不展示) -->
-        <el-tooltip
+        <Tooltip
           v-if="currentOperatingCanvasChild?.type !== 'canvas' && currentOperatingCanvasChild?.type !== 'html' && currentOperatingCanvasChild?.id !== 'this_is_html_id'"
-          content="删除当前选中图层"
-          placement="top"
-          :hide-after="0"
+          :delay-duration="0"
         >
-          <el-popconfirm
-            :title="`确定删除当前【${canvasChildLabelMap[currentOperatingCanvasChild.type] || '图层'}】？`"
-            confirm-button-text="删除"
-            cancel-button-text="取消"
-            @confirm="remove(currentOperatingCanvasChild.id)"
-          >
-            <template #reference>
-              <button
-                type="button"
-                class="canvas-layer-delete-btn"
-                title="删除当前图层"
-              >
-                <el-icon :size="13"><CircleCloseFilled /></el-icon>
-              </button>
-            </template>
-          </el-popconfirm>
-        </el-tooltip>
+          <TooltipTrigger as-child>
+            <button
+              type="button"
+              class="canvas-layer-delete-btn"
+              title="删除当前图层"
+              @click="confirm({ title: `确定删除当前【${canvasChildLabelMap[currentOperatingCanvasChild.type] || '图层'}】？`, okText: '删除', cancelText: '取消' }).then((ok) => ok && remove(currentOperatingCanvasChild.id))"
+            >
+              <XCircle class="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">删除当前选中图层</TooltipContent>
+        </Tooltip>
       </div>
     </div>
 
@@ -190,91 +171,80 @@
     </div>
   </div>
 
-  <a-modal
-    v-model:open="showUploadModal"
-    :centered="true"
-    :destroyOnClose="true"
-    width="540px"
-    :title="currentEditingCustomStickerId ? '更新自定义贴纸（保存将覆盖原作品）' : '保存自定义贴纸（新建作品）'"
-    :okText="currentEditingCustomStickerId ? '确认更新' : '确认保存'"
-    cancelText="取消"
-    @ok="doUpload"
-    :confirmLoading="submitLoading"
-  >
-    <el-form
+  <Dialog :modal="false" v-model:open="showUploadModal">
+    <DialogContent class="max-w-[540px]">
+      <DialogHeader>
+        <DialogTitle class="text-sm font-semibold">
+          {{ currentEditingCustomStickerId ? '更新自定义贴纸（保存将覆盖原作品）' : '保存自定义贴纸（新建作品）' }}
+        </DialogTitle>
+      </DialogHeader>
+    <div
       style="padding: 12px"
-      label-width="100px"
-      :inline-message="false"
-      :show-message="false"
-      label-position="left"
+      class="flex flex-col gap-3"
     >
-      <el-form-item label="贴纸名称：">
-        <el-input v-model="editForm.name" placeholder="贴纸名称"></el-input>
-      </el-form-item>
-      <el-form-item label="贴纸描述:">
-        <el-input
-          type="textarea"
+      <div class="flex items-center gap-3">
+        <Label class="w-[100px] shrink-0 text-xs">贴纸名称：</Label>
+        <Input v-model="editForm.name" placeholder="贴纸名称" class="flex-1" />
+      </div>
+      <div class="flex items-start gap-3">
+        <Label class="w-[100px] shrink-0 text-xs pt-1.5">贴纸描述:</Label>
+        <Textarea
           v-model="editForm.description"
           placeholder="贴纸描述"
-        ></el-input>
-      </el-form-item>
-      <el-form-item label="关键字:">
+          :rows="2"
+          class="flex-1"
+        />
+      </div>
+      <div class="flex items-start gap-3">
+        <Label class="w-[100px] shrink-0 text-xs pt-1.5">关键字:</Label>
+        <div class="flex-1">
         <tagsInput
           v-model="editForm.keywords"
           :autocomplete-tags="stickerAutoplacementTags"
           :autocomplete-width="400"
           autocompletePlacement="bottom"
         ></tagsInput>
-      </el-form-item>
+        </div>
+      </div>
 
-      <el-form-item label="保存到:">
+      <div class="flex items-start gap-3">
+        <Label class="w-[100px] shrink-0 text-xs pt-1.5">保存到:</Label>
         <div class="folder-tree-wrapper">
-          <el-tree
-            :data="folderTree"
-            :props="{ label: 'name', children: 'children' }"
-            node-key="id"
-            :expand-on-click-node="false"
-            @node-click="handleFolderNodeClick"
-          >
-            <template #default="{ node, data }">
-              <span
-                class="folder-tree-item"
-                :class="{ 'is-selected': editForm.folderId === data.id }"
-                @click.stop="toggleFolderSelect(data.id)"
-              >
-                <span class="folder-tree-text">{{ node.label }}</span>
-                <el-icon v-if="editForm.folderId === data.id" class="folder-check-icon">
-                  <Check />
-                </el-icon>
-              </span>
-            </template>
-          </el-tree>
+          <folderTreeNode
+            :nodes="folderTree"
+            :selected-id="editForm.folderId"
+            :on-select="toggleFolderSelect"
+          />
           <div class="folder-tree-hint">
             当前选择: {{ selectedFolderName || '根目录' }}
-            <el-button v-if="editForm.folderId" link type="primary" size="small" @click="clearFolderSelect">
+            <Button v-if="editForm.folderId" variant="link" size="sm" @click="clearFolderSelect">
               取消选择
-            </el-button>
+            </Button>
           </div>
         </div>
-      </el-form-item>
+      </div>
 
-      <el-form-item label="自动去除白色边框:">
-        <a-switch
-          v-model:checked="editForm.autoTrim"
-          checked-children="是"
-          un-checked-children="否"
-        />
-      </el-form-item>
+      <div class="flex items-center gap-3">
+        <Label class="w-[100px] shrink-0 text-xs">自动去除白色边框:</Label>
+        <Switch v-model:checked="editForm.autoTrim" />
+        <span class="ml-2 text-xs text-muted-foreground">{{ editForm.autoTrim ? '是' : '否' }}</span>
+      </div>
 
-      <!-- <el-form-item label="是否共享:">
-        <a-switch
+      <!-- <div class="flex items-center gap-3">
+        <Label class="w-[100px] shrink-0 text-xs">是否共享:</Label>
+        <Switch
           v-model:checked="editForm.isPublic"
-          checked-children="公开"
-          un-checked-children="私密"
         />
-      </el-form-item> -->
-    </el-form>
-  </a-modal>
+      </div> -->
+    </div>
+      <DialogFooter>
+        <Button variant="outline" @click="showUploadModal = false">取消</Button>
+        <Button :disabled="submitLoading" @click="doUpload">
+          {{ currentEditingCustomStickerId ? '确认更新' : '确认保存' }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
   <ChildViewHelperComponent></ChildViewHelperComponent>
 </template>
@@ -307,7 +277,7 @@ import {
   nextTick,
 } from "vue";
 
-import { CircleCloseFilled, FullScreen, Check } from "@element-plus/icons-vue";
+import { Check, Maximize2, XCircle } from 'lucide-vue-next'
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 import addPopover from "./addPopover.vue";
 import Api from "@/api";
@@ -320,6 +290,26 @@ import {
   currentFocusingStickerId,
   ChildViewHelperComponent,
 } from "@/components/design/layout/canvas/components/childViewHelper/index";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { confirm } from "@/components/ui/confirm";
+import folderTreeNode from "./folderTreeNode.vue";
 
 const canvasContainerRef = ref();
 
@@ -375,7 +365,7 @@ function clearCanvasChildren() {
     ) || {
       id: "this_is_html_id",
       type: "html",
-      htmlContent: `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #fafafa; color: #666; font-family: sans-serif; font-size: 24px;">\n  主 HTML 模板\n</div>`,
+      htmlContent: `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--1s-surface-background); color: var(--1s-text-color-secondary); font-family: sans-serif; font-size: 24px;">\n  主 HTML 模板\n</div>`,
       htmlBindings: {},
       htmlTemplateFields: [],
       htmlTemplateDefaultBindings: {},
@@ -397,7 +387,7 @@ function clearCanvasChildren() {
     };
 
   // 重置 HTML 内容与绑定关系
-  htmlChild.htmlContent = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #fafafa; color: #666; font-family: sans-serif; font-size: 24px;">\n  主 HTML 模板\n</div>`;
+  htmlChild.htmlContent = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--1s-surface-background); color: var(--1s-text-color-secondary); font-family: sans-serif; font-size: 24px;">\n  主 HTML 模板\n</div>`;
   htmlChild.htmlBindings = {};
   htmlChild.htmlTemplateFields = [];
   htmlChild.htmlTemplateDefaultBindings = {};
@@ -570,18 +560,6 @@ function genSticker() {
 </script>
 
 <style lang="less" scoped>
-:deep(.el-form-item) {
-  margin-bottom: 8px;
-
-  .el-form-item__label {
-    line-height: 1;
-  }
-
-  .el-form-item__content {
-    line-height: 1;
-  }
-}
-
 .folder-tree-wrapper {
   width: 100%;
   max-height: 300px;
@@ -590,37 +568,10 @@ function genSticker() {
   border-radius: 6px;
   padding: 4px 6px;
   background: var(--1s-surface-background, #fafafa);
-
-  :deep(.el-tree) {
-    background: transparent;
-    font-size: 12px;
-  }
-
-  :deep(.el-tree-node__content) {
-    height: 26px;
-    border-radius: 3px;
-    padding: 0;
-  }
-
-  :deep(.el-tree-node__content:hover) {
-    background: transparent;
-  }
-
-  :deep(.el-tree-node.is-current > .el-tree-node__content) {
-    background: transparent !important;
-  }
-
-  :deep(.el-tree-node__expand-icon) {
-    font-size: 12px;
-    color: #999;
-  }
-
-  :deep(.el-tree-node__expand-icon.is-leaf) {
-    width: 12px;
-  }
+  font-size: 12px;
 }
 
-.folder-tree-item {
+:deep(.folder-tree-item) {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -652,17 +603,37 @@ function genSticker() {
   }
 }
 
-.folder-tree-text {
+:deep(.folder-tree-text) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.folder-check-icon {
-  font-size: 14px;
+:deep(.folder-check-icon) {
   color: var(--1s-accent-color);
   flex-shrink: 0;
   margin-left: 4px;
+}
+
+:deep(.folder-tree-arrow) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--1s-text-color-tertiary);
+  cursor: pointer;
+  transition: transform 0.15s;
+
+  &.is-expanded {
+    transform: rotate(90deg);
+  }
+}
+
+:deep(.folder-tree-arrow-placeholder) {
+  width: 14px;
+  flex-shrink: 0;
 }
 
 .folder-tree-hint {
@@ -718,7 +689,7 @@ function genSticker() {
   font-size: 10px;
   font-weight: 500;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.85);
+  background: color-mix(in srgb, var(--1s-surface-background) 85%, transparent);
   backdrop-filter: blur(var(--1s-blur-sm));
   color: var(--1s-text-color);
   border: 1px solid var(--1s-border-color);
@@ -731,7 +702,7 @@ function genSticker() {
     backdrop-filter var(--1s-transition-base);
 
   &:hover {
-    background: #ffffff;
+    background: var(--1s-surface-background);
     transform: translateY(-2px);
     box-shadow: var(--1s-shadow-md);
     backdrop-filter: blur(var(--1s-blur-md));

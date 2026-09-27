@@ -243,7 +243,7 @@ export function isNewDesignRequest(
       return false;
     }
 
-    return /创建|新建|生成|制作|实现|设计一(?:张|个|套|款|幅|枚|组)|做一(?:张|个|套|款|幅|枚|组)|创作一(?:张|个|套|款|幅|枚|组)|清空画布.*(?:添加|创建)|复刻|仿做|仿制|做同款|相同款|照着.{0,12}(?:做|制作)|create|generate|make a|design a/i.test(
+    return /创建|新建|生成|制作|实现|(?:设计|做|创作|画)[一]?(?:张|个|套|款|幅|枚|组)|清空画布.*(?:添加|创建)|复刻|仿做|仿制|做同款|相同款|照着.{0,12}(?:做|制作)|create|generate|make a|design a/i.test(
       text,
     );
   }
@@ -298,7 +298,7 @@ function getPrimaryArtworkAction(
 
   const analysisOnly =
     shouldAllowCanvasAnalysis(userMessage) &&
-    !/创建|生成|制作|设计一(?:张|个|套|款|幅|枚|组)|做一(?:张|个|套|款|幅|枚|组)|创作一(?:张|个|套|款|幅|枚|组)|新建|复刻|仿做|仿制|同款|基于当前|修改当前|调整当前/i.test(
+    !/创建|生成|制作|(?:设计|做|创作|画)[一]?(?:张|个|套|款|幅|枚|组)|新建|复刻|仿做|仿制|同款|基于当前|修改当前|调整当前/i.test(
       userMessage,
     );
   if (analysisOnly) return null;
@@ -489,29 +489,48 @@ export function buildExecutionPlan(
   ) {
     steps.push(createStep("canvas.analyze", "分析当前画布并给出评价"));
   }
-  if (
-    !imageGroupRequest &&
-    !independentBatchRequest &&
-    (task?.delivery === "save" ||
-      hasPositiveCommandIntent(
-        userMessage,
-        /保存|save/i,
-        /(不要|不用|无需|别|禁止|不需要).{0,12}(保存|save)/i,
-      ))
-  ) {
-    steps.push(createStep("canvas.updateAndSaveSticker", "保存当前设计"));
-  }
-  if (
-    task?.delivery === "export" ||
-    hasPositiveCommandIntent(
-      userMessage,
-      /导出|export/i,
-      /(不要|不用|无需|别|禁止|不需要).{0,12}(导出|export)/i,
-    )
-  ) {
-    steps.push(createStep("canvas.exportPng", "导出当前设计"));
+
+  // 是否真的有设计/交付工作要做。
+  // 任务预设里的 delivery 只在“确有设计工作”时才追加交付步骤；
+  // 否则闲聊/问答（如 “hi”、“你是什么模型”）会被 AiPanel 默认的 delivery:save
+  // 绑上一个“保存当前设计”，导致计划永远完不成、agent 死循环。
+  const explicitSave = hasPositiveCommandIntent(
+    userMessage,
+    /保存|save/i,
+    /(不要|不用|无需|别|禁止|不需要).{0,12}(保存|save)/i,
+  );
+  const explicitExport = hasPositiveCommandIntent(
+    userMessage,
+    /导出|export/i,
+    /(不要|不用|无需|别|禁止|不需要).{0,12}(导出|export)/i,
+  );
+  const hasResourceStep = steps.some((step) =>
+    REUSABLE_ACTIONS.has(step.action),
+  );
+  const hasDesignWork =
+    isNewDesign ||
+    Boolean(artworkAction) ||
+    imageGroupRequest ||
+    independentBatchRequest ||
+    hasResourceStep ||
+    steps.some((step) => step.action === "canvas.analyze") ||
+    explicitSave ||
+    explicitExport;
+
+  if (hasDesignWork) {
+    if (
+      !imageGroupRequest &&
+      !independentBatchRequest &&
+      (explicitSave || (task?.delivery === "save" && Boolean(artworkAction)))
+    ) {
+      steps.push(createStep("canvas.updateAndSaveSticker", "保存当前设计"));
+    }
+    if (explicitExport || (task?.delivery === "export" && Boolean(artworkAction))) {
+      steps.push(createStep("canvas.exportPng", "导出当前设计"));
+    }
   }
 
+  // 闲聊/纯问答：不建计划，让 agent 直接回复文字后结束
   const plan = steps.length
     ? {
         goal: normalized,
@@ -626,11 +645,9 @@ export function getIncompleteDeliveryActions(
   plan: DesignPlan | null,
 ): string[] {
   if (!plan) return [];
-  return Array.from(REQUIRED_DELIVERY_ACTIONS).filter((action) => {
-    const actionSteps = plan.steps.filter((step) => step.action === action);
-    return (
-      actionSteps.length > 0 &&
-      !actionSteps.every((step) => step.status === "done")
-    );
-  });
+  // 只把仍是 pending 的交付步骤视为未完成。
+  // failed/done 都是终态 —— 若把 failed 也算进去，保存失败会被反复强制重试，形成死循环。
+  return Array.from(REQUIRED_DELIVERY_ACTIONS).filter((action) =>
+    plan.steps.some((step) => step.action === action && step.status === "pending"),
+  );
 }

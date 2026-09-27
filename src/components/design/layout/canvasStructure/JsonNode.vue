@@ -6,7 +6,7 @@
       @click.stop="emit('toggle', path)"
     >
       <span class="json-node__arrow" :class="{ 'json-node__arrow--expanded': expanded }">
-        <RightOutlined />
+        <ChevronRight />
       </span>
       <span class="json-node__key" :class="{ 'json-node__key--root': depth === 0 }">{{ displayKey }}</span>
       <span class="json-node__bracket">{{ isArray ? '[' : '{' }}</span>
@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RightOutlined } from '@ant-design/icons-vue'
+import { ChevronRight } from 'lucide-vue-next'
 
 defineOptions({ name: 'JsonNode' })
 

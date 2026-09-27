@@ -1,81 +1,95 @@
 <template>
-  <el-collapse v-model="waveformCollapseActives">
-    <el-collapse-item name="1" title="音频波形">
-      <operate-form-item>
-        <template #icon><icon></icon></template>
-        <template #name>音频URL</template>
-        <template #content>
-          <el-input
-            v-model="currentOperatingCanvasChild.audioUrl"
-            placeholder="请输入音频URL"
-            clearable
-            size="small"
-          >
-          </el-input>
-        </template>
-      </operate-form-item>
+  <Accordion
+    type="multiple"
+    :model-value="waveformCollapseActives"
+    @update:model-value="v => (waveformCollapseActives = v as string[])"
+  >
+    <AccordionItem value="1">
+      <AccordionTrigger>音频波形</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #icon><icon></icon></template>
+          <template #name>音频URL</template>
+          <template #content>
+            <Input
+              v-model="currentOperatingCanvasChild.audioUrl"
+              placeholder="请输入音频URL"
+              class="h-6 text-[11px]"
+            >
+            </Input>
+          </template>
+        </operate-form-item>
 
-      <operateItemColor
-        label="波形色"
-        v-model="currentOperatingCanvasChild.waveColor"
-      >
-      </operateItemColor>
+        <operateItemColor
+          label="波形色"
+          v-model="currentOperatingCanvasChild.waveColor"
+        >
+        </operateItemColor>
 
-      <operateItemColor
-        label="进度色"
-        v-model="currentOperatingCanvasChild.progressColor"
-      >
-      </operateItemColor>
+        <operateItemColor
+          label="进度色"
+          v-model="currentOperatingCanvasChild.progressColor"
+        >
+        </operateItemColor>
 
-      <operate-form-item>
-        <template #icon><icon></icon></template>
-        <template #name>波形高度</template>
-        <template #content>
-          <el-slider
-            v-model="currentOperatingCanvasChild.height"
-            :min="20"
-            :max="300"
-            :step="1"
-            size="small"
-          >
-          </el-slider>
-        </template>
-      </operate-form-item>
+        <operate-form-item>
+          <template #icon><icon></icon></template>
+          <template #name>波形高度</template>
+          <template #content>
+            <Slider
+              :model-value="[currentOperatingCanvasChild.height]"
+              :min="20"
+              :max="300"
+              :step="1"
+              @update:model-value="v => (currentOperatingCanvasChild.height = v[0])"
+            >
+            </Slider>
+          </template>
+        </operate-form-item>
 
-      <operateItemBackgroundColor
-        v-model="currentOperatingCanvasChild.backgroundColor"
-      >
-      </operateItemBackgroundColor>
-    </el-collapse-item>
+        <operateItemBackgroundColor
+          v-model="currentOperatingCanvasChild.backgroundColor"
+        >
+        </operateItemBackgroundColor>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="2" title="尺寸">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      >
-      </operateItemSize>
-    </el-collapse-item>
+    <AccordionItem value="2">
+      <AccordionTrigger>尺寸</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        >
+        </operateItemSize>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="3" title="通用属性">
-      <operateItemCommonGroup
-        v-model="currentOperatingCanvasChild"
-      ></operateItemCommonGroup>
-    </el-collapse-item>
+    <AccordionItem value="3">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup
+          v-model="currentOperatingCanvasChild"
+        ></operateItemCommonGroup>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="4">
-      <template #title>
+    <AccordionItem value="4">
+      <AccordionTrigger>
         <div class="title">滤镜效果</div>
-      </template>
-      <operateItemFilterGroup
-        v-model="currentOperatingCanvasChild.filter"
-      ></operateItemFilterGroup>
-    </el-collapse-item>
+      </AccordionTrigger>
+      <AccordionContent>
+        <operateItemFilterGroup
+          v-model="currentOperatingCanvasChild.filter"
+        ></operateItemFilterGroup>
+      </AccordionContent>
+    </AccordionItem>
 
     <operateItemClipPath
       v-model="currentOperatingCanvasChild.clipPath"
     ></operateItemClipPath>
-  </el-collapse>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -87,6 +101,14 @@ import operateItemBackgroundColor from "@/components/design/layout/canvas/operat
 import operateItemFilterGroup from "@/components/design/layout/canvas/operate/filter/group.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
 import operateItemClipPath from "@/components/design/layout/canvas/operate/clipPath/index.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 
 import { currentOperatingCanvasChild } from "../index.tsx";
 

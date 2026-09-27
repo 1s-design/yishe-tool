@@ -50,14 +50,14 @@
               <span class="label">标签:</span>
               <div class="tags">
                 <template v-if="currentOperatingBaseModelInfo?.keywords">
-                  <el-tag 
+                  <Badge
                     v-for="(keyword, index) in currentOperatingBaseModelInfo.keywords.split(',')" 
                     :key="`base-${index}-${keyword.trim()}`"
-                    size="small"
+                    variant="secondary"
                     class="tag-item"
                   >
                     {{ keyword.trim() }}
-                  </el-tag>
+                  </Badge>
                 </template>
                 <span v-else class="no-data">未设置</span>
               </div>
@@ -90,14 +90,14 @@
                   <div class="sticker-desc">{{ decal.info?.description || '未设置' }}</div>
                   <div class="sticker-tags">
                     <template v-if="decal.info?.keywords">
-                      <el-tag 
+                      <Badge
                         v-for="(keyword, tagIndex) in decal.info.keywords.split(',')" 
                         :key="`decal-${decal.id && decal.id.value ? decal.id.value : index}-${keyword.trim()}`"
                         size="small"
                         class="tag-item"
                       >
                         {{ keyword.trim() }}
-                      </el-tag>
+                      </Badge>
                     </template>
                     <span v-else class="no-data">未设置</span>
                   </div>
@@ -145,14 +145,14 @@
             <span class="label">标签:</span>
             <div class="tags">
               <template v-if="currentModelController.state.material.textureInfo?.keywords">
-                <el-tag 
+                <Badge
                   v-for="(keyword, index) in currentModelController.state.material.textureInfo.keywords.split(',')" 
                   :key="`material-${index}-${keyword.trim()}`"
-                  size="small"
+                  variant="secondary"
                   class="tag-item"
                 >
                   {{ keyword.trim() }}
-                </el-tag>
+                </Badge>
               </template>
               <span v-else class="no-data">未设置</span>
             </div>
@@ -193,66 +193,65 @@
           <h3 class="text-base font-medium">模型信息</h3>
         </div>
         
-        <el-form label-position="top" class="compact-form">
-          <el-form-item label="模型名称">
-            <el-input 
-              v-model="form.name" 
+        <div class="compact-form flex flex-col gap-3">
+          <div class="flex flex-col gap-1">
+            <Label class="text-xs">模型名称</Label>
+            <Input
+              v-model="form.name"
               placeholder="请输入模型名称"
-              size="small"
-            ></el-input>
-          </el-form-item>
-          
-          <el-form-item label="模型描述">
-            <el-input
+              class="h-6 text-[11px]"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <Label class="text-xs">模型描述</Label>
+            <Textarea
               v-model="form.description"
               placeholder="请输入模型描述"
-              type="textarea"
-              :autosize="{ minRows: 2, maxRows: 4 }"
-              size="small"
-            ></el-input>
-          </el-form-item>
+              :rows="3"
+              class="text-[11px]"
+            />
+          </div>
 
-          <el-form-item label="模型标签">
+          <div class="flex flex-col gap-1">
+            <Label class="text-xs">模型标签</Label>
             <s1-tagsInput
               v-model="form.keywords"
               :string="true"
               :autocompleteTags="customModelAutoplacementTags"
               :autocompleteWidth="300"
             ></s1-tagsInput>
-          </el-form-item>
+          </div>
 
-          <el-form-item label="是否母版">
-            <el-switch 
-              v-model="form.isTemplate" 
+          <div class="flex items-center gap-2">
+            <Label class="text-xs">是否母版</Label>
+            <Switch
+              v-model:checked="form.isTemplate"
             />
-          </el-form-item>
-          
-        </el-form>
+          </div>
+
+        </div>
 
         <!-- 保存按钮上方新增AI生成内容按钮 -->
         <!-- <div class="ai-gen-button-container" style="padding: 0 12px 8px 12px;">
-          <el-button 
+          <Button 
             @click="aiGenerateContent" 
-            type="success" 
-            class="ai-gen-button" 
-            round 
-            size="default"
+            variant="outline"
+            class="ai-gen-button rounded-full" 
           >
             AI生成内容
-          </el-button>
+          </Button>
         </div> -->
         <!-- 保存按钮 -->
         <div class="save-button-container">
-          <el-button 
+          <Button 
             @click="save" 
-            type="primary" 
-            class="save-button" 
-            round 
-            :loading="loading"
-            size="default"
+            variant="default" 
+            class="save-button rounded-full" 
+            :disabled="loading"
           >
             {{ loadingMessage || "上传模型" }}
-          </el-button>
+          </Button>
         </div>
       </div>
     </div>
@@ -261,7 +260,7 @@
 <script setup>
 import { ref, onBeforeMount, computed, watch } from "vue";
 import { createCustomModelApi, uploadToCOS, getCustomModelById } from "@/api";
-import { ElMessageBox } from "element-plus";
+import { confirm as uiConfirm } from '@/components/ui/confirm';
 import {
   currentModelController,
   currentOperatingBaseModelInfo,
@@ -277,7 +276,13 @@ import { base64ToFile, base64ToPngFile } from "@/common/transform/base64ToFile";
 import { useLoginStatusStore } from "@/store/stores/login";
 import { message } from '@/common/message';
 import desimage from "@/components/image.vue";
-import { CircleCloseFilled } from "@element-plus/icons-vue";
+import { XCircle } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import Utils from "@/common/utils";
 import { saveCustomModel } from "./index.ts";
 import { customModelAutoplacementTags } from "../../components/tagsInput";
@@ -364,11 +369,13 @@ async function save() {
     loading.value = true;
     if (isEdit.value) {
       // 编辑模式，弹窗提示
-      await ElMessageBox.confirm(
-        "当前为修改模式，将会影响到原模型，是否继续？",
-        "提示",
-        { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" }
-      );
+      const okContinue = await uiConfirm({
+        title: "提示",
+        description: "当前为修改模式，将会影响到原模型，是否继续？",
+        okText: "确定",
+        cancelText: "取消",
+      });
+      if (!okContinue) return;
       await updateCustomModelWithUpload({
         ...form.value,
         id: currentEditingModelId.value,
@@ -462,7 +469,7 @@ function aiGenerateContent() {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  background: #f8f9fa;
+  background: var(--1s-control-surface-muted);
   border-radius: 8px;
   overflow: hidden;
   min-height: 0;
@@ -472,8 +479,8 @@ function aiGenerateContent() {
 
 .preview-header {
   padding: 6px 10px 4px;
-  border-bottom: 1px solid #e9ecef;
-  background: white;
+  border-bottom: 1px solid var(--1s-border-color);
+  background: var(--1s-surface-background);
   flex-shrink: 0;
 }
 
@@ -490,7 +497,7 @@ function aiGenerateContent() {
 .preview-image {
   width: 100%;
   height: 100%;
-  background: #f5f6f7;
+  background: var(--1s-control-surface-muted);
   border-radius: 6px;
   object-fit: contain;
   max-height: 120px;
@@ -498,15 +505,15 @@ function aiGenerateContent() {
 
 /* 卡片通用样式 */
 .info-card {
-  background: white;
+  background: var(--1s-surface-background);
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--1s-border-color);
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .form-card {
-  background: white;
+  background: var(--1s-surface-background);
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
@@ -514,8 +521,8 @@ function aiGenerateContent() {
 
 .card-header {
   padding: 8px 12px 6px;
-  border-bottom: 1px solid #e9ecef;
-  background: #f8f9fa;
+  border-bottom: 1px solid var(--1s-border-color);
+  background: var(--1s-control-surface-muted);
   flex-shrink: 0;
 }
 
@@ -531,7 +538,7 @@ function aiGenerateContent() {
 }
 
 .model-info {
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--1s-border-color);
 }
 
 .info-label {
@@ -539,7 +546,7 @@ function aiGenerateContent() {
   align-items: center;
   margin-bottom: 6px;
   font-weight: 500;
-  color: #495057;
+  color: var(--1s-text-color-secondary);
   font-size: 12px;
 }
 
@@ -552,7 +559,7 @@ function aiGenerateContent() {
 }
 
 .dot.blue {
-  background: #007bff;
+  background: var(--1s-accent-color);
 }
 
 .dot.green {
@@ -576,14 +583,14 @@ function aiGenerateContent() {
 .label {
   flex: 0 0 45px;
   font-size: 11px;
-  color: #6c757d;
+  color: var(--1s-text-color-tertiary);
   margin-right: 4px;
 }
 
 .value {
   flex: 1;
   font-size: 11px;
-  color: #212529;
+  color: var(--1s-text-color);
   word-break: break-word;
   line-height: 1.3;
 }
@@ -601,7 +608,7 @@ function aiGenerateContent() {
 }
 
 .no-data {
-  color: #6c757d;
+  color: var(--1s-text-color-tertiary);
   font-style: italic;
   font-size: 11px;
 }
@@ -616,10 +623,10 @@ function aiGenerateContent() {
   display: flex;
   gap: 6px;
   padding: 6px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--1s-border-color);
   border-radius: 4px;
   margin-bottom: 4px;
-  background: #f8f9fa;
+  background: var(--1s-control-surface-muted);
 }
 
 .sticker-item:last-child {
@@ -635,7 +642,7 @@ function aiGenerateContent() {
   height: 24px;
   border-radius: 3px;
   object-fit: cover;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--1s-border-color);
 }
 
 .sticker-details {
@@ -646,7 +653,7 @@ function aiGenerateContent() {
 .sticker-name {
   font-size: 11px;
   font-weight: 500;
-  color: #212529;
+  color: var(--1s-text-color);
   margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -655,7 +662,7 @@ function aiGenerateContent() {
 
 .sticker-desc {
   font-size: 10px;
-  color: #6c757d;
+  color: var(--1s-text-color-tertiary);
   margin-bottom: 3px;
   line-height: 1.2;
   display: -webkit-box;
@@ -674,7 +681,7 @@ function aiGenerateContent() {
   margin-left: 10px;
   padding: 12px;
   text-align: center;
-  color: #6c757d;
+  color: var(--1s-text-color-tertiary);
   font-size: 11px;
 }
 
@@ -683,26 +690,17 @@ function aiGenerateContent() {
   padding: 8px 12px;
 }
 
-.compact-form .el-form-item {
-  margin-bottom: 8px;
-}
-
-.compact-form .el-form-item:last-child {
-  margin-bottom: 0;
-}
-
-.compact-form .el-form-item__label {
+.compact-form label {
   font-size: 11px;
   font-weight: 500;
-  color: #495057;
-  margin-bottom: 3px;
+  color: var(--1s-text-color-secondary);
 }
 
 /* 保存按钮 */
 .save-button-container {
   padding: 8px 12px;
-  border-top: 1px solid #e9ecef;
-  background: #f8f9fa;
+  border-top: 1px solid var(--1s-border-color);
+  background: var(--1s-control-surface-muted);
   flex-shrink: 0;
 }
 
@@ -728,11 +726,11 @@ function aiGenerateContent() {
   height: 48px;
   border-radius: 4px;
   object-fit: cover;
-  border: 1px solid #eee;
-  background: #f7f7f7;
+  border: 1px solid var(--1s-border-color);
+  background: var(--1s-control-surface-muted);
 }
 .no-material-thumb {
-  color: #aaa;
+  color: var(--1s-text-color-tertiary);
   font-size: 11px;
   margin-bottom: 8px;
 }
@@ -743,12 +741,12 @@ function aiGenerateContent() {
   margin-bottom: 4px;
 }
 .material-row .label {
-  color: #6c757d;
+  color: var(--1s-text-color-tertiary);
   margin-right: 6px;
   min-width: 36px;
 }
 .material-row .value {
-  color: #212529;
+  color: var(--1s-text-color);
 }
 
 /* 颜色显示样式 */
@@ -763,13 +761,13 @@ function aiGenerateContent() {
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  border: 1px solid #eee;
+  border: 1px solid var(--1s-border-color);
   flex-shrink: 0;
 }
 
 .color-value {
   font-size: 11px;
-  color: #212529;
+  color: var(--1s-text-color);
 }
 
 /* 滚动条样式 */
@@ -780,19 +778,19 @@ function aiGenerateContent() {
 
 .info-section::-webkit-scrollbar-track,
 .sticker-list::-webkit-scrollbar-track {
-  background: #f1f3f4;
+  background: var(--1s-control-surface-muted);
   border-radius: 2px;
 }
 
 .info-section::-webkit-scrollbar-thumb,
 .sticker-list::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--1s-control-surface-muted);
   border-radius: 2px;
 }
 
 .info-section::-webkit-scrollbar-thumb:hover,
 .sticker-list::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--1s-border-color);
 }
 
 /* 响应式设计 */
@@ -901,7 +899,7 @@ function aiGenerateContent() {
     padding: 6px 8px;
   }
   
-  .compact-form .el-form-item__label {
+  .compact-form label {
     font-size: 10px;
   }
   
@@ -961,7 +959,7 @@ function aiGenerateContent() {
     padding: 4px 6px;
   }
   
-  .compact-form .el-form-item__label {
+  .compact-form label {
     font-size: 9px;
   }
   

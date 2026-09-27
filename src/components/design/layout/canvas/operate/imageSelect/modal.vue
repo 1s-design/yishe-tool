@@ -7,38 +7,41 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <a-modal
-    v-bind="$attrs"
-    width="960px"
-    style="min-width: 960px"
-    title="选择基础图片"
-    :footer="null"
-    :destroyOnClose="true"
-  >
-    <div class="model">
-      <s1-scrollbar>
-        <div v-infinite-scroll="getList" :infinite-scroll-distance="150">
-          <el-row style="row-gap: 4px; padding: 20px">
-            <el-col :span="24 / column" v-for="item in list" align="center">
-              <div @click="useAsCanvasImage(item)">
-                <s1-image class="img" :src="item?.url"> </s1-image>
+  <Dialog v-bind="$attrs">
+    <DialogContent class="max-w-[960px] w-[960px]">
+      <DialogHeader>
+        <DialogTitle>选择基础图片</DialogTitle>
+      </DialogHeader>
+      <div class="model">
+        <s1-scrollbar>
+          <div v-infinite-scroll="getList" :infinite-scroll-distance="150">
+            <div class="flex flex-wrap" style="row-gap: 4px; padding: 20px">
+              <div :style="{ flex: `0 0 ${(100 / column)}%` }" v-for="item in list" class="flex flex-col items-center">
+                <div @click="useAsCanvasImage(item)">
+                  <s1-image class="img" :src="item?.url"> </s1-image>
+                </div>
               </div>
-            </el-col>
-          </el-row>
-          <loadingBottom v-if="loading"></loadingBottom>
-        </div>
-      </s1-scrollbar>
-    </div>
-  </a-modal>
+            </div>
+            <loadingBottom v-if="loading"></loadingBottom>
+          </div>
+        </s1-scrollbar>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="tsx">
 import { ref, onBeforeMount, watch } from "vue";
-import { Search, ArrowRightBold, Operation, ArrowRight } from "@element-plus/icons-vue";
 import { getStickerList } from "@/api";
 import { usePaging } from "@/hooks/data/paging.ts";
 import desimage from "@/components/image.vue";
 import { showImageSelectModal } from "./index.tsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { currentModelController, viewDisplayController } from "@/components/design/store";
 import { initDraggableElement } from "@/components/design/utils/draggable";
 import { imgToFile, createImgObjectURL, imgToBase64 } from "@/common/transform/index";
@@ -94,6 +97,6 @@ watch(showImageSelectModal, (val) => {
 .img {
   width: 100px !important;
   height: 100px !important;
-  background: #f1f1f1;
+  background: var(--1s-control-surface-muted);
 }
 </style>

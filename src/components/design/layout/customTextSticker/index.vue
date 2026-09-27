@@ -4,21 +4,17 @@
     <sticker-canvas class="canvas"></sticker-canvas>
     <operating-form></operating-form>
     <footer>
-      <el-button-group link style="width: 100%">
-        <el-button :loading="loading" @click="exportPng"> 导出 png </el-button>
-        <!-- <el-button @click="exportTextStickerSvg" type="primary"> 导出svg </el-button> -->
-        <el-button> 分享 </el-button>
-        <el-popconfirm
-          confirm-button-text="确认"
-          cancel-button-text="暂不"
-          @confirm="upload"
-          title="确认要上传该贴纸吗"
+      <div class="footer-btns">
+        <Button :disabled="loading" @click="exportPng"> 导出 png </Button>
+        <!-- <Button @click="exportTextStickerSvg" variant="default"> 导出svg </Button> -->
+        <Button variant="ghost"> 分享 </Button>
+        <Button
+          variant="ghost"
+          @click="confirm({ title: '确认要上传该贴纸吗', okText: '确认', cancelText: '暂不' }).then((ok) => ok && upload())"
         >
-          <template #reference>
-            <el-button> 上传 </el-button>
-          </template>
-        </el-popconfirm>
-      </el-button-group>
+          上传
+        </Button>
+      </div>
     </footer>
   </div>
 </template>
@@ -35,6 +31,8 @@ import {
   exportTextStickerSvg,
 } from "./watch";
 import { message } from '@/common/message';
+import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/ui/confirm';
 
 const loading = ref(false);
 
@@ -86,9 +84,10 @@ header {
 footer {
   padding: 1em;
   width: 100%;
-  .el-button-group {
+  .footer-btns {
     display: flex;
-    .el-button {
+    width: 100%;
+    button {
       flex: 1;
     }
   }

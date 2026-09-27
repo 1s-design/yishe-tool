@@ -104,7 +104,7 @@ main {
   box-sizing: border-box;
   border: 2px solid #eee;
   &:focus-within {
-    border: 2px solid var(--el-color-primary);
+    border: 2px solid var(--1s-accent-color);
   }
 }
 
@@ -117,7 +117,7 @@ main {
   white-space: pre;
   outline: none;
   min-width: 1px; // 保证在没有内容时也能显示光标
-  caret-color: var(--el-color-primary);
+  caret-color: var(--1s-accent-color);
   font-family: Microsoft Yahei;
 }
 </style>

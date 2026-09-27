@@ -1,26 +1,14 @@
 <template>
   <div class="img-container" ref="imageRef">
-    <el-image
+    <img
       ref="elImageRef"
       class="el-img"
       v-bind="$attrs"
-      :fit="fit || 'contain'"
-      :lazy="lazy"
+      :style="{ objectFit: fit || 'contain', width: '100%', height: '100%', padding }"
+      :loading="lazy ? 'lazy' : undefined"
       @load="load($event)"
-      style="width: 100%; height: 100%"
-      :style="{ padding }"
-    >
-      <template #placeholder>
-        <div class="el-img_loading"></div>
-      </template>
-      <template #error>
-        <div class="el-img_error">
-          <el-icon style="color: #aaa">
-            <Picture />
-          </el-icon>
-        </div>
-      </template>
-    </el-image>
+      alt=""
+    />
 
     <!-- 显示图片尺寸信息 -->
     <div v-if="showSize && imageSize.width && imageSize.height" class="size-info">
@@ -34,7 +22,7 @@
 </template>
 <script setup>
 import { onMounted, ref, computed, nextTick } from "vue";
-import { Picture, FolderOpened, Search, Operation } from "@element-plus/icons-vue";
+import { Image as Picture, FolderOpen as FolderOpened, Search, SlidersHorizontal as Operation } from "lucide-vue-next";
 
 const emits = defineEmits(["load"]);
 
@@ -94,10 +82,11 @@ function load(e) {
 
 defineExpose({
   getNaturalSize() {
-    // 获取
-    let el = elImageRef.value.$el.querySelector("img");
+    // 获取（兼容原 el-image 组件实例与原生 img 元素）
+    const refVal = elImageRef.value;
+    let el = refVal?.$el?.querySelector?.("img") || refVal;
 
-    if (!el.complete) {
+    if (!el || !el.complete) {
       return console.warn("img not loaded while get natural size");
     }
 
@@ -145,24 +134,6 @@ defineExpose({
   height: 100%;
   transition: all 0.3s;
   display: block;
-
-  &_loading {
-    width: 100%;
-    height: 100%;
-    list-style: none;
-    background-image: linear-gradient(100deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
-    background-size: 400% 100%;
-    background-position: 100% 50%;
-    animation: skeleton-loading 1.4s ease infinite;
-  }
-
-  &_error {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
 }
 
 @keyframes skeleton-loading {

@@ -6,29 +6,23 @@
     <template #name> 文字阴影 </template>
     <template #content>
       <div>
-        <el-button size="small"> 选择阴影 </el-button>
-        <el-popover
-          width="800"
-          placement="bottom"
-          :visible="showPopover"
-          popper-class="el-popover-operation"
+        <Button size="sm" variant="outline"> 选择阴影 </Button>
+        <Popover
+          :open="showPopover"
         >
-          <template #reference>
-            <el-button @click="click" size="small" link>
-              <el-icon size="16">
-                <Setting />
-              </el-icon>
-            </el-button>
-          </template>
-          <template #default>
-            <el-row
-              align="middle"
-              justify="space-around"
-              style="row-gap: 0.8rem"
-              :gutter="24"
+          <PopoverTrigger as-child>
+            <Button @click="click" size="sm" variant="link">
+              <Settings class="w-4 h-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent side="bottom" class="w-[800px] max-w-[calc(100vw-2rem)]">
+          <div>
+            <div
+              class="flex flex-wrap items-center"
+              style="row-gap: 0.8rem; column-gap: 1rem; justify-content: space-around"
             >
               <template v-for="(item, index) in model">
-                <el-col :span="24">
+                <div class="w-full">
                   <div class="flex items-center justify-between" style="column-gap: 1rem">
                     <span> {{ index + 1 }}: </span>
                     水平偏移:
@@ -52,24 +46,25 @@
                     颜色:
                     <color-picker type="pure" v-model="model[index].color"></color-picker>
                     隐藏：
-                    <el-switch size="small" v-model="model[index].disabled"></el-switch>
-                    <el-button type="danger" plain size="small" @click="remove(index)">
+                    <Switch v-model:checked="model[index].disabled"></Switch>
+                    <Button variant="outline" class="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive" size="sm" @click="remove(index)">
                       移除
-                    </el-button>
+                    </Button>
                   </div>
-                </el-col>
+                </div>
               </template>
-              <el-col :span="24">
-                <el-button-group class="w-full" style="display: flex">
-                  <el-button @click="clear" size="small"> 清空 </el-button>
-                  <el-button @click="addShadow" size="small" style="flex: 1">
+              <div class="w-full">
+                <div class="w-full flex items-stretch gap-0">
+                  <Button @click="clear" size="sm" variant="outline"> 清空 </Button>
+                  <Button @click="addShadow" size="sm" variant="outline" style="flex: 1">
                     添加阴影
-                  </el-button>
-                </el-button-group>
-              </el-col>
-            </el-row>
-          </template>
-        </el-popover>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </template>
   </operate-form-item>
@@ -86,7 +81,10 @@ import {
   formatToNativeSizeOption,
   parseTextShadowOptionsToCSS,
 } from "@/components/design/layout/canvas/helper.tsx";
-import { Setting } from "@element-plus/icons-vue";
+import { Settings } from "lucide-vue-next";
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 
 const model = defineModel({
   default: [],

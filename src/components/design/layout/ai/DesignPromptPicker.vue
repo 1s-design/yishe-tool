@@ -1,14 +1,13 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="提示词库"
-    width="680px"
-    top="8vh"
-    :close-on-click-modal="true"
-    destroy-on-close
-    @close="handleClose"
+  <Dialog
+    :open="visible"
+    @update:open="(v) => { visible = v; if (!v) handleClose(); }"
   >
-    <div class="prompt-lib" :class="{ 'is-dark': isDark }">
+    <DialogContent class="max-w-[680px] w-[680px]">
+      <DialogHeader>
+        <DialogTitle>提示词库</DialogTitle>
+      </DialogHeader>
+      <div class="prompt-lib" :class="{ 'is-dark': isDark }">
       <div class="prompt-lib__search">
         <input
           v-model="keyword"
@@ -53,8 +52,9 @@
           <span class="prompt-lib__spinner" />
         </div>
       </div>
-    </div>
-  </el-dialog>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -66,6 +66,12 @@ import {
 } from "@/ai/design-prompts";
 import type { DesignPromptItem } from "@/ai/design-prompts";
 import { isDarkMode } from "@/components/design/store";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{
@@ -150,31 +156,17 @@ function handleClose() {
 
 <style lang="less" scoped>
 .prompt-lib {
-  --pl-bg: #ffffff;
-  --pl-bg-card: #f9fafb;
-  --pl-bg-card-hover: #f3f4f6;
-  --pl-bg-input: #ffffff;
-  --pl-text: #111827;
-  --pl-text-secondary: #6b7280;
-  --pl-border: #e5e7eb;
-  --pl-accent: #4f46e5;
-  --pl-accent-alpha: rgba(79, 70, 229, 0.08);
-  --pl-fav: #d1d5db;
+  --pl-bg: var(--1s-panel-background);
+  --pl-bg-card: var(--1s-surface-background);
+  --pl-bg-card-hover: var(--1s-hover-background);
+  --pl-bg-input: var(--1s-control-surface-background);
+  --pl-text: var(--1s-text-color);
+  --pl-text-secondary: var(--1s-text-color-secondary);
+  --pl-border: var(--1s-border-color);
+  --pl-accent: var(--1s-accent-color);
+  --pl-accent-alpha: var(--1s-hover-background);
+  --pl-fav: var(--1s-text-color-tertiary);
   --pl-fav-active: #ef4444;
-
-  &.is-dark {
-    --pl-bg: #111114;
-    --pl-bg-card: #1e1e22;
-    --pl-bg-card-hover: #27272a;
-    --pl-bg-input: #1e1e22;
-    --pl-text: #f4f4f5;
-    --pl-text-secondary: #a1a1aa;
-    --pl-border: #2e2e33;
-    --pl-accent: #6366f1;
-    --pl-accent-alpha: rgba(99, 102, 241, 0.15);
-    --pl-fav: #3f3f46;
-    --pl-fav-active: #ef4444;
-  }
 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 13px;

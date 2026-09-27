@@ -5,49 +5,55 @@
     </template>
     <template #name> 高级滤镜 </template>
     <template #content>
-      <el-popover
-        width="auto"
-        trigger="click"
-        :visible="showPopover"
-        popper-class="el-popover-operation"
-      >
-        <template #reference>
-          <el-button link size="small" @click="showPopover = !showPopover">
+      <Popover v-model:open="showPopover">
+        <PopoverTrigger as-child>
+          <Button variant="link" size="sm">
             {{ modelLabel }}
-          </el-button>
-        </template>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent class="w-auto">
         <div class="filter-popover-panel">
           <template v-if="activeTab == Tab.BuiltIn">
-            <el-row style="row-gap: 1rem">
-              <el-col :span="24">
+            <div class="flex flex-col w-full" style="row-gap: 1rem">
+              <div class="w-full">
               <div class="filter-toolbar w-full flex justify-between items-center">
-                <el-input
+                <Input
                   v-model="searchInput"
                   class="filter-search-input"
                   placeholder="关键字搜索"
-                ></el-input>
-                  <el-tooltip content="禁用滤镜效果" placement="top">
-                    <el-button link @click="removeCurrentFilter">
-                      <el-icon size="16">
-                        <StopOutlined />
-                      </el-icon>
-                    </el-button>
-                  </el-tooltip>
+                ></Input>
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Button variant="link" @click="removeCurrentFilter">
+                        <Square class="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">禁用滤镜效果</TooltipContent>
+                  </Tooltip>
                 </div>
-                <el-tabs v-model="activeCategory">
-                  <el-tab-pane
+                <Tabs :model-value="activeCategory" @update:model-value="v => (activeCategory = v as any)">
+                  <TabsList>
+                    <TabsTrigger
+                      v-for="category in SvgFilterCategoryOptions"
+                      :key="category.value"
+                      :value="category.value"
+                    >
+                      {{ category.label }}
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent
                     v-for="category in SvgFilterCategoryOptions"
-                    :name="category.value"
-                    :label="category.label"
+                    :key="category.value"
+                    :value="category.value"
                   >
-                    <el-scrollbar height="360px">
-                      <el-row
+                    <ScrollArea style="height:360px">
+                      <div
                         v-if="withSearchFilter(category.children).length"
-                        class="filter-grid"
+                        class="filter-grid flex flex-wrap"
                       >
-                        <el-col
+                        <div
                           v-for="item in withSearchFilter(category.children)"
-                          :span="4"
+                          :style="{ flex: `0 0 ${(100 / 24) * 4}%` }"
                         >
                           <div
                             class="flex flex-col justify-center items-center filter-item"
@@ -77,28 +83,26 @@
                               {{ item.filterLabel }}
                             </div>
                           </div>
-                        </el-col>
-                      </el-row>
-                      <el-empty
+                        </div>
+                      </div>
+                      <div
                         v-else
                         @click="searchInput = ''"
-                        class="cursor-pointer"
-                        description="无结果"
-                        :image="emptyImage"
-                        :image-size="64"
+                        class="cursor-pointer flex flex-col items-center justify-center py-10 text-xs text-muted-foreground"
                       >
-                      </el-empty>
-                    </el-scrollbar>
-                  </el-tab-pane>
-                </el-tabs>
-              </el-col>
-            </el-row>
+                        无结果
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
           </template>
 
           <!-- <template v-if="activeTab == Tab.Custom">
-            <el-row>
-              <el-scrollbar height="360px">
-                <el-col
+            <div>
+              <ScrollArea height="360px">
+                <div
                   v-for="(opt, index) in canvasStickerOptions.svgFilter.children"
                   :span="24"
                 >
@@ -108,7 +112,7 @@
                         {{ SvgFilterEffectDisplayLabelMap[opt.type] }}
                       </div>
                       <div class="label">横向偏移</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         v-model="opt.dx.value"
@@ -117,9 +121,9 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
+                      </Input>
                       <div class="label">纵向偏移</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         v-model="opt.dy.value"
@@ -128,9 +132,9 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
+                      </Input>
                       <div class="label">横向模糊</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         v-model="opt.stdDeviationX.value"
@@ -139,9 +143,9 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
+                      </Input>
                       <div class="label">纵向模糊</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         v-model="opt.stdDeviationY.value"
@@ -150,11 +154,11 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
+                      </Input>
                       <div class="label">投影颜色</div>
                       <colorPicker type="pure" v-model="opt.floodColor"></colorPicker>
                       <div class="label">投影透明度</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         max="1"
@@ -166,11 +170,11 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
+                      </Input>
 
-                      <el-button @click="remove(index)" type="danger" size="small" plain>
+                      <Button @click="remove(index)" type="danger" size="small" plain>
                         移除
-                      </el-button>
+                      </Button>
                     </div>
                   </template>
 
@@ -180,7 +184,7 @@
                         {{ SvgFilterEffectDisplayLabelMap[opt.type] }}
                       </div>
                       <div class="label">横向模糊</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         v-model="opt.stdDeviationX.value"
@@ -189,9 +193,9 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
+                      </Input>
                       <div class="label">纵向模糊</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         v-model="opt.stdDeviationY.value"
@@ -200,10 +204,10 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
-                      <el-button @click="remove(index)" type="danger" size="small" plain>
+                      </Input>
+                      <Button @click="remove(index)" type="danger" size="small" plain>
                         移除
-                      </el-button>
+                      </Button>
                     </div>
                   </template>
 
@@ -213,7 +217,7 @@
                         {{ SvgFilterEffectDisplayLabelMap[opt.type] }}
                       </div>
                       <div class="label">横向半径</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         v-model="opt.radiusX.value"
@@ -222,9 +226,9 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
+                      </Input>
                       <div class="label">纵向半径</div>
-                      <el-input
+                      <Input
                         style="width: 80px"
                         type="number"
                         v-model="opt.radiusY.value"
@@ -233,90 +237,91 @@
                         <template #suffix>
                           <span> {{ canvasStickerOptions.unit }}</span>
                         </template>
-                      </el-input>
+                      </Input>
                       <div class="label">模式</div>
-                      <el-select
+                      <Select
                         style="width: 80px"
                         type="number"
                         v-model="opt.operator"
                         size="small"
                       >
-                        <el-option
+                        <SelectItem
                           v-for="op in FeMorphologyOperatorOptions"
                           :value="op.value"
                           :label="op.label"
                         />
-                      </el-select>
-                      <el-button @click="remove(index)" type="danger" size="small" plain>
+                      </Select>
+                      <Button @click="remove(index)" type="danger" size="small" plain>
                         移除
-                      </el-button>
+                      </Button>
                     </div>
                   </template>
-                </el-col>
-              </el-scrollbar>
-            </el-row>
+                </div>
+              </ScrollArea>
+            </div>
           </template> -->
 
-          <el-row>
-            <el-col :span="24">
+          <div>
+            <div class="w-full">
               <div class="flex toolbar items-center filter-footer">
                 <!-- <template v-if="activeTab == Tab.BuiltIn">
-                  <el-button :icon="Switch" size="small" @click="activeTab = Tab.Custom">
+                  <Button :icon="Switch" size="small" @click="activeTab = Tab.Custom">
                     使用自定义高级滤镜
-                  </el-button>
+                  </Button>
 
-                  <el-tooltip
+                  <Tooltip
                     content="开始组合滤镜时，可以为同一元素使用多种滤镜"
                     placement="bottom"
                   >
-                    <el-switch
+                    <Switch
                       inline-prompt
-                      v-model="model.isCompositeFilter"
+                      v-model:checked="model.isCompositeFilter"
                       disabled
                       active-text="组合滤镜"
                       inactive-text="单滤镜"
                     />
-                  </el-tooltip>
+                  </Tooltip>
                 </template>
 
                 
                 <template v-if="activeTab == Tab.Custom">
-                  <el-button :icon="Switch" size="small" @click="activeTab = Tab.BuiltIn">
+                  <Button :icon="Switch" size="small" @click="activeTab = Tab.BuiltIn">
                     使用内置滤镜
-                  </el-button>
+                  </Button>
 
-                  <el-dropdown>
-                    <el-button
+                  <DropdownMenu>
+                    <Button
                       style="margin-left: 1rem"
                       size="small"
                       type="primary"
                       plain
                     >
                       添加滤镜特效
-                    </el-button>
+                    </Button>
                     <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
                           v-for="item in SvgFilterEffects"
                           @click="addSvgFilterEffect(item)"
                         >
                           {{ SvgFilterEffectDisplayLabelMap[item] }}
-                        </el-dropdown-item>
-                      </el-dropdown-menu>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
                     </template>
-                  </el-dropdown>
+                  </DropdownMenu>
                 </template> -->
 
                 <div style="flex: 1"></div>
 
-                <el-button size="small" type="danger" @click="showPopover = false">
+                <Button size="sm" variant="destructive" @click="showPopover = false">
                   关闭
-                </el-button>
+                </Button>
               </div>
-            </el-col>
-          </el-row>
+            </div>
+          </div>
         </div>
-      </el-popover>
+        </PopoverContent>
+      </Popover>
     </template>
   </operate-form-item>
 </template>
@@ -332,8 +337,13 @@ import {
   SvgFilterResource,
 } from "@/components/design/layout/canvas/children/svgFilter/index";
 import { ref, computed } from "vue";
-import { StopOutlined } from "@ant-design/icons-vue";
-import { Switch } from "@element-plus/icons-vue";
+import { Square } from 'lucide-vue-next';
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { ScrollArea } from '@/components/ui/scroll-area' 
 import desimage from "@/components/image.vue";
 import {
   SvgFilterCategoryOptions,
@@ -483,24 +493,15 @@ function useCurrentFiter(effect: SvgFilterCustomEffectType) {
   text-wrap: nowrap;
 }
 
-:deep(.el-tabs__nav-wrap::after) {
-  display: none;
-}
-
-:deep(.el-tabs__active-bar) {
-  display: none;
-}
-
-:deep(.el-tabs__item) {
-  padding: 0 12px;
+:deep([data-state="inactive"]) {
   color: rgba(0, 0, 0, 0.3);
 }
 
-:deep(.el-tabs__item.is-active) {
+:deep([data-state="active"]) {
   color: rgba(0, 0, 0, 0.8);
 }
 
-:deep(.el-tabs__header) {
+:deep([role="tablist"]) {
   margin: 0 15px;
 }
 

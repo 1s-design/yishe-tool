@@ -8,37 +8,37 @@
             <div class="size-inputs-wrapper">
                 <div class="input-group">
                     <span class="label-text">宽</span>
-                    <el-input class="size-input" size="small" v-model.number="width.value" step="10" placeholder="宽" type="number" @input="onWidthChange">
-                        <template #suffix>
-                            <span class="unit-text">{{ canvasStickerOptions.unit }}</span>
-                        </template>
-                    </el-input>
+                    <div class="size-input flex items-center gap-1">
+                        <Input class="h-6 text-[11px] min-w-0 flex-1" v-model.number="width.value" step="10" placeholder="宽" type="number" @input="onWidthChange" />
+                        <span class="unit-text">{{ canvasStickerOptions.unit }}</span>
+                    </div>
                 </div>
 
-                <el-tooltip :content="locked ? '点击解锁比例' : '点击锁定比例'" placement="top">
-                    <div class="lock-btn" :class="{ 'lock-btn--active': locked }" @click="toggleLock">
-                        <el-icon :size="14">
-                            <Lock v-if="locked" />
-                            <Unlock v-else />
-                        </el-icon>
-                    </div>
-                </el-tooltip>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <div class="lock-btn" :class="{ 'lock-btn--active': locked }" @click="toggleLock">
+                            <Lock v-if="locked" class="w-3.5 h-3.5" />
+                            <Unlock v-else class="w-3.5 h-3.5" />
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">{{ locked ? '点击解锁比例' : '点击锁定比例' }}</TooltipContent>
+                </Tooltip>
 
-                <el-tooltip content="翻转宽高" placement="top">
-                    <div class="flip-btn" @click="flipSize">
-                        <el-icon :size="14">
-                            <Sort />
-                        </el-icon>
-                    </div>
-                </el-tooltip>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <div class="flip-btn" @click="flipSize">
+                            <ArrowUpDown class="w-3.5 h-3.5" />
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">翻转宽高</TooltipContent>
+                </Tooltip>
                 
                 <div class="input-group input-group--secondary">
                     <span class="label-text">高</span>
-                    <el-input class="size-input" size="small" v-model.number="height.value" step="10" placeholder="高" type="number" @input="onHeightChange">
-                        <template #suffix>
-                            <span class="unit-text">{{ canvasStickerOptions.unit }}</span>
-                        </template>
-                    </el-input>
+                    <div class="size-input flex items-center gap-1">
+                        <Input class="h-6 text-[11px] min-w-0 flex-1" v-model.number="height.value" step="10" placeholder="高" type="number" @input="onHeightChange" />
+                        <span class="unit-text">{{ canvasStickerOptions.unit }}</span>
+                    </div>
                 </div>
             </div>
         </template>
@@ -48,7 +48,9 @@
 <script setup lang="ts">
 import icon from "@/components/design/assets/icon/size.svg?component";
 import { canvasStickerOptions } from '@/components/design/layout/canvas/index.tsx'
-import { Lock, Unlock, Sort } from "@element-plus/icons-vue";
+import { Lock, Unlock, ArrowUpDown } from "lucide-vue-next";
+import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { ref } from 'vue'
 
 const props = defineProps({
@@ -124,7 +126,7 @@ function flipSize() {
     
     .label-text {
         font-size: 11px;
-        color: #999;
+        color: var(--1s-text-color-tertiary);
         flex-shrink: 0;
     }
 }
@@ -155,12 +157,12 @@ function flipSize() {
     transition: all 0.15s;
 
     &:hover {
-        color: #666;
-        background: #f0f0f0;
+        color: var(--1s-text-color-secondary);
+        background: var(--1s-control-surface-muted);
     }
 
     &--active {
-        color: var(--el-color-primary, #409eff);
+        color: var(--1s-accent-color);
         background: rgba(64, 158, 255, 0.08);
 
         &:hover {
@@ -183,8 +185,8 @@ function flipSize() {
     transform: rotate(90deg);
 
     &:hover {
-        color: #666;
-        background: #f0f0f0;
+        color: var(--1s-text-color-secondary);
+        background: var(--1s-control-surface-muted);
     }
 }
 

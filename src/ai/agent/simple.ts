@@ -724,6 +724,25 @@ const RETRYABLE_DELIVERY_OPERATIONS = new Set([
   "material.createImageGroup",
 ]);
 
+/**
+ * 终态失败：继续重试也不会成功，必须落定为 failed，否则会死循环。
+ * 例如空画布保存、未生成作品就导出。
+ */
+const TERMINAL_DELIVERY_FAILURE_PATTERNS = [
+  /空模板|空白画布|画布仍为空|没有可保存|未保存/i,
+  /尚未(生成|创建|完成).{0,12}(作品|设计|画面|内容)/i,
+  /未生成.{0,8}(作品|设计)|没有.{0,8}(作品|设计|内容).{0,8}(可|能)?(保存|导出)/i,
+  /等待设计生成完成/i,
+];
+
+function isTerminalDeliveryFailure(result?: string): boolean {
+  const text = String(result || "");
+  return TERMINAL_DELIVERY_FAILURE_PATTERNS.some((re) => re.test(text));
+}
+
+// 交付动作的失败重试次数（单轮 agent 执行内）
+const deliveryRetryCounts = new Map<string, number>();
+
 const SIZE_DECISION_OPERATIONS = new Set([
   "canvas.setSize",
   "canvas.smartSize",
@@ -864,17 +883,33 @@ function settleRuntimePlanStep(
   result?: string,
 ) {
   if (!plan) return;
-  if (!success && RETRYABLE_DELIVERY_OPERATIONS.has(action)) {
-    const index = ensurePlanStep(plan, action, describePlanAction(action));
-    plan.steps[index].status = "pending";
-    plan.steps[index].result = result;
+  const isRetryableDelivery = RETRYABLE_DELIVERY_OPERATIONS.has(action);
+  const terminal = isTerminalDeliveryFailure(result);
+
+  if (success) {
+    deliveryRetryCounts.delete(action);
+    settlePlanStep(plan, action, "done", result, describePlanAction(action));
     notifyPlanUpdated(result);
     return;
   }
+
+  if (isRetryableDelivery && !terminal) {
+    const attempts = (deliveryRetryCounts.get(action) || 0) + 1;
+    deliveryRetryCounts.set(action, attempts);
+    // 只允许一次重试；再失败必须落定，否则 getIncompleteDeliveryActions 会强制续跑形成死循环
+    if (attempts < 2) {
+      const index = ensurePlanStep(plan, action, describePlanAction(action));
+      plan.steps[index].status = "pending";
+      plan.steps[index].result = result;
+      notifyPlanUpdated(result);
+      return;
+    }
+  }
+
   settlePlanStep(
     plan,
     action,
-    success ? "done" : "failed",
+    "failed",
     result,
     describePlanAction(action),
   );
@@ -1083,6 +1118,7 @@ async function runAgentLoop(
     options.allowCanvasAnalysis ??
     shouldAllowCanvasAnalysis(userMessage, taskSpec);
   let iteration = 0;
+  deliveryRetryCounts.clear();
   const allowPostArtworkContinuation = shouldContinueAfterArtwork(
     userMessage,
     taskSpec,

@@ -3,11 +3,16 @@
         <template #icon> <icon></icon> </template>
         <template #name> 厚度 </template>
         <template #content>
-            <el-select v-model="model" size="small" style="min-width: 72px">
-                <el-option v-for="item in fontWeightOptions" :key="item.value" :label="item.label" :value="item.value">
-                    <span :style="{ fontWeight: item.value }"> {{ item.label }} </span>
-                </el-option>
-            </el-select>
+            <Select :model-value="model as any" @update:model-value="v => (model = v)">
+                <SelectTrigger class="h-6 text-[11px]" style="min-width: 72px">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem v-for="item in fontWeightOptions" :key="item.value" :value="item.value">
+                        <span :style="{ fontWeight: item.value }"> {{ item.label }} </span>
+                    </SelectItem>
+                </SelectContent>
+            </Select>
         </template>
     </operate-form-item>
 </template>
@@ -16,6 +21,7 @@
 import iconFontSize from "@/components/design/assets/icon/font-size.svg?component";
 import { ref, reactive } from 'vue'
 import icon from "@/components/design/assets/icon/bold.svg?component";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 const model = defineModel({})
 
 const fontWeightOptions = reactive([

@@ -3,7 +3,7 @@
     <div class="automation-content">
       <!-- 关闭按钮 -->
       <div class="close-button" @click="handleClose">
-        <el-icon><Close /></el-icon>
+        <Close class="w-4 h-4" />
       </div>
       
       <div class="loading-spinner">
@@ -13,7 +13,7 @@
         <h3>自动化操作进行中</h3>
         <p class="description">{{ automationDescription || '请稍候，正在处理您的请求...' }}</p>
         <div class="warning-box">
-          <el-icon class="warning-icon"><Warning /></el-icon>
+          <AlertTriangle class="warning-icon w-4 h-4" />
           <span>请勿关闭页面，以免操作中断</span>
         </div>
       </div>
@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { isAutomationRunning, automationDescription } from '@/store/stores/app';
 import { stopAutomation } from '@/common/utils/automation';
-import { Close, Warning } from '@element-plus/icons-vue';
+import { X as Close, AlertTriangle as Warning } from 'lucide-vue-next';
 
 function handleClose() {
   stopAutomation();
@@ -71,16 +71,12 @@ function handleClose() {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #666;
+  color: var(--1s-text-color-secondary);
   
   &:hover {
     background: rgba(0, 0, 0, 0.2);
-    color: #333;
+    color: var(--1s-text-color);
     transform: scale(1.1);
-  }
-  
-  .el-icon {
-    font-size: 16px;
   }
 }
 
@@ -151,4 +147,4 @@ function handleClose() {
     transform: translateY(0) scale(1);
   }
 }
-</style> 
+</style>

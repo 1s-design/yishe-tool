@@ -19,19 +19,11 @@ import i18n from '@/i18n/index.ts'
 import '@/style/base.less'
 import '@/style/vars.less'
 
-import Antd from 'ant-design-vue'
-import ElementPlus from 'element-plus'
-
-import 'element-plus/dist/index.css'
-import 'element-plus/theme-chalk/display.css'
-import 'element-plus/theme-chalk/dark/css-vars.css'
-
 import App from './App.vue'
-import '@/style/cover-elementplus.scss'
 import { apiInstance } from "@/api/apiInstance";
 
-import '@/style/cover-antdesign.less'
 import { s1Plugin } from '@/components/export.ts'
+import { lightDirectivesPlugin } from '@/plugins/lightDirectives'
 
 // 引入注册组件
 import 'virtual:svg-icons-register'
@@ -202,11 +194,9 @@ async function setup() {
 
   app.use(pinia)
 
-  app.use(Antd)
-
   app.use(i18n)
 
-  app.use(ElementPlus)
+  app.use(lightDirectivesPlugin)
 
   app.config.globalProperties.__DEV__ = import.meta.env.DEV
 

@@ -1,144 +1,178 @@
 <template>
-    <el-collapse v-model="collapseActives">
-        <el-collapse-item name="1" title="基础属性">
+    <Accordion type="multiple" :model-value="collapseActives" @update:model-value="v => collapseActives = v as string[]">
+        <AccordionItem value="1">
+            <AccordionTrigger>基础属性</AccordionTrigger>
+            <AccordionContent>
             <operateItemSize
                 label="尺寸"
                 v-model:width="currentOperatingCanvasChild.width"
                 v-model:height="currentOperatingCanvasChild.height"
             />
-        </el-collapse-item>
+            </AccordionContent>
+        </AccordionItem>
 
-        <el-collapse-item name="2" title="场景">
+        <AccordionItem value="2">
+            <AccordionTrigger>场景</AccordionTrigger>
+            <AccordionContent>
             <operate-form-item label="透明背景">
-                <el-switch v-model="transparentBackground" />
+                <Switch v-model:checked="transparentBackground" />
             </operate-form-item>
 
             <operate-form-item v-if="!transparentBackground" label="背景色">
-                <el-color-picker v-model="threejs.scene.background.value" show-alpha />
+                <!-- TODO: replace with shared colorPicker when its API accepts plain color strings -->
+                <input type="color" v-model="threejs.scene.background.value" class="h-7 w-10 rounded border border-input cursor-pointer" />
             </operate-form-item>
 
             <operate-form-item label="全局动画">
-                <el-switch v-model="threejs.scene.animation.enabled" />
+                <Switch v-model:checked="threejs.scene.animation.enabled" />
             </operate-form-item>
 
             <operate-form-item label="拖动旋转">
-                <el-switch v-model="threejs.scene.interaction.dragToRotate.enabled" />
+                <Switch v-model:checked="threejs.scene.interaction.dragToRotate.enabled" />
             </operate-form-item>
 
             <operate-form-item v-if="threejs.scene.interaction.dragToRotate.enabled" label="旋转灵敏度">
-                <el-slider
-                    v-model="threejs.scene.interaction.dragToRotate.sensitivity"
+                <Slider
+                    :model-value="[threejs.scene.interaction.dragToRotate.sensitivity]"
+                    @update:model-value="v => threejs.scene.interaction.dragToRotate.sensitivity = v[0]"
                     :min="0.002"
                     :max="0.02"
                     :step="0.001"
                 />
             </operate-form-item>
-        </el-collapse-item>
+            </AccordionContent>
+        </AccordionItem>
 
-        <el-collapse-item name="3" title="场景项">
+        <AccordionItem value="3">
+            <AccordionTrigger>场景项</AccordionTrigger>
+            <AccordionContent>
             <operate-form-item label="新增">
-                <el-dropdown trigger="click" @command="addSceneItem">
-                    <el-button size="small">添加</el-button>
-                    <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item command="primitive">几何体</el-dropdown-item>
-                            <el-dropdown-item command="model">模型</el-dropdown-item>
-                            <el-dropdown-item command="ambient">环境光</el-dropdown-item>
-                            <el-dropdown-item command="directional">方向光</el-dropdown-item>
-                            <el-dropdown-item command="point">点光</el-dropdown-item>
-                            <el-dropdown-item command="camera">相机</el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button size="sm" variant="outline">添加</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        <DropdownMenuItem @select="addSceneItem('primitive')">几何体</DropdownMenuItem>
+                        <DropdownMenuItem @select="addSceneItem('model')">模型</DropdownMenuItem>
+                        <DropdownMenuItem @select="addSceneItem('ambient')">环境光</DropdownMenuItem>
+                        <DropdownMenuItem @select="addSceneItem('directional')">方向光</DropdownMenuItem>
+                        <DropdownMenuItem @select="addSceneItem('point')">点光</DropdownMenuItem>
+                        <DropdownMenuItem @select="addSceneItem('camera')">相机</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </operate-form-item>
 
             <operate-form-item label="当前">
-                <el-select v-model="selectedItemKey" size="small" placeholder="选择场景项">
-                    <el-option
-                        v-for="item in sceneItems"
-                        :key="item.key"
-                        :label="item.label"
-                        :value="item.key"
-                    />
-                </el-select>
+                <Select v-model="selectedItemKey">
+                    <SelectTrigger class="w-full">
+                        <SelectValue placeholder="选择场景项" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem
+                            v-for="item in sceneItems"
+                            :key="item.key"
+                            :value="item.key"
+                        >{{ item.label }}</SelectItem>
+                    </SelectContent>
+                </Select>
             </operate-form-item>
 
             <operate-form-item label="操作">
                 <div class="three-scene-button-row">
-                    <el-button
+                    <Button
                         v-if="selectedItem?.group === 'camera'"
-                        size="small"
+                        size="sm"
+                        variant="outline"
                         :disabled="threejs.scene.activeCameraId === selectedItem.item.id"
                         @click="setActiveCamera"
                     >
                         设为主相机
-                    </el-button>
-                    <el-button size="small" type="danger" :disabled="!selectedItem" @click="removeSelectedItem">
+                    </Button>
+                    <Button size="sm" variant="destructive" :disabled="!selectedItem" @click="removeSelectedItem">
                         删除
-                    </el-button>
+                    </Button>
                 </div>
             </operate-form-item>
 
             <template v-if="selectedItem">
                 <operate-form-item label="名称">
-                    <el-input v-model="selectedItem.item.name" size="small" />
+                    <Input v-model="selectedItem.item.name" />
                 </operate-form-item>
 
                 <template v-if="selectedItem.group === 'object'">
                     <operate-form-item label="显示">
-                        <el-switch v-model="selectedItem.item.visible" />
+                        <Switch v-model:checked="selectedItem.item.visible" />
                     </operate-form-item>
 
                     <template v-if="selectedItem.item.kind === 'primitive'">
                         <operate-form-item label="几何体">
-                            <el-select v-model="selectedItem.item.primitive.geometry" size="small">
-                                <el-option label="立方体" value="box" />
-                                <el-option label="球体" value="sphere" />
-                                <el-option label="圆环" value="torus" />
-                                <el-option label="平面" value="plane" />
-                                <el-option label="圆锥" value="cone" />
-                                <el-option label="圆柱" value="cylinder" />
-                            </el-select>
+                            <Select v-model="selectedItem.item.primitive.geometry">
+                                <SelectTrigger class="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="box">立方体</SelectItem>
+                                    <SelectItem value="sphere">球体</SelectItem>
+                                    <SelectItem value="torus">圆环</SelectItem>
+                                    <SelectItem value="plane">平面</SelectItem>
+                                    <SelectItem value="cone">圆锥</SelectItem>
+                                    <SelectItem value="cylinder">圆柱</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </operate-form-item>
 
                         <operate-form-item label="颜色">
-                            <el-color-picker v-model="selectedItem.item.primitive.material.color" show-alpha />
+                            <!-- TODO: replace with shared colorPicker when its API accepts plain color strings -->
+                            <input type="color" v-model="selectedItem.item.primitive.material.color" class="h-7 w-10 rounded border border-input cursor-pointer" />
                         </operate-form-item>
 
                         <operate-form-item label="金属度">
-                            <el-slider v-model="selectedItem.item.primitive.material.metalness" :min="0" :max="1" :step="0.01" />
+                            <Slider
+                                :model-value="[selectedItem.item.primitive.material.metalness]"
+                                @update:model-value="v => selectedItem.item.primitive.material.metalness = v[0]"
+                                :min="0" :max="1" :step="0.01"
+                            />
                         </operate-form-item>
 
                         <operate-form-item label="粗糙度">
-                            <el-slider v-model="selectedItem.item.primitive.material.roughness" :min="0" :max="1" :step="0.01" />
+                            <Slider
+                                :model-value="[selectedItem.item.primitive.material.roughness]"
+                                @update:model-value="v => selectedItem.item.primitive.material.roughness = v[0]"
+                                :min="0" :max="1" :step="0.01"
+                            />
                         </operate-form-item>
 
                         <operate-form-item label="线框">
-                            <el-switch v-model="selectedItem.item.primitive.material.wireframe" />
+                            <Switch v-model:checked="selectedItem.item.primitive.material.wireframe" />
                         </operate-form-item>
                     </template>
 
                     <template v-if="selectedItem.item.kind === 'model'">
                         <operate-form-item label="资源库">
                             <div class="three-scene-button-row">
-                                <el-input
+                                <Input
                                     :model-value="selectedModelName"
-                                    size="small"
                                     placeholder="未选择模型"
                                     readonly
+                                    class="flex-1"
                                 />
-                                <el-button size="small" type="primary" @click="openAsset3dDialog">选择</el-button>
+                                <Button size="sm" variant="default" @click="openAsset3dDialog">选择</Button>
                             </div>
                         </operate-form-item>
 
                         <operate-form-item label="模型地址">
-                            <el-input v-model="selectedItem.item.model.url" size="small" placeholder="GLB/GLTF URL" />
+                            <Input v-model="selectedItem.item.model.url" placeholder="GLB/GLTF URL" />
                         </operate-form-item>
                         <operate-form-item label="格式">
-                            <el-select v-model="selectedItem.item.model.format" size="small">
-                                <el-option label="GLB" value="glb" />
-                                <el-option label="GLTF" value="gltf" />
-                            </el-select>
+                            <Select v-model="selectedItem.item.model.format">
+                                <SelectTrigger class="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="glb">GLB</SelectItem>
+                                    <SelectItem value="gltf">GLTF</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </operate-form-item>
                     </template>
 
@@ -155,7 +189,7 @@
                     </operate-form-item>
 
                     <operate-form-item label="自转">
-                        <el-switch v-model="selectedItem.item.animation.autoRotate" />
+                        <Switch v-model:checked="selectedItem.item.animation.autoRotate" />
                     </operate-form-item>
 
                     <operate-form-item v-if="selectedItem.item.animation.autoRotate" label="自转速度">
@@ -165,19 +199,29 @@
 
                 <template v-if="selectedItem.group === 'light'">
                     <operate-form-item label="类型">
-                        <el-select v-model="selectedItem.item.type" size="small">
-                            <el-option label="环境光" value="ambient" />
-                            <el-option label="方向光" value="directional" />
-                            <el-option label="点光" value="point" />
-                        </el-select>
+                        <Select v-model="selectedItem.item.type">
+                            <SelectTrigger class="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ambient">环境光</SelectItem>
+                                <SelectItem value="directional">方向光</SelectItem>
+                                <SelectItem value="point">点光</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </operate-form-item>
 
                     <operate-form-item label="颜色">
-                        <el-color-picker v-model="selectedItem.item.color" show-alpha />
+                        <!-- TODO: replace with shared colorPicker when its API accepts plain color strings -->
+                        <input type="color" v-model="selectedItem.item.color" class="h-7 w-10 rounded border border-input cursor-pointer" />
                     </operate-form-item>
 
                     <operate-form-item label="强度">
-                        <el-slider v-model="selectedItem.item.intensity" :min="0" :max="10" :step="0.05" />
+                        <Slider
+                            :model-value="[selectedItem.item.intensity]"
+                            @update:model-value="v => selectedItem.item.intensity = v[0]"
+                            :min="0" :max="10" :step="0.05"
+                        />
                     </operate-form-item>
 
                     <operate-form-item v-if="selectedItem.item.type !== 'ambient'" label="位置">
@@ -187,20 +231,20 @@
 
                 <template v-if="selectedItem.group === 'camera'">
                     <operate-form-item label="主相机">
-                        <el-switch
+                        <Switch
                             :model-value="threejs.scene.activeCameraId === selectedItem.item.id"
-                            @change="setActiveCamera"
+                            @update:model-value="setActiveCamera"
                         />
                     </operate-form-item>
 
                     <operate-form-item label="FOV">
-                        <el-input-number v-model="selectedItem.item.fov" size="small" :min="1" :max="120" />
+                        <Input type="number" v-model="selectedItem.item.fov" :min="1" :max="120" />
                     </operate-form-item>
 
                     <operate-form-item label="裁剪面">
                         <div class="three-scene-button-row">
-                            <el-input-number v-model="selectedItem.item.near" size="small" :min="0.01" :step="0.1" />
-                            <el-input-number v-model="selectedItem.item.far" size="small" :min="1" :step="10" />
+                            <Input type="number" v-model="selectedItem.item.near" :min="0.01" :step="0.1" />
+                            <Input type="number" v-model="selectedItem.item.far" :min="1" :step="10" />
                         </div>
                     </operate-form-item>
 
@@ -213,99 +257,121 @@
                     </operate-form-item>
                 </template>
             </template>
-        </el-collapse-item>
+            </AccordionContent>
+        </AccordionItem>
 
-        <el-collapse-item name="4" title="通用属性">
+        <AccordionItem value="4">
+            <AccordionTrigger>通用属性</AccordionTrigger>
+            <AccordionContent>
             <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-        </el-collapse-item>
-    </el-collapse>
+            </AccordionContent>
+        </AccordionItem>
+    </Accordion>
 
-    <el-drawer
-        v-model="asset3dDialogVisible"
-        title="选择3D模型"
-        size="min(1080px, 92vw)"
-        direction="rtl"
-        class="three-scene-asset-dialog"
-        append-to-body
-        @open="loadAsset3dList"
-    >
-        <div class="three-scene-asset-drawer">
-            <div class="three-scene-asset-toolbar">
-                <el-input
-                    v-model="asset3dQuery.name"
-                    clearable
-                    placeholder="搜索模型名称"
-                    @keyup.enter="searchAsset3d"
-                    @clear="searchAsset3d"
-                />
-                <el-button type="primary" :loading="asset3dLoading" @click="searchAsset3d">搜索</el-button>
-            </div>
-
-            <div
-                v-loading="asset3dLoading"
-                element-loading-text="正在加载资源库..."
-                class="three-scene-asset-list"
-            >
-                <button
-                    v-for="item in asset3dList"
-                    :key="item.id"
-                    type="button"
-                    class="three-scene-asset-card"
-                    :class="{ 'is-active': asset3dSelectedId === item.id }"
-                    @click="asset3dSelectedId = item.id"
-                    @dblclick="confirmSelectedAsset3d(item)"
-                >
-                    <div class="three-scene-asset-card__preview">
-                        <img v-if="getAssetThumbnail(item)" :src="getAssetThumbnail(item)" alt="" />
-                        <span v-else>3D</span>
-                    </div>
-                    <div class="three-scene-asset-card__body">
-                        <div class="three-scene-asset-card__name" :title="getAssetName(item)">
-                            {{ getAssetName(item) }}
-                        </div>
-                        <div class="three-scene-asset-card__desc" v-if="item.description" :title="item.description">
-                            {{ item.description }}
-                        </div>
-                        <div class="three-scene-asset-card__meta" :title="getAssetUrl(item)">
-                            {{ getModelFormat(getAssetUrl(item)).toUpperCase() }}
-                        </div>
-                    </div>
-                    <div class="three-scene-asset-card__check" v-if="asset3dSelectedId === item.id">已选</div>
-                </button>
-
-                <div v-if="!asset3dLoading && !asset3dList.length" class="three-scene-asset-empty">
-                    <el-empty description="暂无3D模型" />
+    <Dialog :open="asset3dDialogVisible" @update:open="v => { asset3dDialogVisible = v; if (v) loadAsset3dList(); }">
+        <DialogContent class="max-w-[min(1080px,92vw)] three-scene-asset-dialog">
+            <DialogHeader>
+                <DialogTitle>选择3D模型</DialogTitle>
+            </DialogHeader>
+            <div class="three-scene-asset-drawer">
+                <div class="three-scene-asset-toolbar">
+                    <Input
+                        v-model="asset3dQuery.name"
+                        placeholder="搜索模型名称"
+                        class="flex-1"
+                        @keyup.enter="searchAsset3d"
+                        @clear="searchAsset3d"
+                    />
+                    <Button variant="default" :disabled="asset3dLoading" @click="searchAsset3d">搜索</Button>
                 </div>
-            </div>
 
-            <div class="three-scene-asset-footer">
-                <el-pagination
-                    v-model:current-page="asset3dPagination.currentPage"
-                    v-model:page-size="asset3dPagination.pageSize"
-                    background
-                    layout="total, sizes, prev, pager, next"
-                    :page-sizes="[12, 24, 48, 96]"
-                    :total="asset3dPagination.total"
-                    @current-change="loadAsset3dList"
-                    @size-change="handleAsset3dSizeChange"
-                />
-                <div class="three-scene-asset-actions">
-                    <el-button @click="asset3dDialogVisible = false">取消</el-button>
-                    <el-button
-                        type="primary"
-                        :disabled="!asset3dSelectedId"
-                        @click="confirmSelectedAsset3d()"
+                <div class="three-scene-asset-list">
+                    <div v-if="asset3dLoading" class="three-scene-asset-loading">正在加载资源库...</div>
+                    <button
+                        v-for="item in asset3dList"
+                        :key="item.id"
+                        type="button"
+                        class="three-scene-asset-card"
+                        :class="{ 'is-active': asset3dSelectedId === item.id }"
+                        @click="asset3dSelectedId = item.id"
+                        @dblclick="confirmSelectedAsset3d(item)"
                     >
-                        使用模型
-                    </el-button>
+                        <div class="three-scene-asset-card__preview">
+                            <img v-if="getAssetThumbnail(item)" :src="getAssetThumbnail(item)" alt="" />
+                            <span v-else>3D</span>
+                        </div>
+                        <div class="three-scene-asset-card__body">
+                            <div class="three-scene-asset-card__name" :title="getAssetName(item)">
+                                {{ getAssetName(item) }}
+                            </div>
+                            <div class="three-scene-asset-card__desc" v-if="item.description" :title="item.description">
+                                {{ item.description }}
+                            </div>
+                            <div class="three-scene-asset-card__meta" :title="getAssetUrl(item)">
+                                {{ getModelFormat(getAssetUrl(item)).toUpperCase() }}
+                            </div>
+                        </div>
+                        <div class="three-scene-asset-card__check" v-if="asset3dSelectedId === item.id">已选</div>
+                    </button>
+
+                    <div v-if="!asset3dLoading && !asset3dList.length" class="three-scene-asset-empty">
+                        <div class="text-sm text-muted-foreground">暂无3D模型</div>
+                    </div>
+                </div>
+
+                <div class="three-scene-asset-footer">
+                    <div class="flex items-center gap-2">
+                        <Button size="sm" variant="outline" :disabled="asset3dPagination.currentPage <= 1" @click="asset3dPagination.currentPage--; loadAsset3dList()">上一页</Button>
+                        <span class="text-xs text-muted-foreground">{{ asset3dPagination.currentPage }} / {{ Math.max(1, Math.ceil(asset3dPagination.total / asset3dPagination.pageSize)) }}</span>
+                        <Button size="sm" variant="outline" :disabled="asset3dPagination.currentPage >= Math.ceil(asset3dPagination.total / asset3dPagination.pageSize)" @click="asset3dPagination.currentPage++; loadAsset3dList()">下一页</Button>
+                    </div>
+                    <div class="three-scene-asset-actions">
+                        <Button variant="ghost" @click="asset3dDialogVisible = false">取消</Button>
+                        <Button
+                            variant="default"
+                            :disabled="!asset3dSelectedId"
+                            @click="confirmSelectedAsset3d()"
+                        >
+                            使用模型
+                        </Button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </el-drawer>
+        </DialogContent>
+    </Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, ref, resolveComponent, watch } from 'vue'
+import { computed, defineComponent, h, ref, watch } from 'vue'
+import {
+    Accordion,
+    AccordionItem,
+    AccordionTrigger,
+    AccordionContent,
+} from '@/components/ui/accordion'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
+import { Slider } from '@/components/ui/slider'
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+} from '@/components/ui/select'
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import operateItemSize from '@/components/design/layout/canvas/operate/size/relativeSize.vue'
 import operateItemCommonGroup from '@/components/design/layout/canvas/operate/commonGroup.vue'
 import operateFormItem from '@/components/design/layout/canvas/operate/operateFormItem.vue'
@@ -336,16 +402,15 @@ const VectorInput = defineComponent({
     },
     emits: ['update:modelValue'],
     setup(props, { emit }) {
-        const ElInputNumber = resolveComponent('el-input-number')
         function setValue(index: number, value: number) {
             const next = [...(props.modelValue as number[])]
             next[index] = value
             emit('update:modelValue', next)
         }
 
-        return () => h('div', { class: 'three-scene-vector-row' }, [0, 1, 2].map((index) => h(ElInputNumber, {
+        return () => h('div', { class: 'three-scene-vector-row' }, [0, 1, 2].map((index) => h(Input, {
             modelValue: props.modelValue[index],
-            size: 'small',
+            type: 'number',
             step: props.step,
             min: props.min,
             'onUpdate:modelValue': (value: number) => setValue(index, value),
@@ -768,9 +833,9 @@ function getLightTypeLabel(type: string) {
     position: relative;
     display: flex;
     flex-direction: column;
-    border: 1px solid #e4e7ed;
+    border: 1px solid var(--1s-border-color);
     border-radius: 8px;
-    background: #fff;
+    background: var(--1s-surface-background);
     overflow: hidden;
     padding: 0;
     text-align: left;
@@ -780,7 +845,7 @@ function getLightTypeLabel(type: string) {
 
 .three-scene-asset-card:hover,
 .three-scene-asset-card.is-active {
-    border-color: #409eff;
+    border-color: var(--1s-accent-color);
     box-shadow: 0 6px 18px rgba(64, 158, 255, 0.14);
     transform: translateY(-1px);
 }
@@ -794,8 +859,8 @@ function getLightTypeLabel(type: string) {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f5f7fa;
-    color: #909399;
+    background: var(--1s-control-surface-muted);
+    color: var(--1s-text-color-tertiary);
     font-size: 18px;
     font-weight: 600;
 }
@@ -814,7 +879,7 @@ function getLightTypeLabel(type: string) {
 .three-scene-asset-card__name {
     font-size: 14px;
     font-weight: 500;
-    color: #303133;
+    color: var(--1s-text-color);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -825,7 +890,7 @@ function getLightTypeLabel(type: string) {
     min-height: 34px;
     font-size: 12px;
     line-height: 17px;
-    color: #909399;
+    color: var(--1s-text-color-tertiary);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -836,7 +901,7 @@ function getLightTypeLabel(type: string) {
 .three-scene-asset-card__meta {
     margin-top: 8px;
     font-size: 12px;
-    color: #606266;
+    color: var(--1s-text-color-secondary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -848,7 +913,7 @@ function getLightTypeLabel(type: string) {
     right: 8px;
     padding: 2px 7px;
     border-radius: 999px;
-    background: #409eff;
+    background: var(--1s-accent-color);
     color: #fff;
     font-size: 12px;
 }
@@ -867,7 +932,7 @@ function getLightTypeLabel(type: string) {
     align-items: center;
     gap: 12px;
     padding-top: 12px;
-    border-top: 1px solid #e4e7ed;
+    border-top: 1px solid var(--1s-border-color);
     flex-shrink: 0;
 }
 

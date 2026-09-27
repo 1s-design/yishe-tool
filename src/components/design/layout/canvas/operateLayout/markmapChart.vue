@@ -1,39 +1,51 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="markdown" title="Markdown">
-      <operate-form-item>
-        <template #name>Markdown</template>
-        <template #content>
-          <el-input
-            v-model="currentOperatingCanvasChild.markdown"
-            type="textarea"
-            :rows="10"
-            resize="vertical"
-            spellcheck="false"
-            placeholder="# 主题&#10;## 分支1&#10;### 子节点1&#10;### 子节点2&#10;## 分支2"
-          ></el-input>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
+  >
+    <AccordionItem value="markdown">
+      <AccordionTrigger>Markdown</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>Markdown</template>
+          <template #content>
+            <Textarea
+              v-model="currentOperatingCanvasChild.markdown"
+              :rows="10"
+              class="resize-y"
+              spellcheck="false"
+              placeholder="# 主题&#10;## 分支1&#10;### 子节点1&#10;### 子节点2&#10;## 分支2"
+            ></Textarea>
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      ></operateItemSize>
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        ></operateItemSize>
 
-      <operateItemBackgroundColor
-        v-model="currentOperatingCanvasChild.backgroundColor"
-      ></operateItemBackgroundColor>
-    </el-collapse-item>
+        <operateItemBackgroundColor
+          v-model="currentOperatingCanvasChild.backgroundColor"
+        ></operateItemBackgroundColor>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup
-        v-model="currentOperatingCanvasChild"
-      ></operateItemCommonGroup>
-    </el-collapse-item>
-  </el-collapse>
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup
+          v-model="currentOperatingCanvasChild"
+        ></operateItemCommonGroup>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -41,6 +53,13 @@ import { ref } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Textarea } from "@/components/ui/textarea";
 import { currentOperatingCanvasChild } from "../index.tsx";
 
 const activeNames = ref(["markdown", "basic", "common"]);

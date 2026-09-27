@@ -1,31 +1,46 @@
 <template>
-    <el-collapse v-model="backgroundCollapseActives">
-        <el-collapse-item name="1" title="背景属性">
+    <Accordion type="multiple" :model-value="backgroundCollapseActives" @update:model-value="v => backgroundCollapseActives = v as string[]">
+        <AccordionItem value="1">
+            <AccordionTrigger>背景属性</AccordionTrigger>
+            <AccordionContent>
             <operateItemSize label="背景尺寸" v-model:width="currentOperatingCanvasChild.width"
                 v-model:height="currentOperatingCanvasChild.height">
             </operateItemSize>
             <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor">
             </operateItemBackgroundColor>
 
-        </el-collapse-item>
-        <el-collapse-item name="2" title="通用属性">
+            </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="2">
+            <AccordionTrigger>通用属性</AccordionTrigger>
+            <AccordionContent>
             <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-        </el-collapse-item>
-        <el-collapse-item name="5">
-            <template #title>
+            </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="5">
+            <AccordionTrigger>
                 <div class="title">滤镜效果</div>
-            </template>
+            </AccordionTrigger>
+            <AccordionContent>
             <operateItemFilterGroup v-model="currentOperatingCanvasChild.filter"></operateItemFilterGroup>
-        </el-collapse-item>
+            </AccordionContent>
+        </AccordionItem>
         <operateItemBuiltInBackground v-model="currentOperatingCanvasChild.customBackground">
         </operateItemBuiltInBackground>
 
         <operateItemClipPath v-model="currentOperatingCanvasChild.clipPath"></operateItemClipPath>
-    </el-collapse>
+    </Accordion>
 </template>
     
 <script setup lang='ts'>
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
+
+import {
+    Accordion,
+    AccordionItem,
+    AccordionTrigger,
+    AccordionContent,
+} from "@/components/ui/accordion";
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";

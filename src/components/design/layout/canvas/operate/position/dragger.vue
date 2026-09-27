@@ -143,7 +143,7 @@ onUnmounted(() => {
 
 .target {
   position: absolute;
-  background-color: rgba(115, 0, 255, 0.3);
+  background-color: color-mix(in srgb, var(--1s-accent-color) 35%, transparent);
   color: white;
   display: flex;
   align-items: center;

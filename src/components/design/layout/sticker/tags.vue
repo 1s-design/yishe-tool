@@ -1,9 +1,13 @@
 <template>
     <div class="tags">
-        <template v-for="item in stickerQueryTags">
-            <el-check-tag class="tag" :checked="item.checked" type="primary" @change="tagChange($event, item)">
+        <template v-for="item in stickerQueryTags" :key="item.label">
+            <Badge
+                class="tag cursor-pointer select-none"
+                :variant="item.checked ? 'default' : 'outline'"
+                @click="tagChange(!item.checked, item)"
+            >
                 {{ item.label }}
-            </el-check-tag>
+            </Badge>
         </template>
         <div style="flex:1;"></div>
     </div>
@@ -12,6 +16,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import {stickerQueryTags,stickerQueryParams} from './index.tsx'
+import { Badge } from '@/components/ui/badge'
 const emits = defineEmits(['change'])
 
 function tagChange(value, item) {

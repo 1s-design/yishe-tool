@@ -6,10 +6,10 @@
     <template #name> {{ label }} </template>
     <template #content>
       <div class="w-full flex gap-2">
-        <el-input :placeholder="placeholder" :autosize="{minRows:2,maxRows:10}" type="textarea" v-model="model" size="small"></el-input>
-        <el-button type="primary" size="small" @click="showSentenceSelector = true">
+        <Textarea :placeholder="placeholder" :rows="3" v-model="model" class="resize-y"></Textarea>
+        <Button variant="default" size="sm" @click="showSentenceSelector = true">
           句库
-        </el-button>
+        </Button>
       </div>
     </template>
   </operate-form-item>
@@ -25,6 +25,8 @@
 import icon from "@/components/design/assets/icon/text-content.svg?component";
 import { ref } from 'vue'
 import SentenceSelector from './sentenceSelector.vue'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 const model = defineModel({ default: '' })
 

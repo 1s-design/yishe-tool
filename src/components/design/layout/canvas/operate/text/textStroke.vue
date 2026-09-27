@@ -9,31 +9,24 @@
         <span>颜色</span>
         <color-picker v-model="color" type="pure"></color-picker>
         <span>宽度</span>
-        <el-popover trigger="click" popper-class="el-popover-operation">
-          <template #reference>
-            <el-input
-              style="width: 72px"
-              type="number"
-              v-model="width.value"
-              size="small"
-              min="0"
-              step="1"
-            >
-              <template #suffix>
-                <div class="text-[10px] text-muted-foreground">{{ width.unit }}</div>
-              </template>
-            </el-input>
-          </template>
-          <el-row align="middle" justify="end">
-            <el-col :span="24">
-              <el-radio-group v-model="width.unit" size="small">
-                <el-radio v-for="u in unitOptions" :value="u.value">
+        <Popover>
+          <PopoverTrigger as-child>
+            <div class="flex items-center gap-1" style="width:80px">
+              <Input class="h-6 text-[11px] min-w-0 flex-1" type="number" v-model.number="width.value" min="0" step="1" />
+              <span class="text-[10px] text-muted-foreground">{{ width.unit }}</span>
+            </div>
+          </PopoverTrigger>
+          <PopoverContent class="w-auto">
+            <div class="flex flex-col items-end gap-2">
+              <RadioGroup v-model="width.unit" class="flex flex-row flex-wrap items-center gap-3">
+                <label v-for="u in unitOptions" :key="u.value" class="flex flex-row flex-wrap items-center gap-3">
+                  <RadioGroupItem :value="u.value" />
                   <span class="text-xs">{{ u.label }}</span>
-                </el-radio>
-              </el-radio-group>
-            </el-col>
-          </el-row>
-        </el-popover>
+                </label>
+              </RadioGroup>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </template>
   </operate-form-item>
@@ -43,6 +36,9 @@
 import icon from "@/components/design/assets/icon/text-stroke.svg?component";
 import { ref, computed } from "vue";
 import { canvasStickerOptions,canvasStickerOptionsOnlyChild } from "@/components/design/layout/canvas/index.tsx";
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 const props = defineProps({
   tooltip: {

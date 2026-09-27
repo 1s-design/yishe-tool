@@ -135,7 +135,7 @@
     </div>
 
     <!-- 预览弹窗 -->
-    <Dialog v-model:open="showPreviewModal">
+    <Dialog :modal="false" v-model:open="showPreviewModal">
       <DialogContent class="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{{ currentItem.name || '字体详情' }}</DialogTitle>
@@ -176,7 +176,7 @@
     </Dialog>
 
     <!-- 编辑弹窗 -->
-    <Dialog v-model:open="showFormModal">
+    <Dialog :modal="false" v-model:open="showFormModal">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>编辑字体信息</DialogTitle>

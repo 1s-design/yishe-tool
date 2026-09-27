@@ -7,46 +7,44 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <a-modal
-    v-model:open="show"
-    :footer="null"
-    :centered="true"
-    :destroyOnClose="true"
-    @close="close"
-    width="980px"
-    wrap-class-name="project-detail-modal"
-  >
-    <div class="flex">
-      <s1-img
-        :src="detailInfo.url"
-        class="sticker-detail-image"
-        @load="imgLoad"
-      >
-      </s1-img>
-      <div class="sticker-detail-side flex flex-col">
-        <h1 class="sticker-detail-title">{{ detailInfo.name }}</h1>
-        <h6 class="sticker-detail-text">{{ detailInfo.description }}</h6>
-        <h6 class="sticker-detail-text">{{ detailInfo.keywords }}</h6>
-        <h6 class="sticker-detail-text sticker-detail-time">{{ detailInfo.updateTime }}</h6>
-        <div class="color-palette flex">
-          <div
-            v-for="color in colors"
-            :key="color"
-            class="sticker-detail-color"
-            :style="{ background: color }"
-            @click="copyColor(color)"
-            :title="'点击复制 ' + color"
-          ></div>
+  <Dialog :modal="false" v-model:open="show" @update:open="(v) => { if (!v) close(); }">
+    <DialogContent class="max-w-[980px] w-[980px]">
+      <div class="flex">
+        <s1-img
+          :src="detailInfo.url"
+          class="sticker-detail-image"
+          @load="imgLoad"
+        >
+        </s1-img>
+        <div class="sticker-detail-side flex flex-col">
+          <h1 class="sticker-detail-title">{{ detailInfo.name }}</h1>
+          <h6 class="sticker-detail-text">{{ detailInfo.description }}</h6>
+          <h6 class="sticker-detail-text">{{ detailInfo.keywords }}</h6>
+          <h6 class="sticker-detail-text sticker-detail-time">{{ detailInfo.updateTime }}</h6>
+          <div class="color-palette flex">
+            <div
+              v-for="color in colors"
+              :key="color"
+              class="sticker-detail-color"
+              :style="{ background: color }"
+              @click="copyColor(color)"
+              :title="'点击复制 ' + color"
+            ></div>
+          </div>
         </div>
       </div>
-    </div>
-  </a-modal>
+    </DialogContent>
+  </Dialog>
 </template>
 <script setup lang="ts">
 import { useStickerDetailModal } from "./stickerModal.ts";
 import { ref } from "vue";
 import Utils from "@/common/utils";
 import { message } from '@/common/message';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
 
 const { show, detailInfo } = useStickerDetailModal();
 

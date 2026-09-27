@@ -12,9 +12,7 @@
             <span v-else> {{ title }} </span>
           </div>
           <div @click="close" class="designiy-dialog-header-close">
-            <el-icon size="16">
-              <CloseBold />
-            </el-icon>
+            <X class="w-4 h-4" />
           </div>
         </div>
         <div class="designiy-dialog-content">
@@ -28,7 +26,7 @@
 import { defineProps, ref, onMounted, onBeforeMount, computed, watch } from "vue";
 import { useDraggable } from "@vueuse/core";
 import { UseDraggable as Draggable } from "@vueuse/components";
-import { CloseBold } from "@element-plus/icons-vue";
+import { X } from "lucide-vue-next";
 import { onActivated } from "vue";
 
 const handle = ref();
@@ -115,7 +113,7 @@ function close() {
 }
 
 .designiy-dialog-header-title {
-  color: #333;
+  color: var(--1s-text-color);
   font-size: 1.2rem;
 }
 

@@ -11,24 +11,24 @@
         <div>{{ item.description }}</div>
         <div>最近更新时间： {{ item.updateTime }}</div>
 
-        <a-row>
-          <a-col :span="24">
-            <a-image-preview-group v-if="item?.meta?.details">
-              <div class="preview-images">
-                <a-image
-                  v-for="img in item?.meta?.details"
-                  :width="36"
-                  :height="36"
-                  :src="img.url"
-                />
-              </div>
-            </a-image-preview-group>
-          </a-col>
-        </a-row>
+        <div class="flex flex-wrap w-full">
+          <div class="w-full">
+            <div v-if="item?.meta?.details" class="preview-images">
+              <img
+                v-for="img in item?.meta?.details"
+                :key="img.url"
+                :width="36"
+                :height="36"
+                :src="img.url"
+                class="rounded-sm object-cover"
+              />
+            </div>
+          </div>
+        </div>
 
         <div style="flex: 1"></div>
 
-        <el-button @click="selectModel(item)" type="primary" plain class="select-button"> 使用该模型 </el-button>
+        <Button @click="selectModel(item)" variant="outline" class="select-button"> 使用该模型 </Button>
       </div>
     </div>
   </div>
@@ -36,7 +36,8 @@
 <script setup>
 import { getProductModelList } from "@/api";
 import { onMounted, ref } from "vue";
-import { PayCircleOutlined, FormOutlined } from "@ant-design/icons-vue";
+import { CreditCard, PenLine } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
 import {
   showBaseModelSelect,
   currentOperatingBaseModelInfo,
@@ -108,7 +109,7 @@ function selectModel(productModel) {
 .img {
   width: 200px;
   height: 160px;
-  background-color: #f6f6f6;
+  background-color: var(--1s-control-surface-muted);
 }
 
 .preview-images {

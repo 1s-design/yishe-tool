@@ -34,20 +34,22 @@
             </div>
             <div style="flex: 1"></div>
             <div class="decal-item-bar">
-              <el-button-group>
-                <el-button link round :icon="iconMore"> </el-button>
-                <el-button link round @click="setting(decal)" :icon="iconSetting">
-                </el-button>
-                <el-popconfirm
-                  title="确定要移除该贴纸吗？"
-                  @confirm="removeDecal(decal)"
-                  confirm-button-type="danger"
+              <div class="flex items-center">
+                <Button variant="ghost" size="icon-sm" class="rounded-full w-7 h-7">
+                  <iconMore class="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon-sm" class="rounded-full w-7 h-7" @click="setting(decal)">
+                  <iconSetting class="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  class="rounded-full w-7 h-7 text-destructive hover:text-destructive"
+                  @click="confirm({ title: '确定要移除该贴纸吗？' }).then((ok) => ok && removeDecal(decal))"
                 >
-                  <template #reference>
-                    <el-button link round type="danger" :icon="iconDelete"> </el-button>
-                  </template>
-                </el-popconfirm>
-              </el-button-group>
+                  <iconDelete class="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </template>
@@ -58,23 +60,11 @@
     </div>
 
     <div class="bottom">
-      <el-button-group type="primary">
-        <el-button @click="clear">
+      <div class="flex items-center">
+        <Button @click="clear">
           <span> 清空当前场景 </span>
-        </el-button>
-        <!-- <el-button>
-          <span> 上传 </span>
-        </el-button>
-        <el-button>
-          <span> 上传 </span>
-        </el-button>
-        <el-button>
-          <span> 上传 </span>
-        </el-button>
-        <el-button>
-          <span> 上传 </span>
-        </el-button> -->
-      </el-button-group>
+        </Button>
+      </div>
     </div>
   </div>
 </template>
@@ -91,11 +81,12 @@ import {
 import { computed, ref } from "vue";
 import baseGltfViewer from "@/components/model/baseGltfViewer/index.vue";
 import { useNow, useDateFormat } from "@vueuse/core";
-import { MoreFilled, CloseBold, Edit, EditPen } from "@element-plus/icons-vue";
 import iconSetting from "./setting.svg";
 import iconDelete from "./remove.svg";
 import iconMore from "./more.svg";
 import desimage from "@/components/image.vue";
+import { Button } from "@/components/ui/button";
+import { confirm } from "@/components/ui/confirm";
 
 function formatDate(date) {
   const d = useDateFormat(date, "YYYY-MM-DD HH:mm:ss");
@@ -228,10 +219,6 @@ function clear() {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-
-  :deep(.el-button) {
-    padding: 0 0.5em;
-  }
 }
 
 .bottom {

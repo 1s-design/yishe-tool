@@ -5,50 +5,48 @@
         </template>
         <template #name> 圆形文字半径 </template>
         <template #content>
-            <el-popover trigger="click" popper-class="el-popover-operation">
-                <template #reference>
+            <Popover>
+                <PopoverTrigger as-child>
                     <div class="flex items-center gap-1">
                         <span class="text-[11px] text-muted-foreground">X</span>
-                        <el-input style="width:72px" type="number" v-model="horizontalRadius.value" size="small" min="0"
-                            step="1">
-                            <template #suffix>
-                                <div class="text-[10px] text-muted-foreground"> {{ horizontalRadius.unit }}</div>
-                            </template>
-                        </el-input>
+                        <div class="flex items-center gap-1" style="width:72px">
+                            <Input type="number" v-model="horizontalRadius.value" class="h-6 min-w-0 flex-1 text-[11px]" min="0" step="1" />
+                            <div class="text-[10px] text-muted-foreground"> {{ horizontalRadius.unit }}</div>
+                        </div>
                     </div>
-                </template>
-                <el-row align="middle" justify="end">
-                    <el-col :span="24">
-                        <el-radio-group v-model="horizontalRadius.unit" size="small">
-                            <el-radio v-for="u in unitOptions" :value="u.value">
+                </PopoverTrigger>
+                <PopoverContent align="end" class="w-auto p-3">
+                    <div class="flex items-center justify-end">
+                        <RadioGroup v-model="horizontalRadius.unit" class="flex flex-row flex-wrap items-center gap-3">
+                            <label v-for="u in unitOptions" :key="u.value" class="flex items-center gap-1.5">
+                                <RadioGroupItem :value="u.value" />
                                 <span class="text-xs">{{ u.label }}</span>
-                            </el-radio>
-                        </el-radio-group>
-                    </el-col>
-                </el-row>
-            </el-popover>
-            <el-popover trigger="click" popper-class="el-popover-operation">
-                <template #reference>
+                            </label>
+                        </RadioGroup>
+                    </div>
+                </PopoverContent>
+            </Popover>
+            <Popover>
+                <PopoverTrigger as-child>
                     <div class="flex items-center gap-1">
                         <span class="text-[11px] text-muted-foreground">Y</span>
-                        <el-input style="width:72px" type="number" v-model="verticalRadius.value" size="small" min="0"
-                            step="1">
-                            <template #suffix>
-                                <div class="text-[10px] text-muted-foreground"> {{ verticalRadius.unit }}</div>
-                            </template>
-                        </el-input>
+                        <div class="flex items-center gap-1" style="width:72px">
+                            <Input type="number" v-model="verticalRadius.value" class="h-6 min-w-0 flex-1 text-[11px]" min="0" step="1" />
+                            <div class="text-[10px] text-muted-foreground"> {{ verticalRadius.unit }}</div>
+                        </div>
                     </div>
-                </template>
-                <el-row align="middle" justify="end">
-                    <el-col :span="24">
-                        <el-radio-group v-model="verticalRadius.unit" size="small">
-                            <el-radio v-for="u in unitOptions" :value="u.value">
+                </PopoverTrigger>
+                <PopoverContent align="end" class="w-auto p-3">
+                    <div class="flex items-center justify-end">
+                        <RadioGroup v-model="verticalRadius.unit" class="flex flex-row flex-wrap items-center gap-3">
+                            <label v-for="u in unitOptions" :key="u.value" class="flex items-center gap-1.5">
+                                <RadioGroupItem :value="u.value" />
                                 <span class="text-xs">{{ u.label }}</span>
-                            </el-radio>
-                        </el-radio-group>
-                    </el-col>
-                </el-row>
-            </el-popover>
+                            </label>
+                        </RadioGroup>
+                    </div>
+                </PopoverContent>
+            </Popover>
         </template>
     </operate-form-item>
 </template>
@@ -57,6 +55,9 @@
 import icon from "@/components/design/assets/icon/round-text-radius.svg?component";
 import { ref, computed } from 'vue'
 import { canvasStickerOptions,canvasStickerOptionsOnlyChild } from '@/components/design/layout/canvas/index.tsx'
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 const props = defineProps({
     tooltip: {
@@ -83,4 +84,3 @@ const unitOptions = computed(() => {
 </script>
   
 <style></style>
-  

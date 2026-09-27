@@ -1,52 +1,75 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="particles" title="粒子效果">
-      <operate-form-item>
-        <template #name>预设</template>
-        <template #content>
-          <el-select v-model="currentOperatingCanvasChild.preset" size="small">
-            <el-option label="星星 (Stars)" value="stars"></el-option>
-            <el-option label="气泡 (Bubbles)" value="bubbles"></el-option>
-            <el-option label="雪花 (Snow)" value="snow"></el-option>
-            <el-option label="火焰 (Fire)" value="fire"></el-option>
-          </el-select>
-        </template>
-      </operate-form-item>
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
+  >
+    <AccordionItem value="particles">
+      <AccordionTrigger>粒子效果</AccordionTrigger>
+      <AccordionContent>
+        <operate-form-item>
+          <template #name>预设</template>
+          <template #content>
+            <Select v-model="currentOperatingCanvasChild.preset">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="stars">星星 (Stars)</SelectItem>
+                <SelectItem value="bubbles">气泡 (Bubbles)</SelectItem>
+                <SelectItem value="snow">雪花 (Snow)</SelectItem>
+                <SelectItem value="fire">火焰 (Fire)</SelectItem>
+              </SelectContent>
+            </Select>
+          </template>
+        </operate-form-item>
 
-      <operate-form-item>
-        <template #name>粒子数量</template>
-        <template #content>
-          <el-input-number
-            v-model="currentOperatingCanvasChild.particleCount"
-            size="small"
-            :min="10"
-            :max="500"
-            :step="10"
-          ></el-input-number>
-        </template>
-      </operate-form-item>
-    </el-collapse-item>
+        <operate-form-item>
+          <template #name>粒子数量</template>
+          <template #content>
+            <Input
+              type="number"
+              :model-value="currentOperatingCanvasChild.particleCount"
+              :min="10"
+              :max="500"
+              :step="10"
+              class="h-6 text-[11px]"
+              @update:model-value="v => (currentOperatingCanvasChild.particleCount = Number(v))"
+            />
+          </template>
+        </operate-form-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      ></operateItemSize>
-    </el-collapse-item>
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        ></operateItemSize>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="style" title="样式">
-      <operateItemBackgroundColor
-        v-model="currentOperatingCanvasChild.backgroundColor"
-      ></operateItemBackgroundColor>
-    </el-collapse-item>
+    <AccordionItem value="style">
+      <AccordionTrigger>样式</AccordionTrigger>
+      <AccordionContent>
+        <operateItemBackgroundColor
+          v-model="currentOperatingCanvasChild.backgroundColor"
+        ></operateItemBackgroundColor>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup
-        v-model="currentOperatingCanvasChild"
-      ></operateItemCommonGroup>
-    </el-collapse-item>
-  </el-collapse>
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup
+          v-model="currentOperatingCanvasChild"
+        ></operateItemCommonGroup>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -54,6 +77,20 @@ import { ref } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { currentOperatingCanvasChild } from "../index.tsx";
 
 const activeNames = ref(["particles", "basic", "style", "common"]);

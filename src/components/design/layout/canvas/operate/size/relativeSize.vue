@@ -7,47 +7,47 @@
         <template #content>
             <div class="flex items-center gap-1.5">
                 <span class="text-[11px] text-muted-foreground">宽</span>
-                <el-popover trigger="hover" width="160" popper-class="el-popover-operation">
-                    <template #reference>
-                        <el-input type="number" style="width: 72px" size="small" v-model="width.value" step="10" min="0"
-                            placeholder="宽">
-                            <template #suffix>
-                                <div class="text-[10px] text-muted-foreground">{{ width.unit }}</div>
-                            </template>
-                        </el-input>
-                    </template>
-                    <el-row align="middle" justify="end">
-                        <el-col :span="24">
-                            <el-radio-group v-model="width.unit" size="small">
-                                <el-radio v-for="u, index in unitOptions" :value="u.value" :key="index">
+                <Popover>
+                    <PopoverTrigger as-child>
+                        <div class="flex items-center gap-1" style="width: 80px">
+                            <Input class="h-6 text-[11px] min-w-0 flex-1" type="number" v-model.number="width.value" step="10" min="0"
+                                placeholder="宽" />
+                            <span class="text-[10px] text-muted-foreground">{{ width.unit }}</span>
+                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-[160px]">
+                        <div class="flex items-end justify-end">
+                            <RadioGroup v-model="width.unit" class="flex flex-row flex-wrap items-center gap-3">
+                                <label v-for="u, index in unitOptions" :key="index" class="flex flex-row flex-wrap items-center gap-3">
+                                    <RadioGroupItem :value="u.value" />
                                     <span class="text-xs">{{ u.label }}</span>
-                                </el-radio>
-                            </el-radio-group>
-                        </el-col>
-                    </el-row>
-                </el-popover>
+                                </label>
+                            </RadioGroup>
+                        </div>
+                    </PopoverContent>
+                </Popover>
 
                 <span class="text-[11px] text-muted-foreground">高</span>
 
-                <el-popover trigger="hover" width="160" popper-class="el-popover-operation">
-                    <template #reference>
-                        <el-input type="number" style="width: 72px" size="small" v-model="height.value" step="10"
-                            placeholder="高" min="0">
-                            <template #suffix>
-                                <div class="text-[10px] text-muted-foreground">{{ height.unit }}</div>
-                            </template>
-                        </el-input>
-                    </template>
-                    <el-row align="middle" justify="end">
-                        <el-col :span="24">
-                            <el-radio-group v-model="height.unit" size="small">
-                                <el-radio v-for="u, index in unitOptions" :value="u.value" :key="index">
+                <Popover>
+                    <PopoverTrigger as-child>
+                        <div class="flex items-center gap-1" style="width: 80px">
+                            <Input class="h-6 text-[11px] min-w-0 flex-1" type="number" v-model.number="height.value" step="10"
+                                placeholder="高" min="0" />
+                            <span class="text-[10px] text-muted-foreground">{{ height.unit }}</span>
+                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-[160px]">
+                        <div class="flex items-end justify-end">
+                            <RadioGroup v-model="height.unit" class="flex flex-row flex-wrap items-center gap-3">
+                                <label v-for="u, index in unitOptions" :key="index" class="flex flex-row flex-wrap items-center gap-3">
+                                    <RadioGroupItem :value="u.value" />
                                     <span class="text-xs">{{ u.label }}</span>
-                                </el-radio>
-                            </el-radio-group>
-                        </el-col>
-                    </el-row>
-                </el-popover>
+                                </label>
+                            </RadioGroup>
+                        </div>
+                    </PopoverContent>
+                </Popover>
             </div>
         </template>
     </operate-form-item>
@@ -56,8 +56,10 @@
 <script setup lang="ts">
 import icon from "@/components/design/assets/icon/size.svg?component";
 import { ref, watch, computed } from "vue";
-import { Setting } from "@element-plus/icons-vue";
 import { canvasStickerOptions ,canvasStickerOptionsOnlyChild} from "@/components/design/layout/canvas/index.tsx";
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 
 

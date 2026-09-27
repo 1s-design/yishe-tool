@@ -1,62 +1,57 @@
 <template>
   <div class="flex h-full">
     <div
-      style="width: 400px; height: 100%; padding: 1.5rem; row-gap: 1.5rem; overflow: auto; border-right: 1px solid #eee;"
+      style="width: 400px; height: 100%; padding: 1.5rem; row-gap: 1.5rem; overflow: auto; border-right: 1px solid var(--1s-border-color);"
       class="flex flex-col"
     >
       <div class="label">{{ activeFont.name || '未选择字体' }} 预览</div>
       <div class="preview-actions">
-        <el-button 
-          size="small" 
-          type="primary" 
-          :loading="uploadingThumbnail"
-          :disabled="!activeFont.id"
+        <Button
+          size="sm"
+          :disabled="uploadingThumbnail || !activeFont.id"
           @click="uploadThumbnail"
         >
           更新缩略图
-        </el-button>
+        </Button>
       </div>
       <div v-if="activeFont.id" class="font-family-info">
         <div class="font-family-label">FontFamily ID:</div>
         <div class="font-family-value-wrapper">
           <div class="font-family-value">{{ `font_${activeFont.id}` }}</div>
-          <el-button 
-            size="small" 
-            text 
-            type="primary" 
-            :icon="DocumentCopy"
+          <Button
+            size="sm"
+            variant="ghost"
             @click="copyFontFamily(activeFont.id)"
             class="font-family-copy-btn"
           >
+            <Copy class="h-3.5 w-3.5 mr-1" />
             复制
-          </el-button>
+          </Button>
         </div>
         <div class="font-actions">
-          <el-button
+          <Button
             v-if="!isFontLoaded(activeFont.id)"
-            size="small"
-            type="primary"
-            plain
-            :icon="Download"
+            size="sm"
+            variant="outline"
             @click="loadFontToCanvas(activeFont)"
             class="font-load-btn"
           >
+            <Download class="h-3.5 w-3.5 mr-1" />
             加载到画布
-          </el-button>
-          <el-button
+          </Button>
+          <Button
             v-else
-            size="small"
-            type="success"
-            plain
+            size="sm"
+            variant="outline"
             disabled
-            :icon="Check"
             class="font-loaded-btn"
           >
+            <Check class="h-3.5 w-3.5 mr-1" />
             已加载
-          </el-button>
+          </Button>
         </div>
       </div>
-      <div style="background: rgba(115, 0, 255, 0.05);">
+      <div style="background: var(--1s-hover-background);">
       <div
         ref="previewContainerRef"
         :style="{ fontSize: previewFontSize + 'px', fontFamily: `font_${activeFont.id}` }"
@@ -75,26 +70,28 @@
       </div>
     </div>
       <div class="label">文字预览大小</div>
-      <a-slider id="test" v-model:value="previewFontSize" :max="100" :min="10" />
+      <Slider v-model="previewFontSizeModel" :max="100" :min="10" />
       <div class="label">描述</div>
       <div class="description-text">{{ activeFont.description }}</div>
       <div class="label">标签</div>
       <div class="flex flex-wrap" style="gap: 1rem 0.5rem">
         <template v-for="t in activeFont.keywords?.split(',')">
-          <a-tag color="default" v-if="t">{{ t }}</a-tag>
+          <Badge variant="secondary" v-if="t">{{ t }}</Badge>
         </template>
       </div>
     </div>
     <div style="flex: 1; height: 100%; display: flex; flex-direction: column;">
-      <div style="padding: 1.5rem; border-bottom: 1px solid #eee;" class="flex items-center justify-between">
+      <div style="padding: 1.5rem; border-bottom: 1px solid var(--1s-border-color);" class="flex items-center justify-between">
         <div>共 {{ total }} 条</div>
         <div style="flex: 1"></div>
-        <el-button size="small" link :icon="TopRight" @click="goUpload">
+        <Button size="sm" variant="link" @click="goUpload">
+          <ArrowUpRight class="h-3.5 w-3.5 mr-1" />
           去上传
-        </el-button>
-        <el-button size="small" link :icon="TopRight" @click="goMine">
+        </Button>
+        <Button size="sm" variant="link" @click="goMine">
+          <ArrowUpRight class="h-3.5 w-3.5 mr-1" />
           查看我的上传
-        </el-button>
+        </Button>
       </div>
       <div style="flex: 1; overflow: hidden;">
         <s1-scrollbar height="100%">
@@ -120,7 +117,7 @@
                     style="width: 100%; height: 100%;"
                   ></s1-image>
                   <div class="font-item-loaded-badge" v-if="isFontLoaded(item.id) && activeFont.id !== item.id">
-                    <el-icon><Check /></el-icon>
+                    <Check class="h-3.5 w-3.5" />
                   </div>
                 </div>
                 <div class="font-item-info">
@@ -128,26 +125,24 @@
                   <div class="font-item-time">{{ item.createTime }}</div>
                 </div>
                 <div class="font-item-actions" @click.stop>
-                  <el-button
+                  <Button
                     v-if="!isFontLoaded(item.id)"
-                    size="small"
-                    type="primary"
-                    plain
+                    size="icon-sm"
+                    variant="outline"
                     @click="loadFontToCanvas(item)"
                     class="font-item-load-btn"
                   >
-                    <el-icon><Download /></el-icon>
-                  </el-button>
-                  <el-button
+                    <Download class="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
                     v-else
-                    size="small"
-                    type="success"
-                    plain
+                    size="icon-sm"
+                    variant="outline"
                     disabled
                     class="font-item-loaded-btn"
                   >
-                    <el-icon><Check /></el-icon>
-                  </el-button>
+                    <Check class="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -161,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeMount } from "vue";
+import { ref, onBeforeMount, computed } from "vue";
 import { getFontListApi } from "@/api";
 import {
   showFontModal,
@@ -170,7 +165,7 @@ import {
 } from "../../store";
 import { usePaging } from "@/hooks/data/paging";
 import Utils from "@/common/utils";
-import { Paperclip, TopRight } from "@element-plus/icons-vue";
+import { Copy, Download, Check, ArrowUpRight } from "lucide-vue-next";
 
 import { fetchFontFaceWithMessage } from "@/components/design/layout/canvas/operate/fontFamily/index.ts";
 import { getFontList, updateFontTemplate } from "@/api";
@@ -179,7 +174,9 @@ import { htmlToPngFile } from "@/common/transform";
 import { uploadToCOS } from "@/api/cos";
 import { message } from '@/common/message';
 import { cacheFontFamily } from "@/components/design/store";
-import { DocumentCopy, Download, Check } from "@element-plus/icons-vue";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 
 // 字体列表
@@ -193,6 +190,14 @@ const { list, getList, reset, loading, total } = usePaging((params) => {
 const activeFont = ref({} as any);
 
 const previewFontSize = ref(36);
+
+// Slider 组件使用数组 modelValue，这里做适配而不改变 previewFontSize 的数字语义
+const previewFontSizeModel = computed({
+  get: () => [previewFontSize.value],
+  set: (v) => {
+    previewFontSize.value = Array.isArray(v) ? v[0] : v;
+  },
+});
 
 const previewTextareaRef = ref();
 const previewContainerRef = ref();
@@ -349,32 +354,32 @@ async function uploadThumbnail() {
 
 .font-item {
   cursor: pointer;
-  border: 1px solid #eee;
+  border: 1px solid var(--1s-border-color);
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
-  background: #fff;
+  background: var(--1s-surface-background);
   aspect-ratio: 1 / 1.4;
   position: relative;
 
   &:hover {
-    border-color: #007bff;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    border-color: var(--1s-accent-color);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--1s-accent-color) 15%, transparent);
     transform: translateY(-2px);
   }
 
   &.font-item-selected {
-    border-color: #007bff;
-    background: #f0f8ff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    border-color: var(--1s-accent-color);
+    background: var(--1s-hover-background);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-accent-color) 20%, transparent);
     
     .font-item-name {
-      color: #007bff;
+      color: var(--1s-accent-color);
       font-weight: 600;
     }
     
     .font-item-image {
-      background: #e6f3ff;
+      background: var(--1s-accent-color-soft);
     }
   }
 
@@ -386,11 +391,11 @@ async function uploadThumbnail() {
 .font-item-image {
   width: 100%;
   height: 70%;
-  background: #f8f9fa;
+  background: var(--1s-control-surface-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--1s-border-color);
   position: relative;
 }
 
@@ -405,7 +410,7 @@ async function uploadThumbnail() {
 .font-item-name {
   font-size: 1rem;
   font-weight: 500;
-  color: #333;
+  color: var(--1s-text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -414,14 +419,14 @@ async function uploadThumbnail() {
 
 .font-item-time {
   font-size: 0.8rem;
-  color: #999;
+  color: var(--1s-text-color-tertiary);
   line-height: 1.2;
 }
 
 .label {
   font-size: 1.2rem;
   font-weight: 500;
-  color: #333;
+  color: var(--1s-text-color);
 }
 
 .preview-actions {
@@ -431,26 +436,26 @@ async function uploadThumbnail() {
 }
 
 .description-text {
-  color: #666;
+  color: var(--1s-text-color-secondary);
   line-height: 1.5;
-  background: #f8f9fa;
+  background: var(--1s-control-surface-muted);
   padding: 0.75rem;
   border-radius: 6px;
-  border-left: 3px solid #007bff;
+  border-left: 3px solid var(--1s-accent-color);
 }
 
 .font-family-info {
   margin-top: 1rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--1s-control-surface-muted);
   border-radius: 8px;
-  border: 1px solid #eee;
+  border: 1px solid var(--1s-border-color);
 }
 
 .font-family-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #666;
+  color: var(--1s-text-color-secondary);
   margin-bottom: 0.5rem;
 }
 
@@ -465,11 +470,11 @@ async function uploadThumbnail() {
   flex: 1;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
   font-size: 0.875rem;
-  color: #007bff;
-  background: #fff;
+  color: var(--1s-accent-color);
+  background: var(--1s-surface-background);
   padding: 0.5rem;
   border-radius: 4px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--1s-border-color);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -5,49 +5,54 @@
     </template>
     <template #name> 内置背景 </template>
     <template #content>
-      <el-popover
-        width="auto"
-        trigger="click"
-        :visible="showPopover"
-        popper-class="el-popover-operation"
-      >
-        <template #reference>
-          <el-button link size="small" @click="showPopover = !showPopover">
+      <Popover v-model:open="showPopover">
+        <PopoverTrigger as-child>
+          <Button variant="link" size="sm">
             {{ modelLabel }}
-          </el-button>
-        </template>
-        <div class="background-popover-panel">
-          <el-row style="row-gap: 1rem">
-            <el-col :span="24">
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent class="w-auto">
+          <div class="background-popover-panel">
+            <div class="flex flex-col w-full" style="row-gap: 1rem">
               <div class="background-toolbar w-full flex justify-between items-center">
-                <el-input
+                <Input
                   v-model="searchInput"
                   class="background-search-input"
                   placeholder="关键字搜索"
-                ></el-input>
-                <el-tooltip content="取消背景" placement="top">
-                  <el-button link @click="removeCurrentBackground">
-                    <el-icon size="14">
-                      <StopOutlined />
-                    </el-icon>
-                  </el-button>
-                </el-tooltip>
+                ></Input>
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <Button variant="link" @click="removeCurrentBackground">
+                      <Square class="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">取消背景</TooltipContent>
+                </Tooltip>
               </div>
-              <el-tabs v-model="activeCategory">
-                <el-tab-pane
+              <Tabs :model-value="activeCategory" @update:model-value="v => (activeCategory = v as any)">
+                <TabsList>
+                  <TabsTrigger
+                    v-for="category in CustomBackgroundCategoryOptions"
+                    :key="category.value"
+                    :value="category.value"
+                  >
+                    {{ category.label }}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent
                   v-for="category in CustomBackgroundCategoryOptions"
-                  :name="category.value"
-                  :label="category.label"
+                  :key="category.value"
+                  :value="category.value"
                 >
-                  <el-scrollbar height="360px">
-                    <el-row
+                  <ScrollArea style="height:360px">
+                    <div
                       v-if="withSearchFilter(category.children).length"
-                      class="background-grid"
+                      class="background-grid flex flex-wrap"
                     >
-                      <el-col
+                      <div
                         v-for="(item, index) in withSearchFilter(category.children)"
                         :key="index"
-                        :span="4"
+                        :style="{ flex: `0 0 ${(100 / 24) * 4}%` }"
                       >
                         <div
                           class="flex flex-col justify-center items-center preview-item"
@@ -66,35 +71,31 @@
                             {{ item.label }}
                           </div>
                         </div>
-                      </el-col>
-                    </el-row>
-                    <el-empty
+                      </div>
+                    </div>
+                    <div
                       v-else
                       @click="searchInput = ''"
-                      class="cursor-pointer"
-                      description="无结果"
-                      :image="emptyImage"
-                      :image-size="64"
+                      class="cursor-pointer flex flex-col items-center justify-center py-10 text-xs text-muted-foreground"
                     >
-                    </el-empty>
-                  </el-scrollbar>
-                </el-tab-pane>
-              </el-tabs>
-            </el-col>
-          </el-row>
+                      无结果
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
+            </div>
 
-          <el-row>
-            <el-col :span="24">
+            <div>
               <div class="flex toolbar items-center background-footer">
                 <div style="flex: 1"></div>
-                <el-button size="small" type="danger" @click="showPopover = false">
+                <Button size="sm" variant="destructive" @click="showPopover = false">
                   关闭
-                </el-button>
+                </Button>
               </div>
-            </el-col>
-          </el-row>
-        </div>
-      </el-popover>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </template>
   </operate-form-item>
 </template>
@@ -110,14 +111,19 @@ import {
   SvgFilterResource,
 } from "@/components/design/layout/canvas/children/svgFilter/index";
 import { ref, computed, h } from "vue";
-import { StopOutlined } from "@ant-design/icons-vue";
-import { Switch } from "@element-plus/icons-vue";
+import { Square } from 'lucide-vue-next';
 import desimage from "@/components/image.vue";
 import { CustomBackgroundCategoryOptions } from "@/components/design/layout/canvas/children/background/builtIn/index";
 import { useLocalStorage } from "@vueuse/core";
 import { SvgFilterCategory } from "@/types/filter.ts";
 import Utils from "@/common/utils";
 import { GlobalConst } from "@/types/index.ts";
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const model = defineModel({
   default: null,
@@ -210,27 +216,6 @@ function useCurrent(effect) {
 .label {
   width: 64px;
   text-wrap: nowrap;
-}
-
-:deep(.el-tabs__nav-wrap::after) {
-  display: none;
-}
-
-:deep(.el-tabs__active-bar) {
-  display: none;
-}
-
-:deep(.el-tabs__item) {
-  padding: 0 12px;
-  color: rgba(0, 0, 0, 0.3);
-}
-
-:deep(.el-tabs__item.is-active) {
-  color: rgba(0, 0, 0, 0.8);
-}
-
-:deep(.el-tabs__header) {
-  margin: 0 15px;
 }
 
 .preview-item {

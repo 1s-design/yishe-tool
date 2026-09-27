@@ -1,98 +1,199 @@
 <template>
-  <el-form label-width="80px" :model="formData">
-    <el-card header="数据配置" class="property-group" shadow="never">
-      <el-form-item label="节点数据">
-        <el-input
-          v-model="nodesJson"
-          type="textarea"
-          :rows="6"
-          placeholder='[{"id":"A","name":"Node A"},{"id":"B","name":"Node B"}]'
-          @blur="onNodesChange"
-        />
-        <div v-if="nodesError" class="text-red-500 text-xs mt-1">
-          {{ nodesError }}
+  <div>
+    <Card class="property-group">
+      <CardHeader>
+        <CardTitle>数据配置</CardTitle>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <div class="grid grid-cols-[80px_1fr] items-start gap-2">
+          <Label class="pt-1.5">节点数据</Label>
+          <div class="flex flex-col gap-1">
+            <Textarea
+              v-model="nodesJson"
+              :rows="6"
+              placeholder='[{"id":"A","name":"Node A"},{"id":"B","name":"Node B"}]'
+              @blur="onNodesChange"
+            />
+            <div v-if="nodesError" class="text-red-500 text-xs mt-1">
+              {{ nodesError }}
+            </div>
+          </div>
         </div>
-      </el-form-item>
-      <el-form-item label="链接数据">
-        <el-input
-          v-model="linksJson"
-          type="textarea"
-          :rows="6"
-          placeholder='[{"source":"A","target":"B","value":10}]'
-          @blur="onLinksChange"
-        />
-        <div v-if="linksError" class="text-red-500 text-xs mt-1">
-          {{ linksError }}
+        <div class="grid grid-cols-[80px_1fr] items-start gap-2">
+          <Label class="pt-1.5">链接数据</Label>
+          <div class="flex flex-col gap-1">
+            <Textarea
+              v-model="linksJson"
+              :rows="6"
+              placeholder='[{"source":"A","target":"B","value":10}]'
+              @blur="onLinksChange"
+            />
+            <div v-if="linksError" class="text-red-500 text-xs mt-1">
+              {{ linksError }}
+            </div>
+          </div>
         </div>
-      </el-form-item>
-    </el-card>
+      </CardContent>
+    </Card>
 
-    <el-card header="样式配置" class="property-group" shadow="never">
-      <el-form-item label="背景色">
-        <ColorInput v-model="formData.backgroundColor" />
-      </el-form-item>
-      <el-form-item label="节点宽度">
-        <el-input-number v-model="formData.nodeWidth" :min="5" :max="60" />
-      </el-form-item>
-      <el-form-item label="节点间距">
-        <el-input-number v-model="formData.nodePadding" :min="0" :max="50" />
-      </el-form-item>
-    </el-card>
+    <Card class="property-group">
+      <CardHeader>
+        <CardTitle>样式配置</CardTitle>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>背景色</Label>
+          <ColorInput v-model="formData.backgroundColor" />
+        </div>
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>节点宽度</Label>
+          <Input
+            type="number"
+            :model-value="formData.nodeWidth"
+            :min="5"
+            :max="60"
+            @update:model-value="v => (formData.nodeWidth = Number(v))"
+          />
+        </div>
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>节点间距</Label>
+          <Input
+            type="number"
+            :model-value="formData.nodePadding"
+            :min="0"
+            :max="50"
+            @update:model-value="v => (formData.nodePadding = Number(v))"
+          />
+        </div>
+      </CardContent>
+    </Card>
 
-    <el-card header="尺寸配置" class="property-group" shadow="never">
-      <el-form-item label="宽度">
-        <el-input-number
-          v-model="formData.width"
-          :min="200"
-          :max="2000"
-          :step="10"
-        />
-      </el-form-item>
-      <el-form-item label="高度">
-        <el-input-number
-          v-model="formData.height"
-          :min="100"
-          :max="1500"
-          :step="10"
-        />
-      </el-form-item>
-    </el-card>
+    <Card class="property-group">
+      <CardHeader>
+        <CardTitle>尺寸配置</CardTitle>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>宽度</Label>
+          <Input
+            type="number"
+            :model-value="formData.width"
+            :min="200"
+            :max="2000"
+            :step="10"
+            @update:model-value="v => (formData.width = Number(v))"
+          />
+        </div>
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>高度</Label>
+          <Input
+            type="number"
+            :model-value="formData.height"
+            :min="100"
+            :max="1500"
+            :step="10"
+            @update:model-value="v => (formData.height = Number(v))"
+          />
+        </div>
+      </CardContent>
+    </Card>
 
-    <el-card header="通用属性" class="property-group" shadow="never">
-      <el-form-item label="X坐标">
-        <el-input-number v-model="formData.x" :min="0" :max="2000" :step="1" />
-      </el-form-item>
-      <el-form-item label="Y坐标">
-        <el-input-number v-model="formData.y" :min="0" :max="2000" :step="1" />
-      </el-form-item>
-      <el-form-item label="层级">
-        <el-input-number v-model="formData.zIndex" :min="0" :max="999" />
-      </el-form-item>
-      <el-form-item label="旋转角度">
-        <el-slider
-          v-model="formData.rotate"
-          :min="0"
-          :max="360"
-          show-input
-          input-size="small"
-        />
-      </el-form-item>
-      <el-form-item label="透明度">
-        <el-slider
-          v-model="formData.opacity"
-          :min="0"
-          :max="1"
-          :step="0.01"
-          show-input
-          input-size="small"
-        />
-      </el-form-item>
-    </el-card>
-  </el-form>
+    <Card class="property-group">
+      <CardHeader>
+        <CardTitle>通用属性</CardTitle>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>X坐标</Label>
+          <Input
+            type="number"
+            :model-value="formData.x"
+            :min="0"
+            :max="2000"
+            :step="1"
+            @update:model-value="v => (formData.x = Number(v))"
+          />
+        </div>
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>Y坐标</Label>
+          <Input
+            type="number"
+            :model-value="formData.y"
+            :min="0"
+            :max="2000"
+            :step="1"
+            @update:model-value="v => (formData.y = Number(v))"
+          />
+        </div>
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>层级</Label>
+          <Input
+            type="number"
+            :model-value="formData.zIndex"
+            :min="0"
+            :max="999"
+            @update:model-value="v => (formData.zIndex = Number(v))"
+          />
+        </div>
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>旋转角度</Label>
+          <div class="flex items-center gap-2">
+            <Slider
+              :model-value="[formData.rotate]"
+              :min="0"
+              :max="360"
+              class="flex-1"
+              @update:model-value="v => (formData.rotate = v[0])"
+            />
+            <Input
+              type="number"
+              :model-value="formData.rotate"
+              :min="0"
+              :max="360"
+              class="w-16"
+              @update:model-value="v => (formData.rotate = Number(v))"
+            />
+          </div>
+        </div>
+        <div class="grid grid-cols-[80px_1fr] items-center gap-2">
+          <Label>透明度</Label>
+          <div class="flex items-center gap-2">
+            <Slider
+              :model-value="[formData.opacity]"
+              :min="0"
+              :max="1"
+              :step="0.01"
+              class="flex-1"
+              @update:model-value="v => (formData.opacity = v[0])"
+            />
+            <Input
+              type="number"
+              :model-value="formData.opacity"
+              :min="0"
+              :max="1"
+              :step="0.01"
+              class="w-16"
+              @update:model-value="v => (formData.opacity = Number(v))"
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, PropType } from "vue";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 
 interface SankeyNode {
   id: string;

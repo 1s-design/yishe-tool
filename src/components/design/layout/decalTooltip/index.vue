@@ -57,7 +57,7 @@ function formatDate(date) {
     width: 48px;
     flex-shrink: 0;
     text-align: justify;
-    color: #000;
+    color: var(--1s-text-color);
     // text-align-last: justify;
   }
 }

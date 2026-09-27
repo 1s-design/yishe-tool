@@ -1,79 +1,104 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    :title="isEdit ? '编辑知识' : '新增知识'"
-    fullscreen
-    :close-on-click-modal="false"
-    destroy-on-close
-    class="knowledge-edit-dialog"
+  <Dialog
+    :open="visible"
+    @update:open="(val) => (visible = val)"
   >
+    <DialogContent
+      class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none knowledge-edit-dialog"
+    >
+    <DialogHeader class="px-6 pt-6 pb-2">
+      <DialogTitle>{{ isEdit ? '编辑知识' : '新增知识' }}</DialogTitle>
+    </DialogHeader>
     <div class="knowledge-edit-content">
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-position="top"
-      >
+      <div class="form">
         <div class="knowledge-edit-layout">
           <!-- 左侧：主要内容编辑 -->
           <div class="knowledge-edit-main">
-            <el-form-item label="标题" prop="title">
-              <el-input
-                v-model="form.title"
-                placeholder="简短描述这条知识"
-                size="large"
-                maxlength="255"
-                show-word-limit
-              />
-            </el-form-item>
+            <div class="form-item">
+              <Label>标题</Label>
+              <div class="form-item-content">
+                <Input
+                  v-model="form.title"
+                  placeholder="简短描述这条知识"
+                  maxlength="255"
+                  class="h-9"
+                />
+                <div class="word-limit">{{ (form.title || '').length }} / 255</div>
+              </div>
+            </div>
 
-            <el-form-item label="知识内容" prop="content" class="content-editor-item">
-              <el-input
-                v-model="form.content"
-                type="textarea"
-                placeholder="知识内容（支持 Markdown）"
-                class="content-editor"
-              />
-            </el-form-item>
+            <div class="form-item content-editor-item">
+              <Label>知识内容</Label>
+              <div class="form-item-content">
+                <Textarea
+                  v-model="form.content"
+                  placeholder="知识内容（支持 Markdown）"
+                  class="content-editor"
+                />
+              </div>
+            </div>
           </div>
 
           <!-- 右侧：设置面板 -->
           <div class="knowledge-edit-sidebar">
             <div class="sidebar-section">
               <div class="sidebar-section-title">基本信息</div>
-              <el-form-item label="分类" prop="category">
-                <el-select v-model="form.category" placeholder="选择分类" style="width: 100%">
-                  <el-option label="CSS技巧" value="css-trick" />
-                  <el-option label="颜色值" value="color-value" />
-                  <el-option label="代码配置" value="code-config" />
-                  <el-option label="设计原则" value="design-principle" />
-                  <el-option label="模板技巧" value="template-tip" />
-                  <el-option label="其他" value="other" />
-                </el-select>
-              </el-form-item>
+              <div class="form-item">
+                <Label>分类</Label>
+                <div class="form-item-content">
+                  <Select v-model="form.category">
+                    <SelectTrigger style="width: 100%">
+                      <SelectValue placeholder="选择分类" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="css-trick">CSS技巧</SelectItem>
+                      <SelectItem value="color-value">颜色值</SelectItem>
+                      <SelectItem value="code-config">代码配置</SelectItem>
+                      <SelectItem value="design-principle">设计原则</SelectItem>
+                      <SelectItem value="template-tip">模板技巧</SelectItem>
+                      <SelectItem value="other">其他</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-              <el-form-item label="可见性">
-                <el-radio-group v-model="form.isPublic">
-                  <el-radio :value="false">私有</el-radio>
-                  <el-radio :value="true">公开</el-radio>
-                </el-radio-group>
-              </el-form-item>
+              <div class="form-item">
+                <Label>可见性</Label>
+                <div class="form-item-content">
+                  <div class="flex gap-2">
+                    <Button
+                      size="sm"
+                      :variant="form.isPublic === false ? 'default' : 'outline'"
+                      @click="form.isPublic = false"
+                    >私有</Button>
+                    <Button
+                      size="sm"
+                      :variant="form.isPublic === true ? 'default' : 'outline'"
+                      @click="form.isPublic = true"
+                    >公开</Button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="sidebar-section">
               <div class="sidebar-section-title">标签</div>
               <div class="tags-input-wrapper">
-                <el-tag
+                <Badge
                   v-for="tag in form.tags"
                   :key="tag"
-                  closable
-                  @close="removeTag(tag)"
-                  class="mr-1 mb-1"
+                  variant="secondary"
+                  class="mr-1 mb-1 gap-1 pr-1"
                 >
                   {{ tag }}
-                </el-tag>
+                  <button
+                    type="button"
+                    class="rounded-full p-0.5 hover:bg-background/60"
+                    @click="removeTag(tag)"
+                  >×</button>
+                </Badge>
               </div>
-              <el-input
+              <Input
                 v-model="newTag"
                 size="small"
                 placeholder="输入标签后回车添加"
@@ -85,36 +110,54 @@
 
             <div class="sidebar-section">
               <div class="sidebar-section-title">扩展数据 (JSON)</div>
-              <el-input
+              <Textarea
                 v-model="extrasJson"
-                type="textarea"
                 :rows="6"
                 placeholder='{"key": "value"}'
               />
-              <div v-if="extrasError" class="el-form-item__error">JSON 格式不正确</div>
+              <div v-if="extrasError" class="form-error">JSON 格式不正确</div>
             </div>
           </div>
         </div>
-      </el-form>
+      </div>
     </div>
 
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="visible = false" size="large">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit" size="large">保存</el-button>
-      </div>
-    </template>
-  </el-dialog>
+    <div class="dialog-footer">
+      <Button variant="outline" class="h-9" @click="visible = false">取消</Button>
+      <Button class="h-9" :disabled="submitting" @click="handleSubmit">
+        <span v-if="submitting">保存中...</span>
+        <span v-else>保存</span>
+      </Button>
+    </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
-import { ElMessage } from "element-plus";
-import type { FormInstance, FormRules } from "element-plus";
+import { message } from '@/common/message';
 import {
   createDesignKnowledge,
   updateDesignKnowledge,
 } from "@/api";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const props = defineProps<{
   visible: boolean;
@@ -133,7 +176,6 @@ const visible = computed({
 
 const isEdit = computed(() => !!props.editData?.id);
 
-const formRef = ref<FormInstance>();
 const submitting = ref(false);
 const newTag = ref("");
 const extrasJson = ref("");
@@ -148,7 +190,7 @@ const form = ref({
   isPublic: false,
 });
 
-const rules: FormRules = {
+const rules = {
   title: [{ required: true, message: "请输入标题", trigger: "blur" }],
   content: [{ required: true, message: "请输入内容", trigger: "blur" }],
   category: [{ required: true, message: "请选择分类", trigger: "change" }],
@@ -196,12 +238,17 @@ function removeTag(tag: string) {
 }
 
 async function handleSubmit() {
-  if (!formRef.value) return;
-
-  try {
-    await formRef.value.validate();
-  } catch {
-    return;
+  // 表单校验（原 el-form rules 的等价实现）
+  const requiredFields: Array<[keyof typeof form.value, string]> = [
+    ["title", "请输入标题"],
+    ["content", "请输入内容"],
+    ["category", "请选择分类"],
+  ];
+  for (const [key, msg] of requiredFields) {
+    if (!form.value[key]) {
+      message.error(msg);
+      return;
+    }
   }
 
   // 解析 extras JSON
@@ -212,7 +259,7 @@ async function handleSubmit() {
       extrasError.value = false;
     } catch {
       extrasError.value = true;
-      ElMessage.error("扩展数据格式错误，请输入有效的 JSON");
+      message.error("扩展数据格式错误，请输入有效的 JSON");
       return;
     }
   }
@@ -229,17 +276,17 @@ async function handleSubmit() {
         id: props.editData.id,
         ...payload,
       });
-      ElMessage.success("更新成功");
+      message.success("更新成功");
     } else {
       await createDesignKnowledge(payload);
-      ElMessage.success("创建成功");
+      message.success("创建成功");
     }
 
     visible.value = false;
     emit("success");
   } catch (error) {
     console.error("保存知识失败:", error);
-    ElMessage.error("保存失败，请重试");
+    message.error("保存失败，请重试");
   } finally {
     submitting.value = false;
   }
@@ -247,16 +294,12 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
-.knowledge-edit-dialog :deep(.el-dialog__body) {
-  padding: 0;
-  height: calc(100vh - 120px);
-  overflow: hidden;
-}
-
 .knowledge-edit-content {
   height: 100%;
   padding: 20px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .knowledge-edit-layout {
@@ -281,7 +324,7 @@ async function handleSubmit() {
 .sidebar-section {
   margin-bottom: 24px;
   padding: 16px;
-  background: var(--el-fill-color-lighter);
+  background: var(--1s-control-surface-muted);
   border-radius: 8px;
 }
 
@@ -289,7 +332,28 @@ async function handleSubmit() {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 12px;
-  color: var(--el-text-color-primary);
+  color: var(--1s-text-color);
+}
+
+.form-item {
+  margin-bottom: 16px;
+}
+
+.form-item-content {
+  margin-top: 6px;
+}
+
+.form-error {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #ef4444;
+}
+
+.word-limit {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--1s-text-color-tertiary);
+  text-align: right;
 }
 
 .content-editor-item {
@@ -298,16 +362,13 @@ async function handleSubmit() {
   flex-direction: column;
 }
 
-.content-editor-item :deep(.el-form-item__content) {
+.content-editor-item .form-item-content {
   flex: 1;
+  display: flex;
 }
 
 .content-editor {
   height: 100%;
-}
-
-.content-editor :deep(.el-textarea__inner) {
-  height: 100% !important;
   min-height: 400px;
   font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
   font-size: 14px;
@@ -337,5 +398,7 @@ async function handleSubmit() {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--1s-border-color);
 }
 </style>

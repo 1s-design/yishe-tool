@@ -41,7 +41,6 @@ import { DecalGeometry } from "three/examples/jsm/geometries/DecalGeometry.js";
 import { gltfLoader } from "../../../common/threejsHelper";
 import { reactive, ref, shallowReactive, nextTick, shallowRef, watch } from "vue";
 import { reactify, useDebounceFn, useMouse, useMouseInElement } from "@vueuse/core";
-import { ElMessage } from "element-plus";
 import { base64ToFile } from "@/common/transform/base64ToFile";
 import { DecalController } from "./decalController";
 import { _1stfExporterMixin } from "./1stf";

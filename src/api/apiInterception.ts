@@ -9,8 +9,7 @@
  * Copyright (c) 2024 by 1s, All Rights Reserved. 
  */
 import { normalizeTokenValue, useLoginStatusStore } from "@/store/stores/login";
-import { ElMessage } from 'element-plus'
-import { message } from '@/common/message'
+import { message } from '@/common/message';
 import { openLoginDialog } from '@/modules/main/view/user/login/index.tsx'
 
 const ownershipExcludedKeywords = ['/login', '/signup', '/page', '/list', '/delete', '/logout']

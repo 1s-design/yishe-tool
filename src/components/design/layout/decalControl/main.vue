@@ -10,180 +10,198 @@
     </div>
 
     <div style="padding: 0.75rem">
-      <el-form label-position="left" label-width="78px" size="small" class="custom-form">
-        <el-form-item label="旋转角度">
-          <el-slider
+      <div class="custom-form flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <Label class="w-[78px] shrink-0 text-xs">旋转角度</Label>
+          <Slider
+            class="flex-1"
             :min="0"
             :max="360"
             :step="1"
-            v-model="currentOperatingDecalController.state.modelValueRotate"
-            size="small"
+            :model-value="[currentOperatingDecalController.state.modelValueRotate]"
+            @update:model-value="v => (currentOperatingDecalController.state.modelValueRotate = v[0])"
           />
-        </el-form-item>
+        </div>
 
-        <el-form-item label="贴纸尺寸">
-          <el-slider
+        <div class="flex items-center gap-2">
+          <Label class="w-[78px] shrink-0 text-xs">贴纸尺寸</Label>
+          <Slider
+            class="flex-1"
             :min="0"
             :max="100"
             :step="1"
-            v-model="currentOperatingDecalController.state.modelValueSize"
-            size="small"
+            :model-value="[currentOperatingDecalController.state.modelValueSize]"
+            @update:model-value="v => (currentOperatingDecalController.state.modelValueSize = v[0])"
           />
-        </el-form-item>
+        </div>
 
-        <el-form-item label="贴纸粗糙度">
-          <el-slider
+        <div class="flex items-center gap-2">
+          <Label class="w-[78px] shrink-0 text-xs">贴纸粗糙度</Label>
+          <Slider
+            class="flex-1"
             :min="0"
             :max="1"
             :step="0.01"
-            v-model="currentOperatingDecalController.state.roughness"
-            size="small"
+            :model-value="[currentOperatingDecalController.state.roughness]"
+            @update:model-value="v => (currentOperatingDecalController.state.roughness = v[0])"
           />
-        </el-form-item>
+        </div>
 
-        <el-form-item label="金属质感">
-          <el-slider
+        <div class="flex items-center gap-2">
+          <Label class="w-[78px] shrink-0 text-xs">金属质感</Label>
+          <Slider
+            class="flex-1"
             :min="0"
             :max="1"
             :step="0.01"
-            v-model="currentOperatingDecalController.state.metalness"
-            size="small"
+            :model-value="[currentOperatingDecalController.state.metalness]"
+            @update:model-value="v => (currentOperatingDecalController.state.metalness = v[0])"
           />
-        </el-form-item>
+        </div>
 
-        <el-form-item label="调整位置">
+        <div class="flex items-start gap-2">
+          <Label class="w-[78px] shrink-0 text-xs">调整位置</Label>
+          <div class="flex-1">
           <div class="position-control-container">
             <!-- 方向控制区域 -->
             <div class="direction-controls">
               <!-- 上方向 -->
               <div class="direction-row">
                 <div class="direction-spacer"></div>
-                <el-button
+                <Button
                   @click="moveTop"
-                  :icon="Top"
-                  class="direction-btn up-btn"
-                  size="small"
-                  circle
-                ></el-button>
+                  variant="outline"
+                  class="direction-btn up-btn rounded-full"
+                  size="icon-sm"
+                >
+                  <ArrowUp class="w-3.5 h-3.5" />
+                </Button>
                 <div class="direction-spacer"></div>
               </div>
 
               <!-- 左中右方向 -->
               <div class="direction-row">
-                <el-button
+                <Button
                   @click="moveLeft"
-                  :icon="Back"
-                  class="direction-btn left-btn"
-                  size="small"
-                  circle
-                ></el-button>
+                  variant="outline"
+                  class="direction-btn left-btn rounded-full"
+                  size="icon-sm"
+                >
+                  <ArrowLeft class="w-3.5 h-3.5" />
+                </Button>
                 <div class="center-spacer"></div>
-                <el-button
+                <Button
                   @click="moveRight"
-                  :icon="Right"
-                  class="direction-btn right-btn"
-                  size="small"
-                  circle
-                ></el-button>
+                  variant="outline"
+                  class="direction-btn right-btn rounded-full"
+                  size="icon-sm"
+                >
+                  <ChevronRight class="w-3.5 h-3.5" />
+                </Button>
               </div>
 
               <!-- 下方向 -->
               <div class="direction-row">
                 <div class="direction-spacer"></div>
-                <el-button
+                <Button
                   @click="moveDown"
-                  :icon="Bottom"
-                  class="direction-btn down-btn"
-                  size="small"
-                  circle
-                ></el-button>
+                  variant="outline"
+                  class="direction-btn down-btn rounded-full"
+                  size="icon-sm"
+                >
+                  <ArrowDown class="w-3.5 h-3.5" />
+                </Button>
                 <div class="direction-spacer"></div>
               </div>
             </div>
 
             <!-- 重置按钮 -->
             <div class="reset-section">
-              <el-button
+              <Button
                 @click="resetPosition"
-                :icon="RefreshRight"
+                variant="outline"
                 class="reset-btn"
-                size="small"
-                type="warning"
+                size="sm"
               >
+                <RotateCw class="w-3.5 h-3.5 mr-1" />
                 恢复原始贴图位置
-              </el-button>
+              </Button>
             </div>
           </div>
 
-          <a-alert
-            message="适用于微调，如果出现贴纸部分丢失，建议重新拉取一个贴纸"
-            banner
-            closable
+          <div
+            class="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground"
             style="margin-top: 8px"
-          />
-        </el-form-item>
-        <el-form-item label="印花工艺">
-          <el-select
-            v-model="clothingPaintMethod"
-            size="small"
-            placeholder="选择印花工艺"
           >
-            <template #label="{ label }">
-              <div style="font-size: 0.875rem">{{ label }}</div>
-            </template>
-            <el-option
-              v-for="item in clothingPaintMethods"
-              :key="item.title"
-              :label="item.title"
-              :value="item.title"
-            >
-              <el-popover width="auto" :hide-after="0" placement="right">
-                <template #reference>
-                  <div class="flex">
-                    {{ item.title }}
-                  </div>
-                </template>
-                <s1-img
-                  :src="item.thumbnail"
-                  fit="cover"
-                  style="width: 180px; height: 180px"
-                ></s1-img>
-                <div style="width: 180px; padding: 8px">
-                  {{ item.description }}
-                </div>
-              </el-popover>
-            </el-option>
-          </el-select>
-        </el-form-item>
-      </el-form>
+            适用于微调，如果出现贴纸部分丢失，建议重新拉取一个贴纸
+          </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <Label class="w-[78px] shrink-0 text-xs">印花工艺</Label>
+          <Select
+            v-model="clothingPaintMethod"
+            class="flex-1"
+          >
+            <SelectTrigger class="h-6 text-[11px] w-full">
+              <SelectValue placeholder="选择印花工艺" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="item in clothingPaintMethods"
+                :key="item.title"
+                :value="item.title"
+              >
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <div class="flex">
+                      {{ item.title }}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <s1-img
+                      :src="item.thumbnail"
+                      fit="cover"
+                      style="width: 180px; height: 180px"
+                    ></s1-img>
+                    <div style="width: 180px; padding: 8px">
+                      {{ item.description }}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
     </div>
 
     <div></div>
 
     <div style="flex: 1"></div>
     <div>
-      <el-button @click="replace" type="warning" round class="bottom-btn"
-        >替换该贴纸</el-button
+      <Button @click="replace" variant="default" class="bottom-btn rounded-full"
+        >替换该贴纸</Button
       >
     </div>
     <div>
-      <el-button @click="useCurrentSticker()" round plain class="bottom-btn"
-        >在贴纸制作中使用该贴纸模版</el-button
+      <Button @click="useCurrentSticker()" variant="outline" class="bottom-btn rounded-full"
+        >在贴纸制作中使用该贴纸模版</Button
       >
     </div>
     <div>
-      <el-button @click="showDecalList = !showDecalList" round plain class="bottom-btn">
+      <Button @click="showDecalList = !showDecalList" variant="outline" class="bottom-btn rounded-full">
         贴纸列表
-      </el-button>
+      </Button>
     </div>
     <div>
-      <el-button @click="showWorkspace = !showWorkspace" round plain class="bottom-btn">
+      <Button @click="showWorkspace = !showWorkspace" variant="outline" class="bottom-btn rounded-full">
         工作台
-      </el-button>
+      </Button>
     </div>
     <div>
-      <el-button @click="remove" type="danger" round class="bottom-btn"
-        >移除该贴纸</el-button
+      <Button @click="remove" variant="destructive" class="bottom-btn rounded-full"
+        >移除该贴纸</Button
       >
     </div>
   </div>
@@ -193,26 +211,21 @@
   </s1-empty>
 
   <!-- 替换贴纸弹窗 -->
-  <el-dialog
-    v-model="showReplaceDialog"
-    title="替换贴纸"
-    width="100%"
-    :fullscreen="true"
-    :before-close="handleCloseDialog"
-  >
-    <div class="replace-dialog-content">
+  <Dialog :open="showReplaceDialog" @update:open="v => !v && handleCloseDialog()">
+    <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col">
+      <DialogHeader class="px-5 py-3 border-b border-border flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogTitle class="text-sm font-semibold">替换贴纸</DialogTitle>
+      </DialogHeader>
+      <div class="replace-dialog-content flex-1 overflow-auto min-h-0">
       <div class="search-section">
-        <el-input
-          v-model="stickerSearchQueryParams.searchText"
-          placeholder="搜索贴纸"
-          clearable
-        >
-          <template #prefix>
-            <el-icon>
-              <Search />
-            </el-icon>
-          </template>
-        </el-input>
+        <div class="relative w-full">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            v-model="stickerSearchQueryParams.searchText"
+            placeholder="搜索贴纸"
+            class="pl-8"
+          />
+        </div>
       </div>
 
       <div class="sticker-grid">
@@ -227,26 +240,55 @@
           </s1-image>
           <div class="sticker-info">
             <div class="sticker-title text-ellipsis">{{ item.name || "......" }}</div>
-            <el-button @click="replaceSticker(item.id)" type="primary" size="small" round>
+            <Button @click="replaceSticker(item.id)" variant="default" size="sm" class="rounded-full">
               替换
-            </el-button>
+            </Button>
           </div>
         </div>
       </div>
 
       <div class="pagination-section">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[12, 24, 36, 48]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-muted-foreground">共 {{ total }} 条</span>
+          <Select
+            :model-value="String(pageSize)"
+            @update:model-value="v => handleSizeChange(Number(v))"
+          >
+            <SelectTrigger class="h-6 text-[11px] w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="s in [12, 24, 36, 48]"
+                :key="s"
+                :value="String(s)"
+              >
+                {{ s }} 条/页
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="currentPage <= 1"
+            @click="handleCurrentChange(currentPage - 1)"
+          >
+            上一页
+          </Button>
+          <span class="text-xs">{{ currentPage }}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="currentPage * pageSize >= total"
+            @click="handleCurrentChange(currentPage + 1)"
+          >
+            下一页
+          </Button>
+        </div>
       </div>
-    </div>
-  </el-dialog>
+      </div>
+    </DialogContent>
+  </Dialog>
 
   <!-- 贴纸详情弹窗 -->
   <sticker-detail-modal v-if="showStickerDetailModal" />
@@ -263,7 +305,29 @@ import {
   setActiveMenu,
   menuItems,
 } from "../../store";
-import { Top, Bottom, Back, Right, RefreshRight, Search } from "@element-plus/icons-vue";
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight, RotateCw, Search } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { canvasStickerOptions } from "../canvas";
 import { clothingPaintMethods } from ".";
 import { getStickerList } from "@/api";
@@ -401,9 +465,9 @@ function handleStickerImgClick() {
 }
 
 .custom-form {
-  :deep(.el-form-item__label) {
+  :deep(label) {
     font-size: 12px;
-    color: #606266;
+    color: var(--1s-text-color-secondary);
   }
 }
 
@@ -427,7 +491,7 @@ function handleStickerImgClick() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #ffffff;
+  background: var(--1s-surface-background);
   border-radius: 12px;
   padding: 12px;
   position: relative;
@@ -525,12 +589,12 @@ function handleStickerImgClick() {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--1s-border-color);
   border-radius: 8px;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #409eff;
+    border-color: var(--1s-accent-color);
     box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
   }
 }
@@ -552,7 +616,7 @@ function handleStickerImgClick() {
 
 .sticker-title {
   font-size: 12px;
-  color: #606266;
+  color: var(--1s-text-color-secondary);
   text-align: center;
   max-width: 100%;
 }

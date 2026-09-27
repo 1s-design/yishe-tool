@@ -1,5 +1,5 @@
 import { ref,nextTick } from 'vue'
-import { genFileId } from 'element-plus'
+import { genFileId } from '@/components/ui/file-upload'
 import { showUpload } from '@/components/design/store'
 
 //  上传组件的实例子

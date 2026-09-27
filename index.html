@@ -56,47 +56,40 @@
             .app-loading-shell__text {
                 display: flex;
                 align-items: center;
-                min-height: 24px;
+                min-height: 1.5rem;
             }
 
             .app-loading-shell__text p {
+                --app-loading-duration: 3s;
+                --app-loading-text: #f5f7fa;
+
                 position: relative;
                 margin: 0;
-                color: #f5f7fa;
-                font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
-                font-size: clamp(16px, 1.6vw, 18.4px);
-                font-weight: 500;
-                letter-spacing: -0.03em;
+                color: var(--app-loading-text);
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+                font-weight: 800;
+                font-style: italic;
+                letter-spacing: 0.04em;
                 line-height: 1.2;
+                -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+                mask-image: linear-gradient(90deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+                -webkit-mask-size: 250% 100%;
+                mask-size: 250% 100%;
+                -webkit-mask-repeat: no-repeat;
+                mask-repeat: no-repeat;
+                animation: app-loading-mask var(--app-loading-duration) linear infinite;
             }
 
-            .app-loading-shell__text p::after {
-                position: absolute;
-                left: calc(100% + 0.08em);
-                animation: app-loading-dots 3s infinite linear;
-                color: #f5f7fa;
-                content: '';
-            }
-
-            @keyframes app-loading-dots {
+            @keyframes app-loading-mask {
                 0% {
-                    content: '';
-                }
-
-                10% {
-                    content: '.';
-                }
-
-                40% {
-                    content: '..';
-                }
-
-                70% {
-                    content: '...';
+                    -webkit-mask-position: 150% 0;
+                    mask-position: 150% 0;
                 }
 
                 100% {
-                    content: '';
+                    -webkit-mask-position: -150% 0;
+                    mask-position: -150% 0;
                 }
             }
 
@@ -111,11 +104,11 @@
                 }
 
                 .app-loading-shell__text {
-                    min-height: 22.4px;
+                    min-height: 1.4rem;
                 }
 
                 .app-loading-shell__text p {
-                    font-size: 15.2px;
+                    font-size: 0.95rem;
                 }
             }
         </style>
@@ -123,7 +116,7 @@
         <div class="app-loading-shell" role="status" aria-live="polite" aria-label="%VITE_APP_SHORT_NAME% loading">
             <div class="app-loading-shell__stage">
                 <div class="app-loading-shell__text">
-                    <p>%VITE_APP_SHORT_NAME%</p>
+                    <p>%VITE_APP_SHORT_NAME%...</p>
                 </div>
             </div>
         </div>

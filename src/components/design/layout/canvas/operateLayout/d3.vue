@@ -1,83 +1,92 @@
 <template>
-  <el-collapse v-model="activeNames">
-    <el-collapse-item name="code" title="D3.js 代码">
-      <div class="d3-code-editor">
-        <div class="d3-code-editor__toolbar">
-          <el-popover
-            v-model:visible="aiPopoverVisible"
-            trigger="click"
-            placement="right-start"
-            width="340"
-          >
-            <div class="d3-ai-popover">
-              <el-input
-                v-model="aiPrompt"
-                type="textarea"
-                :rows="4"
-                resize="vertical"
-                spellcheck="false"
-                :disabled="aiLoading"
-                placeholder="描述图表，例如：生成一个柱状图、饼图、力导向图"
-                @keydown.enter.ctrl="generateCodeByAi"
-              ></el-input>
+  <Accordion
+    type="multiple"
+    :model-value="activeNames"
+    @update:model-value="v => (activeNames = v as string[])"
+  >
+    <AccordionItem value="code">
+      <AccordionTrigger>D3.js 代码</AccordionTrigger>
+      <AccordionContent>
+        <div class="d3-code-editor">
+          <div class="d3-code-editor__toolbar">
+            <Popover v-model:open="aiPopoverVisible">
+              <PopoverTrigger as-child>
+                <Button size="sm" variant="outline">AI 生成</Button>
+              </PopoverTrigger>
+              <PopoverContent side="right" align="start" class="w-[340px]">
+                <div class="d3-ai-popover">
+                  <Textarea
+                    v-model="aiPrompt"
+                    :rows="4"
+                    class="resize-vertical"
+                    spellcheck="false"
+                    :disabled="aiLoading"
+                    placeholder="描述图表，例如：生成一个柱状图、饼图、力导向图"
+                    @keydown.enter.ctrl="generateCodeByAi"
+                  />
 
-              <div class="d3-ai-popover__actions">
-                <el-button size="small" @click="aiPopoverVisible = false">取消</el-button>
-                <el-button
-                  size="small"
-                  type="primary"
-                  :loading="aiLoading"
-                  :disabled="!aiPrompt.trim() || aiLoading"
-                  @click="generateCodeByAi"
-                >
-                  确定
-                </el-button>
-              </div>
+                  <div class="d3-ai-popover__actions">
+                    <Button size="sm" variant="outline" @click="aiPopoverVisible = false">取消</Button>
+                    <Button
+                      size="sm"
+                      :disabled="!aiPrompt.trim() || aiLoading"
+                      @click="generateCodeByAi"
+                    >
+                      确定
+                    </Button>
+                  </div>
 
-              <div v-if="aiError" class="d3-error">{{ aiError }}</div>
-            </div>
+                  <div v-if="aiError" class="d3-error">{{ aiError }}</div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
-            <template #reference>
-              <el-button size="small" type="primary" plain>AI 生成</el-button>
-            </template>
-          </el-popover>
+            <Select v-model="selectedTemplate" @update:model-value="applyTemplate">
+              <SelectTrigger class="h-6 text-[11px]">
+                <SelectValue placeholder="选择模板" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bar">柱状图</SelectItem>
+                <SelectItem value="pie">饼图</SelectItem>
+                <SelectItem value="line">折线图</SelectItem>
+                <SelectItem value="scatter">散点图</SelectItem>
+                <SelectItem value="force">力导向图</SelectItem>
+                <SelectItem value="tree">树状图</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <el-select v-model="selectedTemplate" size="small" placeholder="选择模板" @change="applyTemplate">
-            <el-option label="柱状图" value="bar" />
-            <el-option label="饼图" value="pie" />
-            <el-option label="折线图" value="line" />
-            <el-option label="散点图" value="scatter" />
-            <el-option label="力导向图" value="force" />
-            <el-option label="树状图" value="tree" />
-          </el-select>
+          <Textarea
+            v-model="currentOperatingCanvasChild.code"
+            :rows="16"
+            class="d3-code-editor__input resize-vertical"
+            spellcheck="false"
+            placeholder="// D3.js 代码&#10;// 可用: d3, container, width, height"
+          />
         </div>
+      </AccordionContent>
+    </AccordionItem>
 
-        <el-input
-          v-model="currentOperatingCanvasChild.code"
-          type="textarea"
-          :rows="16"
-          resize="vertical"
-          spellcheck="false"
-          placeholder="// D3.js 代码&#10;// 可用: d3, container, width, height"
-          class="d3-code-editor__input"
-        ></el-input>
-      </div>
-    </el-collapse-item>
+    <AccordionItem value="basic">
+      <AccordionTrigger>基础</AccordionTrigger>
+      <AccordionContent>
+        <operateItemSize
+          label="尺寸"
+          v-model:width="currentOperatingCanvasChild.width"
+          v-model:height="currentOperatingCanvasChild.height"
+        />
 
-    <el-collapse-item name="basic" title="基础">
-      <operateItemSize
-        label="尺寸"
-        v-model:width="currentOperatingCanvasChild.width"
-        v-model:height="currentOperatingCanvasChild.height"
-      />
+        <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor" />
+      </AccordionContent>
+    </AccordionItem>
 
-      <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor" />
-    </el-collapse-item>
-
-    <el-collapse-item name="common" title="通用属性">
-      <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-    </el-collapse-item>
-  </el-collapse>
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
+        <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -85,6 +94,26 @@ import { ref, watch } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { currentOperatingCanvasChild } from "../index.tsx";
 import { generateD3Code } from "../children/aiD3Service.ts";
 
@@ -380,7 +409,7 @@ watch(
   gap: 8px;
 }
 
-.d3-code-editor__input :deep(.el-textarea__inner) {
+.d3-code-editor__input {
   font-family: Consolas, Monaco, "Courier New", monospace;
   font-size: 13px;
   line-height: 1.55;
@@ -396,14 +425,10 @@ watch(
   display: flex;
   justify-content: flex-end;
   gap: 4px;
-
-  :deep(.el-button + .el-button) {
-    margin-left: 0;
-  }
 }
 
 .d3-error {
-  color: #c45656;
+  color: var(--el-color-danger);
   font-size: 12px;
   line-height: 1.4;
 }

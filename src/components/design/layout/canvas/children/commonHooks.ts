@@ -102,7 +102,6 @@ function processCalcComputedSize(payload) {
 
 import { getClipPathCircleByPercentPosition, getClipPathEllipseByPercentPosition } from '@/components/design/layout/canvas/operate/clipPath/dragger.tsx'
 import { currentOperatingCanvasChildId } from '..';
-import { id } from 'element-plus/es/locale/index';
 function processClipPath(payload) {
     let { style, options } = payload
 

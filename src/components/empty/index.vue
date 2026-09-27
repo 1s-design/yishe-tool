@@ -4,12 +4,15 @@
     :class="{ full: full }"
     :style="{ minHeight: minHeight, minWidth: minWidth }"
   >
-    <el-empty :image="image" :image-size="82" v-bind="$attrs">
-      <slot></slot>
-      <template #description>
+    <div class="s1-empty-inner" v-bind="$attrs">
+      <img class="s1-empty-image" :src="image" width="82" height="82" alt="" />
+      <div class="s1-empty-description">
         <slot name="description"></slot>
-      </template>
-    </el-empty>
+      </div>
+      <div class="s1-empty-bottom">
+        <slot></slot>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -33,17 +36,27 @@ const props = defineProps({
 .s1-empty {
   font-size: 10px;
   color: #ccc;
-  .el-empty {
-    --el-empty-padding: 12px 24px !important;
-    --el-empty-bottom-margin-top: 8px;
+
+  .s1-empty-inner {
+    padding: 12px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .el-empty__description {
-    --el-empty-description-margin-top: 6px !important;
+  .s1-empty-image {
+    width: 82px;
+    height: 82px;
   }
 
-  .el-empty__description {
+  .s1-empty-description {
+    margin-top: 6px;
     color: #ccc;
+    text-align: center;
+  }
+
+  .s1-empty-bottom {
+    margin-top: 8px;
   }
 }
 

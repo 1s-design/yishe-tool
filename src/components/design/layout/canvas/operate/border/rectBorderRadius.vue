@@ -7,53 +7,47 @@
         <template #content>
             <div class="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <span>水平</span>
-                <el-popover  width="180" trigger="click" popper-class="el-popover-operation">
-                    <template #reference>
-                        <el-input size="small"  min="0" step="1"
-                            type="number"
-                        style="width:72px;"
-                            v-model.number="model.horizontal.value">
-                            <template #suffix>
-                                <div class="text-[10px] text-muted-foreground"> {{ model.horizontal.unit }}
-                                </div>
-                            </template>
-                        </el-input>
-                    </template>
-
-                    <el-row align="middle" justify="end">
-                        <el-col :span="24">
-                            <el-radio-group v-model="model.horizontal.unit" size="small">
-                                <el-radio v-for="u in unitOptions" :value="u.value">
-                                    <span class="text-xs">{{ u.label }}</span>
-                                </el-radio>
-                            </el-radio-group>
-                        </el-col>
-                    </el-row>
-                </el-popover>
+                <Popover>
+                    <PopoverTrigger as-child>
+                        <div class="relative w-[72px]">
+                            <Input type="number" v-model.number="model.horizontal.value" class="h-6 pr-8 text-[11px]" min="0" step="1" />
+                            <div class="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground"> {{ model.horizontal.unit }} </div>
+                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-[180px]">
+                        <div class="flex items-center justify-end">
+                            <div class="w-full">
+                                <RadioGroup v-model="model.horizontal.unit" class="grid gap-1">
+                                    <label v-for="u in unitOptions" :key="u.value" class="flex items-center gap-2 cursor-pointer">
+                                        <RadioGroupItem :value="u.value" />
+                                        <span class="text-xs">{{ u.label }}</span>
+                                    </label>
+                                </RadioGroup>
+                            </div>
+                        </div>
+                    </PopoverContent>
+                </Popover>
                 <span>垂直</span>
-                <el-popover  width="180" trigger="click" popper-class="el-popover-operation">
-                    <template #reference>
-                        <el-input size="small"  min="0" step="1"
-                            type="number"
-                            style="width:72px;"
-                            v-model.number="model.vertical.value">
-                            <template #suffix>
-                                <div class="text-[10px] text-muted-foreground"> {{ model.vertical.unit }}
-                                </div>
-                            </template>
-                        </el-input>
-                    </template>
-
-                    <el-row align="middle" justify="end">
-                        <el-col :span="24">
-                            <el-radio-group v-model="model.vertical.unit" size="small">
-                                <el-radio v-for="u in unitOptions" :value="u.value">
-                                    <span class="text-xs">{{ u.label }}</span>
-                                </el-radio>
-                            </el-radio-group>
-                        </el-col>
-                    </el-row>
-                </el-popover>
+                <Popover>
+                    <PopoverTrigger as-child>
+                        <div class="relative w-[72px]">
+                            <Input type="number" v-model.number="model.vertical.value" class="h-6 pr-8 text-[11px]" min="0" step="1" />
+                            <div class="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground"> {{ model.vertical.unit }} </div>
+                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-[180px]">
+                        <div class="flex items-center justify-end">
+                            <div class="w-full">
+                                <RadioGroup v-model="model.vertical.unit" class="grid gap-1">
+                                    <label v-for="u in unitOptions" :key="u.value" class="flex items-center gap-2 cursor-pointer">
+                                        <RadioGroupItem :value="u.value" />
+                                        <span class="text-xs">{{ u.label }}</span>
+                                    </label>
+                                </RadioGroup>
+                            </div>
+                        </div>
+                    </PopoverContent>
+                </Popover>
             </div>
         </template>
     </operate-form-item>
@@ -63,6 +57,9 @@
 import icon from "@/components/design/assets/icon/border-radius.svg?component";
 import { ref, computed } from 'vue'
 import { canvasStickerOptions,canvasStickerOptionsOnlyChild } from "@/components/design/layout/canvas/index.tsx";
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 
 /*
@@ -116,6 +113,5 @@ const unitOptions = computed(() => {
 
 
 </script>
-  
+
 <style></style>
-  

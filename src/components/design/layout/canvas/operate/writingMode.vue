@@ -3,13 +3,23 @@
         <template #icon> <icon-writing-mode></icon-writing-mode> </template>
         <template #name> 排列方式 </template>
         <template #content>
-            <el-tooltip content="英文和数字显示方向会有影响" :hide-after="0">
-                <el-select v-model="model" size="small" class="operate-compact-select">
-                <el-option v-for="item in writingModeOptions" :key="item.value" :label="item.label" :value="item.value">
-                    <span> {{ item.label }} </span>
-                </el-option>
-            </el-select>
-            </el-tooltip>
+            <Tooltip>
+                <TooltipTrigger as-child>
+                    <div>
+                        <Select :model-value="model as any" @update:model-value="v => (model = v)">
+                            <SelectTrigger class="operate-compact-select h-6 text-[11px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem v-for="item in writingModeOptions" :key="item.value" :value="item.value">
+                                    <span> {{ item.label }} </span>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">英文和数字显示方向会有影响</TooltipContent>
+            </Tooltip>
         </template>
     </operate-form-item>
 </template>
@@ -17,6 +27,8 @@
 <script setup lang='ts'>
 import { ref } from 'vue'
 import iconWritingMode from "@/components/design/assets/icon/writing-mode.svg?component";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 const model = defineModel({})
 
 const writingModeOptions = ref([

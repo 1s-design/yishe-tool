@@ -7,22 +7,17 @@
  * @Description: 材质选择drawer组件
 -->
 <template>
-  <el-drawer 
-    v-model="viewDisplayController.showMaterialModal" 
-    :modal="true" 
-    :size="420" 
-    :with-header="true" 
-    :append-to-body="true"
-    :wrapper-closable="true"
-    modal-class="bg-transparent"
-    title="材质选择"
-    direction="ltr"
-    :before-close="handleClose"
-  >
-    <div class="material-drawer-content">
+  <Dialog :open="viewDisplayController.showMaterialModal" @update:open="(val) => handleClose()">
+    <DialogContent
+      class="fixed left-0 top-0 right-auto translate-x-0 translate-y-0 h-[100vh] max-h-[100vh] w-[420px] max-w-[90vw] rounded-none gap-0 p-0 overflow-hidden flex flex-col"
+    >
+      <DialogHeader class="px-5 py-3 border-b border-border">
+        <DialogTitle>材质选择</DialogTitle>
+      </DialogHeader>
+      <div class="material-drawer-content">
       <!-- 搜索栏 -->
       <div class="search-section">
-        <el-input placeholder="搜索材质" v-model="search"></el-input>
+        <Input placeholder="搜索材质" v-model="search"></Input>
       </div>
       
       <!-- 当前使用材质 -->
@@ -36,7 +31,7 @@
           class="current-material-image"
           fit="cover"
         ></s1-img>
-        <el-button @click="removeMaterial" size="small" type="danger" plain> 移除 </el-button>
+        <Button @click="removeMaterial" size="sm" variant="outline" class="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"> 移除 </Button>
       </div>
       
       <!-- 材质列表区域 -->
@@ -60,9 +55,9 @@
                   <p class="material-description">{{ item.description || '暂无描述' }}</p>
                 </div>
                 <div class="material-actions">
-                  <el-button @click="useMaterial(item)" type="primary" size="small" round>
+                  <Button @click="useMaterial(item)" size="sm" class="rounded-full">
                     使用该材质
-                  </el-button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -80,19 +75,31 @@
       
       <!-- 分页组件 -->
       <div class="pagination-section">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[12, 24, 36, 48]"
-          :total="total"
-          layout="prev, pager, next, sizes"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          small
-        />
+        <div class="flex items-center justify-between gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="currentPage <= 1"
+            @click="handleCurrentChange(currentPage - 1)"
+          >
+            上一页
+          </Button>
+          <div class="text-xs text-muted-foreground">
+            {{ currentPage }} / {{ Math.max(1, Math.ceil(total / pageSize)) }}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="currentPage >= Math.max(1, Math.ceil(total / pageSize))"
+            @click="handleCurrentChange(currentPage + 1)"
+          >
+            下一页
+          </Button>
+        </div>
       </div>
-    </div>
-  </el-drawer>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -100,6 +107,9 @@ import { ref, onMounted, watch } from "vue";
 import { viewDisplayController, currentModelController } from "@/components/design/store";
 import Api from "@/api";
 import Utils from "@/common/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 let search = ref("");
 
@@ -182,6 +192,8 @@ onMounted(() => {
   flex-direction: column;
   width: 100%;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .search-section {

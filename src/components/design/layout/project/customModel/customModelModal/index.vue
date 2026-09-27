@@ -9,74 +9,70 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <a-modal
-    v-bind="$attrs"
-    v-model:open="show"
-    :footer="null"
-    :centered="true"
-    :destroyOnClose="true"
-    width="1200px"
-    style="min-width: 1200px"
-    wrap-class-name="project-detail-modal"
-  >
-    <el-row class="project-detail-layout" :gutter="24">
-      <!-- 左侧：3D模型预览 -->
-      <el-col :span="14" class="project-detail-col">
-        <div class="project-detail-viewer">
-          <gltf-viewer
-            v-if="show && detailInfo"
-            :model="detailInfo.meta.modelInfo"
-            style="width: 100%; height: 100%;"
-          />
-        </div>
-      </el-col>
-      
-      <!-- 右侧：模型信息 -->
-      <el-col :span="10" class="project-detail-col">
-        <div class="project-detail-side">
-          <!-- 模型基本信息 -->
-          <div>
-            <h1 class="project-detail-title">
-              {{ detailInfo.name || "--" }}
-            </h1>
-            <p class="project-detail-desc">
-              {{ detailInfo.description || "暂无描述" }}
-            </p>
-            
-            <!-- 缩略图 -->
-            <div v-if="detailInfo.thumbnail" class="project-detail-thumbnail-wrap">
-              <el-image 
-                :src="detailInfo.thumbnail" 
-                class="project-detail-thumbnail"
-                fit="cover"
-                :preview-src-list="[detailInfo.thumbnail]" 
-                :preview-teleported="true" 
-              />
-            </div>
+  <Dialog v-bind="$attrs" v-model:open="show">
+    <DialogContent class="max-w-[1200px] w-[1200px]">
+      <div class="project-detail-layout flex gap-6">
+        <!-- 左侧：3D模型预览 -->
+        <div class="project-detail-col flex-[14] min-w-0">
+          <div class="project-detail-viewer">
+            <gltf-viewer
+              v-if="show && detailInfo"
+              :model="detailInfo.meta.modelInfo"
+              style="width: 100%; height: 100%;"
+            />
           </div>
-          
-          <!-- 上传者信息 -->
-          <div class="project-detail-uploader flex items-center">
-            <a-avatar size="large" :src="detailInfo?.uploader?.avatar" alt="?">
-              <template #icon>
-                <UserOutlined />
-              </template>
-            </a-avatar>
+        </div>
+
+        <!-- 右侧：模型信息 -->
+        <div class="project-detail-col flex-[10] min-w-0">
+          <div class="project-detail-side">
+            <!-- 模型基本信息 -->
             <div>
-              <div class="project-detail-uploader-name">{{ detailInfo.uploader?.name || "--" }}</div>
-              <div class="project-detail-uploader-label">上传者</div>
+              <h1 class="project-detail-title">
+                {{ detailInfo.name || "--" }}
+              </h1>
+              <p class="project-detail-desc">
+                {{ detailInfo.description || "暂无描述" }}
+              </p>
+
+              <!-- 缩略图 -->
+              <div v-if="detailInfo.thumbnail" class="project-detail-thumbnail-wrap">
+                <img
+                  :src="detailInfo.thumbnail"
+                  class="project-detail-thumbnail object-cover"
+                />
+              </div>
+            </div>
+
+            <!-- 上传者信息 -->
+            <div class="project-detail-uploader flex items-center">
+              <Avatar class="h-10 w-10">
+                <AvatarImage :src="detailInfo?.uploader?.avatar" alt="?" />
+                <AvatarFallback>
+                  <User class="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div class="project-detail-uploader-name">{{ detailInfo.uploader?.name || "--" }}</div>
+                <div class="project-detail-uploader-label">上传者</div>
+              </div>
             </div>
           </div>
         </div>
-      </el-col>
-    </el-row>
-  </a-modal>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { useCustomModelDetailModal } from "./index.ts";
 import gltfViewer from "@/components/model/gltfViewer/index.vue";
-import { UserOutlined } from "@ant-design/icons-vue";
+import { User } from 'lucide-vue-next';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 import { saveAs } from "file-saver";
 

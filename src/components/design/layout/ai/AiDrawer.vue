@@ -1,28 +1,14 @@
 <template>
-  <el-drawer
-    v-model="open"
-    title="AI 设计助手"
-    direction="rtl"
-    size="480px"
-    :close-on-click-modal="false"
-    :modal="false"
-    :show-close="true"
-    class="ai-drawer"
-    :with-modal="false"
-    :append-to-body="false"
-    :lock-scroll="false"
-  >
-    <template #header>
-      <div class="drawer-header">
-        <div class="header-left">
-          <span class="header-icon">🎨</span>
-          <span class="header-title">AI 设计助手</span>
-        </div>
-        <el-button link @click="clearChat" :disabled="isProcessing">
-          <DeleteOutlined /> 清空对话
-        </el-button>
+  <aside v-if="open" class="ai-drawer">
+    <div class="drawer-header">
+      <div class="header-left">
+        <span class="header-icon">🎨</span>
+        <span class="header-title">AI 设计助手</span>
       </div>
-    </template>
+      <Button variant="ghost" size="sm" @click="clearChat" :disabled="isProcessing">
+        <Trash2 class="h-3.5 w-3.5 mr-1" /> 清空对话
+      </Button>
+    </div>
 
     <!-- 消息区域 -->
     <div class="messages-container" ref="messagesRef">
@@ -140,21 +126,21 @@
               或者
             </div>
 
-            <div class="interaction-input">
-              <el-input
+            <div class="interaction-input flex items-center gap-1.5">
+              <Input
                 v-model="customAnswer"
                 placeholder="输入你的回答..."
+                class="h-7 flex-1"
                 @keydown.enter="submitInteraction(customAnswer)"
+              />
+              <Button
+                size="sm"
+                class="h-7"
+                :disabled="!customAnswer.trim()"
+                @click="submitInteraction(customAnswer)"
               >
-                <template #append>
-                  <el-button
-                    @click="submitInteraction(customAnswer)"
-                    :disabled="!customAnswer.trim()"
-                  >
-                    发送
-                  </el-button>
-                </template>
-              </el-input>
+                发送
+              </Button>
             </div>
           </div>
         </div>
@@ -163,35 +149,36 @@
 
     <!-- 输入区域 -->
     <div class="input-area">
-      <el-input
+      <Textarea
         v-model="inputText"
-        type="textarea"
         :rows="3"
         placeholder="描述你想要的设计..."
         :disabled="isProcessing"
+        class="min-h-[64px] resize-none"
         @keydown.enter.exact.prevent="handleSend"
         @compositionstart="isComposing = true"
         @compositionend="isComposing = false"
-        resize="none"
       />
       <div class="input-footer">
         <span class="input-hint">按 Enter 发送</span>
-        <el-button
-          type="primary"
-          :loading="isProcessing"
-          :disabled="!inputText.trim()"
+        <Button
+          size="sm"
+          :disabled="!inputText.trim() || isProcessing"
           @click="handleSend"
         >
           发送
-        </el-button>
+        </Button>
       </div>
     </div>
-  </el-drawer>
+  </aside>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch, onMounted, onUnmounted } from "vue";
-import { DeleteOutlined } from "@ant-design/icons-vue";
+import { Trash2 } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { designAgent } from "@/ai/langgraph";
 import type { AgentInteraction } from "@/ai/langgraph";
 
@@ -317,30 +304,20 @@ watch(() => messages.value.length, scrollToBottom);
 
 <style lang="less" scoped>
 .ai-drawer {
-  // 确保 drawer 不遮挡画布操作
-  :deep(.el-drawer__wrapper) {
-    pointer-events: none;
-  }
-
-  :deep(.el-drawer) {
-    pointer-events: auto;
-    box-shadow: var(--1s-shadow-lg);
-  }
-
-  :deep(.el-drawer__header) {
-    margin-bottom: 0;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--1s-border-color);
-    flex-shrink: 0;
-  }
-
-  :deep(.el-drawer__body) {
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    height: 100%;
-  }
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 480px;
+  max-width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  background: var(--1s-panel-background, hsl(var(--background)));
+  border-left: 1px solid var(--1s-border-color, hsl(var(--border)));
+  box-shadow: var(--1s-shadow-lg);
 }
 
 .drawer-header {
@@ -348,6 +325,9 @@ watch(() => messages.value.length, scrollToBottom);
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--1s-border-color, hsl(var(--border)));
 }
 
 .header-left {
@@ -395,7 +375,7 @@ watch(() => messages.value.length, scrollToBottom);
 }
 
 .welcome p {
-  color: #666;
+  color: var(--1s-text-color-secondary);
   margin-bottom: 32px;
 }
 
@@ -406,7 +386,7 @@ watch(() => messages.value.length, scrollToBottom);
 
 .quick-title {
   font-size: 12px;
-  color: #999;
+  color: var(--1s-text-color-tertiary);
   margin-bottom: 12px;
 }
 
@@ -415,14 +395,14 @@ watch(() => messages.value.length, scrollToBottom);
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: #f5f7fa;
+  background: var(--1s-control-surface-muted);
   border-radius: 8px;
   margin-bottom: 8px;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    background: #e8eaed;
+    background: var(--1s-hover-background);
   }
 }
 
@@ -472,7 +452,7 @@ watch(() => messages.value.length, scrollToBottom);
 .ai-name {
   font-size: 13px;
   font-weight: 500;
-  color: #333;
+  color: var(--1s-text-color);
 }
 
 .message-bubble {
@@ -488,7 +468,7 @@ watch(() => messages.value.length, scrollToBottom);
   }
 
   &.ai-bubble {
-    background: #f5f7fa;
+    background: var(--1s-control-surface-muted);
     border-bottom-left-radius: 4px;
   }
 }
@@ -504,7 +484,7 @@ watch(() => messages.value.length, scrollToBottom);
   gap: 8px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid var(--1s-border-color);
 }
 
 .tool-call {
@@ -512,10 +492,10 @@ watch(() => messages.value.length, scrollToBottom);
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #fff;
+  background: var(--1s-surface-background);
   border-radius: 6px;
   font-size: 12px;
-  color: #666;
+  color: var(--1s-text-color-secondary);
 }
 
 .tool-icon {
@@ -529,7 +509,7 @@ watch(() => messages.value.length, scrollToBottom);
   gap: 6px;
   padding: 8px 16px;
   font-size: 13px;
-  color: #666;
+  color: var(--1s-text-color-secondary);
 
   .success {
     color: #52c41a;
@@ -548,7 +528,7 @@ watch(() => messages.value.length, scrollToBottom);
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #999;
+    background: var(--1s-text-color-tertiary);
     animation: bounce 1.4s infinite ease-in-out;
 
     &:nth-child(1) {
@@ -573,8 +553,8 @@ watch(() => messages.value.length, scrollToBottom);
 
 // 交互区域
 .interaction-section {
-  background: #fff;
-  border: 1px solid #e8e8e8;
+  background: var(--1s-surface-background);
+  border: 1px solid var(--1s-border-color);
   border-radius: 12px;
   overflow: hidden;
   margin-top: 8px;
@@ -585,8 +565,8 @@ watch(() => messages.value.length, scrollToBottom);
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e8e8e8;
+  background: var(--1s-control-surface-muted);
+  border-bottom: 1px solid var(--1s-border-color);
 }
 
 .interaction-content {
@@ -608,23 +588,23 @@ watch(() => messages.value.length, scrollToBottom);
 
 .option-btn {
   padding: 12px 16px;
-  background: #f5f7fa;
-  border: 1px solid #e8e8e8;
+  background: var(--1s-control-surface-muted);
+  border: 1px solid var(--1s-border-color);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
   text-align: center;
 
   &:hover {
-    border-color: #667eea;
-    background: #f0f2ff;
-    color: #667eea;
+    border-color: var(--1s-accent-color);
+    background: var(--1s-hover-background);
+    color: var(--1s-accent-color);
   }
 }
 
 .divider-text {
   text-align: center;
-  color: #999;
+  color: var(--1s-text-color-tertiary);
   font-size: 12px;
   margin: 12px 0;
   position: relative;
@@ -636,7 +616,7 @@ watch(() => messages.value.length, scrollToBottom);
     top: 50%;
     width: 40%;
     height: 1px;
-    background: #e8e8e8;
+    background: var(--1s-divider-color);
   }
 
   &::before {
@@ -655,8 +635,8 @@ watch(() => messages.value.length, scrollToBottom);
 .input-area {
   flex-shrink: 0;
   padding: 16px 20px;
-  border-top: 1px solid #e8e8e8;
-  background: #fff;
+  border-top: 1px solid var(--1s-border-color);
+  background: var(--1s-surface-background);
 }
 
 .input-footer {
@@ -668,6 +648,6 @@ watch(() => messages.value.length, scrollToBottom);
 
 .input-hint {
   font-size: 12px;
-  color: #999;
+  color: var(--1s-text-color-tertiary);
 }
 </style>

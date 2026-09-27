@@ -1,10 +1,19 @@
 <template>
   <div class="ai-html-gen">
-    <el-radio-group v-model="mode" size="small" class="ai-html-gen__mode-switch">
-      <el-radio-button value="generate">全新生成</el-radio-button>
-      <el-radio-button value="modify">修改模板</el-radio-button>
-      <el-radio-button value="bindings" :disabled="!hasBindings">改变量</el-radio-button>
-    </el-radio-group>
+    <RadioGroup v-model="mode" class="ai-html-gen__mode-switch flex flex-row flex-wrap items-center gap-3">
+      <label class="flex flex-row items-center gap-2">
+        <RadioGroupItem value="generate" />
+        <span class="text-xs">全新生成</span>
+      </label>
+      <label class="flex flex-row items-center gap-2">
+        <RadioGroupItem value="modify" />
+        <span class="text-xs">修改模板</span>
+      </label>
+      <label class="flex flex-row items-center gap-2">
+        <RadioGroupItem value="bindings" :disabled="!hasBindings" />
+        <span class="text-xs">改变量</span>
+      </label>
+    </RadioGroup>
 
     <div class="ai-html-gen__history" v-if="history.length">
       <div
@@ -16,44 +25,41 @@
           <span class="ai-html-gen__history-label">{{ modeLabelMap[item.mode] }}</span>
           {{ item.prompt }}
         </div>
-        <el-button
-          size="small"
-          text
-          type="primary"
+        <Button
+          size="sm"
+          variant="ghost"
+          class="text-primary"
           @click="redoItem(item)"
-          class="ai-html-gen__history-redo"
         >
           重做
-        </el-button>
+        </Button>
       </div>
     </div>
 
     <div class="ai-html-gen__input-area">
-      <el-input
+      <Textarea
         v-model="userInput"
-        type="textarea"
         :rows="3"
         :placeholder="placeholderMap[mode]"
-        resize="vertical"
+        class="resize-y"
         :disabled="loading"
         @keydown.enter.ctrl="handleExecute"
       />
 
       <div class="ai-html-gen__buttons">
-        <el-button
-          type="primary"
-          :loading="loading"
+        <Button
           :disabled="!userInput.trim() || loading"
           @click="handleExecute"
         >
+          <Loader2 v-if="loading" class="w-3.5 h-3.5 mr-1 animate-spin" />
           {{ executeLabel }}
-        </el-button>
+        </Button>
       </div>
     </div>
 
     <div v-if="error" class="ai-html-gen__error">
       <span>{{ error }}</span>
-      <el-button size="small" type="primary" link @click="error = ''">关闭</el-button>
+      <Button size="sm" variant="link" @click="error = ''">关闭</Button>
     </div>
   </div>
 </template>
@@ -63,6 +69,10 @@ import { ref, computed } from 'vue'
 import type { AiHtmlMode } from '@/components/design/layout/canvas/htmlTemplate/aiHtmlService'
 import { generateHtml, modifyHtml, modifyBindings } from '@/components/design/layout/canvas/htmlTemplate/aiHtmlService'
 import { ensureHtmlTemplateOptions } from '@/components/design/layout/canvas/htmlTemplate/runtime'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Loader2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: any
@@ -204,14 +214,8 @@ function redoItem(item: HistoryItem) {
     width: 100%;
     display: flex;
 
-    :deep(.el-radio-button) {
+    label {
       flex: 1;
-
-      .el-radio-button__inner {
-        width: 100%;
-        padding: 6px 0;
-        font-size: 12px;
-      }
     }
   }
 

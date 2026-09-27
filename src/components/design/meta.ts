@@ -1,5 +1,4 @@
-import { message } from '@/common/message'
-import { ElNotification } from 'element-plus'
+import { message } from '@/common/message';
 
 export const meta = {
     onMainModelLoading: function () {

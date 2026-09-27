@@ -138,7 +138,7 @@
     </div>
 
     <!-- 编辑弹窗 -->
-    <Dialog v-model:open="showFormModal">
+    <Dialog :modal="false" v-model:open="showFormModal">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>编辑贴纸信息</DialogTitle>
@@ -188,7 +188,7 @@
     </Dialog>
 
     <!-- 重复效果预览 Modal -->
-    <Dialog v-model:open="showRepeatModal">
+    <Dialog :modal="false" v-model:open="showRepeatModal">
       <DialogContent class="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>平铺重复效果预览</DialogTitle>

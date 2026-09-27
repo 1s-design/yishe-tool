@@ -4,23 +4,13 @@
     @mouseenter="isHover = true"
     @mouseleave="isHover = false"
   >
-    <el-image
+    <img
       v-if="!isHover"
       :src="thumbnailUrl"
       class="display-content image"
-      fit="cover"
-      style="border-radius: 50%"
-    >
-      <template #placeholder>
-        <div
-          class="placeholder"
-          style="background: transparent; width: 100%; height: 100%"
-        ></div>
-      </template>
-      <template #error>
-        <div class="error" style="width: 100%; height: 100%"></div>
-      </template>
-    </el-image>
+      style="border-radius: 50%; object-fit: cover"
+      alt=""
+    />
     <div v-else class="display-content model">
       <gltf-viewer :src="modelUrl"></gltf-viewer>
     </div>

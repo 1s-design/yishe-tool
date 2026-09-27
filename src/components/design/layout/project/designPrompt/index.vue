@@ -149,7 +149,7 @@
     </div>
 
     <!-- 创建 / 编辑弹窗 -->
-    <Dialog v-model:open="showModal">
+    <Dialog :modal="false" v-model:open="showModal">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{{ isEdit ? '编辑设计提示词' : '新建设计提示词' }}</DialogTitle>

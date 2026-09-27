@@ -7,53 +7,60 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <a-modal
-    v-bind="$attrs"
-    v-model:open="showOfficialTempalteModal"
-    :footer="null"
-    :centered="true"
-    :destroyOnClose="true"
-    style="min-width: 1080px"
-    title="模版"
-  >
-    <div style="padding: 1rem">
-      <a-tabs
-        class="off-template-tab"
-        v-model:activeKey="activeOfficialStickerTab"
-        tab-position="left"
-        @change="tabChange"
-        :style="{ height: '480px' }"
-      >
-        <a-tab-pane
-          v-for="item in officialStickerTemplateOptions"
-          :key="item.value"
-          :tab="item.label"
+  <Dialog v-bind="$attrs" v-model:open="showOfficialTempalteModal">
+    <DialogContent class="max-w-[1080px] w-[1080px]">
+      <DialogHeader>
+        <DialogTitle>模版</DialogTitle>
+      </DialogHeader>
+      <div style="padding: 1rem">
+        <Tabs
+          :model-value="activeOfficialStickerTab"
+          class="off-template-tab flex gap-4"
+          :style="{ height: '480px' }"
+          @update:model-value="(v) => { activeOfficialStickerTab = v as string; tabChange(); }"
         >
-          <div
-            style="height: 480px; width: 100%; overflow: auto; padding: 20px"
-            v-infinite-scroll="getList"
-            :infinite-scroll-distance="150"
+          <TabsList class="flex flex-col h-full shrink-0 items-stretch justify-start bg-transparent p-0 rounded-none gap-1">
+            <TabsTrigger
+              v-for="item in officialStickerTemplateOptions"
+              :key="item.value"
+              :value="item.value"
+              class="justify-start text-left"
+            >
+              {{ item.label }}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent
+            v-for="item in officialStickerTemplateOptions"
+            :key="item.value"
+            :value="item.value"
+            class="mt-0 h-full flex-1 min-w-0 ring-offset-background focus-visible:outline-none"
           >
-            <el-row>
-              <el-col :span="4" v-for="item in list">
-                <div style="margin: 20px">
-                  <s1-img
-                    :src="item.url"
-                    style="width: 100px; height: 100px"
-                  ></s1-img>
+            <div
+              style="height: 480px; width: 100%; overflow: auto; padding: 20px"
+              v-infinite-scroll="getList"
+              :infinite-scroll-distance="150"
+            >
+              <div class="grid grid-cols-6">
+                <div v-for="item in list" :key="item.url">
+                  <div style="margin: 20px">
+                    <s1-img
+                      :src="item.url"
+                      style="width: 100px; height: 100px"
+                    ></s1-img>
+                  </div>
                 </div>
-              </el-col>
-            </el-row>
+              </div>
 
-            <s1-loadingBottom v-if="loading"></s1-loadingBottom>
-            <s1-empty v-if="isEmpty">
-              <template #description> 暂无结果 </template>
-            </s1-empty>
-          </div>
-        </a-tab-pane>
-      </a-tabs>
-    </div>
-  </a-modal>
+              <s1-loadingBottom v-if="loading"></s1-loadingBottom>
+              <s1-empty v-if="isEmpty">
+                <template #description> 暂无结果 </template>
+              </s1-empty>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -62,6 +69,13 @@ import { ref } from "vue";
 import { officialStickerTemplateOptions } from "./index.tsx";
 import { getStickerList } from "@/api";
 import { usePaging } from "@/hooks/data/paging.ts";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const activeOfficialStickerTab = ref(officialStickerTemplateOptions[0].value);
 

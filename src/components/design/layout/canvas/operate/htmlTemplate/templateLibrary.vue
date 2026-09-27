@@ -6,38 +6,36 @@
     <template #name> 模板库 </template>
     <template #content>
       <div class="html-template-library__trigger">
-        <el-button size="small" type="primary" plain @click="openDialog">打开模板库</el-button>
+        <Button size="sm" variant="outline" class="text-primary border-primary/40 hover:bg-primary/10 hover:text-primary" @click="openDialog">打开模板库</Button>
       </div>
     </template>
   </operate-form-item>
 
-  <el-dialog
-    v-model="dialogVisible"
-    fullscreen
-    append-to-body
-    class="html-template-library"
-    title="选择 HTML 模板"
-    :close-on-click-modal="false"
-  >
+  <Dialog :modal="false" v-model:open="dialogVisible">
+    <DialogContent
+      class="html-template-library max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col"
+      @interact-outside="e => e.preventDefault()"
+      @pointer-down-outside="e => e.preventDefault()"
+    >
+      <DialogHeader class="px-6 pt-6 pb-2 shrink-0">
+        <DialogTitle>选择 HTML 模板</DialogTitle>
+      </DialogHeader>
     <div class="html-template-library__layout">
       <div class="html-template-library__toolbar">
-        <el-input
-          v-model="searchKeyword"
-          clearable
-          size="large"
-          placeholder="搜索模板名称、标签、描述"
-          class="html-template-library__search"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
+        <div class="html-template-library__search relative">
+          <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            v-model="searchKeyword"
+            placeholder="搜索模板名称、标签、描述"
+            class="pl-8 h-8 text-xs"
+          />
+        </div>
 
         <div class="html-template-library__stats">
           {{ filteredTemplates.length }} / {{ templateList.length }} 个模板
         </div>
 
-        <el-button size="large" @click="dialogVisible = false">关闭</el-button>
+        <Button size="sm" variant="outline" @click="dialogVisible = false">关闭</Button>
       </div>
 
       <div v-loading="loading" class="html-template-library__grid">
@@ -80,12 +78,21 @@
         </div>
       </div>
     </div>
-  </el-dialog>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Search } from "@element-plus/icons-vue";
+import { Search } from "lucide-vue-next";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import icon from "@/components/design/assets/icon/project.svg?component";
 import operateFormItem from "@/components/design/layout/canvas/operate/operateFormItem.vue";
 import {
@@ -207,7 +214,7 @@ function applyTemplate(template: HtmlTemplateDefinition) {
 
 .html-template-library__stats {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--1s-text-color-tertiary);
   flex-shrink: 0;
 }
 
@@ -226,9 +233,9 @@ function applyTemplate(template: HtmlTemplateDefinition) {
 
 .html-template-library__card {
   height: 100%;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--1s-border-color);
   border-radius: 24px;
-  background: #fff;
+  background: var(--1s-surface-background);
   overflow: hidden;
   cursor: pointer;
   display: flex;
@@ -240,13 +247,13 @@ function applyTemplate(template: HtmlTemplateDefinition) {
 .html-template-library__card:hover,
 .html-template-library__card.is-active {
   transform: translateY(-2px);
-  border-color: #c7d2fe;
+  border-color: var(--1s-accent-color);
   box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
 }
 
 .html-template-library__preview {
   flex: 0 0 auto;
-  background: linear-gradient(180deg, #f8fafc, #eef2ff);
+  background: linear-gradient(180deg, var(--1s-control-surface-muted), var(--1s-hover-background));
   padding: 14px;
 }
 
@@ -255,7 +262,7 @@ function applyTemplate(template: HtmlTemplateDefinition) {
   border-radius: 20px;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
-  background: #fff;
+  background: var(--1s-surface-background);
 }
 
 .html-template-library__preview-content {
@@ -274,14 +281,14 @@ function applyTemplate(template: HtmlTemplateDefinition) {
 .html-template-library__card-title {
   font-size: 16px;
   font-weight: 700;
-  color: #111827;
+  color: var(--1s-text-color);
 }
 
 .html-template-library__card-desc {
   margin-top: 10px;
   font-size: 12px;
   line-height: 1.6;
-  color: #6b7280;
+  color: var(--1s-text-color-tertiary);
 }
 
 .html-template-library__card-tags {
@@ -293,8 +300,8 @@ function applyTemplate(template: HtmlTemplateDefinition) {
 
 .html-template-library__card-tags span {
   font-size: 11px;
-  color: #475569;
-  background: #f8fafc;
+  color: var(--1s-text-color-secondary);
+  background: var(--1s-control-surface-muted);
   border-radius: 999px;
   padding: 5px 9px;
 }
@@ -305,7 +312,7 @@ function applyTemplate(template: HtmlTemplateDefinition) {
   align-content: center;
   gap: 6px;
   min-height: 280px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--1s-border-color);
   border-radius: 24px;
   background: linear-gradient(180deg, #f8fafc, #ffffff);
 }
@@ -313,12 +320,12 @@ function applyTemplate(template: HtmlTemplateDefinition) {
 .html-template-library__empty-title {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: var(--1s-text-color);
 }
 
 .html-template-library__empty-desc {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--1s-text-color-tertiary);
 }
 
 .html-template-library__grid::-webkit-scrollbar,

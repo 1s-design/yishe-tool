@@ -5,13 +5,11 @@
       <div class="editor-main">
         <div v-if="!selectedImage" class="editor-placeholder">
           <div class="placeholder-content">
-            <el-icon :size="64" color="#ccc">
-              <Picture></Picture>
-            </el-icon>
+            <Picture class="w-16 h-16 text-neutral-300" />
             <p>请选择一张图片开始编辑</p>
-            <el-button type="primary" @click="showSelectModal = true" style="margin-top: 16px">
+            <Button @click="showSelectModal = true" style="margin-top: 16px">
               选择图片
-            </el-button>
+            </Button>
           </div>
         </div>
 
@@ -78,61 +76,60 @@
               <div class="filter-item" v-if="fabricCanvas">
                 <div class="filter-label-row">
                   <span class="filter-label">亮度</span>
-                  <el-input-number
-                    v-model="filterValues.brightness"
+                  <Input
+                    type="number"
+                    :model-value="filterValues.brightness"
                     :min="-100"
                     :max="100"
                     :step="1"
-                    size="small"
-                    controls-position="right"
-                    style="width: 80px"
-                    @change="applyBrightness"
+                    class="h-6 w-20 text-[11px]"
+                    @update:model-value="v => (filterValues.brightness = Number(v))"
+                    @change="(e) => applyBrightness(Number(e.target.value))"
                   />
                 </div>
               </div>
               <div class="filter-item" v-if="fabricCanvas">
                 <div class="filter-label-row">
                   <span class="filter-label">对比度</span>
-                  <el-input-number
-                    v-model="filterValues.contrast"
+                  <Input
+                    type="number"
+                    :model-value="filterValues.contrast"
                     :min="-100"
                     :max="100"
                     :step="1"
-                    size="small"
-                    controls-position="right"
-                    style="width: 80px"
-                    @change="applyContrast"
+                    class="h-6 w-20 text-[11px]"
+                    @update:model-value="v => (filterValues.contrast = Number(v))"
+                    @change="(e) => applyContrast(Number(e.target.value))"
                   />
                 </div>
               </div>
               <div class="filter-item" v-if="fabricCanvas">
                 <div class="filter-label-row">
                   <span class="filter-label">饱和度</span>
-                  <el-input-number
-                    v-model="filterValues.saturation"
+                  <Input
+                    type="number"
+                    :model-value="filterValues.saturation"
                     :min="-100"
                     :max="100"
                     :step="1"
-                    size="small"
-                    controls-position="right"
-                    style="width: 80px"
-                    @change="applySaturation"
+                    class="h-6 w-20 text-[11px]"
+                    @update:model-value="v => (filterValues.saturation = Number(v))"
+                    @change="(e) => applySaturation(Number(e.target.value))"
                   />
                 </div>
               </div>
               <div class="filter-item" v-if="fabricCanvas">
                 <div class="filter-label-row">
                   <span class="filter-label">模糊</span>
-                  <el-input-number
-                    v-model="filterValues.blur"
+                  <Input
+                    type="number"
+                    :model-value="filterValues.blur"
                     :min="0"
                     :max="10"
                     :step="0.1"
-                    :precision="1"
-                    size="small"
-                    controls-position="right"
-                    style="width: 80px"
-                    @change="applyBlur"
+                    class="h-6 w-20 text-[11px]"
+                    @update:model-value="v => (filterValues.blur = Number(v))"
+                    @change="(e) => applyBlur(Number(e.target.value))"
                   />
                 </div>
               </div>
@@ -202,9 +199,7 @@
               <!-- Loading 遮罩 -->
               <div v-if="imageLoading" class="image-loading-overlay">
                 <div class="loading-content">
-                  <el-icon class="is-loading" :size="32">
-                    <Loading />
-                  </el-icon>
+                  <Loader2 class="w-8 h-8 animate-spin" />
                   <p>正在加载图片...</p>
                 </div>
               </div>
@@ -215,61 +210,62 @@
     </div>
 
     <!-- 选择图片弹窗 -->
-    <a-modal
-      v-model:open="showSelectModal"
-      title="选择图片"
-      width="1200px"
-      :footer="null"
-      :z-index="10001"
-      :centered="true"
-      :body-style="{ padding: '16px', height: '600px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }"
-      @cancel="showSelectModal = false"
-      class="select-image-modal"
-    >
-      <div class="select-modal-content">
-        <div class="sticker-list-container">
-          <stickerSelector @select="handleImageSelectFromModal" />
+    <Dialog :modal="false" v-model:open="showSelectModal">
+      <DialogContent class="max-w-[1200px] w-[1200px]">
+        <DialogHeader>
+          <DialogTitle>选择图片</DialogTitle>
+        </DialogHeader>
+        <div
+          class="select-modal-content"
+          style="padding: 16px; height: 600px; overflow: hidden; display: flex; flex-direction: column"
+        >
+          <div class="sticker-list-container">
+            <stickerSelector @select="handleImageSelectFromModal" />
+          </div>
         </div>
-      </div>
-    </a-modal>
+      </DialogContent>
+    </Dialog>
 
     <!-- 上传弹窗 -->
-    <a-modal
-      v-model:open="showUploadModal"
-      title="保存到图片素材库"
-      :confirmLoading="submitLoading"
-      :z-index="10002"
-      :centered="true"
-      @ok="doUpload"
-      @cancel="showUploadModal = false"
-    >
-      <el-form label-width="100px">
-        <el-form-item label="图片名称：">
-          <el-input v-model="uploadForm.name" placeholder="图片名称"></el-input>
-        </el-form-item>
-        <el-form-item label="图片描述:">
-          <el-input
-            type="textarea"
-            v-model="uploadForm.description"
-            placeholder="图片描述"
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="关键字:">
-          <tagsInput
-            v-model="uploadForm.keywords"
-            :autocomplete-tags="stickerAutoplacementTags"
-            :autocomplete-width="400"
-            autocompletePlacement="bottom"
-          ></tagsInput>
-        </el-form-item>
-      </el-form>
-    </a-modal>
+    <Dialog :modal="false" v-model:open="showUploadModal">
+      <DialogContent class="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>保存到图片素材库</DialogTitle>
+        </DialogHeader>
+        <div class="px-6 pb-2 space-y-3">
+          <div class="flex flex-col gap-1.5">
+            <Label>图片名称：</Label>
+            <Input v-model="uploadForm.name" placeholder="图片名称"></Input>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <Label>图片描述:</Label>
+            <Textarea
+              v-model="uploadForm.description"
+              placeholder="图片描述"
+            ></Textarea>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <Label>关键字:</Label>
+            <tagsInput
+              v-model="uploadForm.keywords"
+              :autocomplete-tags="stickerAutoplacementTags"
+              :autocomplete-width="400"
+              autocompletePlacement="bottom"
+            ></tagsInput>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" size="sm" @click="showUploadModal = false">取消</Button>
+          <Button size="sm" :disabled="submitLoading" @click="doUpload">确定</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { Picture, Loading } from '@element-plus/icons-vue'
+import { Image as Picture, Loader2 } from 'lucide-vue-next'
 import { message } from '@/common/message'
 
 // 配置 message 的 z-index，确保显示在弹窗之上
@@ -286,6 +282,17 @@ import { imageDataToFile } from '@/common/transform'
 import tagsInput from '@/components/design/components/tagsInput/tagsInput.vue'
 import { stickerAutoplacementTags } from '@/components/design/components/tagsInput/index.ts'
 import stickerSelector from './stickerSelector.vue'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import * as fabric from 'fabric'
 
 const loginStore = useLoginStatusStore()
@@ -1732,7 +1739,7 @@ onUnmounted(() => {
   .select-modal-tip {
     margin: 0 0 16px 0;
     font-size: 14px;
-    color: #666;
+    color: var(--1s-text-color-secondary);
     flex-shrink: 0;
   }
   
@@ -1759,7 +1766,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fafafa;
+  background: var(--1s-surface-background);
 }
 
 .placeholder-content {
@@ -1767,7 +1774,7 @@ onUnmounted(() => {
   
   p {
     margin-top: 16px;
-    color: #999;
+    color: var(--1s-text-color-tertiary);
     font-size: 14px;
   }
 }
@@ -1783,8 +1790,8 @@ onUnmounted(() => {
   width: 360px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e5e5e5;
-  background: #fafafa;
+  border-right: 1px solid var(--1s-border-color);
+  background: var(--1s-surface-background);
   padding: 12px 10px;
   overflow-y: auto;
   flex-shrink: 0;
@@ -1799,7 +1806,7 @@ onUnmounted(() => {
 
 .section-title {
   font-size: 11px;
-  color: #666;
+  color: var(--1s-text-color-secondary);
   padding: 8px 10px 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1808,7 +1815,7 @@ onUnmounted(() => {
 
 .sidebar-divider {
   height: 1px;
-  background: #e5e5e5;
+  background: var(--1s-control-surface-muted);
   margin: 8px 0;
   flex-shrink: 0;
 }
@@ -1830,27 +1837,27 @@ onUnmounted(() => {
   transition: all 0.15s ease;
   user-select: none;
   min-height: 36px;
-  background: #fff;
+  background: var(--1s-surface-background);
   border: 1px solid transparent;
   
   &:hover:not(.disabled) {
-    background: #f5f5f5;
-    border-color: #e0e0e0;
+    background: var(--1s-control-surface-muted);
+    border-color: var(--1s-border-color);
   }
   
   &:active:not(.disabled) {
-    background: #eeeeee;
+    background: var(--1s-control-surface-muted);
   }
   
   &.disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    background: #fafafa;
+    background: var(--1s-surface-background);
   }
   
   &.active {
-    background: #6900ff;
-    border-color: #6900ff;
+    background: var(--1s-accent-color);
+    border-color: var(--1s-accent-color);
     
     .tool-label {
       color: #fff;
@@ -1858,18 +1865,18 @@ onUnmounted(() => {
   }
   
   &.primary {
-    background: #6900ff;
+    background: var(--1s-accent-color);
     color: #fff;
-    border-color: #6900ff;
+    border-color: var(--1s-accent-color);
     
     &:hover:not(.disabled) {
-      background: #5a00e6;
-      border-color: #5a00e6;
+      background: var(--1s-accent-color);
+      border-color: var(--1s-accent-color);
     }
     
     &:active:not(.disabled) {
-      background: #4d00cc;
-      border-color: #4d00cc;
+      background: var(--1s-accent-color);
+      border-color: var(--1s-accent-color);
     }
     
     .tool-label {
@@ -1886,7 +1893,7 @@ onUnmounted(() => {
 
 .tool-label {
   font-size: 13px;
-  color: #333;
+  color: var(--1s-text-color);
   font-weight: 400;
   line-height: 1.4;
 }
@@ -1894,7 +1901,7 @@ onUnmounted(() => {
 .filter-item {
   padding: 8px 10px;
   margin-bottom: 4px;
-  background: #fff;
+  background: var(--1s-surface-background);
   border-radius: 6px;
   border: 1px solid transparent;
 }
@@ -1908,7 +1915,7 @@ onUnmounted(() => {
 
 .filter-label {
   font-size: 13px;
-  color: #333;
+  color: var(--1s-text-color);
   font-weight: 400;
   flex: 1;
 }
@@ -1928,7 +1935,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--1s-control-surface-muted);
   padding: 20px;
   overflow: auto;
   min-height: 0;
@@ -1959,7 +1966,7 @@ onUnmounted(() => {
   
   p {
     margin: 0;
-    color: #666;
+    color: var(--1s-text-color-secondary);
     font-size: 14px;
   }
 }
@@ -1978,9 +1985,9 @@ onUnmounted(() => {
 }
 
 .fabric-canvas {
-  border: 1px solid #ddd;
+  border: 1px solid var(--1s-border-color);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  background: #fff;
+  background: var(--1s-surface-background);
   display: block;
   max-width: 100%;
   max-height: 100%;

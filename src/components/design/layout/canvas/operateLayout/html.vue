@@ -1,28 +1,43 @@
 <template>
-  <el-collapse v-model="htmlCollapseActives">
-    <el-collapse-item name="0" title="AI 生成">
+  <Accordion type="multiple" :model-value="htmlCollapseActives" @update:model-value="v => htmlCollapseActives = v as string[]">
+    <AccordionItem value="0">
+      <AccordionTrigger>AI 生成</AccordionTrigger>
+      <AccordionContent>
       <ai-html-generator v-model="currentOperatingCanvasChild" />
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item v-if="hasTemplateBindings" name="2" title="模板绑定">
+    <AccordionItem v-if="hasTemplateBindings" value="2">
+      <AccordionTrigger>模板绑定</AccordionTrigger>
+      <AccordionContent>
       <operate-item-html-bindings-editor
         v-model="currentOperatingCanvasChild"
       />
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="3" title="代码画布">
+    <AccordionItem value="3">
+      <AccordionTrigger>代码画布</AccordionTrigger>
+      <AccordionContent>
       <operateItemHtmlInput
         label="HTML"
         placeholder="<div class='card'>这里输入 HTML 代码</div>"
         :template-target="currentOperatingCanvasChild"
         v-model="currentOperatingCanvasChild.htmlContent"
       />
-    </el-collapse-item>
-  </el-collapse>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import operateItemHtmlInput from "@/components/design/layout/canvas/operate/htmlInput.vue";
 import operateItemHtmlBindingsEditor from "@/components/design/layout/canvas/operate/htmlTemplate/bindingsEditor.vue";
 import aiHtmlGenerator from "@/components/design/layout/canvas/operate/aiHtmlGenerator.vue";

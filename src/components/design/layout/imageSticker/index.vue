@@ -1,14 +1,11 @@
 <template>
   <div class="designiy-image-sticker">
     <div class="designiy-image-sticker-header">
-      <el-input v-model="input" placeholder="搜索贴纸">
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-        <template #suffix>
-          <el-icon><Operation /></el-icon>
-        </template>
-      </el-input>
+      <div class="relative w-full">
+        <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+        <Input v-model="input" placeholder="搜索贴纸" class="pl-8 pr-8 bg-[#f6f6f6] shadow-none text-xs" />
+        <SlidersHorizontal class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+      </div>
     </div>
     <div
       class="designiy-image-sticker-content"
@@ -17,22 +14,12 @@
       :infinite-scroll-disabled="disabled || loading"
     >
       <div class="item" title="拖动来进行贴图" v-for="i in list" draggable="false">
-        <el-image
+        <img
           @load="load($event, i)"
           :src="i.preview_img"
-          style="width: 100%; height: 100%"
-          fit="contain"
-          lazy
-        >
-          <template #placeholder>
-            <div class="item_loading"></div>
-          </template>
-          <template #error>
-            <div class="item_error">
-              <el-icon style="color: #888"><Picture /></el-icon>
-            </div>
-          </template>
-        </el-image>
+          class="item_img"
+          loading="lazy"
+        />
       </div>
     </div>
     <div class="designiy-image-sticker-footer"></div>
@@ -41,7 +28,8 @@
 <script setup>
 import { onMounted, ref, computed } from "vue";
 import { currentModelController } from "../../store";
-import { Picture, FolderOpened, Search, Operation } from "@element-plus/icons-vue";
+import { FolderOpen, Image, Search, SlidersHorizontal } from 'lucide-vue-next'
+import { Input } from "@/components/ui/input";
 import { getImage } from "@/api/index";
 import { initDraggableElement } from "../../utils/draggable";
 
@@ -98,14 +86,6 @@ async function scroll() {
   display: flex;
   flex-direction: column;
   row-gap: 10px;
-  .el-input__wrapper {
-    box-shadow: none;
-    background-color: #f6f6f6;
-    font-size: 12px;
-  }
-  .el-cascader {
-    width: 100%;
-  }
 }
 
 .designiy-image-sticker-content {
@@ -117,8 +97,11 @@ async function scroll() {
   padding: 10px;
   column-gap: 4px;
   row-gap: 4px;
-  .el-image {
+  .item_img {
     display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 }
 

@@ -1,10 +1,10 @@
 <template>
-  <el-collapse v-model="qrcodeCollapseActives">
-    <el-collapse-item name="1">
-      <template #title>
+  <Accordion type="multiple" :model-value="qrcodeCollapseActives" @update:model-value="v => qrcodeCollapseActives = v as string[]">
+    <AccordionItem value="1">
+      <AccordionTrigger>
         <div class="title">基本配置</div>
-      </template>
-
+      </AccordionTrigger>
+      <AccordionContent>
       <operateItemTextContent
         label="条形码内容"
         v-model="currentOperatingCanvasChild.barcodeContent"
@@ -16,7 +16,7 @@
 
       <operateItemBarcodeWidth v-model="currentOperatingCanvasChild.width">
       </operateItemBarcodeWidth>
-      <a-alert type="info" message="该宽度指定的是条形码单个线的宽度"></a-alert>
+      <div class="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">该宽度指定的是条形码单个线的宽度</div>
 
       <operateItemBarcodeHeight v-model="currentOperatingCanvasChild.height">
       </operateItemBarcodeHeight>
@@ -37,18 +37,28 @@
         type="pure"
       >
       </operateItemColor>
-    </el-collapse-item>
+      </AccordionContent>
+    </AccordionItem>
 
-    <el-collapse-item name="common" title="通用属性">
+    <AccordionItem value="common">
+      <AccordionTrigger>通用属性</AccordionTrigger>
+      <AccordionContent>
       <operateItemCommonGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemCommonGroup>
-    </el-collapse-item>
-  </el-collapse>
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";
 import operateItemBarcodeFormat from "@/components/design/layout/canvas/operate/barcode/format.vue";

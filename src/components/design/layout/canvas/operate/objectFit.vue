@@ -3,18 +3,24 @@
         <template #icon> 适 </template>
         <template #name> 图片适应 </template>
         <template #content>
-            <el-select v-model="model" size="small" class="operate-compact-select" clearable>
-                <el-option v-for="item in objectFitOptions" :key="item.value" :label="item.label" :value="item.value">
-                    <span> {{ item.label }} </span>
-                </el-option>
-            </el-select>
+            <Select v-model="model">
+                <SelectTrigger class="operate-compact-select h-6 text-[11px]">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem v-for="item in objectFitOptions" :key="item.value" :value="item.value">
+                        <span> {{ item.label }} </span>
+                    </SelectItem>
+                </SelectContent>
+            </Select>
         </template>
     </operate-form-item>
 </template>
-    
+
 <script setup lang='ts'>
 import { ref } from 'vue'
 import icon from "@/components/design/assets/icon/writing-mode.svg?component";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 const model = defineModel({})
 
 const objectFitOptions = ref([
@@ -36,8 +42,8 @@ const objectFitOptions = ref([
     },
 ])
 
-</script> 
-        
+</script>
+
 <style scoped>
 .operate-compact-select {
   width: min(160px, 100%);

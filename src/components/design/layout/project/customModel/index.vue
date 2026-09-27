@@ -5,10 +5,9 @@
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
           <span class="project-muted-text text-sm">只看母版</span>
-          <el-switch 
-            v-model="showTemplateOnly" 
-            @change="handleFilterChange"
-            size="small"
+          <Switch
+            :model-value="showTemplateOnly"
+            @update:model-value="(v) => { showTemplateOnly = v; handleFilterChange(); }"
           />
         </div>
       </div>
@@ -39,32 +38,30 @@
             </div>
             <div class="project-timeago">{{ Utils.time.timeago(item.updateTime) }}</div>
             <div class="flex-1"></div>
-            <a-dropdown trigger="click">
-              <el-button link>
-                <el-icon size="12">
-                  <MoreFilled />
-                </el-icon>
-              </el-button>
-              <template #overlay>
-                <a-menu>
-                  <a-menu-item @click="copyToWorkspace(item)"> 复制模型信息到工作台 </a-menu-item>
-                  <a-menu-item @click="edit(item)"> 编辑 </a-menu-item>
-                  <a-menu-item @click="deleteItem(item)">
-                    <span style="color: var(--el-color-danger)">删除</span>
-                  </a-menu-item>
-                  <a-menu-item @click="downloadThumbnail(item)"> 下载缩略图 </a-menu-item>
-                  <a-menu-item @click="openShareCardModal(item)">
-                    生成分享卡片
-                  </a-menu-item>
-                  <a-menu-item @click="editInWorkspace(item)">在工作台中编辑</a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button variant="link" size="icon-sm">
+                  <MoreHorizontal class="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem @select="copyToWorkspace(item)"> 复制模型信息到工作台 </DropdownMenuItem>
+                <DropdownMenuItem @select="edit(item)"> 编辑 </DropdownMenuItem>
+                <DropdownMenuItem @select="deleteItem(item)">
+                  <span class="text-destructive">删除</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem @select="downloadThumbnail(item)"> 下载缩略图 </DropdownMenuItem>
+                <DropdownMenuItem @select="openShareCardModal(item)">
+                  生成分享卡片
+                </DropdownMenuItem>
+                <DropdownMenuItem @select="editInWorkspace(item)">在工作台中编辑</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
       <div v-if="loading" class="project-loading-overlay absolute inset-0 flex items-center justify-center">
-        <el-icon class="animate-spin text-2xl"><Loading /></el-icon>
+        <Loader2 class="animate-spin h-6 w-6" />
       </div>
       <s1-empty v-if="isEmpty">
         <template #description> 暂无模型 </template>
@@ -72,48 +69,58 @@
     </div>
     
     <div class="project-footer sticky bottom-0 left-0 right-0 py-4">
-      <div class="mx-auto flex justify-end">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[20, 40, 60, 80]"
-          :total="total"
-          layout="total, sizes, prev, pager, next"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+      <div class="mx-auto flex items-center gap-2">
+        <span class="text-xs text-muted-foreground">共 {{ total }} 条</span>
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="currentPage <= 1"
+          @click="handleCurrentChange(currentPage - 1)"
+        >
+          上一页
+        </Button>
+        <span class="text-xs">{{ currentPage }}</span>
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="currentPage * pageSize >= total"
+          @click="handleCurrentChange(currentPage + 1)"
+        >
+          下一页
+        </Button>
       </div>
     </div>
   </div>
 
-  <a-modal
-    v-model:open="showFormModal"
-    :centered="true"
-    :destroyOnClose="true"
-    width="540px"
-    title="更新信息"
-    okText="修改"
-    cancelText="取消"
-    @ok="ok"
-    :confirmLoading="submitLoading"
-  >
-    <el-form style="padding: 24px 12px">
-      <el-form-item label="名称">
-        <el-input v-model="editForm.name" placeholder="名字"></el-input
-      ></el-form-item>
-      <el-form-item label="描述">
-        <el-input v-model="editForm.description" placeholder="描述"></el-input
-      ></el-form-item>
-      <el-form-item label="标签">
-        <tagsInput v-model="editForm.keywords" :string="true"> </tagsInput>
-      </el-form-item>
-      <el-form-item label="是否母版">
-        <el-switch 
-          v-model="editForm.isTemplate" 
-        />
-      </el-form-item>
-    </el-form>
-  </a-modal>
+  <Dialog :modal="false" v-model:open="showFormModal">
+    <DialogContent class="max-w-[540px] w-[540px]">
+      <DialogHeader>
+        <DialogTitle>更新信息</DialogTitle>
+      </DialogHeader>
+      <div style="padding: 24px 12px" class="flex flex-col gap-3">
+        <div class="flex flex-col gap-1.5">
+          <Label>名称</Label>
+          <Input v-model="editForm.name" placeholder="名字"></Input>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <Label>描述</Label>
+          <Input v-model="editForm.description" placeholder="描述"></Input>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <Label>标签</Label>
+          <tagsInput v-model="editForm.keywords" :string="true"> </tagsInput>
+        </div>
+        <div class="flex items-center gap-2">
+          <Label>是否母版</Label>
+          <Switch v-model:checked="editForm.isTemplate" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" size="sm" @click="showFormModal = false">取消</Button>
+        <Button size="sm" :disabled="submitLoading" @click="ok">修改</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
   <!-- 关联草稿弹窗 -->
 </template>
@@ -121,7 +128,7 @@
 <script setup lang="tsx">
 import { ref, onBeforeMount } from "vue";
 import { useLocalStorage } from "@vueuse/core";
-import { Search, ArrowRightBold, Operation, ArrowRight, MoreFilled, Loading, VideoPlay } from "@element-plus/icons-vue";
+import { Loader2, MoreHorizontal } from "lucide-vue-next";
 import { getStickerList } from "@/api";
 import desimage from "@/components/image.vue";
 import { currentModelController, viewDisplayController, enterEditMode, selectedAngles } from "@/components/design/store";
@@ -137,6 +144,23 @@ import { useCustomModelDetailModal } from "@/components/design/layout/project/cu
 import { openShareCardModal } from "@/components/design/layout/shareCard/index.ts";
 import { saveAs } from "file-saver";
 import { openCustomModel } from '@/components/design/utils/openCustomModel';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 const { open } = useCustomModelDetailModal();
 
@@ -305,11 +329,11 @@ function editInWorkspace(item) {
   }
   
   .draft-item {
-    border: 1px solid var(--el-border-color);
+    border: 1px solid var(--1s-border-color);
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s ease;
-    background: var(--el-bg-color);
+    background: var(--1s-surface-background);
     box-shadow: var(--1s-shadow-sm);
     display: flex;
     flex-direction: column;
@@ -318,17 +342,17 @@ function editInWorkspace(item) {
     &:hover {
       box-shadow: var(--1s-shadow-md);
       transform: translateY(-4px);
-      border-color: var(--el-color-primary-light-7);
+      border-color: var(--primary);
     }
   }
   
   .draft-preview {
     position: relative;
-    background: var(--el-fill-color-lighter);
+    background: var(--1s-control-surface-muted);
     
-    .el-image {
+    img {
       transition: transform 0.3s ease;
-      background: var(--el-fill-color-lighter);
+      background: var(--1s-control-surface-muted);
       
       &:hover {
         transform: scale(1.02);
@@ -337,8 +361,8 @@ function editInWorkspace(item) {
   }
   
   .draft-info {
-    background: var(--el-bg-color);
-    border-top: 1px solid var(--el-border-color-lighter);
+    background: var(--1s-surface-background);
+    border-top: 1px solid var(--1s-border-color);
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -347,7 +371,7 @@ function editInWorkspace(item) {
   
   .draft-name {
     font-weight: 600;
-    color: var(--el-text-color-primary);
+    color: var(--1s-text-color);
     line-height: 1.4;
   }
   
@@ -357,11 +381,11 @@ function editInWorkspace(item) {
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.5;
-    color: var(--el-text-color-regular);
+    color: var(--1s-text-color-secondary);
   }
   
   .draft-meta {
-    color: var(--el-text-color-placeholder);
+    color: var(--1s-text-color-tertiary);
     font-size: 12px;
     line-height: 1.4;
   }
@@ -402,7 +426,7 @@ function editInWorkspace(item) {
   }
   
   .type-tag {
-    background: var(--el-color-primary);
+    background: var(--primary);
     color: white;
     padding: 2px 6px;
     border-radius: 4px;
@@ -412,19 +436,8 @@ function editInWorkspace(item) {
 }
 
 .empty-state {
-  color: var(--el-text-color-placeholder);
+  color: var(--1s-text-color-tertiary);
 }
-
-.custom-model-modal .ant-modal {
-  top: 32px !important;
-  margin: 0 auto;
-  padding-bottom: 0;
-}
-.custom-model-modal .ant-modal-content {
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
 .model-3d-container {
   width: 100%;
   height: 100%;
@@ -437,10 +450,5 @@ function editInWorkspace(item) {
   position: relative;
 }
 
-@media (max-width: 600px) {
-  .custom-model-modal .ant-modal {
-    width: 98vw !important;
-    min-width: unset !important;
-  }
-}
+@media (max-width: 600px) {}
 </style>

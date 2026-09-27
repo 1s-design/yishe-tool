@@ -5,63 +5,55 @@
         </template>
         <template #name> 边框圆角 </template>
         <template #content>
-            <el-popover width="180" trigger="click" popper-class="el-popover-operation">
-                <template #reference>
-                    <el-button size="small" link>
-                        <el-tooltip :content="borderRadiusLabel" :hide-after="0">
-                            <div class="text-ellipsis" style="max-width:200px;">
-                                {{ borderRadiusLabel }}
-                            </div>
-                        </el-tooltip>
-                    </el-button>
-                </template>
-                <div>
-                    <el-row align="middle" justify="center">
-                        <el-col :span="24">
-                            <div style="font-weight: bold; padding: 1em 0">圆角设置</div>
-                        </el-col>
+            <Popover>
+                <PopoverTrigger as-child>
+                    <Button variant="ghost" size="sm">
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <div class="text-ellipsis overflow-hidden max-w-[200px]">{{ borderRadiusLabel }}</div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{{ borderRadiusLabel }}</TooltipContent>
+                        </Tooltip>
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent class="w-[180px]">
+                    <div>
+                        <div class="font-bold py-4">圆角设置</div>
                         <template v-for="item in borderRadiusOptions">
-                            <el-col :span="8">
-                                <div>{{ item.label }}</div>
-                            </el-col>
-                            <el-col :span="16">
-                                <div class="input-item">
-                                    <el-popover placement="right" width="200" trigger="click" :teleported="false" popper-class="el-popover-operation">
-                                        <template #reference>
-                                            <el-input size="small"  min="0" step="1"
-                                                type="number"
-                                                style="width:80px;height:24px;" v-model.number="model[item.type].value">
-                                                <template #suffix>
-                                                    <div class="text-[10px] text-muted-foreground"> {{ model[item.type].unit }}
-                                                    </div>
-                                                </template>
-                                            </el-input>
-                                        </template>
-
-                                        <el-row align="middle" justify="end">
-                                            <el-col :span="24">
-                                                <el-radio-group v-model="model[item.type].unit" size="small">
-                                                    <el-radio v-for="u in unitOptions" :value="u.value">
-                                                        <span class="text-xs">{{ u.label }}</span>
-                                                    </el-radio>
-                                                </el-radio-group>
-                                            </el-col>
-                                        </el-row>
-
-                                    </el-popover>
+                            <div class="flex items-center">
+                                <div class="w-1/3">{{ item.label }}</div>
+                                <div class="w-2/3 input-item">
+                                    <Popover>
+                                        <PopoverTrigger as-child>
+                                            <div class="relative w-[80px]">
+                                                <Input type="number" v-model.number="model[item.type].value" class="h-6 pr-8 text-[11px]" min="0" step="1" />
+                                                <div class="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground"> {{ model[item.type].unit }} </div>
+                                            </div>
+                                        </PopoverTrigger>
+                                        <PopoverContent side="right" class="w-[200px]">
+                                            <div class="flex items-center justify-end">
+                                                <div class="w-full">
+                                                    <RadioGroup v-model="model[item.type].unit" class="grid gap-1">
+                                                        <label v-for="u in unitOptions" :key="u.value" class="flex items-center gap-2 cursor-pointer">
+                                                            <RadioGroupItem :value="u.value" />
+                                                            <span class="text-xs">{{ u.label }}</span>
+                                                        </label>
+                                                    </RadioGroup>
+                                                </div>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
-                            </el-col>
-                        </template>
-                        <el-col :span="24">
-                            <div class="input-item">
-                                <el-button size="small" style="width:100%;" @click="reset">
-                                    重置
-                                </el-button>
                             </div>
-                        </el-col>
-                    </el-row>
-                </div>
-            </el-popover>
+                        </template>
+                        <div class="input-item">
+                            <Button size="sm" variant="outline" class="w-full" @click="reset">
+                                重置
+                            </Button>
+                        </div>
+                    </div>
+                </PopoverContent>
+            </Popover>
         </template>
     </operate-form-item>
 </template>
@@ -71,6 +63,11 @@ import { ref, computed, nextTick, onMounted } from "vue";
 import icon from "@/components/design/assets/icon/border-radius.svg?component";
 import { getBroderRadiusDispalyLabel } from "@/components/design/layout/canvas/helper.tsx";
 import { canvasStickerOptions,canvasStickerOptionsOnlyChild } from "@/components/design/layout/canvas/index.tsx";
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 
 /*
@@ -156,10 +153,5 @@ const borderRadiusLabel = computed(() => {
     display: flex;
     align-items: center;
     justify-content: end;
-
-    :deep(.el-input) {
-        width: 48px;
-        height: 20px;
-    }
 }
 </style>

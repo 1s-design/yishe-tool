@@ -7,83 +7,96 @@
       </div>
     </div>
     <div class="header">
-      <el-button-group link style="width: 100%; display: flex;overflow:auto;">
-        <el-popover trigger="click">
-          <div class="tags">
-            <el-tag @click="add" round> 文字 </el-tag>
-            <div style="flex:1;"></div>
-          </div>
-          <template #reference>
-            <el-button style="flex: 1">
+      <div class="flex items-center gap-1 w-full overflow-auto">
+        <Popover>
+          <PopoverTrigger as-child>
+            <Button variant="ghost" class="flex-1">
               添加元素 {{ svgCanvasChildren.length }}
-            </el-button>
-          </template>
-        </el-popover>
-        <el-popover trigger="click">
-          <layout></layout>
-          <template #reference>
-            <el-button>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent class="w-auto">
+            <div class="tags">
+              <Badge variant="secondary" class="cursor-pointer rounded-full" @click="add"> 文字 </Badge>
+              <div style="flex:1;"></div>
+            </div>
+          </PopoverContent>
+        </Popover>
+        <Popover>
+          <PopoverTrigger as-child>
+            <Button variant="ghost">
               画布 {{ svgCanvasWidth }} : {{ svgCanvasHeight }}
-            </el-button>
-          </template>
-        </el-popover>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent class="w-auto">
+            <layout></layout>
+          </PopoverContent>
+        </Popover>
 
-        <el-button @click="exportToPng"> 导出 png </el-button>
-      </el-button-group>
+        <Button variant="ghost" @click="exportToPng"> 导出 png </Button>
+      </div>
     </div>
     <div class="operate">
       <div class="w-full h-full flex items-center justify-center" v-if="!svgCanvasChildren.length"> 暂无元素 </div>
-      <el-tabs v-else tab-position="top">
-        <el-tab-pane v-for="item, index in svgCanvasChildren" label="1">
-          <el-collapse v-model="actives">
-            <el-collapse-item name="1">
-              <template #title>
+      <Tabs v-else :model-value="'0'" class="w-full">
+        <TabsList class="w-full">
+          <TabsTrigger v-for="item, index in svgCanvasChildren" :key="index" :value="String(index)" class="flex-1">
+            1
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent v-for="item, index in svgCanvasChildren" :key="index" :value="String(index)" class="mt-2">
+          <Accordion type="multiple" :model-value="actives" @update:model-value="v => actives = v as string[]">
+            <AccordionItem value="1">
+              <AccordionTrigger>
                 <div class="title">文字属性</div>
-              </template>
-              <el-row :gutter="24" align="middle">
-                <el-col :span="24">
-                  <operateItemTextContent v-model="item.textContent"></operateItemTextContent>
-                </el-col>
-                <el-col :span="12">
-                  <operateItemFontSize tooltip="文字大小是相对于画布的宽度，0.1即0.1个画布宽度" v-model="item.fontSize">
-                  </operateItemFontSize>
-                </el-col>
-                <el-col :span="12">
-                  <operateItemFontWeight v-model="item.fontWeight"></operateItemFontWeight>
-                </el-col>
-                <el-col :span="12">
-                  <operateItemFontItalic v-model="item.italic"></operateItemFontItalic>
-                </el-col>
-                <el-col :span="12">
-                  <operateItemFontColor v-model="item.fontColor"></operateItemFontColor>
-                </el-col>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div class="grid grid-cols-2 gap-x-6 gap-y-2 items-center">
+                  <div class="col-span-2">
+                    <operateItemTextContent v-model="item.textContent"></operateItemTextContent>
+                  </div>
+                  <div>
+                    <operateItemFontSize tooltip="文字大小是相对于画布的宽度，0.1即0.1个画布宽度" v-model="item.fontSize">
+                    </operateItemFontSize>
+                  </div>
+                  <div>
+                    <operateItemFontWeight v-model="item.fontWeight"></operateItemFontWeight>
+                  </div>
+                  <div>
+                    <operateItemFontItalic v-model="item.italic"></operateItemFontItalic>
+                  </div>
+                  <div>
+                    <operateItemFontColor v-model="item.fontColor"></operateItemFontColor>
+                  </div>
 
-                <el-col :span="24">
-                  <operateItemFontFamily v-model="item.fontFamilyInfo"></operateItemFontFamily>
-                </el-col>
-                <el-col :span="12">
-                  <operateItemLineHeight v-model="item.lineHeight"></operateItemLineHeight>
-                </el-col>
-                <el-col :span="12">
-                  <operateItemLetterSpacing v-model="item.letterSpacing"></operateItemLetterSpacing>
-                </el-col>
-                <el-col :span="12">
-                  <operate-form-item>
-                    <template #icon> <icon-writing-mode></icon-writing-mode> </template>
-                    <template #name> 排列方式 </template>
-                    <template #content> </template>
-                  </operate-form-item>
-                </el-col>
-              </el-row>
-            </el-collapse-item>
-            <el-collapse-item name="2">
-              <template #title>
+                  <div class="col-span-2">
+                    <operateItemFontFamily v-model="item.fontFamilyInfo"></operateItemFontFamily>
+                  </div>
+                  <div>
+                    <operateItemLineHeight v-model="item.lineHeight"></operateItemLineHeight>
+                  </div>
+                  <div>
+                    <operateItemLetterSpacing v-model="item.letterSpacing"></operateItemLetterSpacing>
+                  </div>
+                  <div>
+                    <operate-form-item>
+                      <template #icon> <icon-writing-mode></icon-writing-mode> </template>
+                      <template #name> 排列方式 </template>
+                      <template #content> </template>
+                    </operate-form-item>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="2">
+              <AccordionTrigger>
                 <div class="title">文字位置</div>
-              </template>
-            </el-collapse-item>
-          </el-collapse>
-        </el-tab-pane>
-      </el-tabs>
+              </AccordionTrigger>
+              <AccordionContent>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </TabsContent>
+      </Tabs>
     </div>
   </div>
 </template>
@@ -124,6 +137,12 @@ import operateItemLineHeight from '@/components/design/layout/canvas/operate/lin
 import operateItemLetterSpacing from '@/components/design/layout/canvas/operate/letterSpacing.vue'
 
 import layout from './layout.vue'
+
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 
 
 const r = ref();
@@ -195,10 +214,6 @@ async function exportToSvg() {
   flex-wrap: wrap;
   justify-content: space-around;
   gap: .8em .4em;
-
-  :deep(.el-tag) {
-    cursor: pointer;
-  }
 }
 
 .main {
