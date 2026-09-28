@@ -29,20 +29,46 @@ async function fetchStsCredential(): Promise<any | null> {
         const d = res?.data?.data ?? res?.data
         if (d?.TmpSecretId && d?.TmpSecretKey && d?.SecurityToken && d?.ExpiredTime) {
             _sts = {
-                TmpSecretId: d.TmpSecretId,
-                TmpSecretKey: d.TmpSecretKey,
-                SecurityToken: d.SecurityToken,
-                ExpiredTime: Number(d.ExpiredTime),
+                TmpSecretId: String(d.TmpSecretId),
+                TmpSecretKey: String(d.TmpSecretKey),
+                SecurityToken: String(d.SecurityToken),
+                // COS SDK 要求 10 位秒级时间戳
+                ExpiredTime: Math.floor(Number(d.ExpiredTime) || 0),
                 Bucket: d.Bucket || d.bucket || '',
                 Region: d.Region || d.region || '',
             }
+            console.log('[COS] STS 临时凭据已获取，有效至', new Date(_sts.ExpiredTime * 1000).toISOString())
             return _sts
         }
+        console.warn('[COS] STS 响应缺少凭据字段:', d)
         return null
     } catch (e: any) {
         console.warn('[COS] STS 凭据获取失败（回退永久密钥）:', e?.message || e)
         return null
     }
+}
+
+function createStsCosClient(sts: any) {
+    return new COS({
+        getAuthorization: (_options: any, callback: (auth: any) => void) => {
+            void fetchStsCredential().then((fresh: any) => {
+                const use = fresh || sts
+                if (!use) {
+                    callback({})
+                    return
+                }
+                callback({
+                    TmpSecretId: use.TmpSecretId,
+                    TmpSecretKey: use.TmpSecretKey,
+                    SecurityToken: use.SecurityToken,
+                    ExpiredTime: Math.floor(Number(use.ExpiredTime) || 0),
+                })
+            })
+        },
+        Bucket: sts.Bucket,
+        Region: sts.Region,
+        Timeout: 300000,
+    } as any)
 }
 
 export const getCOS = async (force = false) => {
@@ -56,29 +82,13 @@ export const getCOS = async (force = false) => {
     // 优先 STS 临时凭据
     const sts = await fetchStsCredential()
     if (sts) {
-        _cos = new COS({
-            getAuthorization: (_options: any, callback: (auth: any) => void) => {
-                void fetchStsCredential().then((fresh: any) => {
-                    if (!fresh) {
-                        callback({})
-                        return
-                    }
-                    callback({
-                        TmpSecretId: fresh.TmpSecretId,
-                        TmpSecretKey: fresh.TmpSecretKey,
-                        SecurityToken: fresh.SecurityToken,
-                        ExpiredTime: fresh.ExpiredTime,
-                    })
-                })
-            },
-            Bucket: sts.Bucket,
-            Region: sts.Region,
-            Timeout: 300000,
-        } as any)
+        _cos = createStsCosClient(sts)
         _cosInitTime = now
+        console.log('[COS] 使用 STS 临时凭据模式')
         return _cos
     }
 
+    console.warn('[COS] STS 不可用，回退永久密钥模式')
     if (force || !configStore.cos?.SecretId || (now - _cosInitTime >= COS_TTL_MS)) {
         const { initConfigStoreBasicConfig } = await import('@/store/stores/config')
         await initConfigStoreBasicConfig()
@@ -141,8 +151,6 @@ export async function uploadToCOS({
     entityId?: string | number
     isThumbnail?: boolean
 }) {
-    const cos = await getCOS();
-
     let finalKey = key
     if (!finalKey) {
         finalKey = buildCOSKey({
@@ -156,26 +164,7 @@ export async function uploadToCOS({
     }
 
     try {
-        const res = await cos.uploadFile({
-            Key: String(finalKey),
-            Body: file,
-            Bucket: cos.options.Bucket,
-            Region: cos.options.Region
-        })
-        const url = `https://${res.Location}`
-        registerFileAssetBestEffort({
-            bucket: cos.options.Bucket || '',
-            region: cos.options.Region || '',
-            objectKey: String(finalKey),
-            url,
-            fileName: file.name || 'file',
-            contentType: file.type || '',
-            size: file.size,
-            sourceModule: category || 'uncategorized',
-            category: category || 'uncategorized',
-            metadata: { uploadMode: 'browser-direct' },
-        })
-        return { url, key: finalKey }
+        return await doUpload(finalKey, file)
     } catch (e: any) {
         if (
             e?.statusCode === 403 ||
@@ -183,8 +172,14 @@ export async function uploadToCOS({
             e?.code === 'AccessDenied' ||
             e?.code === 'RequestTimeTooSkewed'
         ) {
-            console.warn('[COS] 凭据已失效或过期，自动清除本地缓存准备重新拉取')
+            console.warn('[COS] 凭据已失效或过期，强制刷新 STS 后重试一次')
             resetCOS()
+            try {
+                return await doUpload(finalKey, file)
+            } catch (e2: any) {
+                console.error('文件上传失败(重试后仍失败):', e2)
+                throw new Error(`COS上传失败: ${e2?.message || e2}`)
+            }
         }
         console.error('文件上传失败:', e)
         const errorMessage = e?.message || e?.toString() || '未知错误'
@@ -196,6 +191,30 @@ export async function uploadToCOS({
             requestId: e?.requestId
         })
         throw new Error(`COS上传失败: ${errorMessage}`)
+    }
+
+    async function doUpload(k: string, f: File) {
+        const cos = await getCOS();
+        const res = await cos.uploadFile({
+            Key: String(k),
+            Body: f,
+            Bucket: cos.options.Bucket,
+            Region: cos.options.Region
+        })
+        const url = `https://${res.Location}`
+        registerFileAssetBestEffort({
+            bucket: cos.options.Bucket || '',
+            region: cos.options.Region || '',
+            objectKey: String(k),
+            url,
+            fileName: f.name || 'file',
+            contentType: f.type || '',
+            size: f.size,
+            sourceModule: category || 'uncategorized',
+            category: category || 'uncategorized',
+            metadata: { uploadMode: 'browser-direct' },
+        })
+        return { url, key: k }
     }
 }
 
