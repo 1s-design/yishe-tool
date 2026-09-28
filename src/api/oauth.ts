@@ -12,11 +12,22 @@ const OAUTH_SCOPE = 'user:read user:write'
 
 /** 获取授权页面 URL */
 function getAuthorizeBaseUrl(): string {
-  const origin = window.location.origin
-  if (origin.includes('localhost')) {
+  const envAdminUrl = String(import.meta.env.VITE_ADMIN_BASE_URL || '').trim().replace(/\/+$/, '')
+  if (envAdminUrl) {
+    return envAdminUrl
+  }
+
+  const { protocol, hostname } = window.location
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:1521'
   }
-  return 'http://admin.1s.design'
+
+  if (hostname.endsWith('1s.design')) {
+    return 'https://admin.1s.design'
+  }
+
+  // 私有部署：默认自适应同主机的 1521 管理端口
+  return `${protocol}//${hostname}:1521`
 }
 
 /** 获取回调地址 */

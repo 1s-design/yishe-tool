@@ -203,7 +203,7 @@ export const getFontById = (id: string) =>
 
 // 解密函数（使用 AES-256-CBC）
 const decryptConfig = (encryptedString: string) => {
-  const SECRET_KEY = "1s";
+  const SECRET_KEY = import.meta.env.VITE_COS_CONFIG_SECRET || "1s";
 
   try {
     // 使用 AES-256-CBC 解密

@@ -4,31 +4,82 @@ import { useConfigStore } from '@/store/stores/config';
 import { saveAs } from 'file-saver';
 import { buildCOSKey, extractCOSFilename, extractCOSObjectKey } from '@/utils/cosPath';
 
-var _cos
+var _cos: any = undefined
+var _cosInitTime = 0
+const COS_TTL_MS = 30 * 60 * 1000 // 30 分钟缓存有效期，支持后端凭据定时轮换
 
-// 上传成功后登记文件存储记录；登记失败不影响原有上传结果。
-const registerFileAssetBestEffort = (payload: Record<string, any>) => {
-    void import('./apiInstance').then(({ apiInstance }) => apiInstance.post('/api/file-asset/register', {
-        provider: 'tencent-cos',
-        sourceApp: '1s',
-        ...payload,
-    })).catch((error: any) => {
-        console.warn('[file-asset] 登记失败，不影响 COS 上传', error?.message || error)
-    })
-}
+// STS 临时凭据（优先），失败回退 configStore 永久密钥
+var _sts: any = null
+const STS_REFRESH_AHEAD_MS = 5 * 60 * 1000
 
 export const resetCOS = () => {
     _cos = undefined
+    _cosInitTime = 0
+    _sts = null
 }
 
-export const getCOS = async () => {
-    let configStore = useConfigStore()
+async function fetchStsCredential(): Promise<any | null> {
+    try {
+        const now = Date.now()
+        if (_sts && (_sts.ExpiredTime || 0) * 1000 - now > STS_REFRESH_AHEAD_MS) {
+            return _sts
+        }
+        const { apiInstance } = await import('./apiInstance')
+        const res = await apiInstance.get('/api/cos/sts', { params: { expireSeconds: 7200 } })
+        const d = res?.data?.data ?? res?.data
+        if (d?.TmpSecretId && d?.TmpSecretKey && d?.SecurityToken && d?.ExpiredTime) {
+            _sts = {
+                TmpSecretId: d.TmpSecretId,
+                TmpSecretKey: d.TmpSecretKey,
+                SecurityToken: d.SecurityToken,
+                ExpiredTime: Number(d.ExpiredTime),
+                Bucket: d.Bucket || d.bucket || '',
+                Region: d.Region || d.region || '',
+            }
+            return _sts
+        }
+        return null
+    } catch (e: any) {
+        console.warn('[COS] STS 凭据获取失败（回退永久密钥）:', e?.message || e)
+        return null
+    }
+}
 
-    if (_cos) {
+export const getCOS = async (force = false) => {
+    let configStore = useConfigStore()
+    const now = Date.now()
+
+    if (_cos && !force && (now - _cosInitTime < COS_TTL_MS)) {
         return _cos
     }
 
-    if (!configStore.cos?.SecretId) {
+    // 优先 STS 临时凭据
+    const sts = await fetchStsCredential()
+    if (sts) {
+        _cos = new COS({
+            getAuthorization: (_options: any, callback: (auth: any) => void) => {
+                void fetchStsCredential().then((fresh: any) => {
+                    if (!fresh) {
+                        callback({})
+                        return
+                    }
+                    callback({
+                        TmpSecretId: fresh.TmpSecretId,
+                        TmpSecretKey: fresh.TmpSecretKey,
+                        SecurityToken: fresh.SecurityToken,
+                        ExpiredTime: fresh.ExpiredTime,
+                    })
+                })
+            },
+            Bucket: sts.Bucket,
+            Region: sts.Region,
+            Timeout: 300000,
+        } as any)
+        _cosInitTime = now
+        return _cos
+    }
+
+    if (force || !configStore.cos?.SecretId || (now - _cosInitTime >= COS_TTL_MS)) {
         const { initConfigStoreBasicConfig } = await import('@/store/stores/config')
         await initConfigStoreBasicConfig()
     }
@@ -42,13 +93,26 @@ export const getCOS = async () => {
         SecretKey: configStore.cos.SecretKey,
         Bucket: configStore.cos.Bucket,
         Region: configStore.cos.Region,
+        Timeout: 300000,
     } as any)
+    _cosInitTime = now
 
     return _cos
 }
 
 
 
+
+// 上传成功后登记文件存储记录；登记失败不影响原有上传结果。
+const registerFileAssetBestEffort = (payload: Record<string, any>) => {
+    void import('./apiInstance').then(({ apiInstance }) => apiInstance.post('/api/file-asset/register', {
+        provider: 'tencent-cos',
+        sourceApp: '1s',
+        ...payload,
+    })).catch((error: any) => {
+        console.warn('[file-asset] 登记失败，不影响 COS 上传', error?.message || error)
+    })
+}
 
 /**
  * 上传文件到 COS
@@ -113,6 +177,15 @@ export async function uploadToCOS({
         })
         return { url, key: finalKey }
     } catch (e: any) {
+        if (
+            e?.statusCode === 403 ||
+            e?.code === 'SignatureDoesNotMatch' ||
+            e?.code === 'AccessDenied' ||
+            e?.code === 'RequestTimeTooSkewed'
+        ) {
+            console.warn('[COS] 凭据已失效或过期，自动清除本地缓存准备重新拉取')
+            resetCOS()
+        }
         console.error('文件上传失败:', e)
         const errorMessage = e?.message || e?.toString() || '未知错误'
         console.error('错误详情:', {
@@ -139,6 +212,15 @@ export async function deleteCOSFile(key) {
             Key: key
         }, function (err, data) {
             if (err) {
+                if (
+                    err?.statusCode === 403 ||
+                    err?.code === 'SignatureDoesNotMatch' ||
+                    err?.code === 'AccessDenied' ||
+                    err?.code === 'RequestTimeTooSkewed'
+                ) {
+                    console.warn('[COS] 删除凭据已失效，清除本地缓存')
+                    resetCOS()
+                }
                 console.error('删除文件失败:', err);
                 reject(err);
             } else {
