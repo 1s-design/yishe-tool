@@ -528,7 +528,7 @@ function handleStickerImgClick() {
   height: 36px;
   border-radius: 50%;
   transition: all 0.2s ease;
-  box-shadow: var(--1s-shadow-sm);
+  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -538,13 +538,13 @@ function handleStickerImgClick() {
   &:hover {
     background: var(--1s-hover-background);
     border-color: var(--1s-border-color-strong);
-    transform: scale(1.05);
+    
     box-shadow: var(--1s-shadow-md);
   }
 
   &:active {
     transform: scale(0.95);
-    box-shadow: var(--1s-shadow-xs);
+    
   }
 }
 

@@ -340,7 +340,7 @@ function handleEditSuccess() {
 
 .knowledge-card:hover {
   border-color: var(--1s-accent-color);
-  box-shadow: var(--1s-shadow-sm);
+  
 }
 
 .card-header {

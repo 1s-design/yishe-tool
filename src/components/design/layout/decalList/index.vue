@@ -114,7 +114,7 @@ const decals = computed(() => {
   height: 108px;
   width: 108px;
   flex-shrink: 0;
-  box-shadow: var(--1s-shadow-sm);
+  
   background-color: var(--1s-control-surface-background);
   border-radius: 8px;
   border: 2px solid var(--1s-control-border-color);

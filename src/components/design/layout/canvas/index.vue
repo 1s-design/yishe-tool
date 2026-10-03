@@ -671,7 +671,7 @@ function genSticker() {
   backdrop-filter: blur(var(--1s-blur-sm));
   color: var(--1s-text-color);
   border: 1px solid var(--1s-border-color);
-  box-shadow: var(--1s-shadow-sm);
+  
   cursor: pointer;
   transition:
     background-color var(--1s-transition-base),
@@ -687,7 +687,7 @@ function genSticker() {
   }
 
   &:active {
-    transform: translateY(0);
+    
   }
 }
 
@@ -823,7 +823,7 @@ body.designiy-dark .canvas-action-button--primary {
     &:hover {
       background: rgba(239, 68, 68, 0.1);
       border-color: rgba(239, 68, 68, 0.4);
-      transform: scale(1.05);
+      
     }
   }
 

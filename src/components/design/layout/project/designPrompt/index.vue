@@ -175,7 +175,7 @@
               v-model="formData.content"
               rows="5"
               placeholder="输入完整的 Prompt 描述文本..."
-              class="flex w-full rounded-xl border border-[var(--1s-border-color)] bg-[var(--1s-control-surface-muted)] px-3 py-2 text-xs text-[var(--1s-text-color)] placeholder:text-[var(--1s-text-color-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--1s-accent-color)]"
+              class="flex w-full rounded-lg border border-[var(--1s-border-color)] bg-[var(--1s-control-surface-muted)] px-3 py-2 text-xs text-[var(--1s-text-color)] placeholder:text-[var(--1s-text-color-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--1s-accent-color)]"
             ></textarea>
           </div>
         </div>

@@ -191,7 +191,7 @@
 
   <!-- 创作资源弹层 (基于 shadcn-vue Dialog) -->
   <Dialog :modal="false" v-model:open="menuState.showProject">
-    <DialogContent class="max-w-[94vw] w-[94vw] h-[88vh] max-h-[88vh] p-0 overflow-hidden flex flex-col rounded-2xl border-[var(--1s-border-color)] bg-[var(--1s-surface-background)] shadow-2xl">
+    <DialogContent class="max-w-[94vw] w-[94vw] h-[88vh] max-h-[88vh] p-0 overflow-hidden flex flex-col rounded-lg border-[var(--1s-border-color)] bg-[var(--1s-surface-background)] shadow-2xl">
       <DialogHeader class="px-5 py-3 border-b border-[var(--1s-divider-color)] flex flex-row items-center justify-between space-y-0">
         <div class="flex items-center gap-2">
           <Sparkles class="h-4 w-4 text-[var(--1s-accent-color)]" />
@@ -715,7 +715,7 @@ async function initAction() {
   border: 1px solid var(--1s-border-color);
   border-radius: var(--1s-radius-sm);
   background: var(--1s-elevated-background);
-  box-shadow: var(--1s-shadow-sm);
+  
   overflow: hidden;
 }
 

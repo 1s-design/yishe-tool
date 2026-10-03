@@ -43,6 +43,7 @@ import {
   getIncompleteDeliveryActions,
   getPlanProgress,
   isModificationRequest,
+  isPureTextResponse,
   settlePlanStep,
   shouldAllowCanvasAnalysis,
   shouldContinueAfterArtwork,
@@ -1151,8 +1152,13 @@ async function runAgentLoop(
     return;
   }
 
+  // 纯文字回复（闲聊/自我介绍等）：不建计划、不传工具，直接让 LLM 回复
+  const isPureText = isPureTextResponse(userMessage);
+
   // 1. 本地生成可执行计划，避免额外的 Planner 模型请求。
-  const executionPlan = buildExecutionPlan(userMessage, taskSpec);
+  const executionPlan = isPureText
+    ? { plan: null, isNewDesign: false, shouldPreflightSize: false, explicitCanvasSize: null, typographyDensity: "balanced" as const, searchQueries: { styles: [], fonts: [], sentences: [] }, perOutputCanvasSize: false }
+    : buildExecutionPlan(userMessage, taskSpec);
   const requiresImageGroupDelivery = taskSpec.createImageGroup;
   let canvasSizeReadyForArtwork = !executionPlan.isNewDesign;
   if (executionPlan.isNewDesign) {
@@ -1243,13 +1249,17 @@ async function runAgentLoop(
     ...excludedPreflightOperations,
     ...(!allowCanvasAnalysis ? CANVAS_ANALYSIS_OPERATIONS : []),
   ];
-  const allTools = buildAITools({
-    includeResources: true,
-    resourceTools: resourceService.tools,
-    includeInteractions: allowInteraction,
-    excludeOperations,
-    compactPresetShortcuts: true,
-  });
+  // 纯文字回复或无设计计划时，不传工具定义，避免 LLM 看到工具就调用
+  const planIsEmpty = !plan || plan.steps.length === 0;
+  const allTools = (isPureText || planIsEmpty)
+    ? []
+    : buildAITools({
+        includeResources: true,
+        resourceTools: resourceService.tools,
+        includeInteractions: allowInteraction,
+        excludeOperations,
+        compactPresetShortcuts: true,
+      });
 
   const needsDesignKnowledge = !referenceImage;
 
@@ -1445,7 +1455,7 @@ async function runAgentLoop(
       })), null, 2));
       response = await directChat({
         messages: finalMessages,
-        tools: allTools,
+        tools: allTools.length > 0 ? allTools : undefined,
         maxTokens: referenceImage ? 4096 : undefined,
         temperature: referenceImage ? 0.4 : undefined,
         timeoutMs: AI_TIMEOUTS.chat,

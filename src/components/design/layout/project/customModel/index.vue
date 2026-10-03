@@ -315,7 +315,7 @@ function editInWorkspace(item) {
   white-space: nowrap;
   z-index: 10;
   border: 1px solid rgba(245, 158, 11, 0.28);
-  box-shadow: var(--1s-shadow-sm);
+  
 }
 
 .draft-modal-content {
@@ -334,7 +334,7 @@ function editInWorkspace(item) {
     overflow: hidden;
     transition: all 0.3s ease;
     background: var(--1s-surface-background);
-    box-shadow: var(--1s-shadow-sm);
+    
     display: flex;
     flex-direction: column;
     height: fit-content;
@@ -355,7 +355,7 @@ function editInWorkspace(item) {
       background: var(--1s-control-surface-muted);
       
       &:hover {
-        transform: scale(1.02);
+        
       }
     }
   }

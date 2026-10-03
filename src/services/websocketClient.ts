@@ -816,13 +816,18 @@ async function handleRemoteCommand(data: any) {
         }
         result.success = true;
         result.phase = "completed";
-        // 提取 Agent 最后的回复
+        // 提取 Agent 最后的回复（只统计当前请求的工具调用）
         const msgs = designAgent.state.messages;
-        const lastAssistant = [...msgs]
+        const lastUserIdx = [...msgs]
+          .map((m, i) => ({ m, i }))
+          .filter(({ m }) => m.role === "user")
+          .pop()?.i ?? -1;
+        const currentMsgs = msgs.slice(lastUserIdx + 1);
+        const lastAssistant = [...currentMsgs]
           .reverse()
           .find((m: any) => m.role === "assistant" && m.content);
         result.agentResponse = lastAssistant?.content || "";
-        result.toolCallsCount = msgs.filter(
+        result.toolCallsCount = currentMsgs.filter(
           (m: any) => m.role === "tool",
         ).length;
 
@@ -837,9 +842,13 @@ async function handleRemoteCommand(data: any) {
           stickersCount?: number;
         }> = [];
 
-        for (const m of msgs) {
-          if (m.role === "tool" && (m.meta as any)?.toolResult) {
-            const tr = (m.meta as any).toolResult;
+        for (const m of currentMsgs) {
+          if (m.role === "tool") {
+            // 从 meta.toolResult 或 content JSON 中提取保存结果
+            let tr = (m.meta as any)?.toolResult;
+            if (!tr && typeof m.content === "string") {
+              try { tr = JSON.parse(m.content); } catch {}
+            }
             if (tr?.success && tr?.data) {
               if (tr.data.customStickerId || tr.data.url) {
                 outputs.push({

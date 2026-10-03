@@ -29,7 +29,7 @@
               <!-- 单图设计 -->
               <button
                 type="button"
-                class="flex flex-col items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+                class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
                 :class="
                   config.outputKind === 'independent-batch'
                     ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10'
@@ -80,7 +80,7 @@
               <!-- 系列组图 -->
               <button
                 type="button"
-                class="flex flex-col items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+                class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
                 :class="
                   config.outputKind === 'group'
                     ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10'
@@ -134,7 +134,7 @@
           <!-- 单图模式下的数量设置 -->
           <div
             v-if="config.outputKind === 'independent-batch'"
-            class="space-y-2 rounded-xl border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200"
+            class="space-y-2 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200"
           >
             <div class="flex items-center justify-between">
               <div class="font-bold text-foreground text-xs flex items-center gap-1.5">
@@ -165,7 +165,7 @@
           <!-- 组图模式下的张数与套数设置 -->
           <div
             v-if="config.outputKind === 'group'"
-            class="space-y-2.5 rounded-xl border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200"
+            class="space-y-2.5 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200"
           >
             <div class="flex items-center justify-between">
               <div class="font-bold text-foreground text-xs flex items-center gap-1.5">
@@ -263,6 +263,22 @@
             </div>
             <span class="text-[10px] text-muted-foreground">开启后可提升出图精度</span>
           </div>
+
+          <!-- 6. 保持当前画布尺寸 -->
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-border/50">
+            <div class="flex items-center gap-2">
+              <input
+                id="preserve-size"
+                v-model="config.preserveCanvasSize"
+                type="checkbox"
+                class="accent-primary h-3.5 w-3.5 rounded cursor-pointer"
+              />
+              <label for="preserve-size" class="text-xs font-medium text-foreground cursor-pointer">
+                保持当前画布尺寸不变
+              </label>
+            </div>
+            <span class="text-[10px] text-muted-foreground">AI 不会修改画布宽高</span>
+          </div>
         </div>
 
         <DialogFooter class="flex items-center justify-between gap-2 pt-2 border-t border-border/70">
@@ -321,7 +337,7 @@
 
         <div class="space-y-3.5 py-1 text-xs">
           <!-- 进度条与统计 -->
-          <div class="space-y-1.5 bg-muted/20 p-3 rounded-xl border border-border/60">
+          <div class="space-y-1.5 bg-muted/20 p-3 rounded-lg border border-border/60">
             <div class="flex items-center justify-between text-xs font-medium">
               <span class="text-muted-foreground">整体生产进度</span>
               <span class="font-bold text-foreground font-mono">
@@ -593,6 +609,7 @@ const config = reactive<AutoBatchConfig>({
   membersPerGroup: 2,
   customInstructions: "",
   enableAnalysisOptimization: false,
+  preserveCanvasSize: true,
 });
 
 const currentFormatLabel = computed(() => {
@@ -629,6 +646,7 @@ function handleResetConfig() {
   config.membersPerGroup = 2;
   config.customInstructions = "";
   config.enableAnalysisOptimization = false;
+  config.preserveCanvasSize = true;
 }
 
 const now = useNow({ interval: 1000 });

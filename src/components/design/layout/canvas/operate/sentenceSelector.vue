@@ -182,7 +182,7 @@ onMounted(() => {
 .sentence-selector {
   .sentence-item {
     &:hover {
-      transform: translateY(-1px);
+      
     }
   }
 }

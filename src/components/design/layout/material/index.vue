@@ -307,7 +307,7 @@ watch(() => currentModelController.value, (controller) => {
   transition: transform 0.2s ease;
 
   &:hover {
-    transform: scale(1.05);
+    
   }
 }
 

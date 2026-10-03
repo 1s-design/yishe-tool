@@ -88,7 +88,7 @@ export async function renderCurrentCanvasNow(
     throw new Error("画布控制器未初始化");
   }
 
-  const timeoutMs = options.timeoutMs ?? 15_000;
+  const timeoutMs = options.timeoutMs ?? 30_000;
 
   await nextTick();
   await waitForAnimationFrame();

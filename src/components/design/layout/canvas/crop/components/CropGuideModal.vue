@@ -184,23 +184,49 @@
               </div>
             </div>
 
-            <!-- 最优比例推荐 -->
+            <!-- 最优比例推荐（几何平均数算法） -->
             <div
-              v-if="optimalCanvasRatio && optimalSafeAreaRatio && currentSafeAreaRatio"
+              v-if="optimalLayout"
               class="crop-guide-modal__section"
             >
               <div class="crop-guide-modal__section-title">最优画布比例</div>
-              <div
-                class="crop-guide-modal__optimal"
-                :class="{ 'is-optimal': isUsingOptimalRatio }"
-              >
+              <div class="crop-guide-modal__optimal">
                 <div class="crop-guide-modal__optimal-header">
                   <div class="crop-guide-modal__optimal-ratio">{{ optimalRatioText }}</div>
                   <div v-if="isUsingOptimalRatio" class="crop-guide-modal__optimal-badge">
                     当前
                   </div>
                 </div>
-                <div class="crop-guide-modal__optimal-stats">
+
+                <!-- 安全区详情 -->
+                <div class="crop-guide-modal__safearea-grid">
+                  <div class="crop-guide-modal__safearea-item">
+                    <span class="crop-guide-modal__safearea-label">安全区覆盖率</span>
+                    <span class="crop-guide-modal__safearea-value highlight">
+                      {{ (safeAreaCoverage * 100).toFixed(1) }}%
+                    </span>
+                  </div>
+                  <div class="crop-guide-modal__safearea-item">
+                    <span class="crop-guide-modal__safearea-label">安全区比例</span>
+                    <span class="crop-guide-modal__safearea-value">
+                      {{ safeAreaAspect ? safeAreaAspect.toFixed(4) : '' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- 归一化坐标 -->
+                <div class="crop-guide-modal__norm-coords">
+                  <div class="crop-guide-modal__norm-title">安全区归一化坐标</div>
+                  <div class="crop-guide-modal__norm-values">
+                    <span>x: {{ safeAreaNormalized.x.toFixed(4) }}</span>
+                    <span>y: {{ safeAreaNormalized.y.toFixed(4) }}</span>
+                    <span>w: {{ safeAreaNormalized.width.toFixed(4) }}</span>
+                    <span>h: {{ safeAreaNormalized.height.toFixed(4) }}</span>
+                  </div>
+                </div>
+
+                <!-- 当前 vs 最优对比 -->
+                <div class="crop-guide-modal__optimal-stats" v-if="currentSafeAreaRatio">
                   <div class="crop-guide-modal__optimal-stat">
                     <span class="crop-guide-modal__optimal-label">当前安全区</span>
                     <span class="crop-guide-modal__optimal-value">
@@ -211,10 +237,11 @@
                   <div class="crop-guide-modal__optimal-stat">
                     <span class="crop-guide-modal__optimal-label">最优安全区</span>
                     <span class="crop-guide-modal__optimal-value optimal">
-                      {{ (optimalSafeAreaRatio * 100).toFixed(1) }}%
+                      {{ (safeAreaCoverage * 100).toFixed(1) }}%
                     </span>
                   </div>
                 </div>
+
                 <Button
                   v-if="!isUsingOptimalRatio"
                   variant="default"
@@ -391,6 +418,10 @@ import {
   currentMixedSafeZone,
   recommendedCanvasSize,
   activeCropRegions,
+  optimalLayout,
+  safeAreaNormalized,
+  safeAreaCoverage,
+  safeAreaAspect,
 } from '../store'
 import { canvasStickerOptionsOnlyChild, canvasStickerOptions } from '../../index'
 import type { CropPreset } from '../types'
@@ -605,6 +636,21 @@ function initCanvasSizeInput() {
 watch(showCropGuideModal, (val) => {
   if (val) initCanvasSizeInput()
 })
+
+// 画布尺寸外部变化时同步到输入框（实时更新）
+watch(
+  () => {
+    const canvasChild = canvasStickerOptionsOnlyChild.value
+    return canvasChild ? [canvasChild.width.value, canvasChild.height.value] : null
+  },
+  ([w, h]) => {
+    if (w && h && w > 0 && h > 0) {
+      canvasWidthInput.value = w
+      canvasHeightInput.value = h
+    }
+  },
+  { immediate: true }
+)
 
 // 画布尺寸变化时应用到实际画布
 function onCanvasSizeChange() {
@@ -959,6 +1005,62 @@ function getCropFrameStyle(item: { guide: any; preset: any; region: any }): CSSP
   padding: 2px 8px;
   border-radius: var(--1s-radius-pill, 10px);
   font-weight: 600;
+}
+
+/* 安全区详情网格 */
+.crop-guide-modal__safearea-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.crop-guide-modal__safearea-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px;
+  background: var(--1s-control-surface-muted);
+  border-radius: var(--1s-radius-sm);
+}
+
+.crop-guide-modal__safearea-label {
+  font-size: 10px;
+  color: var(--1s-text-color-tertiary);
+}
+
+.crop-guide-modal__safearea-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--1s-text-color);
+  font-family: var(--1s-font-family-mono, monospace);
+
+  &.highlight {
+    color: var(--1s-accent-color);
+  }
+}
+
+/* 归一化坐标 */
+.crop-guide-modal__norm-coords {
+  padding: 8px 10px;
+  background: var(--1s-control-surface-muted);
+  border-radius: var(--1s-radius-sm);
+  margin-bottom: 12px;
+}
+
+.crop-guide-modal__norm-title {
+  font-size: 10px;
+  color: var(--1s-text-color-tertiary);
+  margin-bottom: 4px;
+}
+
+.crop-guide-modal__norm-values {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  font-family: var(--1s-font-family-mono, monospace);
+  color: var(--1s-text-color-secondary);
 }
 
 .crop-guide-modal__optimal-stats {

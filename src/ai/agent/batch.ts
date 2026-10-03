@@ -31,6 +31,8 @@ export interface AutoBatchConfig {
   style?: string;
   width?: number;
   height?: number;
+  /** 保持当前画布尺寸，不修改 */
+  preserveCanvasSize?: boolean;
   transparentBackground?: boolean;
   qualityThreshold?: number;
   maxRevisions?: number;
@@ -43,6 +45,8 @@ export interface StickerBrief {
   prompt: string;
   width: number;
   height: number;
+  /** 保持当前画布尺寸，不修改 */
+  preserveCanvasSize?: boolean;
   transparentBackground: boolean;
   resourceHints: string[];
   saveName: string;
@@ -121,6 +125,7 @@ interface NormalizedBatchConfig {
   customInstructions: string;
   width?: number;
   height?: number;
+  preserveCanvasSize: boolean;
   transparentBackground: boolean;
   enableAnalysisOptimization: boolean;
   qualityThreshold: number;
@@ -248,6 +253,7 @@ function normalizeConfig(config: AutoBatchConfig): NormalizedBatchConfig {
     customInstructions: String(config.customInstructions || "").trim(),
     width: getOptionalSize(config.width, explicitSize?.width),
     height: getOptionalSize(config.height, explicitSize?.height),
+    preserveCanvasSize: Boolean(config.preserveCanvasSize),
     transparentBackground:
       Boolean(config.transparentBackground) ||
       shouldUseStickerBackground(description),
@@ -378,7 +384,7 @@ async function generateBriefs(
 - ${outputInstruction}
 - 输出必须正好为 ${totalDesignCount} 项；如果用户文本里出现其他数量，以结构化配置为准。
 - 从用户完整提示词里理解尺寸、风格、题材、是否透明、是否保存、质量要求等，不要依赖额外表单字段。
-- 如果用户没有指定尺寸，默认使用 1024x1024。
+- ${config.preserveCanvasSize ? "用户要求保持当前画布尺寸，brief 中不要指定 width/height 字段。" : "如果用户没有指定尺寸，默认使用 1024x1024。"}
 ${
   config.outputKind === "group"
     ? "- 【组图极高优先级规约】：对于套图/组图任务，同组的所有成员必须使用 100% 相同的背景色彩、边框阴影、字号规范与视觉主题，绝对不要为同一组内的不同成员改变视觉风格或色彩风格。"
@@ -396,7 +402,7 @@ ${
 ${config.description || config.style || "自由发挥"}
 
 默认参数（仅在提示词没有说明时使用）：
-- 尺寸：${config.width && config.height ? `${config.width}x${config.height}` : "1024x1024"}
+- 尺寸：${config.preserveCanvasSize ? "保持当前画布尺寸不变，brief 中不要指定 width/height" : (config.width && config.height ? `${config.width}x${config.height}` : "1024x1024")}
 - 背景：${config.transparentBackground ? "适合贴纸、透明/白边/抠边优先" : "按提示词自由处理"}
 - 分析优化：${config.enableAnalysisOptimization ? `开启，质量目标 ${config.qualityThreshold}/10` : "关闭，生成完成后直接保存"}
 - 输出结构：${outputInstruction}
@@ -590,9 +596,9 @@ function normalizeBrief(
   const keywords = asStringArray(raw?.keywords);
   const resourceHints = asStringArray(raw?.resourceHints || raw?.resources);
   const width =
-    getOptionalSize(raw?.width, raw?.size?.width, config.width) || 1024;
+    getOptionalSize(raw?.width, raw?.size?.width, config.width) || (config.preserveCanvasSize ? 0 : 1024);
   const height =
-    getOptionalSize(raw?.height, raw?.size?.height, config.height) || 1024;
+    getOptionalSize(raw?.height, raw?.size?.height, config.height) || (config.preserveCanvasSize ? 0 : 1024);
   const transparentBackground =
     typeof raw?.transparentBackground === "boolean"
       ? raw.transparentBackground
@@ -603,6 +609,7 @@ function normalizeBrief(
     prompt,
     width,
     height,
+    preserveCanvasSize: config.preserveCanvasSize,
     transparentBackground,
     resourceHints,
     saveName: truncateText(raw?.saveName || title, 30),
@@ -735,12 +742,16 @@ function buildDesignPrompt(
 
   const groupContext =
     config?.outputKind === "group"
-      ? `这是第 ${brief.groupIndex + 1} 套组图的第 ${brief.memberIndex + 1}/${config.membersPerGroup} 个成员。【组图视觉一致性极高要求】：同组内所有成员必须使用完全相同的画布尺寸（${brief.width}x${brief.height}）、完全相同的背景色彩/渐变/红纸底色、完全相同的字体和边框边距，严禁自由发挥替换颜色或更换排版风格！请仅替换核心文字文案或主画面主体内容。`
+      ? `这是第 ${brief.groupIndex + 1} 套组图的第 ${brief.memberIndex + 1}/${config.membersPerGroup} 个成员。【组图视觉一致性极高要求】：同组内所有成员必须${brief.preserveCanvasSize ? '保持当前画布尺寸不变' : `使用完全相同的画布尺寸（${brief.width}x${brief.height}）`}、完全相同的背景色彩/渐变/红纸底色、完全相同的字体和边框边距，严禁自由发挥替换颜色或更换排版风格！请仅替换核心文字文案或主画面主体内容。`
       : "这是一个独立设计，不要与其他结果合并为组图。";
+
+  const sizeInstruction = brief.preserveCanvasSize
+    ? `尺寸：保持当前画布尺寸不变。【严格禁止】调用 canvas.setSize 或任何修改画布尺寸的操作。`
+    : `尺寸：${brief.width}x${brief.height}`;
 
   return `制作第 ${index + 1} 张设计。
 
-尺寸：${brief.width}x${brief.height}
+${sizeInstruction}
 ${brief.transparentBackground ? "背景要求：适合贴纸使用，可以做透明感、白边或便于抠边的主体。" : "背景要求：按设计效果自由处理。"}
 主题：${brief.title}
 需求：${brief.prompt}

@@ -300,7 +300,7 @@ function confirmExitEditMode() {
   height: 100%;
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 8px 0 0;
   min-width: 0;
   background: var(--1s-surface-background);
   color: var(--1s-text-color);

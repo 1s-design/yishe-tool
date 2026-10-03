@@ -136,10 +136,18 @@ export async function htmlToPngFile(html, name = '') {
 
 
 export const canvasToFile = (canvas: HTMLCanvasElement, name = 'canvas.png'): Promise<File> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+        if (!canvas || canvas.width === 0 || canvas.height === 0) {
+            reject(new Error('画布为空或尺寸为 0，无法导出图片'))
+            return
+        }
         canvas.toBlob((blob) => {
-            resolve(new File([blob], name, { type: 'image/png' }));
-        }, 'image/png');
+            if (!blob || blob.size === 0) {
+                reject(new Error('画布导出失败：toBlob 返回空数据'))
+                return
+            }
+            resolve(new File([blob], name, { type: 'image/png' }))
+        }, 'image/png')
     });
 }
 

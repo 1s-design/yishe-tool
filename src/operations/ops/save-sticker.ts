@@ -411,8 +411,9 @@ registerOperation({
       }
 
       const provenance = getAgentDesignProvenance(canvasStickerOptions.value);
+      // 只有完全无元数据时才走 AI 生成（耗时操作）；有 name 就用快速 fallback
       const needGenerate =
-        (!name || !description || !keywords) &&
+        !name &&
         (!!autoGenerateMeta || provenance?.source === "ai-agent");
       const promptMetaPromise =
         needGenerate && provenance
@@ -422,7 +423,7 @@ registerOperation({
             )
           : null;
 
-      await renderCurrentCanvasNow({ timeoutMs: AI_TIMEOUTS.batchSave });
+      await renderCurrentCanvasNow({ timeoutMs: 30_000 });
 
       const postRenderValidationError = validateCanvasBeforeSave();
       if (postRenderValidationError) {
@@ -432,8 +433,14 @@ registerOperation({
       let metadataGenerationSource = "provided";
       if (needGenerate) {
         const generatedMeta = promptMetaPromise
-          ? await promptMetaPromise
-          : await generateStickerMetaFromCanvas();
+          ? await Promise.race([
+              promptMetaPromise,
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000)),
+            ])
+          : await Promise.race([
+              generateStickerMetaFromCanvas(),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000)),
+            ]);
         if (generatedMeta) {
           name = name || generatedMeta.name;
           description = description || generatedMeta.description;
@@ -457,23 +464,48 @@ registerOperation({
       }
 
       let file: File;
+      const uniqueFileName = `sticker_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
       if (autoTrim) {
         const trimmedCanvas = Utils.trimCanvas(canvasEl);
-        file = await canvasToFile(trimmedCanvas);
+        file = await canvasToFile(trimmedCanvas, uniqueFileName);
       } else {
-        file = await canvasToFile(canvasEl);
+        file = await canvasToFile(canvasEl, uniqueFileName);
+      }
+
+      // 验证文件有效性
+      if (!file || file.size < 100) {
+        return { success: false, message: `画布导出文件异常（大小: ${file?.size ?? 0} bytes），已阻止保存` };
       }
 
       finishLibraryUpload = beginLibraryUpload();
-      const cos = await uploadToCOS({
-        file,
-        category: "custom-sticker",
-        account:
-          loginStore.userInfo?.account ||
-          loginStore.userInfo?.name ||
-          undefined,
-        userId: loginStore.userInfo?.id,
-      });
+      const cos = await Promise.race([
+        uploadToCOS({
+          file,
+          category: "custom-sticker",
+          account:
+            loginStore.userInfo?.account ||
+            loginStore.userInfo?.name ||
+            undefined,
+          userId: loginStore.userInfo?.id,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("COS 上传超时 (30s)")), 30_000),
+        ),
+      ]);
+
+      // 验证上传结果：检查 URL 是否可达
+      if (!cos?.url) {
+        return { success: false, message: "COS 上传未返回有效 URL" };
+      }
+      try {
+        const headResp = await fetch(cos.url, { method: "HEAD" });
+        if (!headResp.ok) {
+          return { success: false, message: `上传验证失败：文件不可访问 (${headResp.status})` };
+        }
+      } catch (verifyErr: any) {
+        // HEAD 请求可能因 CORS 失败，不阻断保存但记录警告
+        console.warn("[SaveSticker] 上传验证 HEAD 请求失败（可能为 CORS）:", verifyErr?.message);
+      }
 
       const canvasData = JSON.parse(JSON.stringify(canvasStickerOptions.value));
       const stickerMeta = buildStickerRecordMeta(canvasData, provenance);
@@ -490,9 +522,14 @@ registerOperation({
         folderId: folderId ?? currentEditingCustomStickerFolderId.value ?? null,
         meta: stickerMeta,
       };
-      const savedRecord: any = editingCustomStickerId
-        ? await updateCustomSticker(String(editingCustomStickerId), payload)
-        : await createCustomSticker(payload);
+      const savedRecord: any = await Promise.race([
+        editingCustomStickerId
+          ? updateCustomSticker(String(editingCustomStickerId), payload)
+          : createCustomSticker(payload),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("保存到贴纸库超时 (15s)")), 15_000),
+        ),
+      ]);
       const customStickerId = String(savedRecord?.id || editingCustomStickerId || "").trim();
       if (!customStickerId) throw new Error("自定义贴纸已上传，但服务端未返回 customStickerId");
       currentEditingCustomStickerId.value = customStickerId;

@@ -847,7 +847,7 @@ function getLightTypeLabel(type: string) {
 .three-scene-asset-card.is-active {
     border-color: var(--1s-accent-color);
     box-shadow: 0 6px 18px rgba(64, 158, 255, 0.14);
-    transform: translateY(-1px);
+    
 }
 
 .three-scene-asset-card.is-active {

@@ -95,6 +95,33 @@ export function shouldAllowCanvasAnalysis(
   return analysisIntent.test(text) && !deniedAnalysisIntent.test(text);
 }
 
+/**
+ * 检测是否为纯文字回复需求（不需要任何工具/画布操作）
+ * 
+ * 命中时 Agent 不应传入工具定义，避免 LLM 看到工具就调用
+ */
+export function isPureTextResponse(userMessage: string): boolean {
+  const text = String(userMessage || "").trim();
+  if (!text) return false;
+
+  // 明确要求只回复文字/不要调用工具（排除"不要调用保存工具"这类特定工具限制）
+  const explicitTextOnly =
+    /请(?:只)?(?:回复|回|说|回答)(?:一句|一下|一句话|一句号)|不要(?:调用|使用|执行)(?:任何|所有)?工具|不要(?:修改|改动|更改|调整)(?:任何)?(?:画布|设计|排版|布局|元素)|只(?:回复|回|说)(?:文字|文本)|no\s+(?:tool|canvas)/i;
+  if (explicitTextOnly.test(text)) return true;
+
+  // 简单问候/寒暄
+  const greeting =
+    /^(?:你好|您好|哈喽|hello|hi|hey|嗨|早上好|下午好|晚上好|在吗|在不在)[!！。.？?\s]*$/i;
+  if (greeting.test(text)) return true;
+
+  // 询问身份/能力/用法/自我介绍（不涉及设计操作）
+  const aboutMe =
+    /(?:你是谁|你是什么|你是什么模型|你是什么AI|介绍(?:一下)?(?:你|您)?(?:自己)?|自我介绍|你能(?:做什么|干嘛|干什么)|你有(?:什么|哪些)(?:能力|功能)|怎么(?:使用|用|操作)(?:你|这个)|你的(?:能力|功能|用法)|what\s+can\s+you\s+do|who\s+are\s+you)/i;
+  if (aboutMe.test(text)) return true;
+
+  return false;
+}
+
 export function shouldContinueAfterArtwork(
   userMessage: string,
   task?: ResolvedAgentTaskSpec,
@@ -499,11 +526,13 @@ export function buildExecutionPlan(
     /保存|save/i,
     /(不要|不用|无需|别|禁止|不需要).{0,12}(保存|save)/i,
   );
+  const deniedSave = /(不要|不用|无需|别|禁止|不需要).{0,12}(保存|save)/i.test(userMessage);
   const explicitExport = hasPositiveCommandIntent(
     userMessage,
     /导出|export/i,
     /(不要|不用|无需|别|禁止|不需要).{0,12}(导出|export)/i,
   );
+  const deniedExport = /(不要|不用|无需|别|禁止|不需要).{0,12}(导出|export)/i.test(userMessage);
   const hasResourceStep = steps.some((step) =>
     REUSABLE_ACTIONS.has(step.action),
   );
@@ -521,11 +550,12 @@ export function buildExecutionPlan(
     if (
       !imageGroupRequest &&
       !independentBatchRequest &&
+      !deniedSave &&
       (explicitSave || (task?.delivery === "save" && Boolean(artworkAction)))
     ) {
       steps.push(createStep("canvas.updateAndSaveSticker", "保存当前设计"));
     }
-    if (explicitExport || (task?.delivery === "export" && Boolean(artworkAction))) {
+    if (!deniedExport && (explicitExport || (task?.delivery === "export" && Boolean(artworkAction)))) {
       steps.push(createStep("canvas.exportPng", "导出当前设计"));
     }
   }

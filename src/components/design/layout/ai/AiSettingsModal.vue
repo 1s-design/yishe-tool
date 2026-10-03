@@ -19,7 +19,7 @@
             <!-- 服务端代理 -->
             <button
               type="button"
-              class="flex flex-col items-start gap-2 p-3 rounded-xl border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+              class="flex flex-col items-start gap-2 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
               :class="form.mode === 'proxy' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="form.mode = 'proxy'"
             >
@@ -35,7 +35,7 @@
                   <Zap class="h-3.5 w-3.5" />
                 </div>
                 <span class="text-xs" :class="form.mode === 'proxy' ? 'font-bold text-foreground' : 'font-medium'">服务端代理</span>
-                <span class="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">推荐</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">推荐</span>
               </div>
               <div class="text-[10px] text-muted-foreground leading-tight">
                 后端安全中转，专线加速，无需配置跨域与本地 API Key。
@@ -45,7 +45,7 @@
             <!-- 前端直连 -->
             <button
               type="button"
-              class="flex flex-col items-start gap-2 p-3 rounded-xl border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+              class="flex flex-col items-start gap-2 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
               :class="form.mode === 'direct' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="form.mode = 'direct'"
             >
@@ -70,7 +70,7 @@
         </div>
 
         <!-- 2. 直连模式专属配置 (当开启直连时高亮展开) -->
-        <div v-if="form.mode === 'direct'" class="space-y-3 rounded-xl border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3.5 animate-in fade-in-50 duration-200">
+        <div v-if="form.mode === 'direct'" class="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3.5 animate-in fade-in-50 duration-200">
           <div class="flex items-center justify-between">
             <span class="font-bold text-foreground text-xs">直连凭证来源</span>
             <div class="flex items-center gap-1.5">
@@ -136,7 +136,7 @@
         </div>
 
         <!-- 3. 连通性测试区 -->
-        <div class="rounded-xl border border-border/70 bg-card p-3 space-y-2">
+        <div class="rounded-lg border border-border/70 bg-card p-3 space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-medium text-foreground text-xs">网络连通性诊断</span>
             <Button

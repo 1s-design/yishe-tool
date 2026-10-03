@@ -7,7 +7,7 @@
 import { ref, computed, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import type { CropPreset, CropGuide, CropRegion, SafeZone } from './types'
-import { calculateCropRegion, calculateSafeZone, findOptimalCanvasRatio, calculateSafeAreaRatio, calculatePresetCropRegion, calculateMixedSafeZone, findOptimalCanvasSizeMixed, formatRatioAsText } from './engine'
+import { calculateCropRegion, calculateSafeZone, findOptimalCanvasRatio, calculateSafeAreaRatio, calculatePresetCropRegion, calculateMixedSafeZone, findOptimalCanvasSizeMixed, formatRatioAsText, calculateLayout } from './engine'
 import { canvasStickerOptionsOnlyChild } from '../index'
 import { DEFAULT_CROP_PRESETS } from './presets'
 
@@ -209,6 +209,37 @@ export const optimalRatioText = computed(() => {
   const ratio = optimalCanvasRatio.value
   if (!ratio) return ''
   return formatRatioAsText(ratio)
+})
+
+// -- Computed: 几何平均数布局计算（完整结果）--
+export const optimalLayout = computed(() => {
+  const ratios = activeTargetRatios.value
+  if (ratios.length < 2) return null
+  try {
+    return calculateLayout(ratios)
+  } catch {
+    return null
+  }
+})
+
+// -- Computed: 最佳画布比例（几何平均数）--
+export const optimalCanvasRatioGeometric = computed(() => {
+  return optimalLayout.value?.canvasRatio ?? null
+})
+
+// -- Computed: 安全区归一化坐标 --
+export const safeAreaNormalized = computed(() => {
+  return optimalLayout.value?.safeArea ?? null
+})
+
+// -- Computed: 安全区覆盖率 (面积占比) --
+export const safeAreaCoverage = computed(() => {
+  return optimalLayout.value?.safeAreaCoverage ?? null
+})
+
+// -- Computed: 安全区宽高比 --
+export const safeAreaAspect = computed(() => {
+  return optimalLayout.value?.safeAreaRatio ?? null
 })
 
 // -- Computed: 所有可见预设的完整信息（含类型）--

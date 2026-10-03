@@ -17,7 +17,7 @@
         <div
           v-for="card in cards"
           :key="card.key"
-          class="flex flex-col justify-between p-4 rounded-xl bg-muted/40 border border-border/60 hover:border-primary/40 transition-colors gap-3"
+          class="flex flex-col justify-between p-4 rounded-lg bg-muted/40 border border-border/60 hover:border-primary/40 transition-colors gap-3"
         >
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-3">

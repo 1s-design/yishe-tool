@@ -52,6 +52,8 @@ function buildRolePrompt(): string {
 - HTML 已自动注入通用字号变量；先区分主视觉、主标题、核心文字、副标题、正文、说明，再直接使用对应的 --type-hero/title/primary/subtitle/body/caption/micro
 - 只调整现有设计字号时使用 canvas.setBaseFontSize，不要为了改字号重设画布尺寸
 - 用户要求修改/迭代现有设计时，不要清空画布，直接修改
+- **简单属性修改走快速路径**：改颜色→canvas.elementStyle；改文字→canvas.textContent；改字体→canvas.textStyle。一次调用完成，不要拆成多步
+- **不要在修改后再调 canvas.analyze**：除非用户明确要求分析
 - 主要视觉作品使用 canvas.addHtml 创建；再次调用 canvas.addHtml 会替换当前 HTML 作品
 - 流程图/思维导图可用 canvas.addDiagram，数据图表可用 canvas.addChart
 - 每次只调用一个工具，完成后根据结果决定下一步
@@ -90,9 +92,12 @@ function buildHtmlQuickRefPrompt(): string {
 - canvas.addHtml 接收 htmlContent 和 htmlBindings；根节点建议使用 width:100%; height:100%; position:relative; overflow:hidden; box-sizing:border-box
 - 写 HTML 前先按内容量选择层级：dense 用于长文/标签/参数，balanced 用于常规海报，display 用于单字/短标语；同一画面最多设置 6-7 个字号角色
 - --type-hero、--type-title、--type-primary、--type-subtitle、--type-body、--type-caption、--type-micro 已由画布自动提供，直接使用 font-size:var(--type-xxx)，不要重新定义
+- **强制使用字号 CSS 变量**：所有文字元素必须用 font-size:var(--type-hero/title/primary/subtitle/body/caption/micro)，禁止直接写固定字号。简单文字（1-2句）至少用 type-title + type-body；海报/多层级内容至少用 type-hero + type-body + type-caption
 - font-size 只允许 em、百分比或上述 CSS 变量，禁止 px、pt、rem、vw、vh；写入层会把遗漏的绝对字号自动归一为相对字号
 - 主视觉只用于一个最重要的信息；主标题不超过两个；用户要求展示的重要信息最低使用 body，caption/micro 只用于非关键信息
 - 书法正文是视觉主体时归为 primaryText，并使用尺寸工具给出的 primaryText 和 bodyLineHeight；不要把书法正文缩成注释
+- **书法/对联排版规范**：竖排内容必须用 writing-mode:vertical-rl 或 flex-direction:column 实现；对联上联居右、下联居左、横批居上；匾额横排从右到左
+- **字体匹配要求**：用户要求楷书/行书/草书/隶书/篆书/瘦金体时，搜索字体必须选名称包含对应书体的字体；找不到精确匹配时选最接近的传统书法字体
 - 避免嵌套 em 重复放大：中间布局容器不要设置 font-size，只在实际文字元素上设置；极细描边等固定细节才使用 px
 - 图片/字体资源通过 htmlBindings 注入，HTML 中用 {{image.xxx.url}} / {{font.xxx.family}} 引用
 - 可在 HTML 中嵌入组件变量：{{echart.name}}、{{threejs.name}}、{{qrcode.name}}、{{barcode.name}}、{{wordCloud.name}}、{{math.name}}、{{mermaid.name}}、{{chartjs.name}}、{{particlesEffect.name}}、{{opentypeText.name}}

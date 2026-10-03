@@ -37,7 +37,12 @@ registerOperation({
     }
 
     try {
-      await controller.activeUpdateRenderingCanvas()
+      await Promise.race([
+        controller.activeUpdateRenderingCanvas(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('画布渲染启动超时 (15s)')), 15_000),
+        ),
+      ])
 
       const waitForRender = () =>
         new Promise<void>((resolve, reject) => {
@@ -48,8 +53,8 @@ registerOperation({
               return
             }
             attempts++
-            if (attempts > 200) {
-              reject(new Error('画布渲染超时'))
+            if (attempts > 100) {
+              reject(new Error('画布渲染超时 (5s)'))
               return
             }
             setTimeout(check, 50)

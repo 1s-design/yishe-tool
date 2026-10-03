@@ -24,7 +24,7 @@
             <!-- 单图设计 -->
             <button
               type="button"
-              class="flex flex-col items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+              class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
               :class="form.outputKind === 'single' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="setFormat('single')"
             >
@@ -47,7 +47,7 @@
             <!-- 系列组图 -->
             <button
               type="button"
-              class="flex flex-col items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+              class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
               :class="form.outputKind === 'group' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="setFormat('group')"
             >
@@ -71,7 +71,7 @@
 
         <!-- 2. 数量与套数设置 -->
         <!-- 单图模式下的数量设置 -->
-        <div v-if="form.outputKind === 'single'" class="space-y-2 rounded-xl border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200">
+        <div v-if="form.outputKind === 'single'" class="space-y-2 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200">
           <div class="flex items-center justify-between">
             <div class="font-bold text-foreground text-xs flex items-center gap-1.5">
               <Palette class="h-3.5 w-3.5 text-primary" />
@@ -97,7 +97,7 @@
         </div>
 
         <!-- 组图模式下的张数与套数设置 -->
-        <div v-if="form.outputKind === 'group'" class="space-y-2.5 rounded-xl border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200">
+        <div v-if="form.outputKind === 'group'" class="space-y-2.5 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200">
           <div class="flex items-center justify-between">
             <div class="font-bold text-foreground text-xs flex items-center gap-1.5">
               <Layers class="h-3.5 w-3.5 text-primary" />
@@ -153,7 +153,7 @@
           <div class="grid grid-cols-2 gap-2.5">
             <button
               type="button"
-              class="flex items-center justify-between p-2.5 rounded-xl border-2 text-left transition-all duration-150 relative select-none cursor-pointer"
+              class="flex items-center justify-between p-2.5 rounded-lg border-2 text-left transition-all duration-150 relative select-none cursor-pointer"
               :class="form.source === 'blank' && form.intent !== 'edit' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="form.source = 'blank'; form.intent = 'create'"
             >
@@ -169,7 +169,7 @@
 
             <button
               type="button"
-              class="flex items-center justify-between p-2.5 rounded-xl border-2 text-left transition-all duration-150 relative select-none cursor-pointer"
+              class="flex items-center justify-between p-2.5 rounded-lg border-2 text-left transition-all duration-150 relative select-none cursor-pointer"
               :class="form.source === 'current-canvas' || form.intent === 'edit' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="form.source = 'current-canvas'; form.intent = 'edit'"
             >
@@ -191,7 +191,7 @@
           <div class="grid grid-cols-3 gap-2.5">
             <button
               type="button"
-              class="p-2.5 rounded-xl border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
+              class="p-2.5 rounded-lg border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
               :class="form.delivery === 'canvas' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="form.delivery = 'canvas'"
             >
@@ -202,7 +202,7 @@
             </button>
             <button
               type="button"
-              class="p-2.5 rounded-xl border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
+              class="p-2.5 rounded-lg border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
               :class="form.delivery === 'save' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="form.delivery = 'save'"
             >
@@ -213,7 +213,7 @@
             </button>
             <button
               type="button"
-              class="p-2.5 rounded-xl border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
+              class="p-2.5 rounded-lg border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
               :class="form.delivery === 'export' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
               @click="form.delivery = 'export'"
             >

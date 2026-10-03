@@ -19,7 +19,7 @@
     </FileUpload>
     <Separator />
     <div
-      class="flex items-center justify-center rounded-md border border-border bg-white text-[8px] text-center text-muted-foreground"
+      class="flex items-center justify-center rounded-md border border-border bg-white text-[10px] text-center text-muted-foreground"
       style="width: 50px; height: 50px"
     >
       http://www.antdv.com

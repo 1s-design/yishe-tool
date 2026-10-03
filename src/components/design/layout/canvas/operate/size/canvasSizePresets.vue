@@ -804,7 +804,7 @@ function handleSelect(item: SizeOption) {
 .ratio-card:hover {
   background-color: var(--1s-hover-background, rgba(0, 0, 0, 0.04));
   border-color: var(--1s-border-color-strong, #a1a1aa);
-  transform: translateY(-1px);
+  
 }
 
 :global(html.dark) .ratio-card,
@@ -895,7 +895,7 @@ function handleSelect(item: SizeOption) {
 .preset-card:hover {
   background-color: var(--1s-hover-background, rgba(0, 0, 0, 0.04));
   border-color: var(--1s-border-color-strong, #a1a1aa);
-  transform: translateY(-1px);
+  
 }
 
 :global(html.dark) .preset-card,

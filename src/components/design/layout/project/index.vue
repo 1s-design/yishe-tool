@@ -176,7 +176,7 @@ const activeComponent = computed(() => {
   border-radius: var(--1s-radius-md);
   padding: 6px;
   overflow: hidden;
-  box-shadow: var(--1s-shadow-sm);
+  
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {

@@ -253,7 +253,7 @@ getList();
 
   &:hover {
     border-color: hsl(var(--primary));
-    box-shadow: var(--1s-shadow-sm);
+    
   }
 }
 

@@ -131,7 +131,7 @@ function downloadThumbnail(item) {
   width: 100%;
   border-radius: 8px;
   border: 1px solid var(--1s-control-border-color);
-  box-shadow: var(--1s-shadow-sm);
+  
 }
 
 .project-detail-uploader {

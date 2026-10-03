@@ -251,7 +251,7 @@ onMounted(() => {
   
   &:hover {
     background: var(--1s-control-hover-background);
-    transform: translateY(-1px);
+    
     box-shadow: var(--1s-control-focus-ring);
   }
 }

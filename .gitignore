@@ -35,3 +35,5 @@ tools/*.exe
 *.sln
 *.sw?
 docs/.vitepress/cache/
+test-reports/
+tools/.test-token

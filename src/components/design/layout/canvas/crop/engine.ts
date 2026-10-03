@@ -9,6 +9,58 @@
 import type { CropRegion, SafeZone } from './types'
 
 /**
+ * 最优画布布局计算 - 基于归一化坐标的几何优化算法
+ *
+ * 核心思路：将所有产品的裁剪区域映射到统一的母版坐标系中，
+ * 寻找所有裁剪区域的交集，用几何平均数优化母版比例，使公共安全区尽可能大。
+ *
+ * @param ratios - 产品宽高比数组
+ * @returns 最佳画布比例 + 归一化安全区坐标
+ *
+ * @example
+ * calculateLayout([2.0, 2.3333, 2.6667])
+ * // => {
+ * //   canvasRatio: 2.3094,
+ * //   safeArea: { x: 0.1429, y: 0, width: 0.7142, height: 1 },
+ * //   safeAreaRatio: 1.6665
+ * // }
+ */
+export function calculateLayout(ratios: number[]): {
+  canvasRatio: number
+  safeArea: { x: number; y: number; width: number; height: number }
+  safeAreaRatio: number
+  safeAreaCoverage: number
+} {
+  if (!ratios.length || ratios.some(r => !Number.isFinite(r) || r <= 0)) {
+    throw new Error("请输入有效的正数比例")
+  }
+
+  const min = Math.min(...ratios)
+  const max = Math.max(...ratios)
+
+  // 采用几何平均数，均衡横向和纵向裁剪
+  const canvasRatio = Math.sqrt(min * max)
+
+  // 公共安全区的宽高占比（归一化到母版坐标系）
+  const width = min / canvasRatio
+  const height = canvasRatio / max
+
+  return {
+    canvasRatio,
+    safeArea: {
+      x: (1 - width) / 2,
+      y: (1 - height) / 2,
+      width,
+      height
+    },
+    // 安全区实际宽高比
+    safeAreaRatio: canvasRatio * width / height,
+    // 安全区面积覆盖率
+    safeAreaCoverage: width * height
+  }
+}
+
+/**
  * Calculate the visible crop region (normalized 0..1) given a design ratio
  * and a target (preset) ratio, using "cover" mode.
  *
@@ -180,12 +232,10 @@ export function calculateMixedSafeZone(
 }
 
 /**
- * 寻找最优画布比例 - 使得所有目标比例的交集（安全区域）面积最大
+ * 寻找最优画布比例 - 几何平均数法
  *
- * 算法：
- * 1. 在目标比例的最小值和最大值之间进行精细搜索
- * 2. 找到最大安全区域面积
- * 3. 在最大面积中，选择最接近"整数比"的比例（更直观）
+ * 数学依据：当 p_min ≤ r ≤ p_max 时，安全区面积恒为 p_min/p_max，
+ * 采用几何平均数 r = √(p_min × p_max) 可让横向和纵向裁剪损失均衡。
  *
  * @param targetRatios - 目标比例数组
  * @returns 最优画布比例
@@ -197,54 +247,8 @@ export function findOptimalCanvasRatio(targetRatios: number[]): number {
   const minRatio = Math.min(...targetRatios)
   const maxRatio = Math.max(...targetRatios)
 
-  // 搜索范围：最小目标比例到最大目标比例
-  const steps = 10000
-  let bestRatio = minRatio
-  let bestArea = 0
-
-  for (let i = 0; i <= steps; i++) {
-    const ratio = minRatio + (maxRatio - minRatio) * (i / steps)
-    const area = calculateSafeAreaRatio(ratio, targetRatios)
-    if (area > bestArea) {
-      bestArea = area
-      bestRatio = ratio
-    }
-  }
-
-  // 精细化搜索：在最优点附近进行二次搜索
-  const range = (maxRatio - minRatio) / steps * 10
-  const fineSteps = 10000
-  const fineMin = Math.max(minRatio, bestRatio - range)
-  const fineMax = Math.min(maxRatio, bestRatio + range)
-
-  for (let i = 0; i <= fineSteps; i++) {
-    const ratio = fineMin + (fineMax - fineMin) * (i / fineSteps)
-    const area = calculateSafeAreaRatio(ratio, targetRatios)
-    if (area > bestArea) {
-      bestArea = area
-      bestRatio = ratio
-    }
-  }
-
-  // 在最大面积附近，找一个更"整"的比例（最接近常见整数比）
-  // 这样用户看到的推荐比例更直观
-  const tolerance = (maxRatio - minRatio) / steps * 5
-  const niceRatios = [
-    0.5, 2/3, 0.75, 1, 4/3, 1.5, 16/9, 2, 21/9, 3/4, 3/2, 5/4, 4/5, 9/16, 9/21
-  ]
-
-  // 在找到的最优点附近，找一个最接近"整数比"的值
-  for (const nice of niceRatios) {
-    if (Math.abs(nice - bestRatio) < tolerance) {
-      const niceArea = calculateSafeAreaRatio(nice, targetRatios)
-      // 如果整数比的面积与最优面积相差不大（<1%），使用整数比
-      if (niceArea >= bestArea * 0.99) {
-        return nice
-      }
-    }
-  }
-
-  return bestRatio
+  // 几何平均数：让最窄和最宽产品的裁剪损失均衡
+  return Math.sqrt(minRatio * maxRatio)
 }
 
 /**

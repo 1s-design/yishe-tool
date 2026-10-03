@@ -240,7 +240,7 @@ async function handleExecute(op: OperationListItem) {
   }
 
   &:active {
-    transform: translateY(0);
+    
   }
 
   &--active {

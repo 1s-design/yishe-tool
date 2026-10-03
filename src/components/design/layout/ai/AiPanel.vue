@@ -2,7 +2,7 @@
   <div
     v-if="open || isOpen"
     ref="panelRef"
-    class="ai-panel fixed z-50 flex flex-col overflow-hidden rounded-2xl shadow-lg"
+    class="ai-panel fixed z-50 flex flex-col overflow-hidden rounded-lg shadow-lg"
     :class="{ 'is-dragging': isDragging }"
     :style="panelStyle"
   >
@@ -98,7 +98,7 @@
     >
       <!-- 空状态：极简灵感推荐 -->
       <div v-if="messages.length === 0" class="flex flex-col items-center justify-center py-5 text-center space-y-3.5">
-        <div class="ai-panel-empty-icon flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs">
+        <div class="ai-panel-empty-icon flex h-11 w-11 items-center justify-center rounded-lg border shadow-xs">
           <Wand2 class="h-5 w-5" />
         </div>
         <div class="space-y-0.5 max-w-[280px]">
@@ -131,7 +131,7 @@
       <template v-for="msg in visibleMessages" :key="msg.id">
         <!-- 用户消息 -->
         <div v-if="msg.role === 'user'" class="flex justify-end w-full">
-          <div class="ai-panel-msg-user max-w-[85%] rounded-2xl rounded-tr-xs px-3.5 py-2 text-xs shadow-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+          <div class="ai-panel-msg-user max-w-[85%] rounded-lg rounded-tr-xs px-3.5 py-2 text-xs shadow-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
             {{ msg.content }}
           </div>
         </div>
@@ -143,7 +143,7 @@
           </div>
           <div class="flex-1 space-y-1.5 min-w-0 max-w-full">
             <!-- 文本内容 -->
-            <div v-if="msg.content" class="ai-panel-msg-ai rounded-2xl rounded-tl-xs px-3.5 py-2 text-xs shadow-2xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+            <div v-if="msg.content" class="ai-panel-msg-ai rounded-lg rounded-tl-xs px-3.5 py-2 text-xs shadow-2xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
               {{ msg.content }}
             </div>
 
@@ -175,7 +175,7 @@
         <div class="ai-panel-avatar flex h-6 w-6 items-center justify-center rounded-full shrink-0">
           <Loader2 class="h-3 w-3 animate-spin" />
         </div>
-        <div class="ai-panel-thinking flex items-center gap-2 rounded-2xl rounded-tl-xs border px-3 py-2 text-[11px]">
+        <div class="ai-panel-thinking flex items-center gap-2 rounded-lg rounded-tl-xs border px-3 py-2 text-[11px]">
           <span>AI 正在全自动制作贴纸...</span>
           <button v-if="!isWaitingForUser" class="ai-panel-stop-btn h-5 px-1.5 text-[10px] rounded" @click="handleStop">
             停止
@@ -184,7 +184,7 @@
       </div>
 
       <!-- 用户交互确认卡片 (Human in the Loop) -->
-      <div v-if="interactionData" class="ai-panel-interaction rounded-xl border border-amber-400/40 bg-amber-50/60 p-3 space-y-2.5 shadow-sm">
+      <div v-if="interactionData" class="ai-panel-interaction rounded-lg border border-amber-400/40 bg-amber-50/60 p-3 space-y-2.5 shadow-sm">
         <div class="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
           <HelpCircle class="h-3.5 w-3.5 text-amber-500" />
           <span>{{ interactionData.question }}</span>
@@ -221,7 +221,7 @@
       <!-- 回到底部浮动按钮 -->
       <button
         v-if="hasUnreadMessages"
-        class="ai-panel-scroll-btn sticky bottom-1 left-1/2 -translate-x-1/2 rounded-full border px-3 py-1 text-[11px] font-medium shadow-md transition-transform hover:scale-105 active:scale-95 flex items-center gap-1"
+        class="ai-panel-scroll-btn sticky bottom-1 left-1/2 -translate-x-1/2 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors flex items-center gap-1"
         @click="scrollToBottom(true)"
       >
         <ArrowDown class="h-3 w-3" />
@@ -302,7 +302,7 @@
       </div>
 
       <!-- 输入框与工具条 -->
-      <div class="ai-input-box rounded-xl border focus-within:ring-2 shadow-xs transition-all flex flex-col overflow-hidden">
+      <div class="ai-input-box rounded-lg border focus-within:ring-2 shadow-xs transition-all flex flex-col overflow-hidden">
         <!-- 文本域 -->
         <textarea
           ref="textareaRef"
@@ -1126,7 +1126,7 @@ function parseResult(content: string) {
 .ai-panel-quick-card:hover {
   background-color: var(--1s-control-hover-background);
   border-color: var(--1s-border-color-strong);
-  box-shadow: var(--1s-shadow-xs);
+  
 }
 .ai-panel-quick-dot {
   background-color: color-mix(in srgb, var(--1s-accent-color) 40%, transparent);
@@ -1170,7 +1170,7 @@ function parseResult(content: string) {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    
   }
 }
 
@@ -1361,7 +1361,7 @@ function parseResult(content: string) {
   background-color: var(--1s-accent-color);
   color: #ffffff;
   border-color: var(--1s-accent-color);
-  box-shadow: var(--1s-shadow-xs);
+  
 }
 
 .ai-toolbar-icon-btn {
@@ -1383,8 +1383,8 @@ function parseResult(content: string) {
     box-shadow var(--1s-transition-base);
 }
 .ai-input-send-btn:hover {
-  transform: scale(1.08);
-  box-shadow: var(--1s-shadow-sm);
+  
+  
 }
 .ai-input-send-btn:active {
   transform: scale(0.95);
