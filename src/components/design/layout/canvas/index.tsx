@@ -199,11 +199,6 @@ import {
   setValueByPath,
 } from "./htmlTemplate/runtime.ts";
 
-import {
-  currentFocusingStickerId,
-  ChildViewHelperComponent,
-} from "@/components/design/layout/canvas/components/childViewHelper/index";
-
 // import { PngIcoConverter } from "/public/lib/png2icojs"; // 导入库
 
 /*
@@ -898,7 +893,6 @@ export function removeCavnasChild(id) {
   if (currentOperatingCanvasChildId.value === id) {
     currentOperatingCanvasChildId.value = canvasStickerOptions.value.children[0]?.id || null;
   }
-  currentFocusingStickerId.value = null;
 }
 
 export const currentCanvasControllerInstance = shallowRef(null);

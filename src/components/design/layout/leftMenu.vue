@@ -336,14 +336,17 @@ function handleSpecialMenuClick(menuKey) {
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--1s-left-menu-background-color);
-  padding: 6px 0 8px;
+  padding: 4px 0 6px;
   box-sizing: border-box;
+
+  /* 隐藏滚动条 */
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
 
 .menu-bar-item {
   width: calc(var(--1s-left-menu-width) - 8px);
-  min-height: 48px;
-  padding: 6px 4px;
+  height: 48px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -352,52 +355,46 @@ function handleSpecialMenuClick(menuKey) {
   flex-shrink: 0;
   color: var(--1s-text-color-secondary);
   border-radius: 6px;
-  transition:
-    background-color var(--1s-transition-fast),
-    color var(--1s-transition-fast),
-    transform var(--1s-transition-fast),
-    box-shadow var(--1s-transition-fast);
+  transition: background-color 0.08s, color 0.08s;
   position: relative;
+  padding: 4px 0;
 
   .menu-bar-item-icon {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform var(--1s-transition-fast);
   }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 
   span {
-    margin-top: 3px;
-    font-size: 10.5px;
+    margin-top: 2px;
+    font-size: 10px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
     max-width: calc(var(--1s-left-menu-width) - 12px);
-    font-weight: 500;
     color: inherit;
     line-height: 1.2;
     text-align: center;
   }
 
   &:hover {
-    background: var(--1s-hover-background);
+    background: var(--1s-hover-overlay);
     color: var(--1s-text-color);
-    transform: scale(1.04);
   }
 
   &:active {
-    transform: scale(0.97);
+    background: var(--1s-pressed-overlay);
   }
 }
 
 .menu-bar-item-focus {
   background: var(--1s-active-background);
-  color: var(--1s-text-color);
+  color: var(--1s-accent-color);
 }
 </style>

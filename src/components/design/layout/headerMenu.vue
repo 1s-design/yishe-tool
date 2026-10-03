@@ -10,145 +10,114 @@
 -->
 <template>
   <div class="designiy-header">
+    <!-- 菜单 -->
     <div class="designiy-header__brand">
-      <img src="/favicon.png" class="designiy-header__brand-logo" />
-      <span class="designiy-header__brand-title">1s design tool</span>
+      <Menu class="designiy-header__menu-icon" />
     </div>
 
+    <!-- 编辑状态 -->
     <template v-if="isEdit">
-      <div class="edit-mode-info flex items-center gap-2 shrink-0">
-        <span class="model-id-text">模型ID: {{ currentEditingModelId }}</span>
-        <Button variant="destructive" size="sm" @click="confirmExitEditMode">退出</Button>
+      <div class="designiy-header__status">
+        <span class="designiy-header__status-dot designiy-header__status-dot--edit" />
+        <span class="designiy-header__status-text">模型 {{ currentEditingModelId }}</span>
+        <button class="designiy-header__ghost-btn" @click="confirmExitEditMode">退出</button>
       </div>
     </template>
-
-    <!-- 自定义贴纸编辑模式指示 -->
     <template v-else-if="currentEditingCustomStickerId">
-      <div class="edit-mode-info flex items-center gap-1.5 shrink-0">
-        <Badge variant="secondary" class="h-6 gap-1.5 px-2 text-[11px] font-medium border border-amber-400/60 bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-400/40 shadow-xs">
-          <span class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-          <Pencil class="h-3 w-3 text-amber-600 dark:text-amber-400" />
-          <span class="max-w-[150px] truncate">编辑中: {{ currentEditingCustomStickerName || currentEditingCustomStickerId }}</span>
-        </Badge>
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <Button variant="ghost" size="xs" class="h-6 text-[11px] text-muted-foreground hover:text-foreground" @click="handleConvertToCreateNew">
-              转为新建
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">断开原贴纸关联，保存时将作为新贴纸创建</TooltipContent>
-        </Tooltip>
-      </div>
-    </template>
-
-    <!-- 新建空白作品指示 -->
-    <template v-else>
-      <div class="edit-mode-info flex items-center shrink-0">
-        <Badge variant="outline" class="h-6 px-2 text-[11px] font-normal text-muted-foreground border-dashed">
-          新建贴纸
-        </Badge>
+      <div class="designiy-header__status">
+        <span class="designiy-header__status-dot designiy-header__status-dot--edit" />
+        <span class="designiy-header__status-text">编辑中</span>
+        <button class="designiy-header__ghost-btn" @click="handleConvertToCreateNew">转为新建</button>
       </div>
     </template>
 
     <div class="designiy-header__spacer"></div>
 
-    <Tooltip>
-      <TooltipTrigger as-child>
-        <Button
-          variant="ghost"
-          size="sm"
-          class="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2"
-          @click="showDownloadModal = true"
-        >
-          <Download class="h-3.5 w-3.5" />
-          <span>客户端</span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">下载桌面客户端与浏览器扩展插件</TooltipContent>
-    </Tooltip>
+    <!-- 右侧操作区 -->
+    <div class="designiy-header__actions">
+      <!-- 连接状态 -->
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <div class="designiy-header__icon-btn" @click="showDownloadModal = true">
+            <Download class="h-3.5 w-3.5" />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">下载客户端</TooltipContent>
+      </Tooltip>
 
-    <Button variant="ghost" size="sm" class="h-7 text-xs text-muted-foreground hover:text-foreground">快速指南</Button>
+      <!-- 连接状态指示 -->
+      <div class="designiy-header__indicators">
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <div class="designiy-header__indicator">
+              <span
+                class="designiy-header__dot"
+                :class="`designiy-header__dot--${wsStatus}`"
+              />
+              <span class="designiy-header__indicator-label">{{ wsStatusLabel }}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{{ wsStatusTooltip }}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <div class="designiy-header__indicator">
+              <span
+                class="designiy-header__dot"
+                :class="`designiy-header__dot--${agentStatus}`"
+              />
+              <span class="designiy-header__indicator-label">{{ agentStatusLabel }}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{{ agentStatusTooltip }}</TooltipContent>
+        </Tooltip>
+      </div>
 
-    <Tooltip>
-      <TooltipTrigger as-child>
-        <Badge variant="outline" class="h-6 gap-1.5 px-2 text-[11px] font-normal cursor-pointer select-none border-border hover:bg-accent/50 transition-colors">
-          <span
-            class="h-1.5 w-1.5 rounded-full shrink-0"
-            :class="{
-              'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]': wsStatus === 'connected',
-              'bg-amber-500 animate-pulse': wsStatus === 'connecting' || wsStatus === 'reconnecting',
-              'bg-rose-500': wsStatus === 'error',
-              'bg-muted-foreground/50': wsStatus === 'disconnected' || wsStatus === 'idle'
-            }"
-          />
-          <span class="text-muted-foreground">{{ wsStatusLabel }}</span>
-        </Badge>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{{ wsStatusTooltip }}</TooltipContent>
-    </Tooltip>
-
-    <Tooltip>
-      <TooltipTrigger as-child>
-        <Badge variant="outline" class="h-6 gap-1.5 px-2 text-[11px] font-normal cursor-pointer select-none border-border hover:bg-accent/50 transition-colors">
-          <span
-            class="h-1.5 w-1.5 rounded-full shrink-0"
-            :class="{
-              'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]': agentStatus === 'idle',
-              'bg-amber-500 animate-pulse': agentStatus === 'thinking' || agentStatus === 'executing',
-              'bg-rose-500': agentStatus === 'error',
-              'bg-muted-foreground/50': agentStatus === 'disconnected'
-            }"
-          />
-          <span class="text-muted-foreground">Agent {{ agentStatusLabel }}</span>
-        </Badge>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{{ agentStatusTooltip }}</TooltipContent>
-    </Tooltip>
-    
-    <div class="header-actions flex items-center gap-2 shrink-0">
-      <button
-        class="header-action-btn"
-        :class="{ 'header-action-btn--active': batchIsRunning }"
-        @click="showAutocreateModal = true"
-      >
-        <span v-if="batchIsRunning" class="header-action-dot header-action-dot--ping" />
-        <span v-else class="header-action-dot header-action-dot--idle" />
-        <span class="header-action-label">{{ autoCreateButtonLabel }}</span>
-      </button>
-
+      <!-- 自动制作 -->
       <Tooltip>
         <TooltipTrigger as-child>
           <button
-            class="header-action-btn"
-            :class="{ 'header-action-btn--active': screenShareActive }"
+            class="designiy-header__tool-btn"
+            :class="{ 'designiy-header__tool-btn--active': batchIsRunning }"
+            @click="showAutocreateModal = true"
+          >
+            <Sparkles class="h-3.5 w-3.5" />
+            <span>{{ autoCreateButtonLabel }}</span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">自动制作</TooltipContent>
+      </Tooltip>
+
+      <!-- 共享屏幕 -->
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <button
+            class="designiy-header__tool-btn"
+            :class="{ 'designiy-header__tool-btn--active': screenShareActive }"
             @click="toggleScreenShare"
           >
-            <span
-              class="header-action-dot"
-              :class="screenShareActive ? 'header-action-dot--ping header-action-dot--sharing' : 'header-action-dot--idle'"
-            />
-            <span class="header-action-label">{{ screenShareActive ? '共享中' : '共享屏幕' }}</span>
+            <Monitor class="h-3.5 w-3.5" />
+            <span>{{ screenShareActive ? '共享中' : '共享' }}</span>
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">{{ screenShareActive ? '停止共享屏幕' : '共享屏幕给管理端' }}</TooltipContent>
+        <TooltipContent side="bottom">{{ screenShareActive ? '停止共享' : '共享屏幕给管理端' }}</TooltipContent>
       </Tooltip>
 
+      <!-- 主题切换 -->
       <Tooltip>
         <TooltipTrigger as-child>
-          <button
-            class="theme-switch-btn h-6 w-6 rounded-md inline-flex items-center justify-center border border-[var(--1s-border-color)] bg-[var(--1s-control-surface-muted)] text-[var(--1s-text-color-secondary)] hover:text-[var(--1s-text-color)] hover:bg-[var(--1s-hover-background)] cursor-pointer select-none transition-all duration-150"
-            @click="isDarkMode = !isDarkMode"
-            :aria-label="isDarkMode ? '切换为浅色模式' : '切换为深色模式'"
-          >
-            <Moon v-if="isDarkMode" class="theme-switch-icon h-3.5 w-3.5 text-indigo-400" />
-            <Sun v-else class="theme-switch-icon h-3.5 w-3.5 text-amber-500" />
+          <button class="designiy-header__icon-btn" @click="isDarkMode = !isDarkMode">
+            <Moon v-if="isDarkMode" class="h-3.5 w-3.5" />
+            <Sun v-else class="h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">{{ isDarkMode ? '深色模式（点击切换浅色）' : '浅色模式（点击切换深色）' }}</TooltipContent>
+        <TooltipContent side="bottom">{{ isDarkMode ? '浅色模式' : '深色模式' }}</TooltipContent>
       </Tooltip>
+
+      <!-- 用户 -->
+      <user-avatar v-if="loginStatusStore.isLogin" />
+      <Button v-else @click="login" variant="default" size="sm" class="h-6 px-2.5 text-[11px] rounded-md">登录</Button>
     </div>
-    <user-avatar v-if="loginStatusStore.isLogin" />
-    <Button @click="login" v-else variant="default" size="sm" class="login-btn">登录</Button>
 
     <DownloadModal v-model:open="showDownloadModal" />
   </div>
@@ -176,7 +145,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { Pencil, Sun, Moon, Download } from "lucide-vue-next";
+import { Pencil, Sun, Moon, Download, Sparkles, Monitor, Menu } from "lucide-vue-next";
 import { message } from '@/common/message';
 import DownloadModal from "./downloadModal/index.vue";
 import {
@@ -330,540 +299,211 @@ function confirmExitEditMode() {
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: start;
   align-items: center;
-  column-gap: var(--1s-control-gap);
-  padding: 0 10px 0 6px;
+  padding: 0 8px;
   min-width: 0;
   background: var(--1s-surface-background);
   color: var(--1s-text-color);
+  gap: 0;
 }
 
+/* 品牌 */
 .designiy-header__brand {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: var(--1s-left-menu-width);
   height: 100%;
   flex-shrink: 0;
-  padding: 0 10px 0 4px;
-  gap: 9px;
-  border-right: 1px solid var(--1s-divider-color, #e4e4e7);
-  text-decoration: none;
-  overflow: hidden;
-  cursor: default;
+  color: var(--1s-text-color-secondary);
+  cursor: pointer;
+  transition: color 0.08s;
+
+  &:hover {
+    color: var(--1s-text-color);
+  }
 }
 
-.designiy-header__brand-logo {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
+.designiy-header__menu-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* 编辑状态 */
+.designiy-header__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
-  transition: transform var(--1s-transition-base);
+  padding-right: 12px;
+  margin-right: 4px;
+  border-right: 1px solid var(--1s-divider-color);
+  height: 18px;
 }
 
-.designiy-header__brand:hover .designiy-header__brand-logo {
-  transform: scale(1.08);
+.designiy-header__status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--edit {
+    background: var(--1s-accent-color);
+  }
 }
 
-.designiy-header__brand-title {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--1s-text-color);
+.designiy-header__status-text {
+  font-size: 11px;
+  color: var(--1s-text-color-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  user-select: none;
-  flex: 1;
+  max-width: 160px;
 }
 
+.designiy-header__ghost-btn {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--1s-text-color-secondary);
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s;
+
+  &:hover {
+    color: var(--1s-text-color);
+    background: var(--1s-hover-overlay);
+  }
+}
+
+/* Spacer */
 .designiy-header__spacer {
   flex: 1;
   min-width: 0;
 }
 
-.edit-mode-info {
-  min-width: 0;
-  
-  .model-id-text {
-    font-size: 10px;
-    color: var(--1s-text-color-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
-  }
+/* 右侧操作区 */
+.designiy-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
-.header-link {
-  padding-inline: 4px;
-  font-size: 10px;
+/* 图标按钮 */
+.designiy-header__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: none;
+  background: none;
   color: var(--1s-text-color-secondary);
-}
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
 
-.header-actions {
-  min-width: 0;
-  flex-wrap: nowrap;
-  gap: 6px;
-
-  .action-btn {
-    white-space: nowrap;
+  &:hover {
+    background: var(--1s-hover-overlay);
+    color: var(--1s-text-color);
   }
 
-  .theme-switch {
-    flex-shrink: 0;
-  }
-
-  .three-canvas-switch {
-    flex-shrink: 0;
-  }
-
-  .save-btn,
-  .login-btn {
-    flex-shrink: 0;
+  &:active {
+    background: var(--1s-pressed-overlay);
   }
 }
 
-/* Header action buttons - 自动制作 & 共享屏幕 */
-.header-action-btn {
+/* 状态指示 */
+.designiy-header__indicators {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  margin: 0 2px;
+  border-left: 1px solid var(--1s-divider-color);
+  border-right: 1px solid var(--1s-divider-color);
+  height: 18px;
+}
+
+.designiy-header__indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+}
+
+.designiy-header__indicator-label {
+  font-size: 10px;
+  color: var(--1s-text-color-tertiary);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.designiy-header__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--1s-text-color-tertiary);
+  cursor: default;
+  flex-shrink: 0;
+
+  &--connected,
+  &--idle {
+    background: #34d399;
+  }
+
+  &--connecting,
+  &--reconnecting,
+  &--thinking,
+  &--executing {
+    background: #fbbf24;
+  }
+
+  &--error {
+    background: #f87171;
+  }
+
+  &--disconnected {
+    background: var(--1s-text-color-tertiary);
+    opacity: 0.4;
+  }
+}
+
+/* 工具按钮 (自动制作 / 共享) */
+.designiy-header__tool-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid var(--1s-border-color-strong);
-  background: var(--1s-surface-background);
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 5px;
+  border: none;
+  background: none;
   color: var(--1s-text-color-secondary);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
-  user-select: none;
   white-space: nowrap;
-  transition:
-    color var(--1s-transition-base),
-    background-color var(--1s-transition-base),
-    border-color var(--1s-transition-base),
-    box-shadow var(--1s-transition-base),
-    transform var(--1s-transition-base);
-  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
 
   &:hover {
-    border-color: var(--1s-accent-color);
-    color: var(--1s-accent-color);
-    background: var(--1s-hover-background);
-    transform: translateY(-1px);
-    box-shadow: var(--1s-shadow-sm);
+    background: var(--1s-hover-overlay);
+    color: var(--1s-text-color);
   }
 
   &:active {
-    transform: translateY(0);
-    box-shadow: none;
-  }
-}
-
-.header-action-btn--active {
-  border-color: var(--1s-accent-color);
-  background: var(--1s-accent-color);
-  color: #ffffff;
-
-  &:hover {
-    background: var(--1s-accent-color);
-    color: #ffffff;
-    filter: brightness(0.92);
+    background: var(--1s-pressed-overlay);
   }
 
-  .header-action-dot {
-    background: var(--1s-surface-background);
-  }
-}
-
-.header-action-label {
-  font-size: 11px;
-  line-height: 1;
-}
-
-.header-action-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.header-action-dot--idle {
-  background: var(--1s-text-color-tertiary);
-}
-
-.header-action-dot--ping {
-  animation: header-dot-pulse 1.2s ease-in-out infinite;
-}
-
-.header-action-dot--sharing {
-  background: #22c55e;
-}
-
-@keyframes header-dot-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.75); }
-}
-
-/* 暗色切换按钮图标旋转 */
-.theme-switch-icon {
-  transition: transform var(--1s-transition-slow) var(--1s-easing-bounce);
-}
-
-.theme-switch-btn:hover .theme-switch-icon {
-  transform: rotate(180deg) scale(1.1);
-}
-
-.save-btn,
-.login-btn {
-  min-width: 50px;
-  padding-inline: 10px;
-}
-
-:deep(.el-switch) {
-}
-
-:deep(.el-switch__label) {
-  font-size: 9px;
-}
-
-.ws-status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  cursor: default;
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.agent-status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  cursor: default;
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.ws-status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.ws-status-label {
-  font-size: 10px;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-.agent-status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.agent-status-label {
-  font-size: 10px;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-.ws-status--connected {
-  .ws-status-dot {
-    background: #52c41a;
-    box-shadow: 0 0 4px rgba(82, 196, 26, 0.5);
-  }
-  .ws-status-label {
-    color: #52c41a;
-  }
-}
-
-.ws-status--connecting,
-.ws-status--reconnecting {
-  .ws-status-dot {
-    background: #faad14;
-    animation: ws-pulse 1.2s ease-in-out infinite;
-  }
-  .ws-status-label {
-    color: #faad14;
-  }
-}
-
-.ws-status--error {
-  .ws-status-dot {
-    background: #ff4d4f;
-    animation: ws-pulse 1.2s ease-in-out infinite;
-  }
-  .ws-status-label {
-    color: #ff4d4f;
-  }
-}
-
-.ws-status--disconnected,
-.ws-status--idle {
-  .ws-status-dot {
-    background: rgba(128, 128, 128, 0.5);
-  }
-  .ws-status-label {
-    color: var(--1s-text-color-secondary, #999);
-  }
-}
-
-.agent-status--idle {
-  .agent-status-dot {
-    background: #52c41a;
-    box-shadow: 0 0 4px rgba(82, 196, 26, 0.4);
-  }
-  .agent-status-label {
-    color: #52c41a;
-  }
-}
-
-.agent-status--thinking,
-.agent-status--executing {
-  .agent-status-dot {
-    background: #faad14;
-    animation: ws-pulse 1.2s ease-in-out infinite;
-  }
-  .agent-status-label {
-    color: #faad14;
-  }
-}
-
-.agent-status--waiting_user {
-  .agent-status-dot {
-    background: #1677ff;
-    animation: ws-pulse 1.2s ease-in-out infinite;
-  }
-  .agent-status-label {
-    color: #1677ff;
-  }
-}
-
-.agent-status--error {
-  .agent-status-dot {
-    background: #ff4d4f;
-    animation: ws-pulse 1.2s ease-in-out infinite;
-  }
-  .agent-status-label {
-    color: #ff4d4f;
-  }
-}
-
-.screen-share-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  cursor: pointer;
-  user-select: none;
-  flex-shrink: 0;
-  transition: all 0.15s;
-
-  &:hover {
-    background: var(--1s-hover-background);
-  }
-
-  .screen-share-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: rgba(128, 128, 128, 0.5);
-    flex-shrink: 0;
-  }
-
-  .screen-share-label {
-    font-size: 10px;
-    white-space: nowrap;
-    line-height: 1;
-    color: var(--1s-text-color-secondary, #999);
-  }
-}
-
-.auto-create-btn {
-  display: flex;
-  width: 108px;
-  height: 24px;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 8px;
-  box-sizing: border-box;
-  border-radius: 3px;
-  cursor: pointer;
-  user-select: none;
-  flex-shrink: 0;
-  transition: all 0.12s;
-  border: 1px solid var(--1s-border-color-strong, #d9d9d9);
-
-  &:hover {
-    border-color: var(--1s-accent-color);
+  &--active {
+    background: var(--1s-accent-color-soft);
     color: var(--1s-accent-color);
-  }
 
-  .auto-create-label {
-    font-size: 10px;
-    white-space: nowrap;
-    line-height: 1.6;
-    color: var(--1s-text-color-secondary, #636e72);
-    font-weight: 500;
-  }
-}
-
-.auto-create-status-dot {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 7px;
-  border-radius: 50%;
-  background: var(--1s-surface-background);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
-  animation: auto-create-dot-pulse 1.2s ease-in-out infinite;
-}
-
-.auto-create-btn--running {
-  border-color: var(--1s-accent-color);
-  background: var(--1s-accent-color);
-  box-shadow: 0 0 0 2px var(--1s-hover-background);
-  animation: auto-create-running-pulse 1.8s ease-in-out infinite;
-
-  &:hover {
-    border-color: var(--1s-accent-color);
-    background: var(--1s-accent-color);
-    filter: brightness(0.92);
-  }
-
-  .auto-create-label {
-    color: #fff;
-    font-weight: 650;
-  }
-}
-
-.auto-create-btn--paused {
-  border-color: #d97706;
-  background: #d97706;
-  animation: none;
-
-  &:hover {
-    border-color: #b45309;
-    background: #b45309;
-  }
-
-  .auto-create-status-dot {
-    animation: none;
-  }
-}
-
-@keyframes auto-create-dot-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(0.72); }
-}
-
-@keyframes auto-create-running-pulse {
-  0%, 100% { box-shadow: 0 0 0 2px var(--1s-hover-background); }
-  50% { box-shadow: 0 0 0 4px var(--1s-hover-background); }
-}
-
-.screen-share-btn--active {
-  .screen-share-dot {
-    background: #52c41a;
-    box-shadow: 0 0 4px rgba(82, 196, 26, 0.5);
-    animation: ws-pulse 1.5s ease-in-out infinite;
-  }
-  .screen-share-label {
-    color: #52c41a;
-  }
-}
-
-@keyframes ws-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-// 响应式设计
-@media (max-width: 1200px) {
-  .edit-mode-info .model-id-text {
-    max-width: 150px;
-  }
-
-  .header-link {
-    display: none;
-  }
-}
-
-@media (max-width: 1000px) {
-  .edit-mode-info .model-id-text {
-    max-width: 120px;
-  }
-  
-  .header-actions {
-    gap: 4px;
-  }
-}
-
-@media (max-width: 800px) {
-  .designiy-header {
-    padding: 0 8px 0 4px;
-  }
-  
-  .edit-mode-info .model-id-text {
-    max-width: 100px;
-    font-size: 9px;
-  }
-  
-  .header-actions {
-    gap: 2px;
-    
-    .theme-switch,
-    .three-canvas-switch {
-      transform: scale(0.9);
-    }
-  }
-}
-
-@media (max-width: 600px) {
-  .edit-mode-info {
-    .model-id-text {
-      display: none;
-    }
-  }
-  
-  .header-actions {
-    .save-btn {
-      min-width: 36px;
-      
-      span {
-        display: none;
-      }
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .designiy-header {
-    column-gap: 4px;
-    padding-right: 6px;
-  }
-  
-  .header-actions {
-    gap: 1px;
-    
-    .save-btn {
-      min-width: 32px;
-      padding-inline: 8px;
-    }
-    
-    .theme-switch,
-    .three-canvas-switch {
-      transform: scale(0.8);
+    &:hover {
+      background: var(--1s-accent-color-soft);
+      color: var(--1s-accent-color);
     }
   }
 }

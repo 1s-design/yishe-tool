@@ -1251,7 +1251,7 @@ function parseResult(content: string) {
 }
 
 .ai-panel-drag-overlay {
-  background-color: rgba(255, 255, 255, 0.92);
+  background-color: color-mix(in srgb, var(--1s-surface-background) 92%, transparent);
   backdrop-filter: blur(4px);
   color: var(--1s-accent-color);
 }

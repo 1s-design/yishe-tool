@@ -12,80 +12,77 @@
   <div class="designiy-bottom-menu">
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="openEyeDropper">
-          <Palette class="text-sm" />
-        </Button>
+        <button class="bottom-icon-btn" @click="openEyeDropper">
+          <Palette class="bottom-icon" />
+        </button>
       </TooltipTrigger>
       <TooltipContent side="top">拾色器</TooltipContent>
     </Tooltip>
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="takeshot">
-          <Camera class="text-sm" />
-        </Button>
+        <button class="bottom-icon-btn" @click="takeshot">
+          <Camera class="bottom-icon" />
+        </button>
       </TooltipTrigger>
-      <TooltipContent side="top">保存当前模型截图</TooltipContent>
+      <TooltipContent side="top">截图</TooltipContent>
     </Tooltip>
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="showScreenshotDrawer = true">
-          <Image class="text-sm" />
-        </Button>
+        <button class="bottom-icon-btn" @click="showScreenshotDrawer = true">
+          <Image class="bottom-icon" />
+        </button>
       </TooltipTrigger>
-      <TooltipContent side="top">查看所有截图</TooltipContent>
+      <TooltipContent side="top">截图列表</TooltipContent>
     </Tooltip>
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="isFullScreen = !isFullScreen">
-          <Maximize2 class="text-sm" />
-        </Button>
+        <button class="bottom-icon-btn" @click="isFullScreen = !isFullScreen">
+          <Maximize2 class="bottom-icon" />
+        </button>
       </TooltipTrigger>
-      <TooltipContent side="top">{{ isFullScreen ? '退出全屏' : '进入全屏' }}</TooltipContent>
+      <TooltipContent side="top">{{ isFullScreen ? '退出全屏' : '全屏' }}</TooltipContent>
     </Tooltip>
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-destructive" @click="currentModelController.removeDecals()">
-          <Trash2 class="text-sm" />
-        </Button>
+        <button class="bottom-icon-btn bottom-icon-btn--danger" @click="currentModelController.removeDecals()">
+          <Trash2 class="bottom-icon" />
+        </button>
       </TooltipTrigger>
-      <TooltipContent side="top">移除当前所有贴纸</TooltipContent>
+      <TooltipContent side="top">移除所有贴纸</TooltipContent>
     </Tooltip>
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="doBuiltInAnimations">
-          <Video class="text-sm" />
-        </Button>
+        <button class="bottom-icon-btn" @click="doBuiltInAnimations">
+          <Video class="bottom-icon" />
+        </button>
       </TooltipTrigger>
-      <TooltipContent side="top">执行内置动画</TooltipContent>
+      <TooltipContent side="top">内置动画</TooltipContent>
     </Tooltip>
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button
-          variant="default"
-          size="xs"
-          @click="autocreate"
-          class="flex items-center gap-1 font-medium"
-        >
-          <Sparkles class="w-3 h-3" />
-          <span>自动生成</span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">自动根据当前控制台生成模型</TooltipContent>
-    </Tooltip>
-
-    <Tooltip>
-      <TooltipTrigger as-child>
-        <Button variant="ghost" size="icon-sm" class="text-muted-foreground hover:text-foreground" @click="showCropGuideModal = true">
-          <Scissors class="text-sm" />
-        </Button>
+        <button class="bottom-icon-btn" @click="showCropGuideModal = true">
+          <Scissors class="bottom-icon" />
+        </button>
       </TooltipTrigger>
       <TooltipContent side="top">裁剪参考线</TooltipContent>
+    </Tooltip>
+
+    <div class="bottom-divider" />
+
+    <Tooltip>
+      <TooltipTrigger as-child>
+        <button class="bottom-action-btn" @click="autocreate">
+          <Sparkles class="bottom-icon" />
+          <span>自动生成</span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top">自动根据当前控制台生成模型</TooltipContent>
     </Tooltip>
   </div>
 
@@ -140,11 +137,68 @@ function doBuiltInAnimations() {}
   align-items: center;
   padding: 0 12px;
   background-color: var(--1s-surface-background);
-  border: 1px solid var(--1s-border-color);
-  border-bottom: 0;
-  border-radius: 8px 8px 0 0;
-  column-gap: 3px;
-  box-shadow: var(--1s-shadow-sm);
+  border-top: 1px solid var(--1s-divider-color);
+  column-gap: 2px;
+}
+
+.bottom-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--1s-text-color-secondary);
+  cursor: pointer;
+  transition: background 0.08s, color 0.08s;
+
+  &:hover {
+    background: var(--1s-hover-overlay);
+    color: var(--1s-text-color);
+  }
+
+  &:active {
+    background: var(--1s-pressed-overlay);
+  }
+
+  &--danger:hover {
+    color: var(--1s-text-color);
+    background: color-mix(in srgb, #ef4444 10%, transparent);
+  }
+}
+
+.bottom-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.bottom-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--1s-divider-color);
+  margin: 0 6px;
+}
+
+.bottom-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 5px;
+  background: var(--1s-accent-color);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.1s;
+
+  &:hover {
+    opacity: 0.9;
+  }
 }
 
 @media (max-width: 768px) {

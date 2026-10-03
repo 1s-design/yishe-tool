@@ -810,7 +810,7 @@ async function doUpload() {
 }
 
 .file-preview-fallback {
-  color: #f5f5f5;
+  color: var(--1s-text-color);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -827,7 +827,7 @@ async function doUpload() {
 }
 
 .file-preview-fallback-meta {
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--1s-text-color-secondary);
   font-size: 13px;
 }
 

@@ -5,65 +5,67 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 224 12% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 224 12% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 224 12% 10%;
 
-    /* 白天模式：使用蓝色作为 primary 强调色，而非近黑色 */
     --primary: 217 91% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 20%;
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 6% 46%;
 
     --accent: 217 91% 95%;
-    --accent-foreground: 217 91% 30%;
+    --accent-foreground: 217 91% 28%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 88%;
+    --border: 220 14% 90%;
+    --input: 220 14% 88%;
     --ring: 217 91% 50%;
 
-    --radius: 0.375rem;
+    --radius: 0.5rem;
   }
 
-  .dark {
-    --background: 240 10% 3.9%;
+  .dark,
+  html.dark,
+  .tool-theme-dark,
+  body.designiy-dark {
+    --background: 224 12% 10%;
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 6%;
+    --card: 224 10% 14%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 6%;
+    --popover: 224 10% 14%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 217 91% 65%;
+    --primary-foreground: 224 12% 10%;
 
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 220 8% 22%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 220 8% 22%;
+    --muted-foreground: 220 6% 65%;
 
-    --accent: 240 3.7% 15.9%;
+    --accent: 220 8% 22%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 18%;
-    --input: 240 3.7% 20%;
-    --ring: 240 4.9% 83.9%;
+    --border: 220 8% 28%;
+    --input: 220 8% 30%;
+    --ring: 217 91% 65%;
   }
 }
 /* s1-loading directive (replaces el-loading) */

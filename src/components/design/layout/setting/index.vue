@@ -91,16 +91,17 @@ import {
   .setting-collapse-header {
     height: 25px;
     padding-left: 10px;
-    background-color: #3d3d3d;
+    background-color: var(--1s-control-surface-muted);
     border: none;
-    color: #e5e5e5;
+    color: var(--1s-text-color);
     font-size: 12px;
     font-weight: 100;
   }
 
   .setting-collapse-wrap {
-    background-color: #3d3d3d;
+    background-color: var(--1s-control-surface-muted);
     border: none;
+    color: var(--1s-text-color-secondary);
   }
 }
 </style>

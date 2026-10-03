@@ -126,11 +126,15 @@ async function handleLogout() {
   outline: none !important;
   box-shadow: none !important;
   border-radius: 50% !important;
+  box-sizing: border-box !important;
+  /* 防止 data-state 变化时宽度跳动 */
+  contain: size !important;
 }
 
 .user-avatar-trigger:focus,
 .user-avatar-trigger:focus-visible,
-.user-avatar-trigger[data-state="open"] {
+.user-avatar-trigger[data-state="open"],
+.user-avatar-trigger[data-state="closed"] {
   outline: none !important;
   box-shadow: none !important;
   width: 28px !important;

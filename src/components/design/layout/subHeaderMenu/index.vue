@@ -10,37 +10,34 @@
 -->
 <template>
   <div class="designiy-sub-header">
-    <div class="text-xs font-medium text-muted-foreground select-none">
+    <div class="designiy-sub-header__mode">
       {{ isEdit ? "编辑" : "新建" }}
     </div>
 
-    <div class="flex items-center gap-1">
-      <Button variant="ghost" size="xs" class="flex items-center gap-1">
-        <icon-prev class="designiy-sub-header-icon"></icon-prev>
-        <span>撤销</span>
-      </Button>
-
-      <Button variant="ghost" size="xs" class="flex items-center gap-1">
+    <div class="designiy-sub-header__group">
+      <button class="designiy-sub-header__btn">
+        <icon-prev class="designiy-sub-header__icon"></icon-prev>
+      </button>
+      <button class="designiy-sub-header__btn">
         <icon-prev
           style="transform: rotateY(180deg)"
-          class="designiy-sub-header-icon"
+          class="designiy-sub-header__icon"
         ></icon-prev>
-        <span>重做</span>
-      </Button>
+      </button>
     </div>
 
     <div class="flex-1"></div>
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button variant="ghost" size="icon-sm" @click="$emit('takephoto')">
-          <icon-camera class="w-4 h-4"></icon-camera>
-        </Button>
+        <button class="designiy-sub-header__btn" @click="$emit('takephoto')">
+          <icon-camera class="designiy-sub-header__icon"></icon-camera>
+        </button>
       </TooltipTrigger>
       <TooltipContent side="bottom">截屏</TooltipContent>
     </Tooltip>
 
-    <Separator orientation="vertical" class="h-4" />
+    <div class="designiy-sub-header__divider" />
 
     <online-point :online="online"></online-point>
   </div>
@@ -72,13 +69,57 @@ import { Separator } from "@/components/ui/separator";
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  column-gap: 12px;
+  padding: 0 12px;
+  column-gap: 4px;
   border-bottom: 1px solid var(--1s-divider-color);
 }
 
-.designiy-sub-header-icon {
-  width: 13px;
-  height: 13px;
+.designiy-sub-header__mode {
+  font-size: 11px;
+  color: var(--1s-text-color-tertiary);
+  user-select: none;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.designiy-sub-header__group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.designiy-sub-header__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--1s-text-color-secondary);
+  cursor: pointer;
+  transition: background 0.08s, color 0.08s;
+
+  &:hover {
+    background: var(--1s-hover-overlay);
+    color: var(--1s-text-color);
+  }
+
+  &:active {
+    background: var(--1s-pressed-overlay);
+  }
+}
+
+.designiy-sub-header__icon {
+  width: 14px;
+  height: 14px;
+}
+
+.designiy-sub-header__divider {
+  width: 1px;
+  height: 14px;
+  background: var(--1s-divider-color);
+  margin: 0 4px;
 }
 </style>

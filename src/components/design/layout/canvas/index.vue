@@ -126,8 +126,6 @@
               >
                 <div
                   class="canvas-layer-option-item"
-                  @mouseenter="optionMouseenter(item)"
-                  @mouseleave="optionMouseleave(item)"
                 >
                   <span>{{ canvasChildLabelMap[item.type] }}</span>
                   <div style="flex: 1"></div>
@@ -245,8 +243,6 @@
       </DialogFooter>
     </DialogContent>
   </Dialog>
-
-  <ChildViewHelperComponent></ChildViewHelperComponent>
 </template>
 
 <script setup lang="tsx">
@@ -286,10 +282,6 @@ import tagsInput from "@/components/design/components/tagsInput/tagsInput.vue";
 import { stickerAutoplacementTags } from "@/components/design/components/tagsInput/index.ts";
 import { executeAITool } from "@/ai/shared/execute-tool";
 import { clearAgentDesignProvenance } from "@/ai/design-provenance";
-import {
-  currentFocusingStickerId,
-  ChildViewHelperComponent,
-} from "@/components/design/layout/canvas/components/childViewHelper/index";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -527,20 +519,6 @@ async function doUpload() {
     console.error("保存失败:", e);
     submitLoading.value = false;
     message.error("保存失败: " + (e.message || e));
-  }
-}
-
-/**
- * @method 子元素鼠标覆盖事件
- */
-
-function optionMouseenter(item) {
-  currentFocusingStickerId.value = item.id;
-}
-
-function optionMouseleave(item) {
-  if (item.id == currentFocusingStickerId.value) {
-    currentFocusingStickerId.value = null;
   }
 }
 
