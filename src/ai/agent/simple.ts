@@ -360,7 +360,7 @@ function isDuplicateSearch(
   toolName: string,
   args: Record<string, any>,
 ): SearchRecord | null {
-  const query = (args.query || args.request || "").toLowerCase().trim();
+  const query = String(args.query || args.request || "").toLowerCase().trim();
   if (!query) return null;
 
   return (

@@ -575,7 +575,7 @@ export function findPresetsByCategory(category: string): SizePreset[] {
 }
 
 export function searchPresets(query: string): SizePreset[] {
-  const q = query.toLowerCase().trim();
+  const q = String(query ?? "").toLowerCase().trim();
   if (!q) return sizePresets;
   return sizePresets.filter((p) => {
     return (
