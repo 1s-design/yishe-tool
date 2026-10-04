@@ -1,12 +1,5 @@
 <template>
   <Accordion type="multiple" :model-value="htmlCollapseActives" @update:model-value="v => htmlCollapseActives = v as string[]">
-    <AccordionItem value="0">
-      <AccordionTrigger>AI 生成</AccordionTrigger>
-      <AccordionContent>
-      <ai-html-generator v-model="currentOperatingCanvasChild" />
-      </AccordionContent>
-    </AccordionItem>
-
     <AccordionItem v-if="hasTemplateBindings" value="2">
       <AccordionTrigger>模板绑定</AccordionTrigger>
       <AccordionContent>
@@ -40,7 +33,6 @@ import {
 } from "@/components/ui/accordion";
 import operateItemHtmlInput from "@/components/design/layout/canvas/operate/htmlInput.vue";
 import operateItemHtmlBindingsEditor from "@/components/design/layout/canvas/operate/htmlTemplate/bindingsEditor.vue";
-import aiHtmlGenerator from "@/components/design/layout/canvas/operate/aiHtmlGenerator.vue";
 import { currentOperatingCanvasChild } from "../index.tsx";
 import {
   detachHtmlTemplateFromTarget,
@@ -49,7 +41,7 @@ import {
   syncHtmlTemplateFieldsFromContent,
 } from "@/components/design/layout/canvas/htmlTemplate/runtime.ts";
 
-const htmlCollapseActives = ref(["0", "2", "3"]);
+const htmlCollapseActives = ref(["2", "3"]);
 
 const hasTemplateBindings = computed(() => {
   ensureHtmlTemplateOptions(currentOperatingCanvasChild.value);

@@ -86,19 +86,20 @@ const decals = computed(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--1s-elevated-background);
-  color: var(--1s-text-color);
-  box-shadow: var(--1s-shadow-md);
-  border: 1px solid var(--1s-border-color);
+  background-color: transparent;
+  color: var(--1s-text-color-secondary);
+  border: none;
   height: 24px;
   width: 64px;
-  border-radius: 8px;
+  border-radius: 5px;
   z-index: 10;
   cursor: pointer;
   left: calc(50% - 32px);
+  transition: background 0.1s, color 0.1s;
 
   &:hover {
-    background-color: var(--1s-control-hover-background);
+    background-color: var(--1s-hover-overlay);
+    color: var(--1s-text-color);
   }
 }
 

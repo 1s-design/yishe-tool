@@ -1,23 +1,24 @@
 <template>
-  <DropdownMenu>
-    <DropdownMenuTrigger as-child>
-      <button
-        class="user-avatar-trigger inline-flex items-center justify-center h-7 w-7 min-w-[28px] max-w-[28px] shrink-0 p-0 m-0 border-0 outline-none rounded-full overflow-hidden select-none cursor-pointer"
-        aria-label="用户菜单"
+  <div class="user-avatar-fixed">
+    <DropdownMenu>
+      <DropdownMenuTrigger as-child>
+        <button
+          class="user-avatar-trigger"
+          aria-label="用户菜单"
+        >
+          <Avatar class="user-avatar-img">
+            <AvatarImage :src="avatar" alt="用户头像" class="h-full w-full object-cover" />
+            <AvatarFallback class="text-[10px] font-semibold bg-primary text-primary-foreground">
+              {{ initials }}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        class="user-dropdown-content w-60 p-2 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 z-[1000]"
+        :side-offset="8"
       >
-        <Avatar class="h-7 w-7 min-w-[28px] max-w-[28px] shrink-0 aspect-square rounded-full border border-border/80 shadow-xs hover:opacity-90 transition-opacity">
-          <AvatarImage :src="avatar" alt="用户头像" class="h-full w-full object-cover" />
-          <AvatarFallback class="text-[10px] font-semibold bg-primary text-primary-foreground">
-            {{ initials }}
-          </AvatarFallback>
-        </Avatar>
-      </button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent
-      align="end"
-      class="user-dropdown-content w-60 p-2 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 z-[1000]"
-      :side-offset="8"
-    >
       <!-- User info card -->
       <div class="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 mb-1.5 border border-zinc-200/60 dark:border-zinc-700/50">
         <Avatar class="h-9 w-9 shrink-0 ring-1 ring-border shadow-xs">
@@ -57,6 +58,7 @@
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
+  </div>
 </template>
 
 <script setup>
@@ -108,38 +110,51 @@ async function handleLogout() {
 </script>
 
 <style scoped>
+/* 外层固定容器 — 无论内部怎么变，这个盒子永远 28x28 */
+.user-avatar-fixed {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  max-width: 28px;
+  min-height: 28px;
+  max-height: 28px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -4px;
+}
+
 .user-avatar-trigger {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  max-width: 28px !important;
-  min-height: 28px !important;
-  max-height: 28px !important;
-  flex-shrink: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border-radius: 50% !important;
-  box-sizing: border-box !important;
-  /* 防止 data-state 变化时宽度跳动 */
-  contain: size !important;
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .user-avatar-trigger:focus,
 .user-avatar-trigger:focus-visible,
-.user-avatar-trigger[data-state="open"],
-.user-avatar-trigger[data-state="closed"] {
-  outline: none !important;
-  box-shadow: none !important;
-  width: 28px !important;
-  min-width: 28px !important;
-  max-width: 28px !important;
+.user-avatar-trigger:active,
+.user-avatar-trigger:hover,
+.user-avatar-trigger[data-state] {
+  outline: none;
+  box-shadow: none;
+  border: none;
+  width: 28px;
+  height: 28px;
+}
+
+.user-avatar-img {
+  width: 28px;
+  height: 28px;
 }
 </style>
 
