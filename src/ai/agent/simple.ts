@@ -1333,7 +1333,7 @@ async function runAgentLoop(
     buildSearchContext() +
     getBatchProgress() +
     (allowInteraction
-      ? ""
+      ? "\n\n## 交互模式\n- 优先完成所有计划步骤（尤其是保存/导出）再结束，不要调用 ask_choice 或 request_feedback 打断流程\n- 如果用户明确要求保存/导出，必须执行保存成功后才能结束"
       : deliveryHandledExternally
         ? "\n\n## 自动制作模式\n- 当前任务不能等待用户反馈，也不要调用 ask_choice 或 request_feedback\n- 如果信息不足，请基于当前提示词和可用资源自行判断\n- 只完成当前画布设计，完成后直接结束；评估和保存由外层流水线负责"
         : "\n\n## 自动制作模式\n- 当前任务不能等待用户反馈，也不要调用 ask_choice 或 request_feedback\n- 如果信息不足，请基于当前提示词和可用资源自行判断\n- 必须完成用户明确要求的设计、检查和保存步骤\n- 保存成功后直接结束，不要请求用户确认、评价或反馈");
@@ -1751,6 +1751,25 @@ async function runAgentLoop(
           );
           agentState.status = "thinking";
           agentState.pendingInteraction = null;
+          continue;
+        }
+
+        // 有未完成的交付步骤时，不允许等待用户反馈
+        const pendingDeliveries = getIncompleteDeliveryActions(plan);
+        if (pendingDeliveries.length > 0) {
+          appendAssistantToolCalls();
+          messagesForLLM.push({
+            role: "tool",
+            tool_call_id: call.id,
+            content: `当前还有未完成的交付步骤（${pendingDeliveries.join("、")}），请先完成这些步骤，不要请求用户反馈。`,
+          });
+          addMessage({
+            role: "tool",
+            tool_call_id: call.id,
+            tool_name: call.function.name,
+            content: `当前还有未完成的交付步骤（${pendingDeliveries.join("、")}），请先完成这些步骤，不要请求用户反馈。`,
+            meta: { iteration, toolArgs: args },
+          });
           continue;
         }
 

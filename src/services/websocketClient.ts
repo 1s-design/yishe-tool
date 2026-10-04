@@ -879,7 +879,7 @@ async function handleRemoteCommand(data: any) {
       }
       case "snapshot": {
         const { captureCanvasForAI } = await import("@/ai/capture");
-        const snapshot = await captureCanvasForAI();
+        const snapshot = await captureCanvasForAI({ timeoutMs: 60_000 });
         result.success = true;
         result.snapshot = snapshot;
         result.message = "已获取当前画布截图";

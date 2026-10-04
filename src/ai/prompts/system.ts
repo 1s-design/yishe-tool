@@ -93,10 +93,12 @@ function buildHtmlQuickRefPrompt(): string {
 - 写 HTML 前先按内容量选择层级：dense 用于长文/标签/参数，balanced 用于常规海报，display 用于单字/短标语；同一画面最多设置 6-7 个字号角色
 - --type-hero、--type-title、--type-primary、--type-subtitle、--type-body、--type-caption、--type-micro 已由画布自动提供，直接使用 font-size:var(--type-xxx)，不要重新定义
 - **强制使用字号 CSS 变量**：所有文字元素必须用 font-size:var(--type-hero/title/primary/subtitle/body/caption/micro)，禁止直接写固定字号。简单文字（1-2句）至少用 type-title + type-body；海报/多层级内容至少用 type-hero + type-body + type-caption
+- **文字一行显示**：主标题/短标语必须 white-space:nowrap + overflow:hidden 确保不换行；字号要根据画布宽度合理选择，4字标题用 type-hero，6字以上用 type-title；多行文字才允许换行
 - font-size 只允许 em、百分比或上述 CSS 变量，禁止 px、pt、rem、vw、vh；写入层会把遗漏的绝对字号自动归一为相对字号
 - 主视觉只用于一个最重要的信息；主标题不超过两个；用户要求展示的重要信息最低使用 body，caption/micro 只用于非关键信息
 - 书法正文是视觉主体时归为 primaryText，并使用尺寸工具给出的 primaryText 和 bodyLineHeight；不要把书法正文缩成注释
 - **书法/对联排版规范**：竖排内容必须用 writing-mode:vertical-rl 或 flex-direction:column 实现；对联上联居右、下联居左、横批居上；匾额横排从右到左
+- **内容必须完整显示在画布内**：所有文字和装饰元素必须在画布边界内，禁止溢出或被裁切；用 % 或 em 定位而非固定 px
 - **字体匹配要求**：用户要求楷书/行书/草书/隶书/篆书/瘦金体时，搜索字体必须选名称包含对应书体的字体；找不到精确匹配时选最接近的传统书法字体
 - 避免嵌套 em 重复放大：中间布局容器不要设置 font-size，只在实际文字元素上设置；极细描边等固定细节才使用 px
 - 图片/字体资源通过 htmlBindings 注入，HTML 中用 {{image.xxx.url}} / {{font.xxx.family}} 引用

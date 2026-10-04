@@ -1035,7 +1035,10 @@ export class CanvasController {
       return this.fontEmbedCSSCache.value;
     }
 
-    const value = await getFontEmbedCSS(this.el);
+    const value = await Promise.race([
+      getFontEmbedCSS(this.el),
+      new Promise<string>((resolve) => setTimeout(() => resolve(''), 8_000)),
+    ]);
     this.fontEmbedCSSCache = {
       value,
       key: cacheKey,
@@ -1046,10 +1049,13 @@ export class CanvasController {
 
   // 等待所有字体加载完成
   async waitForFontsLoaded() {
-    // 等待 document.fonts API 加载完成
+    // 等待 document.fonts API 加载完成（最多 5 秒）
     if (document.fonts && document.fonts.ready) {
       try {
-        await document.fonts.ready;
+        await Promise.race([
+          document.fonts.ready,
+          new Promise((resolve) => setTimeout(resolve, 5_000)),
+        ]);
       } catch (e) {
         console.warn("Font loading check failed:", e);
       }
@@ -1202,13 +1208,21 @@ export class CanvasController {
         // 获取字体嵌入 CSS
         const fontEmbedCSS = await this.getCachedFontEmbedCSS();
 
-        // 转换为 canvas
-        let _canvas = await toCanvas(this.el, {
-          quality: 1,
-          pixelRatio: 1,
-          backgroundColor: null,
-          fontEmbedCSS: fontEmbedCSS,
-        });
+        // 转换为 canvas（最多 30 秒）
+        // imagePlaceholder: 图片加载失败时的占位符，避免整体渲染失败
+        let _canvas = await Promise.race([
+          toCanvas(this.el, {
+            quality: 1,
+            pixelRatio: 1,
+            backgroundColor: null,
+            fontEmbedCSS: fontEmbedCSS,
+            imagePlaceholder: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjqU8L3RleHQ+PC9zdmc+',
+            skipAutoScale: true,
+          }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('画布截图转换超时 (30s)')), 30_000),
+          ),
+        ]);
         console.log("html-to-image toCanvas");
 
         let width = Number(
@@ -1248,7 +1262,30 @@ export class CanvasController {
 
         console.timeEnd("updateRenderingCanvas");
       } catch (e) {
-        throw Error("元素转换失败", e.message);
+        console.warn("画布渲染首次失败，尝试降级重试:", e.message);
+        // 降级重试：跳过字体嵌入，使用占位图
+        try {
+          let _canvas = await toCanvas(this.el, {
+            quality: 0.8,
+            pixelRatio: 1,
+            backgroundColor: null,
+            skipFonts: true,
+            imagePlaceholder: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjqU8L3RleHQ+PC9zdmc+',
+            skipAutoScale: true,
+          });
+          let width = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.width));
+          let height = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.height));
+          this.clearCanvas();
+          this.ctx.drawImage(_canvas, 0, 0, _canvas.width, _canvas.height, 0, 0, width, height);
+          this.loading.value = false;
+          renderingLoading.value = false;
+          this.shouldUpdateCanvasSticker.value = false;
+          console.warn("画布降级渲染成功");
+        } catch (e2) {
+          console.error("画布降级渲染也失败:", e2.message);
+          this.loading.value = false;
+          renderingLoading.value = false;
+        }
       }
     }
 

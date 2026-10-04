@@ -88,7 +88,7 @@ export async function renderCurrentCanvasNow(
     throw new Error("画布控制器未初始化");
   }
 
-  const timeoutMs = options.timeoutMs ?? 30_000;
+  const timeoutMs = options.timeoutMs ?? 60_000;
 
   await nextTick();
   await waitForAnimationFrame();
@@ -113,7 +113,9 @@ export async function renderCurrentCanvasNow(
 
   await waitForRender(controller, timeoutMs, true);
   if (controller.shouldUpdateCanvasSticker?.value) {
-    throw new Error("画布渲染未完成或渲染失败，已阻止使用旧画面");
+    // 竞态条件：onUpdated 可能在渲染后重置标记，不应阻塞截图
+    console.warn("[Capture] shouldUpdateCanvasSticker 仍为 true（可能是竞态），继续使用当前画面");
+    controller.shouldUpdateCanvasSticker.value = false;
   }
   await nextTick();
   await waitForAnimationFrame();

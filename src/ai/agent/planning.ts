@@ -270,7 +270,7 @@ export function isNewDesignRequest(
       return false;
     }
 
-    return /创建|新建|生成|制作|实现|(?:设计|做|创作|画)[一]?(?:张|个|套|款|幅|枚|组)|清空画布.*(?:添加|创建)|复刻|仿做|仿制|做同款|相同款|照着.{0,12}(?:做|制作)|create|generate|make a|design a/i.test(
+    return /创建|新建|生成|制作|实现|(?:设计|做|创作|画)[一]?(?:张|个|套|款|幅|枚|组)?\S{1,12}(?:贴纸|海报|名片|贺卡|封面|横幅|标签|卡片|卡|图|画|插画|壁纸|请柬|邀请函|菜单|Banner|banner|logo|LOGO|匾额|印章|对联|横批|明信片|宣传|横版|竖版|方形|包装)|清空画布.*(?:添加|创建)|复刻|仿做|仿制|做同款|相同款|照着.{0,12}(?:做|制作)|create|generate|make a|design a/i.test(
       text,
     );
   }
@@ -325,7 +325,7 @@ function getPrimaryArtworkAction(
 
   const analysisOnly =
     shouldAllowCanvasAnalysis(userMessage) &&
-    !/创建|生成|制作|(?:设计|做|创作|画)[一]?(?:张|个|套|款|幅|枚|组)|新建|复刻|仿做|仿制|同款|基于当前|修改当前|调整当前/i.test(
+    !/创建|生成|制作|(?:设计|做|创作|画)[一]?(?:张|个|套|款|幅|枚|组)?\S{1,12}(?:贴纸|海报|名片|贺卡|封面|横幅|标签|卡片|图|画|插画|设计|壁纸|请柬|邀请函|菜单|Banner|banner|logo|LOGO)|新建|复刻|仿做|仿制|同款|基于当前|修改当前|调整当前/i.test(
       userMessage,
     );
   if (analysisOnly) return null;
