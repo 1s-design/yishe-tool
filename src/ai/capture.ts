@@ -93,6 +93,9 @@ export async function renderCurrentCanvasNow(
   await nextTick();
   await waitForAnimationFrame();
   await waitForAnimationFrame();
+  // 等待 DOM 稳定（字体加载、图片解码等）
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  await waitForAnimationFrame();
 
   if (typeof controller.updateRenderingCanvasJob === "function") {
     controller.loading.value = true;

@@ -124,8 +124,9 @@ export function buildAITools(options?: {
     type: "function" as const,
     function: {
       name: normalizeOperationToolName(t.name),
-      description: t.description,
-      parameters: t.input_schema,
+      // 压缩描述：截断到 80 字符
+      description: String(t.description || '').slice(0, 80),
+      parameters: compressSchema(t.input_schema),
     },
   }));
 
@@ -138,6 +139,7 @@ export function buildAITools(options?: {
         function: {
           ...tool.function,
           name: normalizeAnyToolName(tool.function?.name),
+          description: String(tool.function?.description || '').slice(0, 80),
         },
       })),
     );
@@ -148,4 +150,25 @@ export function buildAITools(options?: {
   }
 
   return tools;
+}
+
+/**
+ * 压缩 JSON Schema：截断过长的描述字段，减少 token 消耗
+ */
+function compressSchema(schema: any): any {
+  if (!schema || typeof schema !== 'object') return schema;
+  if (Array.isArray(schema)) return schema.map(compressSchema);
+  
+  const result: any = {};
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === 'description' && typeof value === 'string') {
+      result[key] = value.slice(0, 60);
+    } else if (key === 'placeholder' || key === 'label') {
+      // 跳过纯 UI 字段
+      continue;
+    } else {
+      result[key] = compressSchema(value);
+    }
+  }
+  return result;
 }

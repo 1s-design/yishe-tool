@@ -1189,7 +1189,23 @@ export class CanvasController {
     11,
   );
 
+  // 渲染锁：防止并发渲染导致状态混乱
+  _renderingLock = false;
+
   async updateRenderingCanvasJob() {
+    if (this._renderingLock) {
+      console.warn("[Canvas] 渲染进行中，跳过重复请求");
+      return;
+    }
+    this._renderingLock = true;
+    try {
+      await this._doUpdateRenderingCanvas();
+    } finally {
+      this._renderingLock = false;
+    }
+  }
+
+  async _doUpdateRenderingCanvas() {
     if (!this.el) {
       console.log("miss canvas el");
       this.loading.value = false;

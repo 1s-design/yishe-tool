@@ -154,7 +154,7 @@ const STORAGE_KEY = migrateLegacyWorkspaceStorage(
   "yishe_tool_ai_agent_conversation_v1",
 );
 const MAX_PERSISTED_MESSAGES = 80;
-const MAX_PERSISTED_CONTENT_LENGTH = 12000;
+const MAX_PERSISTED_CONTENT_LENGTH = 6000;
 const PERSIST_DEBOUNCE_MS = 400;
 const MAX_PERSISTED_STRING_LENGTH = 1600;
 const MAX_PERSISTED_ARRAY_LENGTH = 12;
@@ -234,7 +234,7 @@ function sanitizeMessageForStorage(message: AgentMessage): AgentMessage {
     role: message.role,
     content: String(message.content || "").slice(
       0,
-      message.role === "tool" ? 2000 : MAX_PERSISTED_CONTENT_LENGTH,
+      message.role === "tool" ? 800 : MAX_PERSISTED_CONTENT_LENGTH,
     ),
     timestamp: Number(message.timestamp || Date.now()),
     tool_calls: compactValueForStorage(message.tool_calls, "tool_calls"),
@@ -1385,11 +1385,11 @@ async function runAgentLoop(
       });
     }
 
-    // 上下文压缩（消息过多时）
-    if (messagesForLLM.length > 14) {
+    // 上下文压缩（消息过多时，更积极地压缩以节省 token）
+    if (messagesForLLM.length > 10) {
       const systemMsgs = messagesForLLM.filter((m) => m.role === "system");
-      const recentMsgs = messagesForLLM.slice(-8);
-      const oldMsgs = messagesForLLM.slice(systemMsgs.length, -8);
+      const recentMsgs = messagesForLLM.slice(-6);
+      const oldMsgs = messagesForLLM.slice(systemMsgs.length, -6);
 
       const summary = oldMsgs
         .map((m) => {
@@ -1397,10 +1397,10 @@ async function runAgentLoop(
             m.role === "user" &&
             String(m.content || "").startsWith("[工具结果]")
           ) {
-            return String(m.content || "").replace("[工具结果] ", "");
+            return String(m.content || "").replace("[工具结果] ", "").slice(0, 200);
           }
           if (m.role === "tool") {
-            return String(m.content || "").slice(0, 500);
+            return String(m.content || "").slice(0, 200);
           }
           return "";
         })
@@ -1415,7 +1415,7 @@ async function runAgentLoop(
       if (summary) {
         messagesForLLM.push({
           role: "system",
-          content: `[历史摘要] 已完成: ${summary}`,
+          content: `[历史摘要] ${summary.slice(0, 600)}`,
         });
       }
       messagesForLLM.push(...recentMsgs);
@@ -2095,6 +2095,20 @@ async function runAgentLoop(
         meta: { iteration, type: "automatic-delivery-complete" },
       });
       return;
+    }
+
+    // 设计已完成但保存步骤未执行时，强制指示保存
+    if (allowPostArtworkContinuation && plan) {
+      const hasDoneArtwork = plan.steps.some(
+        (s) => (s.action === "canvas.addHtml" || s.action === "canvas.addDiagram" || s.action === "canvas.addChart") && s.status === "done",
+      );
+      const pendingDelivery = getIncompleteDeliveryActions(plan);
+      if (hasDoneArtwork && pendingDelivery.length > 0 && iteration > 2) {
+        messagesForLLM.push({
+          role: "system",
+          content: `设计已完成。现在必须立即调用 ${pendingDelivery.join("、")} 完成交付，不要重复调用 canvas.addHtml。`,
+        });
+      }
     }
 
     if (completedArtwork) {
