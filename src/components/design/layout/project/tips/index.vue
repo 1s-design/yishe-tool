@@ -412,7 +412,6 @@ onMounted(() => {
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 
   &:hover {
-    transform: translateY(-2px);
     box-shadow: var(--1s-shadow-md);
     border-color: var(--1s-accent-color);
   }

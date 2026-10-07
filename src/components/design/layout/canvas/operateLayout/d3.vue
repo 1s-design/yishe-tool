@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="code">
-      <AccordionTrigger>D3.js 代码</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">D3.js 代码</h4>
+      
         <div class="d3-code-editor">
           <div class="d3-code-editor__toolbar">
             <Popover v-model:open="aiPopoverVisible">
@@ -64,12 +60,12 @@
             placeholder="// D3.js 代码&#10;// 可用: d3, container, width, height"
           />
         </div>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
@@ -77,16 +73,16 @@
         />
 
         <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor" />
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 </template>
 
 <script setup lang="ts">
@@ -94,12 +90,6 @@ import { ref, watch } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import {
   Select,
   SelectTrigger,
@@ -117,7 +107,6 @@ import {
 import { currentOperatingCanvasChild } from "../index.tsx";
 import { generateD3Code } from "../children/aiD3Service.ts";
 
-const activeNames = ref(["code", "basic", "common"]);
 const aiPopoverVisible = ref(false);
 const aiPrompt = ref("");
 const aiLoading = ref(false);

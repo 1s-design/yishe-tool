@@ -1,8 +1,7 @@
 <template>
-    <Accordion type="multiple" :model-value="rectCollapseActives" @update:model-value="v => rectCollapseActives = v as string[]">
-        <AccordionItem value="1">
-            <AccordionTrigger>矩形属性</AccordionTrigger>
-            <AccordionContent>
+        <section class="operate-section">
+            <h4 class="operate-section__title">矩形属性</h4>
+            
             <operateItemSize label="矩形尺寸" v-model:width="currentOperatingCanvasChild.width"
                 v-model:height="currentOperatingCanvasChild.height">
             </operateItemSize>
@@ -18,27 +17,21 @@
 
             <operateItemRectBorderRadius v-model="currentOperatingCanvasChild.borderRadius">
             </operateItemRectBorderRadius>
-            </AccordionContent>
-        </AccordionItem>
+            
+        </section>
 
-        <AccordionItem value="2">
-            <AccordionTrigger>通用属性</AccordionTrigger>
-            <AccordionContent>
+        <section class="operate-section">
+            <h4 class="operate-section__title">通用属性</h4>
+            
             <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-            </AccordionContent>
-        </AccordionItem>
-    </Accordion>
+            
+        </section>
+    
 </template>
 
 <script setup lang='ts'>
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
 
-import {
-    Accordion,
-    AccordionItem,
-    AccordionTrigger,
-    AccordionContent,
-} from "@/components/ui/accordion";
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";
@@ -87,7 +80,6 @@ import {
     updateRenderingCanvas
 } from "../index.tsx";
 
-const rectCollapseActives = ref(['1','2'])
 
 </script>
 

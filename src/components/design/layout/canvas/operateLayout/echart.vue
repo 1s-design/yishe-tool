@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="ai">
-      <AccordionTrigger>AI 生成</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">AI 生成</h4>
+      
         <div class="echart-ai-generator">
           <Textarea
             v-model="aiPrompt"
@@ -38,12 +34,12 @@
 
           <div v-if="aiError" class="echart-option-error">{{ aiError }}</div>
         </div>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
@@ -75,28 +71,28 @@
             />
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="option">
-      <AccordionTrigger>Option</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">Option</h4>
+      
         <operate-form-item>
           <template #name>JSON 配置</template>
           <template #content>
             <Button size="sm" @click="openOptionDialog">编辑配置</Button>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 
   <Dialog :modal="false" v-model:open="optionDialogVisible">
     <DialogContent class="echart-option-dialog max-w-none h-screen w-screen rounded-none">
@@ -129,12 +125,6 @@ import { computed, ref, watch } from 'vue'
 import operateItemSize from '@/components/design/layout/canvas/operate/size/relativeSize.vue'
 import operateItemCommonGroup from '@/components/design/layout/canvas/operate/commonGroup.vue'
 import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion'
-import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -158,7 +148,6 @@ import {
 import { generateEchartOption } from '../children/echart/aiEchartService'
 import { formatSizeOptionToPixelValue } from '../helper'
 
-const activeNames = ref(['ai', 'basic', 'option', 'common'])
 const optionText = ref('')
 const optionError = ref('')
 const optionDialogVisible = ref(false)

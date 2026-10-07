@@ -3,7 +3,7 @@
     v-bind="forwarded"
     :class="
       cn(
-        'relative flex cursor-pointer select-none items-center rounded-xs px-2 py-1.5 text-xs outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+        'relative flex h-6 cursor-pointer select-none items-center rounded-[5px] px-2 text-[11px] font-[450] outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-[var(--1s-menu-background-hover)] hover:text-[var(--1s-menu-text)] focus:bg-[var(--1s-menu-background-hover)] focus:text-[var(--1s-menu-text)]',
         $attrs.class ?? ''
       )
     "

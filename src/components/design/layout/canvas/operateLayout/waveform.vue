@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="waveformCollapseActives"
-    @update:model-value="v => (waveformCollapseActives = v as string[])"
   >
-    <AccordionItem value="1">
-      <AccordionTrigger>音频波形</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">音频波形</h4>
+      
         <operate-form-item>
           <template #icon><icon></icon></template>
           <template #name>音频URL</template>
@@ -51,45 +47,45 @@
           v-model="currentOperatingCanvasChild.backgroundColor"
         >
         </operateItemBackgroundColor>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="2">
-      <AccordionTrigger>尺寸</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">尺寸</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
           v-model:height="currentOperatingCanvasChild.height"
         >
         </operateItemSize>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="3">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup
           v-model="currentOperatingCanvasChild"
         ></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="4">
-      <AccordionTrigger>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">滤镜效果</div>
-      </AccordionTrigger>
-      <AccordionContent>
+      </h4>
+      
         <operateItemFilterGroup
           v-model="currentOperatingCanvasChild.filter"
         ></operateItemFilterGroup>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
     <operateItemClipPath
       v-model="currentOperatingCanvasChild.clipPath"
     ></operateItemClipPath>
-  </Accordion>
+  
 </template>
 
 <script setup lang="ts">
@@ -101,18 +97,11 @@ import operateItemBackgroundColor from "@/components/design/layout/canvas/operat
 import operateItemFilterGroup from "@/components/design/layout/canvas/operate/filter/group.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
 import operateItemClipPath from "@/components/design/layout/canvas/operate/clipPath/index.vue";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 
 import { currentOperatingCanvasChild } from "../index.tsx";
 
-const waveformCollapseActives = ref(["1", "2", "3", "4"]);
 </script>
 
 <style></style>

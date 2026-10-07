@@ -1,149 +1,179 @@
 <template>
-  <div class="container" v-if="currentOperatingDecalController">
-    <div style="padding: 0.75rem">
+  <div class="container decal-property-panel u-panel" v-if="currentOperatingDecalController">
+    <header class="u-panel__header decal-property-header">
+      <div class="decal-property-heading">
+        <strong>贴纸属性</strong>
+        <span>调整位置与材质</span>
+      </div>
+      <button
+        type="button"
+        class="u-icon-btn u-icon-btn--xs"
+        aria-label="关闭属性面板"
+        title="关闭属性面板"
+        @click="showDecalControl = false"
+      >
+        <X class="w-3 h-3" />
+      </button>
+    </header>
+
+    <section class="decal-preview-wrap u-panel__section">
+      <div class="u-panel__section-title">
+        <span>贴纸</span>
+        <button
+          type="button"
+          class="u-icon-btn u-icon-btn--xs"
+          aria-label="查看贴纸详情"
+          title="查看贴纸详情"
+          @click="handleStickerImgClick"
+        >
+          <Info class="w-3 h-3" />
+        </button>
+      </div>
       <s1-img
         :src="currentOperatingDecalController.state.src"
-        class="png-background"
+        class="png-background u-media-preview"
         @click="handleStickerImgClick"
-        style="cursor: pointer; width: 100%"
       ></s1-img>
-    </div>
+    </section>
 
-    <div style="padding: 0.75rem">
-      <div class="custom-form flex flex-col gap-2">
-        <div class="flex items-center gap-2">
-          <Label class="w-[78px] shrink-0 text-xs">旋转角度</Label>
-          <Slider
-            class="flex-1"
-            :min="0"
-            :max="360"
-            :step="1"
-            :model-value="[currentOperatingDecalController.state.modelValueRotate]"
-            @update:model-value="v => (currentOperatingDecalController.state.modelValueRotate = v[0])"
-          />
+    <section class="decal-property-form u-panel__section">
+      <div class="u-panel__section-title">
+        <span>变换与外观</span>
+      </div>
+      <div class="custom-form">
+        <div class="u-prop-row">
+          <Label class="u-prop-row__label">旋转角度</Label>
+          <div class="u-prop-row__value u-slider-wrap">
+            <Slider
+              class="u-slider"
+              aria-label="旋转角度"
+              :min="0"
+              :max="360"
+              :step="1"
+              :model-value="[currentOperatingDecalController.state.modelValueRotate]"
+              @update:model-value="v => (currentOperatingDecalController.state.modelValueRotate = v[0])"
+            />
+            <span class="u-slider-value">{{ currentOperatingDecalController.state.modelValueRotate }}°</span>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <Label class="w-[78px] shrink-0 text-xs">贴纸尺寸</Label>
-          <Slider
-            class="flex-1"
-            :min="0"
-            :max="100"
-            :step="1"
-            :model-value="[currentOperatingDecalController.state.modelValueSize]"
-            @update:model-value="v => (currentOperatingDecalController.state.modelValueSize = v[0])"
-          />
+        <div class="u-prop-row">
+          <Label class="u-prop-row__label">贴纸尺寸</Label>
+          <div class="u-prop-row__value u-slider-wrap">
+            <Slider
+              class="u-slider"
+              aria-label="贴纸尺寸"
+              :min="0"
+              :max="100"
+              :step="1"
+              :model-value="[currentOperatingDecalController.state.modelValueSize]"
+              @update:model-value="v => (currentOperatingDecalController.state.modelValueSize = v[0])"
+            />
+            <span class="u-slider-value">{{ currentOperatingDecalController.state.modelValueSize }}%</span>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <Label class="w-[78px] shrink-0 text-xs">贴纸粗糙度</Label>
-          <Slider
-            class="flex-1"
-            :min="0"
-            :max="1"
-            :step="0.01"
-            :model-value="[currentOperatingDecalController.state.roughness]"
-            @update:model-value="v => (currentOperatingDecalController.state.roughness = v[0])"
-          />
+        <div class="u-prop-row">
+          <Label class="u-prop-row__label">贴纸粗糙度</Label>
+          <div class="u-prop-row__value u-slider-wrap">
+            <Slider
+              class="u-slider"
+              aria-label="贴纸粗糙度"
+              :min="0"
+              :max="1"
+              :step="0.01"
+              :model-value="[currentOperatingDecalController.state.roughness]"
+              @update:model-value="v => (currentOperatingDecalController.state.roughness = v[0])"
+            />
+            <span class="u-slider-value">{{ Number(currentOperatingDecalController.state.roughness).toFixed(2) }}</span>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <Label class="w-[78px] shrink-0 text-xs">金属质感</Label>
-          <Slider
-            class="flex-1"
-            :min="0"
-            :max="1"
-            :step="0.01"
-            :model-value="[currentOperatingDecalController.state.metalness]"
-            @update:model-value="v => (currentOperatingDecalController.state.metalness = v[0])"
-          />
+        <div class="u-prop-row">
+          <Label class="u-prop-row__label">金属质感</Label>
+          <div class="u-prop-row__value u-slider-wrap">
+            <Slider
+              class="u-slider"
+              aria-label="金属质感"
+              :min="0"
+              :max="1"
+              :step="0.01"
+              :model-value="[currentOperatingDecalController.state.metalness]"
+              @update:model-value="v => (currentOperatingDecalController.state.metalness = v[0])"
+            />
+            <span class="u-slider-value">{{ Number(currentOperatingDecalController.state.metalness).toFixed(2) }}</span>
+          </div>
         </div>
 
-        <div class="flex items-start gap-2">
-          <Label class="w-[78px] shrink-0 text-xs">调整位置</Label>
-          <div class="flex-1">
-          <div class="position-control-container">
-            <!-- 方向控制区域 -->
-            <div class="direction-controls">
-              <!-- 上方向 -->
-              <div class="direction-row">
-                <div class="direction-spacer"></div>
+        <div class="u-prop-row u-prop-row--stacked">
+          <Label class="u-prop-row__label">调整位置</Label>
+          <div class="u-prop-row__value">
+            <div class="position-control-container">
+              <div class="direction-pad" aria-label="贴纸位置微调">
+                <span class="direction-spacer"></span>
                 <Button
                   @click="moveTop"
                   variant="outline"
-                  class="direction-btn up-btn rounded-full"
+                  class="direction-btn direction-btn--up"
                   size="icon-sm"
+                  title="向上移动"
                 >
                   <ArrowUp class="w-3.5 h-3.5" />
                 </Button>
-                <div class="direction-spacer"></div>
-              </div>
-
-              <!-- 左中右方向 -->
-              <div class="direction-row">
+                <span class="direction-spacer"></span>
                 <Button
                   @click="moveLeft"
                   variant="outline"
-                  class="direction-btn left-btn rounded-full"
+                  class="direction-btn direction-btn--left"
                   size="icon-sm"
+                  title="向左移动"
                 >
                   <ArrowLeft class="w-3.5 h-3.5" />
                 </Button>
-                <div class="center-spacer"></div>
+                <span class="direction-center" aria-hidden="true"></span>
                 <Button
                   @click="moveRight"
                   variant="outline"
-                  class="direction-btn right-btn rounded-full"
+                  class="direction-btn direction-btn--right"
                   size="icon-sm"
+                  title="向右移动"
                 >
-                  <ChevronRight class="w-3.5 h-3.5" />
+                  <ArrowRight class="w-3.5 h-3.5" />
                 </Button>
-              </div>
-
-              <!-- 下方向 -->
-              <div class="direction-row">
-                <div class="direction-spacer"></div>
+                <span class="direction-spacer"></span>
                 <Button
                   @click="moveDown"
                   variant="outline"
-                  class="direction-btn down-btn rounded-full"
+                  class="direction-btn direction-btn--down"
                   size="icon-sm"
+                  title="向下移动"
                 >
                   <ArrowDown class="w-3.5 h-3.5" />
                 </Button>
-                <div class="direction-spacer"></div>
+                <span class="direction-spacer"></span>
               </div>
-            </div>
-
-            <!-- 重置按钮 -->
-            <div class="reset-section">
               <Button
                 @click="resetPosition"
                 variant="outline"
                 class="reset-btn"
                 size="sm"
               >
-                <RotateCw class="w-3.5 h-3.5 mr-1" />
+                <RotateCw class="w-3.5 h-3.5" />
                 恢复原始贴图位置
               </Button>
             </div>
-          </div>
-
-          <div
-            class="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground"
-            style="margin-top: 8px"
-          >
-            适用于微调，如果出现贴纸部分丢失，建议重新拉取一个贴纸
-          </div>
+            <div class="u-panel__hint">
+              适用于微调；如果贴纸缺失，建议重新拉取贴纸。
+            </div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <Label class="w-[78px] shrink-0 text-xs">印花工艺</Label>
+        <div class="u-prop-row">
+          <Label class="u-prop-row__label">印花工艺</Label>
           <Select
             v-model="clothingPaintMethod"
-            class="flex-1"
+            class="u-prop-row__value"
           >
-            <SelectTrigger class="h-6 text-[11px] w-full">
+            <SelectTrigger class="h-6 text-[11px]">
               <SelectValue placeholder="选择印花工艺" />
             </SelectTrigger>
             <SelectContent>
@@ -174,36 +204,27 @@
           </Select>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div></div>
+    <div class="decal-property-spacer"></div>
 
-    <div style="flex: 1"></div>
-    <div>
-      <Button @click="replace" variant="default" class="bottom-btn rounded-full"
-        >替换该贴纸</Button
+    <footer class="decal-property-footer">
+      <Button @click="replace" variant="default" class="decal-footer-btn decal-footer-btn--primary"
+        >替换贴纸</Button
       >
-    </div>
-    <div>
-      <Button @click="useCurrentSticker()" variant="outline" class="bottom-btn rounded-full"
-        >在贴纸制作中使用该贴纸模版</Button
+      <Button @click="useCurrentSticker()" variant="outline" class="decal-footer-btn"
+        >作为模板</Button
       >
-    </div>
-    <div>
-      <Button @click="showDecalList = !showDecalList" variant="outline" class="bottom-btn rounded-full">
+      <Button @click="showDecalList = !showDecalList" variant="outline" class="decal-footer-btn">
         贴纸列表
       </Button>
-    </div>
-    <div>
-      <Button @click="showWorkspace = !showWorkspace" variant="outline" class="bottom-btn rounded-full">
+      <Button @click="showWorkspace = !showWorkspace" variant="outline" class="decal-footer-btn">
         工作台
       </Button>
-    </div>
-    <div>
-      <Button @click="remove" variant="destructive" class="bottom-btn rounded-full"
-        >移除该贴纸</Button
+      <Button @click="remove" variant="destructive" class="decal-footer-btn decal-footer-btn--danger"
+        >移除贴纸</Button
       >
-    </div>
+    </footer>
   </div>
 
   <s1-empty v-else>
@@ -240,7 +261,7 @@
           </s1-image>
           <div class="sticker-info">
             <div class="sticker-title text-ellipsis">{{ item.name || "......" }}</div>
-            <Button @click="replaceSticker(item.id)" variant="default" size="sm" class="rounded-full">
+            <Button @click="replaceSticker(item.id)" variant="default" size="sm" class="sticker-replace-btn">
               替换
             </Button>
           </div>
@@ -305,7 +326,7 @@ import {
   setActiveMenu,
   menuItems,
 } from "../../store";
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight, RotateCw, Search } from 'lucide-vue-next'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info, RotateCw, Search, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -455,120 +476,210 @@ function handleStickerImgClick() {
 
 <style scoped lang="less">
 .container {
-  width: 360px;
+  width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 0.75rem;
-  row-gap: 0.75rem;
-  overflow: auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.decal-preview-wrap,
+.decal-property-form {
+  padding-bottom: 4px;
+}
+
+.png-background {
+  width: calc(100% - 16px);
+  height: 96px;
+  min-height: 96px;
+  margin: 0 8px 6px;
+  cursor: pointer;
 }
 
 .custom-form {
-  :deep(label) {
-    font-size: 12px;
-    color: var(--1s-text-color-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 0 4px;
+}
+
+.u-prop-row--stacked {
+  align-items: flex-start;
+  padding-top: 3px;
+
+  > .u-prop-row__label {
+    padding-top: 5px;
+  }
+
+  > .u-prop-row__value {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: visible;
+    white-space: normal;
   }
 }
 
-.bottom-btn {
-  width: 100% !important;
+.u-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
-.container > div {
+.u-slider {
+  flex: 1;
+  min-width: 0;
+}
+
+.u-slider-value {
+  flex: 0 0 34px;
+  color: var(--1s-text-color-secondary);
+  font-size: var(--1s-control-font);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.decal-property-spacer {
+  flex: 1 1 auto;
+  min-height: 8px;
+}
+
+.decal-property-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--1s-divider-color);
+  background: var(--1s-panel-background);
+}
+
+.decal-footer-btn {
   width: 100%;
+  min-width: 0;
+  height: var(--1s-control-h-sm);
+  padding: 0 5px;
+  border-radius: var(--1s-control-radius-sm);
+  font-size: var(--1s-control-font);
+  white-space: nowrap;
+}
+
+.decal-footer-btn--primary {
+  grid-column: 1 / -1;
+}
+
+.decal-footer-btn--danger {
+  grid-column: 1 / -1;
+}
+
+.decal-property-header {
+  height: 32px;
+}
+
+.decal-property-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+
+  strong {
+    color: var(--1s-text-color);
+    font-size: var(--1s-control-font-md);
+    font-weight: 600;
+  }
+
+  span {
+    overflow: hidden;
+    color: var(--1s-text-color-tertiary);
+    font-size: var(--1s-control-font);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.sticker-replace-btn {
+  height: var(--1s-control-h-sm) !important;
+  padding: 0 8px !important;
+  border-radius: var(--1s-control-radius-sm) !important;
+  font-size: var(--1s-control-font) !important;
 }
 
 .position-control-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px;
-  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+  width: 100%;
+  margin: 2px 0 2px;
+  padding: 7px;
+  border: 1px solid var(--1s-border-color);
+  border-radius: var(--1s-control-radius);
+  background: var(--1s-control-surface-muted);
 }
 
-.direction-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--1s-surface-background);
-  border-radius: 12px;
-  padding: 12px;
-  position: relative;
-}
-
-.direction-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+.direction-pad {
+  display: grid;
+  grid-template-columns: repeat(3, var(--1s-control-h-sm));
+  grid-template-rows: repeat(3, var(--1s-control-h-sm));
   justify-content: center;
+  gap: 3px;
 }
 
-.direction-spacer {
-  width: 20px;
-  height: 20px;
+.direction-spacer,
+.direction-center {
+  width: var(--1s-control-h-sm);
+  height: var(--1s-control-h-sm);
 }
 
-.center-spacer {
-  width: 20px;
-  height: 20px;
+.direction-center {
+  display: block;
+  border: 1px solid var(--1s-border-color);
+  border-radius: var(--1s-control-radius-sm);
+  background: var(--1s-surface-background);
 }
 
 .reset-section {
-  margin-top: 12px;
   width: 100%;
+  margin-top: 7px;
+}
+
+.decal-property-form .u-panel__hint {
+  margin: 0;
+  padding: 4px 0 2px;
 }
 
 .reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   width: 100%;
+  height: var(--1s-control-h-sm);
+  margin-top: 7px;
+  font-size: var(--1s-control-font);
+  border-radius: var(--1s-control-radius-sm);
 }
 
 .direction-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--1s-text-color-secondary);
-  font-size: 14px;
+  width: var(--1s-control-h-sm);
+  height: var(--1s-control-h-sm);
+  min-width: var(--1s-control-h-sm);
+  padding: 0;
+  border-radius: var(--1s-control-radius-sm);
+  transition: var(--1s-control-transition);
 
   &:hover {
-    background: var(--1s-hover-background);
+    background: var(--1s-state-hover);
     border-color: var(--1s-border-color-strong);
-    
-    box-shadow: var(--1s-shadow-md);
+    box-shadow: none;
   }
 
   &:active {
-    transform: scale(0.95);
-    
+    transform: none;
+    background: var(--1s-state-active);
   }
 }
 
-.up-btn {
-  margin-bottom: 6px;
-}
-
-.down-btn {
-  margin-top: 6px;
-}
-
-.left-btn {
-  margin-right: 6px;
-}
-
-.right-btn {
-  margin-left: 6px;
-}
-
-// 替换贴纸弹窗样式
 .replace-dialog-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .search-section {
@@ -577,8 +688,8 @@ function handleStickerImgClick() {
 
 .sticker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
   flex: 1;
   overflow-y: auto;
 }
@@ -587,48 +698,51 @@ function handleStickerImgClick() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 6px;
   border: 1px solid var(--1s-border-color);
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: var(--1s-control-radius);
+  transition: var(--1s-control-transition);
 
   &:hover {
     border-color: var(--1s-accent-color);
-    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
+    box-shadow: none;
+    background: var(--1s-state-hover);
   }
 }
 
 .sticker-image {
-  width: 120px !important;
-  height: 100px !important;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+  width: 100% !important;
+  height: 92px !important;
+  background: var(--1s-checkerboard-base);
+  border-radius: var(--1s-control-radius-sm);
 }
 
 .sticker-info {
   width: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 6px;
 }
 
 .sticker-title {
-  font-size: 12px;
+  min-width: 0;
+  flex: 1;
+  font-size: var(--1s-control-font-md);
   color: var(--1s-text-color-secondary);
-  text-align: center;
-  max-width: 100%;
 }
 
 .pagination-section {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  right: auto;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-top: 1px solid var(--1s-divider-color);
+  background: var(--1s-surface-background);
 }
 </style>

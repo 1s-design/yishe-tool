@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, provide } from "vue";
+import { ref, onMounted, onBeforeUnmount, provide } from "vue";
 import iconMenu from "@/icon/menu.svg?component";
 import menuMain from "./main.vue";
 
@@ -35,31 +35,35 @@ const clicker = ref(false);
 
 provide("clicker", clicker);
 
-onMounted(() => {
-  document.body.addEventListener("click", (e) => {
-    showHeaderMenuDropdown.value = false;
-  });
-});
+function closeDropdown() {
+  showHeaderMenuDropdown.value = false;
+}
+
+onMounted(() => document.body.addEventListener("click", closeDropdown));
+onBeforeUnmount(() => document.body.removeEventListener("click", closeDropdown));
 </script>
 
 <style lang="less">
 .designiy-header-menu-dropdown {
-  width: 30px;
-  height: 30px;
-  background: var(--1s-control-surface-muted);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: var(--1s-text-color);
-  border-radius: 5px;
-  font-size: 16px;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--1s-control-h-md);
+  height: var(--1s-control-h-md);
+  border-radius: var(--1s-control-radius);
+  color: var(--1s-text-color-secondary);
+
+  &:hover {
+    background: var(--1s-state-hover);
+    color: var(--1s-text-color);
+  }
 }
 
 .designiy-header-menu-dropdown-content {
   position: absolute;
-  top: 30px;
+  top: calc(100% + 4px);
   left: 0;
-  z-index: 9;
+  z-index: var(--1s-z-dropdown);
 }
 </style>

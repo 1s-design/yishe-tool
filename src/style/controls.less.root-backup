@@ -1,0 +1,643 @@
+/**
+ * 1s 基础控件层 — Figma 级交互精度
+ *
+ * 统一高度 / 字阶 / 圆角 / hover / active / focus / disabled
+ * 所有编辑器 UI 零件走这里的类，避免各自为政。
+ *
+ * 尺寸阶梯（与设计令牌对齐）:
+ *   --1s-control-h-sm: 24px   属性面板行内控件
+ *   --1s-control-h-md: 28px   工具栏 / 默认按钮
+ *   --1s-control-h-lg: 32px   弹层主按钮 / 对话框
+ */
+
+:root {
+  --1s-control-h-sm: 22px;
+  --1s-control-h-md: 26px;
+  --1s-control-h-lg: 30px;
+
+  --1s-control-radius: 5px;
+  --1s-control-radius-sm: 4px;
+
+  --1s-control-font: 10px;
+  --1s-control-font-md: 11px;
+  --1s-control-font-weight: 500;
+
+  /* 交互叠层 — 与 Figma 一致的「轻」 */
+  --1s-state-hover: rgba(0, 0, 0, 0.04);
+  --1s-state-active: rgba(0, 0, 0, 0.08);
+  --1s-state-selected: var(--1s-active-background, rgba(11, 87, 208, 0.12));
+  --1s-state-selected-text: var(--1s-accent-color, #0d99ff);
+
+  --1s-control-transition:
+    background-color var(--1s-duration-fast, 80ms) var(--1s-easing-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    color var(--1s-duration-fast, 80ms) var(--1s-easing-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--1s-duration-fast, 80ms) var(--1s-easing-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--1s-duration-fast, 80ms) var(--1s-easing-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* ============================================================
+ * 基础按钮
+ * ============================================================ */
+.u-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--1s-control-h-md);
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--1s-control-radius);
+  background: transparent;
+  color: var(--1s-text-color);
+  font-family: inherit;
+  font-size: var(--1s-control-font-md);
+  font-weight: var(--1s-control-font-weight);
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: var(--1s-control-transition);
+
+  &:disabled,
+  &[aria-disabled='true'],
+  &[data-disabled] {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* 幽灵 — 最常用 */
+  &--ghost {
+    color: var(--1s-text-color-secondary);
+    background: transparent;
+
+    &:hover {
+      background: var(--1s-state-hover);
+      color: var(--1s-text-color);
+    }
+    &:active {
+      background: var(--1s-state-active);
+    }
+  }
+
+  /* 描边 */
+  &--outline {
+    color: var(--1s-text-color);
+    border-color: var(--1s-control-border-color, rgba(0, 0, 0, 0.14));
+    background: var(--1s-surface-background, #fff);
+
+    &:hover {
+      background: var(--1s-state-hover);
+      border-color: var(--1s-border-color-strong, rgba(0, 0, 0, 0.22));
+    }
+    &:active {
+      background: var(--1s-state-active);
+    }
+  }
+
+  /* 强调 / 主操作 */
+  &--solid {
+    color: var(--1s-primary-foreground, #fff);
+    background: var(--1s-accent-color, #0d99ff);
+
+    &:hover {
+      background: color-mix(in srgb, var(--1s-accent-color, #0d99ff) 90%, #000);
+    }
+    &:active {
+      background: color-mix(in srgb, var(--1s-accent-color, #0d99ff) 82%, #000);
+    }
+  }
+
+  /* 次强调 — 浅色底 */
+  &--tonal {
+    color: var(--1s-state-selected-text);
+    background: var(--1s-state-selected);
+
+    &:hover {
+      background: color-mix(in srgb, var(--1s-state-selected) 88%, #000);
+    }
+    &:active {
+      background: color-mix(in srgb, var(--1s-state-selected) 78%, #000);
+    }
+  }
+
+  /* 危险 */
+  &--danger {
+    color: var(--1s-destructive-text, #d92d20);
+    background: transparent;
+
+    &:hover {
+      background: rgba(217, 45, 32, 0.08);
+      color: #b42318;
+    }
+    &:active {
+      background: rgba(217, 45, 32, 0.14);
+    }
+  }
+
+  &--danger-solid {
+    color: #fff;
+    background: var(--1s-destructive-text, #d92d20);
+
+    &:hover {
+      background: #b42318;
+    }
+    &:active {
+      background: #912018;
+    }
+  }
+
+  /* 选中态 — 工具栏 toggle */
+  &.is-selected,
+  &[aria-pressed='true'],
+  &[data-state='on'] {
+    color: var(--1s-state-selected-text);
+    background: var(--1s-state-selected);
+  }
+}
+
+/* 尺寸 */
+.u-btn--sm {
+  height: var(--1s-control-h-sm);
+  padding: 0 8px;
+  font-size: var(--1s-control-font);
+  border-radius: var(--1s-control-radius-sm);
+}
+
+.u-btn--lg {
+  height: var(--1s-control-h-lg);
+  padding: 0 14px;
+  font-size: var(--1s-control-font-md);
+}
+
+.u-btn--block {
+  width: 100%;
+}
+
+/* ============================================================
+ * 图标按钮 — 方形，视觉重量更轻
+ * ============================================================ */
+.u-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--1s-control-h-md);
+  height: var(--1s-control-h-md);
+  padding: 0;
+  border: none;
+  border-radius: var(--1s-control-radius);
+  background: transparent;
+  color: var(--1s-text-color-secondary);
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: var(--1s-control-transition);
+
+  svg,
+  .u-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: block;
+  }
+
+  &:hover {
+    background: var(--1s-state-hover);
+    color: var(--1s-text-color);
+  }
+  &:active {
+    background: var(--1s-state-active);
+  }
+
+  &:disabled,
+  &[aria-disabled='true'] {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  &.is-selected,
+  &[aria-pressed='true'],
+  &[data-state='on'] {
+    color: var(--1s-state-selected-text);
+    background: var(--1s-state-selected);
+  }
+}
+
+.u-icon-btn--sm {
+  width: var(--1s-control-h-sm);
+  height: var(--1s-control-h-sm);
+  border-radius: var(--1s-control-radius-sm);
+
+  svg,
+  .u-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.u-icon-btn--xs {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+
+  svg,
+  .u-icon {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.u-icon-btn--lg {
+  width: var(--1s-control-h-lg);
+  height: var(--1s-control-h-lg);
+
+  svg,
+  .u-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ============================================================
+ * 输入
+ * ============================================================ */
+.u-input {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  height: var(--1s-control-h-md);
+  padding: 0 8px;
+  border: 1px solid var(--1s-control-border-color, rgba(0, 0, 0, 0.14));
+  border-radius: var(--1s-control-radius);
+  background: var(--1s-surface-background, #fff);
+  color: var(--1s-text-color);
+  font-family: inherit;
+  font-size: var(--1s-control-font-md);
+  line-height: 1;
+  box-sizing: border-box;
+  transition: var(--1s-control-transition);
+  outline: none;
+
+  &::placeholder {
+    color: var(--1s-text-color-tertiary, #747775);
+  }
+
+  &:hover {
+    border-color: var(--1s-border-color-strong, rgba(0, 0, 0, 0.22));
+  }
+
+  &:focus,
+  &:focus-visible {
+    border-color: var(--1s-accent-color, #0d99ff);
+    box-shadow: 0 0 0 2px var(--1s-focus-ring-color, rgba(13, 153, 255, 0.35));
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--1s-control-surface-muted, #f0f4f9);
+  }
+}
+
+.u-input--sm {
+  height: var(--1s-control-h-sm);
+  padding: 0 6px;
+  font-size: var(--1s-control-font);
+  border-radius: var(--1s-control-radius-sm);
+}
+
+.u-input--textarea {
+  height: auto;
+  min-height: 56px;
+  padding: 6px 8px;
+  line-height: 1.5;
+  resize: vertical;
+  align-items: stretch;
+}
+
+/* ============================================================
+ * 分段控件 / 视图切换 — Figma 顶栏常见
+ * ============================================================ */
+.u-segmented {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  gap: 1px;
+  border-radius: var(--1s-control-radius);
+  background: var(--1s-control-surface-muted, #f0f4f9);
+  box-sizing: border-box;
+}
+
+.u-segmented__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  min-width: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--1s-text-color-secondary);
+  font-family: inherit;
+  font-size: var(--1s-control-font);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--1s-control-transition);
+
+  &:hover {
+    color: var(--1s-text-color);
+    background: var(--1s-state-hover);
+  }
+  &:active {
+    background: var(--1s-state-active);
+  }
+
+  &.is-selected {
+    color: var(--1s-text-color);
+    background: var(--1s-surface-background, #fff);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* ============================================================
+ * 面板行 — 属性面板 label + control
+ * ============================================================ */
+.u-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: var(--1s-control-h-md);
+  padding: 3px 0;
+  box-sizing: border-box;
+}
+
+.u-row__label {
+  flex-shrink: 0;
+  min-width: 0;
+  font-size: var(--1s-control-font);
+  font-weight: 500;
+  color: var(--1s-text-color-secondary);
+  line-height: 1.2;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.u-row__control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+}
+
+/* ============================================================
+ * 分组标题 — 属性面板 section
+ * ============================================================ */
+.u-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--1s-control-h-md);
+  padding: 0 2px;
+  font-size: var(--1s-control-font);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--1s-text-color);
+  user-select: none;
+}
+
+.u-divider {
+  height: 1px;
+  background: var(--1s-divider-color, rgba(0, 0, 0, 0.08));
+  border: none;
+  margin: 6px 0;
+}
+
+/* ============================================================
+ * 焦点可见性 — 键盘可达
+ * ============================================================ */
+.u-btn:focus-visible,
+.u-icon-btn:focus-visible,
+.u-segmented__item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--1s-focus-ring-color, rgba(13, 153, 255, 0.35));
+}
+
+/* ============================================================
+ * 面板区块 — Figma UI3 左右栏密度
+ * ============================================================ */
+.u-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  color: var(--1s-text-color);
+  font-size: var(--1s-control-font-md);
+}
+
+.u-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: var(--1s-control-h-md);
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.u-panel__title {
+  font-size: var(--1s-control-font);
+  font-weight: 600;
+  color: var(--1s-text-color-secondary);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.u-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.u-panel__section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 2px 0 6px;
+}
+
+.u-panel__section + .u-panel__section {
+  border-top: 1px solid var(--1s-divider-color);
+}
+
+.u-panel__section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--1s-control-h-md);
+  padding: 0 8px;
+  font-size: var(--1s-control-font);
+  font-weight: 600;
+  color: var(--1s-text-color);
+  user-select: none;
+}
+
+.u-panel__section-title .u-icon-btn--xs {
+  opacity: 0.55;
+}
+
+.u-panel__section-title:hover .u-icon-btn--xs {
+  opacity: 1;
+}
+
+/* 列表行 — Layers / Pages / 样式列表 */
+.u-list-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--1s-control-h-md);
+  margin: 0 6px;
+  padding: 0 6px;
+  border-radius: var(--1s-control-radius-sm);
+  font-size: var(--1s-control-font-md);
+  color: var(--1s-text-color);
+  cursor: default;
+  user-select: none;
+  transition: var(--1s-control-transition);
+  box-sizing: border-box;
+  min-width: 0;
+
+  svg,
+  .u-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--1s-text-color-secondary);
+    display: block;
+  }
+
+  &:hover {
+    background: var(--1s-state-hover);
+  }
+  &:active {
+    background: var(--1s-state-active);
+  }
+
+  &.is-selected {
+    background: var(--1s-state-selected);
+    color: var(--1s-text-color);
+
+    svg,
+    .u-icon {
+      color: var(--1s-state-selected-text);
+    }
+  }
+
+  &__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 450;
+    line-height: 1;
+  }
+
+  &__meta {
+    flex-shrink: 0;
+    font-size: var(--1s-control-font);
+    color: var(--1s-text-color-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* 属性行 — label | value */
+.u-prop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--1s-control-h-md);
+  padding: 1px 8px;
+  font-size: var(--1s-control-font-md);
+  box-sizing: border-box;
+
+  &__label {
+    flex: 0 0 64px;
+    color: var(--1s-text-color-secondary);
+    font-size: var(--1s-control-font);
+    user-select: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__value {
+    flex: 1;
+    min-width: 0;
+    color: var(--1s-text-color);
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* 标签页 — Comment / Properties */
+.u-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--1s-divider-color);
+}
+
+.u-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--1s-control-radius-sm);
+  background: transparent;
+  color: var(--1s-text-color-secondary);
+  font-family: inherit;
+  font-size: var(--1s-control-font-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--1s-control-transition);
+
+  &:hover {
+    background: var(--1s-state-hover);
+    color: var(--1s-text-color);
+  }
+
+  &.is-selected {
+    background: var(--1s-elevated-background);
+    color: var(--1s-text-color);
+    box-shadow: 0 0 0 1px var(--1s-border-color);
+  }
+}
+
+/* 浮动工具条 — 画布底部 */
+.u-float-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--1s-surface-background);
+  border: 1px solid var(--1s-border-color);
+  box-shadow: var(--1s-shadow-popover);
+}
+
+.u-float-toolbar__divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--1s-divider-color);
+}

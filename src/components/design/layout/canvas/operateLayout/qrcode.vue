@@ -1,10 +1,9 @@
 <template>
-  <Accordion type="multiple" :model-value="qrcodeCollapseActives" @update:model-value="v => qrcodeCollapseActives = v as string[]">
-    <AccordionItem value="1">
-      <AccordionTrigger>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">基本配置</div>
-      </AccordionTrigger>
-      <AccordionContent>
+      </h4>
+      
       <operateItemTextContent
         label="二维码内容"
         v-model="currentOperatingCanvasChild.qrcodeContent"
@@ -36,14 +35,14 @@
 
       <operateItemBorderRadius v-model="currentOperatingCanvasChild.borderRadius">
       </operateItemBorderRadius>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="2">
-      <AccordionTrigger>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">二维码配置</div>
-      </AccordionTrigger>
-      <AccordionContent>
+      </h4>
+      
       <operateItemQrcodeErrorCorrectionLevel
         v-model="currentOperatingCanvasChild.errorCorrectionLevel"
       >
@@ -52,44 +51,38 @@
       <operateItemQrcodeType
         v-model="currentOperatingCanvasChild.qrcodeDotType"
       ></operateItemQrcodeType>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
       <operateItemCommonGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="3">
-      <AccordionTrigger>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">定位点样式</div>
-      </AccordionTrigger>
-      <AccordionContent>
-      </AccordionContent>
-    </AccordionItem>
-    <AccordionItem value="4">
-      <AccordionTrigger>
+      </h4>
+      
+      
+    </section>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">中心图片设置</div>
-      </AccordionTrigger>
-      <AccordionContent>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      </h4>
+      
+      
+    </section>
+  
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
 
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";
@@ -136,7 +129,6 @@ import {
   updateRenderingCanvas,
 } from "../index.tsx";
 
-const qrcodeCollapseActives = ref(["1", "2", "3", "4", "5", "common"]);
 </script>
 
 <style></style>

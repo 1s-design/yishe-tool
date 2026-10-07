@@ -226,17 +226,15 @@ function useCurrent(effect) {
     width: 88px;
     height: 88px;
     overflow: hidden;
-    transition: 0.1s;
-    border-radius: 0.4rem;
+    transition: box-shadow 0.1s;
+    border-radius: var(--1s-radius-small);
     cursor: pointer;
-    box-shadow: rgba(0, 0, 0, 0.02) 0px 1px 3px 0px,
-      rgba(27, 31, 35, 0.06) 0px 0px 0px 1px;
+    box-shadow: 0 0 0 1px var(--1s-border-color);
   }
 
   &.checked {
     .preview-box {
-      box-shadow: rgba(115, 0, 255, 0.6) 0px 0px 0px 2px,
-        rgba(115, 0, 255, 0.4) 0px 0px 0px 6px, rgba(115, 0, 255, 0.2) 0px 0px 0px 9px;
+      box-shadow: 0 0 0 2px var(--1s-accent-color);
     }
   }
 

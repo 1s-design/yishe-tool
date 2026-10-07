@@ -440,8 +440,6 @@ function handleSearchClear() {
 
 .image-item:hover {
   border-color: var(--1s-accent-color);
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.1);
-  transform: translateY(-2px);
 }
 
 .image-item-selected {

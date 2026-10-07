@@ -341,7 +341,6 @@ function editInWorkspace(item) {
     
     &:hover {
       box-shadow: var(--1s-shadow-md);
-      transform: translateY(-4px);
       border-color: var(--primary);
     }
   }

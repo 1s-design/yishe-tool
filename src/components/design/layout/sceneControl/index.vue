@@ -1,38 +1,33 @@
 <template>
-  <div class="designiy-scene-control">
-    <!-- 背景色选择（原 color-picker，暂未启用） -->
-
-    <div class="flex flex-col gap-4">
-      <div class="flex flex-col gap-1.5">
-        <Label>画板背景</Label>
-        <RadioGroup v-model="selectedCanvasBackgroundId">
-          <div class="background-options">
-            <div
-              v-for="item in builtInCanvasBackgrounds"
-              :key="item.id"
-              class="background-option"
-              @click="selectedCanvasBackgroundId = item.id"
-            >
-              <RadioGroupItem :value="item.id" />
-              <div
-                class="background-preview"
-                :style="{ background: item.backgroundCss }"
-              ></div>
-              <span class="background-name">{{ item.name }}</span>
-            </div>
+  <section class="designiy-scene-control u-panel">
+    <div class="u-panel__section">
+      <div class="u-panel__section-title">画板背景</div>
+      <div class="scene-control-body">
+        <RadioGroup v-model="selectedCanvasBackgroundId" class="background-options">
+          <div
+            v-for="item in builtInCanvasBackgrounds"
+            :key="item.id"
+            class="background-option"
+            :class="{ 'is-selected': selectedCanvasBackgroundId === item.id }"
+            @click="selectedCanvasBackgroundId = item.id"
+          >
+            <RadioGroupItem :value="item.id" />
+            <div class="background-preview" :style="{ background: item.backgroundCss }"></div>
+            <span class="background-name">{{ item.name }}</span>
           </div>
         </RadioGroup>
-        <div class="background-tip">
-          该颜色只作为辅助，不会真实渲染到画布，也不会影响导出的截图
-        </div>
+        <div class="background-tip">该颜色只作为辅助，不会真实渲染到画布，也不会影响导出的截图</div>
       </div>
+    </div>
 
-      <div class="flex flex-col gap-1.5">
-        <Label>画布背景色</Label>
-        <div class="canvas-background-control">
+    <div class="u-panel__section">
+      <div class="u-panel__section-title">画布背景色</div>
+      <div class="scene-control-body">
+        <div class="canvas-background-control u-row">
           <input
             type="color"
             class="canvas-background-color-input"
+            aria-label="画布背景色"
             :value="canvasBackgroundColor"
             @input="canvasBackgroundColor = $event.target.value; handleActiveColorChange($event.target.value)"
             @change="handleBackgroundColorChange($event.target.value)"
@@ -40,30 +35,28 @@
           <span class="background-tip">此颜色会真实渲染到画布背景</span>
         </div>
       </div>
+    </div>
 
-      <div class="flex flex-col gap-1.5">
-        <Label>画布背景图</Label>
-        <RadioGroup v-model="selectedBackgroundImageId">
-          <div class="background-image-options">
-            <div
-              v-for="item in builtInCanvasBackgroundImages"
-              :key="item.id"
-              class="background-image-option"
-              @click="selectedBackgroundImageId = item.id"
-            >
-              <RadioGroupItem :value="item.id" />
-              <div
-                class="background-image-preview"
-                :style="{ backgroundImage: `url(${item.url})` }"
-              ></div>
-              <span class="background-image-name">{{ item.name }}</span>
-            </div>
+    <div class="u-panel__section">
+      <div class="u-panel__section-title">画布背景图</div>
+      <div class="scene-control-body">
+        <RadioGroup v-model="selectedBackgroundImageId" class="background-image-options">
+          <div
+            v-for="item in builtInCanvasBackgroundImages"
+            :key="item.id"
+            class="background-image-option"
+            :class="{ 'is-selected': selectedBackgroundImageId === item.id }"
+            @click="selectedBackgroundImageId = item.id"
+          >
+            <RadioGroupItem :value="item.id" />
+            <div class="background-image-preview" :style="{ backgroundImage: `url(${item.url})` }"></div>
+            <span class="background-image-name">{{ item.name }}</span>
           </div>
         </RadioGroup>
         <div class="background-tip">选择背景图会覆盖背景色设置</div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 <script setup>
 import { onMounted, ref, computed, watch } from "vue";
@@ -188,78 +181,83 @@ function useCurrentBackground(item) {
 </script>
 <style lang="less">
 .designiy-scene-control {
+  .scene-control-body {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 1px 8px 8px;
+  }
+
   .background-tip {
-    font-size: 11px;
     color: var(--1s-text-color-tertiary);
-    margin-top: 4px;
-    line-height: 1.2;
+    font-size: var(--1s-control-font);
+    line-height: 1.35;
   }
 
-  .background-options {
-    display: flex;
-    flex-wrap: wrap;
-  }
-
-  .background-option {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .background-preview {
-    width: 16px;
-    height: 16px;
-    border-radius: 2px;
-    border: 1px solid #d9d9d9;
-  }
-
-  .background-name {
-    font-size: 12px;
-  }
-
-  .canvas-background-control {
-    display: flex;
-    align-items: center;
-  }
-
-  .canvas-background-color-input {
-    width: 32px;
-    height: 24px;
-    padding: 0;
-    border: 1px solid #d9d9d9;
-    border-radius: 2px;
-    background: transparent;
-    cursor: pointer;
-  }
-
+  .background-options,
   .background-image-options {
     display: flex;
     flex-wrap: wrap;
-  }
-
-  .background-image-option {
-    display: flex;
-    align-items: center;
     gap: 4px;
   }
 
+  .background-option,
+  .background-image-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: var(--1s-control-h-md);
+    padding: 2px 5px;
+    border: 1px solid transparent;
+    border-radius: var(--1s-control-radius-sm);
+    cursor: pointer;
+    transition: var(--1s-control-transition);
+
+    &:hover {
+      background: var(--1s-state-hover);
+    }
+
+    &.is-selected {
+      border-color: var(--1s-accent-color);
+      background: var(--1s-state-selected);
+    }
+  }
+
+  .background-preview,
   .background-image-preview {
-    width: 16px;
-    height: 16px;
-    border-radius: 2px;
-    border: 1px solid #d9d9d9;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    border: 1px solid var(--1s-control-border-color);
+    border-radius: var(--1s-control-radius-sm);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-color: #f5f5f5;
   }
 
+  .background-name,
   .background-image-name {
-    font-size: 12px;
+    max-width: 112px;
     overflow: hidden;
+    color: var(--1s-text-color-secondary);
+    font-size: var(--1s-control-font);
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 120px;
+  }
+
+  .canvas-background-control {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .canvas-background-color-input {
+    width: 30px;
+    height: 22px;
+    padding: 1px;
+    border: 1px solid var(--1s-control-border-color);
+    border-radius: var(--1s-control-radius-sm);
+    background: var(--1s-control-surface-muted);
+    cursor: pointer;
   }
 }
 </style>

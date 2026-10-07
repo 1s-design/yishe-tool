@@ -27,7 +27,7 @@
 </template>
 <script setup>
 import iconRightArrow from "@/icon/rightArrow.svg?component";
-import { ref,onMounted ,inject,watch} from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 
 const showChildren = ref(false);
 
@@ -37,11 +37,12 @@ function itemClick() {
 
 
 
-onMounted(() => {
-  document.body.addEventListener("click", (e) => {
-    showChildren.value = false;
-  });
-});
+function closeChildren() {
+  showChildren.value = false;
+}
+
+onMounted(() => document.body.addEventListener("click", closeChildren));
+onBeforeUnmount(() => document.body.removeEventListener("click", closeChildren));
 
 </script>
 <style lang="less">
@@ -51,21 +52,27 @@ onMounted(() => {
 }
 
 .designiy-dropdown-menu-item-main {
-  min-width:180px;
-  padding: 7px 10px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  gap: 6px;
+  min-width: 190px;
+  height: var(--1s-control-h-md);
+  padding: 0 7px;
+  border-radius: var(--1s-control-radius-sm);
+  color: var(--1s-text-color);
+  font-size: var(--1s-control-font-md);
   cursor: pointer;
-  column-gap: 5px;
-  &:hover{
-    background: var(--1s-control-surface-muted);
+  transition: var(--1s-control-transition);
+
+  &:hover {
+    background: var(--1s-state-hover);
   }
 }
 
-.designiy-dropdown-menu-item-title{
-  text-wrap: nowrap;
+.designiy-dropdown-menu-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .designiy-dropdown-menu-item-children {
@@ -75,18 +82,27 @@ onMounted(() => {
 }
 
 .designiy-dropdown-menu-item-icon {
-  width: 12px;
-  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  color: var(--1s-text-color-secondary);
+
   svg {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
   }
 }
 
 .designiy-dropdown-menu-item-arrow {
-
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 12px;
   height: 12px;
+  color: var(--1s-text-color-tertiary);
+
   svg {
     width: 12px;
     height: 12px;

@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
@@ -26,12 +22,12 @@
             ></Textarea>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="presentation">
-      <AccordionTrigger>表现</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">表现</h4>
+      
         <operateItemFontFamily
           v-model="wordcloud2.fontFamilyInfo"
         ></operateItemFontFamily>
@@ -142,12 +138,12 @@
             <Switch v-model:checked="wordcloud2.clearCanvas"></Switch>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="dimension">
-      <AccordionTrigger>布局</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">布局</h4>
+      
         <operate-form-item>
           <template #name>网格尺寸</template>
           <template #content>
@@ -202,12 +198,12 @@
             <Switch v-model:checked="wordcloud2.shrinkToFit"></Switch>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="mask">
-      <AccordionTrigger>遮罩调试</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">遮罩调试</h4>
+      
         <operate-form-item>
           <template #name>绘制遮罩</template>
           <template #content>
@@ -235,12 +231,12 @@
             />
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="timing">
-      <AccordionTrigger>性能</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">性能</h4>
+      
         <operate-form-item>
           <template #name>绘制等待</template>
           <template #content>
@@ -266,12 +262,12 @@
             />
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="rotation">
-      <AccordionTrigger>旋转</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">旋转</h4>
+      
         <operate-form-item>
           <template #name>旋转概率</template>
           <template #content>
@@ -326,12 +322,12 @@
             />
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="shape">
-      <AccordionTrigger>形状</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">形状</h4>
+      
         <operate-form-item>
           <template #name>形状</template>
           <template #content>
@@ -372,18 +368,18 @@
             <Switch v-model:checked="wordcloud2.shuffle"></Switch>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup
           v-model="currentOperatingCanvasChild"
         ></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 </template>
 
 <script setup lang="ts">
@@ -392,12 +388,6 @@ import operateItemSize from "@/components/design/layout/canvas/operate/size/rela
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemFontFamily from "@/components/design/layout/canvas/operate/fontFamily/fontFamily.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import {
   Select,
   SelectTrigger,
@@ -411,14 +401,6 @@ import { Switch } from "@/components/ui/switch";
 import { currentOperatingCanvasChild } from "../index.tsx";
 import { createDefaultWordCloud2EngineOptions } from "../children/wordCloud/index.tsx";
 
-const activeNames = ref([
-  "basic",
-  "presentation",
-  "dimension",
-  "rotation",
-  "shape",
-  "common",
-]);
 const shapeOptions = [
   "circle",
   "cardioid",

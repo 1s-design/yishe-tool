@@ -3,7 +3,7 @@
     v-bind="forwarded"
     :class="
       cn(
-        'peer h-4 w-4 shrink-0 rounded-xs border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
+        'peer h-3.5 w-3.5 shrink-0 rounded-[2px] border border-[var(--1s-control-border-color)] bg-transparent ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--1s-focus-ring-color)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-[var(--1s-accent-color)] data-[state=checked]:border-[var(--1s-accent-color)] data-[state=checked]:text-white',
         $attrs.class ?? ''
       )
     "

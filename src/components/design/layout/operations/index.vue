@@ -236,7 +236,6 @@ async function handleExecute(op: OperationListItem) {
   &:hover {
     border-color: var(--1s-accent-color);
     box-shadow: var(--1s-shadow-md);
-    transform: translateY(-2px);
   }
 
   &:active {

@@ -1,7 +1,7 @@
 <template>
   <h3
     :class="
-      cn('text-sm font-semibold leading-none tracking-tight text-foreground', $attrs.class ?? '')
+      cn('text-[13px] font-[550] leading-none tracking-tight text-[var(--1s-text-color)]', $attrs.class ?? '')
     "
   >
     <slot />

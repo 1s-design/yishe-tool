@@ -706,8 +706,8 @@ async function doUpload() {
 }
 
 .file-preview-trigger:hover {
-  border-color: var(--1s-color-primary, #409eff);
-  color: var(--1s-color-primary, #409eff);
+  border-color: var(--1s-color-primary, #6900ff);
+  color: var(--1s-color-primary, #6900ff);
 }
 
 .file-preview-thumb {

@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="params">
-      <AccordionTrigger>星图参数</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">星图参数</h4>
+      
         <operate-form-item>
           <template #name>日期时间</template>
           <template #content>
@@ -75,38 +71,38 @@
             <Switch v-model:checked="currentOperatingCanvasChild.showConstellations" />
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
           v-model:height="currentOperatingCanvasChild.height"
         ></operateItemSize>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="style">
-      <AccordionTrigger>样式</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">样式</h4>
+      
         <operateItemBackgroundColor
           v-model="currentOperatingCanvasChild.backgroundColor"
         ></operateItemBackgroundColor>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup
           v-model="currentOperatingCanvasChild"
         ></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 </template>
 
 <script setup lang="ts">
@@ -114,18 +110,11 @@ import { ref } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { currentOperatingCanvasChild } from "../index.tsx";
 
-const activeNames = ref(["params", "basic", "style", "common"]);
 </script>
 
 <style scoped></style>

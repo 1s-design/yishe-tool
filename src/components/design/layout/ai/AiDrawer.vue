@@ -440,10 +440,10 @@ watch(() => messages.value.length, scrollToBottom);
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  background: var(--1s-accent-color);
+  color: var(--1s-primary-foreground);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 550;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -462,8 +462,8 @@ watch(() => messages.value.length, scrollToBottom);
   line-height: 1.6;
 
   &.user-bubble {
-    background: #667eea;
-    color: #fff;
+    background: var(--1s-accent-color);
+    color: var(--1s-primary-foreground);
     border-bottom-right-radius: 4px;
   }
 

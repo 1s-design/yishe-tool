@@ -20,14 +20,14 @@
       <div class="designiy-header__status">
         <span class="designiy-header__status-dot designiy-header__status-dot--edit" />
         <span class="designiy-header__status-text">模型 {{ currentEditingModelId }}</span>
-        <button class="designiy-header__ghost-btn" @click="confirmExitEditMode">退出</button>
+        <button type="button" class="designiy-header__ghost-btn" @click="confirmExitEditMode">退出</button>
       </div>
     </template>
     <template v-else-if="currentEditingCustomStickerId">
       <div class="designiy-header__status">
         <span class="designiy-header__status-dot designiy-header__status-dot--edit" />
         <span class="designiy-header__status-text">编辑中</span>
-        <button class="designiy-header__ghost-btn" @click="handleConvertToCreateNew">转为新建</button>
+        <button type="button" class="designiy-header__ghost-btn" @click="handleConvertToCreateNew">转为新建</button>
       </div>
     </template>
 
@@ -77,8 +77,10 @@
       <Tooltip>
         <TooltipTrigger as-child>
           <button
+            type="button"
             class="designiy-header__tool-btn"
             :class="{ 'designiy-header__tool-btn--active': batchIsRunning }"
+            :aria-pressed="batchIsRunning"
             @click="showAutocreateModal = true"
           >
             <Sparkles class="h-3.5 w-3.5" />
@@ -92,8 +94,10 @@
       <Tooltip>
         <TooltipTrigger as-child>
           <button
+            type="button"
             class="designiy-header__tool-btn"
             :class="{ 'designiy-header__tool-btn--active': screenShareActive }"
+            :aria-pressed="screenShareActive"
             @click="toggleScreenShare"
           >
             <Monitor class="h-3.5 w-3.5" />
@@ -106,7 +110,12 @@
       <!-- 主题切换 -->
       <Tooltip>
         <TooltipTrigger as-child>
-          <button class="designiy-header__icon-btn" @click="isDarkMode = !isDarkMode">
+          <button
+            type="button"
+            class="designiy-header__icon-btn"
+            :aria-pressed="isDarkMode"
+            @click="isDarkMode = !isDarkMode"
+          >
             <Moon v-if="isDarkMode" class="h-3.5 w-3.5" />
             <Sun v-else class="h-3.5 w-3.5" />
           </button>
@@ -364,16 +373,27 @@ function confirmExitEditMode() {
 .designiy-header__ghost-btn {
   background: none;
   border: none;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
+  height: var(--1s-control-h-sm);
+  padding: 0 8px;
+  border-radius: var(--1s-control-radius-sm);
+  font-family: inherit;
+  font-size: var(--1s-control-font);
+  font-weight: 500;
+  line-height: 1;
   color: var(--1s-text-color-secondary);
   cursor: pointer;
-  transition: color 0.1s, background 0.1s;
+  transition: var(--1s-control-transition);
 
   &:hover {
     color: var(--1s-text-color);
-    background: var(--1s-hover-overlay);
+    background: var(--1s-state-hover);
+  }
+  &:active {
+    background: var(--1s-state-active);
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
   }
 }
 
@@ -391,27 +411,45 @@ function confirmExitEditMode() {
   flex-shrink: 0;
 }
 
-/* 图标按钮 */
+/* 图标按钮 — 对齐 u-icon-btn */
 .designiy-header__icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 5px;
+  width: var(--1s-control-h-md);
+  height: var(--1s-control-h-md);
+  border-radius: var(--1s-control-radius);
   border: none;
   background: none;
   color: var(--1s-text-color-secondary);
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+  transition: var(--1s-control-transition);
+
+  svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
 
   &:hover {
-    background: var(--1s-hover-overlay);
+    background: var(--1s-state-hover);
     color: var(--1s-text-color);
   }
 
   &:active {
-    background: var(--1s-pressed-overlay);
+    background: var(--1s-state-active);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+  }
+
+  &--active,
+  &.is-selected {
+    color: var(--1s-state-selected-text);
+    background: var(--1s-state-selected);
   }
 }
 
@@ -471,39 +509,54 @@ function confirmExitEditMode() {
   }
 }
 
-/* 工具按钮 (自动制作 / 共享) */
+/* 工具按钮 (自动制作 / 共享) — 对齐 u-btn--sm--ghost */
 .designiy-header__tool-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 26px;
+  height: var(--1s-control-h-sm);
   padding: 0 8px;
-  border-radius: 5px;
+  border-radius: var(--1s-control-radius-sm);
   border: none;
   background: none;
   color: var(--1s-text-color-secondary);
-  font-size: 11px;
+  font-family: inherit;
+  font-size: var(--1s-control-font);
   font-weight: 500;
+  line-height: 1;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.1s, color 0.1s;
+  transition: var(--1s-control-transition);
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 
   &:hover {
-    background: var(--1s-hover-overlay);
+    background: var(--1s-state-hover);
     color: var(--1s-text-color);
   }
 
   &:active {
-    background: var(--1s-pressed-overlay);
+    background: var(--1s-state-active);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
   }
 
   &--active {
-    background: var(--1s-accent-color-soft);
-    color: var(--1s-accent-color);
+    background: var(--1s-state-selected);
+    color: var(--1s-state-selected-text);
 
     &:hover {
-      background: var(--1s-accent-color-soft);
-      color: var(--1s-accent-color);
+      background: var(--1s-state-selected);
+      color: var(--1s-state-selected-text);
+    }
+    &:active {
+      background: color-mix(in srgb, var(--1s-state-selected) 85%, #000);
     }
   }
 }

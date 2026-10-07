@@ -513,7 +513,7 @@ function getDisplayColor(color: string) {
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      box-shadow: none;
       transition: all 0.3s ease;
 
       .preview-text {

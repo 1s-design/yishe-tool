@@ -1,47 +1,34 @@
 <template>
-  <Accordion type="multiple" :model-value="htmlCollapseActives" @update:model-value="v => htmlCollapseActives = v as string[]">
-    <AccordionItem v-if="hasTemplateBindings" value="2">
-      <AccordionTrigger>模板绑定</AccordionTrigger>
-      <AccordionContent>
-      <operate-item-html-bindings-editor
-        v-model="currentOperatingCanvasChild"
-      />
-      </AccordionContent>
-    </AccordionItem>
+  <!-- 代码画布：HTML 编辑 + 模板绑定（如有）—— 全部直出 -->
+  <section class="operate-section">
+    <h4 class="operate-section__title">代码画布</h4>
 
-    <AccordionItem value="3">
-      <AccordionTrigger>代码画布</AccordionTrigger>
-      <AccordionContent>
-      <operateItemHtmlInput
-        label="HTML"
-        placeholder="<div class='card'>这里输入 HTML 代码</div>"
-        :template-target="currentOperatingCanvasChild"
-        v-model="currentOperatingCanvasChild.htmlContent"
-      />
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+    <operate-item-html-bindings-editor
+      v-if="hasTemplateBindings"
+      v-model="currentOperatingCanvasChild"
+    />
+
+    <operateItemHtmlInput
+      label="HTML"
+      placeholder="<div class='card'>这里输入 HTML 代码</div>"
+      :template-target="currentOperatingCanvasChild"
+      v-model="currentOperatingCanvasChild.htmlContent"
+    />
+  </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
+import { computed, watch } from "vue";
 import operateItemHtmlInput from "@/components/design/layout/canvas/operate/htmlInput.vue";
 import operateItemHtmlBindingsEditor from "@/components/design/layout/canvas/operate/htmlTemplate/bindingsEditor.vue";
-import { currentOperatingCanvasChild } from "../index.tsx";
+/* 代码画布面板固定绑定 html 图层，与画布面板可同时显示 */
+import { htmlLayerChild as currentOperatingCanvasChild } from "../index.tsx";
 import {
   detachHtmlTemplateFromTarget,
   ensureHtmlTemplateOptions,
   hasHtmlMagicVariables,
   syncHtmlTemplateFieldsFromContent,
 } from "@/components/design/layout/canvas/htmlTemplate/runtime.ts";
-
-const htmlCollapseActives = ref(["2", "3"]);
 
 const hasTemplateBindings = computed(() => {
   ensureHtmlTemplateOptions(currentOperatingCanvasChild.value);

@@ -1,56 +1,62 @@
 <template>
-  <div class="fixed" style="height: calc(100vh - 160px); bottom: 24px; right: 12px">
-    <div v-if="!decals.length" style="text-align: center">无贴纸</div>
+  <section class="decal-list-panel u-panel">
+    <header class="u-panel__header">
+      <div class="decal-list-heading">
+        <strong>贴纸图层</strong>
+        <span>{{ decals.length }}</span>
+      </div>
+      <div class="u-panel__actions">
+        <Button variant="ghost" size="icon-xs" title="滚动到顶部" aria-label="滚动到顶部" @click="goTop">
+          <ArrowUp class="w-3 h-3" />
+        </Button>
+        <Button variant="ghost" size="icon-xs" title="滚动到底部" aria-label="滚动到底部" @click="goBottom">
+          <ArrowDown class="w-3 h-3" />
+        </Button>
+        <Button variant="ghost" size="icon-xs" title="关闭" aria-label="关闭贴纸列表" @click="showDecalList = false">
+          <X class="w-3 h-3" />
+        </Button>
+      </div>
+    </header>
 
-    <div style="position: relative; height: calc(100% - 64px)">
-      <div class="to-top btn" v-show="!arrivedState.top" @click="goTop">
-        <ArrowUp class="w-3.5 h-3.5" />
-      </div>
-      <div class="to-bottom btn" v-show="!arrivedState.bottom" @click="goBottom">
-        <ArrowDown class="w-3.5 h-3.5" />
-      </div>
-      <div
-        class="scroller flex flex-col hide-scrollbar items-center"
-        ref="scrollRef"
-        :class="{
-          'gradient-top': !arrivedState.top && arrivedState.bottom,
-          'gradient-bottom': !arrivedState.bottom && arrivedState.top,
-          'gradient-both': !arrivedState.bottom && !arrivedState.top,
-        }"
-        style="height: 100%; overflow: auto"
-      >
-        <template v-for="item in decals">
-          <div class="item" @click="decalClick(item)">
-            <s1-image :src="item.state.url"></s1-image>
-          </div>
-        </template>
-      </div>
-    </div>
+    <div class="decal-list-content">
+      <div v-if="!decals.length" class="u-panel__empty">无贴纸</div>
 
-    <div style="height: 64px" class="flex items-center justify-center">
-      <Button variant="outline" size="icon-sm" class="rounded-full" @click="showDecalList = false">
-        <X class="w-3.5 h-3.5" />
-      </Button>
+      <template v-else>
+        <div class="scroller hide-scrollbar" ref="scrollRef">
+          <button
+            v-for="(item, index) in decals"
+            :key="itemId(item) || index"
+            type="button"
+            class="u-list-row decal-list-row"
+            :class="{ 'is-selected': isCurrent(item) }"
+            :aria-label="`选择贴纸 ${index + 1}`"
+            :aria-current="isCurrent(item) ? 'true' : undefined"
+            @click="decalClick(item)"
+          >
+            <s1-image :src="item.state.url" class="decal-list-thumb"></s1-image>
+            <span class="u-list-row__label">{{ decalName(item, index) }}</span>
+            <span class="u-list-row__meta">#{{ String(index + 1).padStart(2, '0') }}</span>
+          </button>
+        </div>
+      </template>
     </div>
-  </div>
+  </section>
 </template>
 <script setup>
 import {
-  currentOperatingBaseModelInfo,
   currentModelController,
   showDecalList,
   currentOperatingDecalController,
   showDecalControl,
 } from "../../store";
-import { computed, reactive } from "vue";
+import { computed, ref } from "vue";
 import { useScroll } from "@vueuse/core";
-import { Plus, X, ArrowUp, ArrowDown } from 'lucide-vue-next'
+import { X, ArrowUp, ArrowDown } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button';
-import unUploadIcon from "@/icon/un-upload.svg?component";
 
 const scrollRef = ref();
 
-const { x, y, isScrolling, arrivedState, directions } = useScroll(scrollRef, {
+const { y } = useScroll(scrollRef, {
   behavior: "smooth",
 });
 
@@ -67,91 +73,98 @@ function decalClick(item) {
   showDecalControl.value = true;
 }
 
-function unUpload() {}
+function isCurrent(item) {
+  return Boolean(
+    currentOperatingDecalController.value &&
+      itemId(item) === itemId(currentOperatingDecalController.value),
+  );
+}
 
-const decals = computed(() => {
-  return currentModelController.value.decalControllers;
-});
+function itemId(item) {
+  return item?.id?.value ?? item?.id;
+}
+
+function decalName(item, index) {
+  return item?.info?.name || item?.state?.name || `贴纸 ${index + 1}`;
+}
+
+const decals = computed(() => currentModelController.value?.decalControllers ?? []);
 </script>
 <style lang="less" scoped>
-.scroller {
-  row-gap: 12px;
-  min-width: 120px;
-  padding: 1rem;
-}
-
-.btn {
-  position: absolute;
+.decal-list-panel {
   width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.decal-list-heading {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: transparent;
-  color: var(--1s-text-color-secondary);
-  border: none;
-  height: 24px;
-  width: 64px;
-  border-radius: 5px;
-  z-index: 10;
-  cursor: pointer;
-  left: calc(50% - 32px);
-  transition: background 0.1s, color 0.1s;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
 
-  &:hover {
-    background-color: var(--1s-hover-overlay);
+  strong {
     color: var(--1s-text-color);
+    font-size: var(--1s-control-font-md);
+    font-weight: 600;
+  }
+
+  span {
+    color: var(--1s-text-color-tertiary);
+    font-size: var(--1s-control-font);
+    font-variant-numeric: tabular-nums;
   }
 }
 
-.to-top {
-  top: 0;
-}
-
-.to-bottom {
-  bottom: 0;
-}
-
-.item {
-  height: 108px;
-  width: 108px;
-  flex-shrink: 0;
-  
-  background-color: var(--1s-control-surface-background);
-  border-radius: 8px;
-  border: 2px solid var(--1s-control-border-color);
-  transition: all 0.3s;
+.decal-list-content {
   position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 6px 8px 8px;
+}
 
-  &:hover {
-    border-color: var(--1s-accent-color);
+.scroller {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 1px 0;
+  box-sizing: border-box;
+}
+
+.decal-list-row {
+  width: 100%;
+  min-height: 32px;
+  height: 32px;
+  padding: 3px 6px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.decal-list-thumb {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--1s-control-border-color);
+  border-radius: var(--1s-control-radius-sm);
+  background: var(--1s-control-surface-muted);
+
+  :deep(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 }
 
-// 竖向两端 渐变
-.gradient-both {
-  mask-image: linear-gradient(
-    0deg,
-    transparent 0%,
-    transparent 28px,
-    rgba(0, 0, 0) 70px,
-    rgba(0, 0, 0) calc(100% - 70px),
-    transparent calc(100% - 28px)
-  );
-}
 
-.gradient-top {
-  mask-image: linear-gradient(
-    0deg,
-    rgba(0, 0, 0) 70px,
-    rgba(0, 0, 0) calc(100% - 70px),
-    transparent calc(100% - 28px)
-  );
-}
-
-.gradient-bottom {
-  mask-image: linear-gradient(0deg, transparent 0%, transparent 28px, rgba(0, 0, 0) 70px);
-}
-
-.gradient-top {
-}
 </style>

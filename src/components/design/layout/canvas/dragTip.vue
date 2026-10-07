@@ -37,12 +37,10 @@ import iconFingerMove from "@/icon/mobile/fingerMove.svg?component";
 .touch-point {
     width: 10px;
     height: 10px;
-    border-radius: 999999999px;
+    border-radius: var(--1s-radius-full);
     transform: translate(-3px, 10px);
-    background-color: rgba(105, 0, 255,.7);
-    box-shadow: rgba(105, 0, 255,.5) 0px 0px 0px 3px, 
-    rgba(105, 0, 255,.3) 0px 0px 0px 6px, 
-    rgba(105, 0, 255,.1) 0px 0px 0px 9px, 
+    background-color: var(--1s-accent-color);
+    box-shadow: 0 0 0 3px var(--1s-focus-ring-color);
 }
 
 .text {

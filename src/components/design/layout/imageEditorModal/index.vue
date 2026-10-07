@@ -102,8 +102,7 @@ if (typeof window !== 'undefined') {
 
 .image-editor-close-btn {
   background: var(--1s-surface-background);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--1s-shadow-sm);
+  box-shadow: none;
 }
 
 // 动画效果

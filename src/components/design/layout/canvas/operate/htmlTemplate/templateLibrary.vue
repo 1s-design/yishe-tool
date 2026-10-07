@@ -241,19 +241,17 @@ function applyTemplate(template: HtmlTemplateDefinition) {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  transition: border-color 0.18s ease;
 }
 
 .html-template-library__card:hover,
 .html-template-library__card.is-active {
-  transform: translateY(-2px);
   border-color: var(--1s-accent-color);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
 }
 
 .html-template-library__preview {
   flex: 0 0 auto;
-  background: linear-gradient(180deg, var(--1s-control-surface-muted), var(--1s-hover-background));
+  background: var(--1s-control-surface-muted);
   padding: 14px;
 }
 

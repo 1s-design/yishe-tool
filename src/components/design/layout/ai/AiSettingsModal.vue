@@ -20,7 +20,7 @@
             <button
               type="button"
               class="flex flex-col items-start gap-2 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
-              :class="form.mode === 'proxy' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
+              :class="form.mode === 'proxy' ? 'border-primary bg-primary/10 text-foreground font-[550]' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.mode = 'proxy'"
             >
               <div class="absolute top-2.5 right-2.5">
@@ -46,7 +46,7 @@
             <button
               type="button"
               class="flex flex-col items-start gap-2 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
-              :class="form.mode === 'direct' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10' : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'"
+              :class="form.mode === 'direct' ? 'border-primary bg-primary/10 text-foreground font-[550]' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.mode = 'direct'"
             >
               <div class="absolute top-2.5 right-2.5">
@@ -181,7 +181,7 @@
           <Button variant="outline" size="sm" class="text-xs" @click="handleClose">
             取消
           </Button>
-          <Button size="sm" class="text-xs font-bold px-4 gap-1 shadow-sm" @click="handleSave">
+          <Button size="sm" class="text-xs font-bold px-4 gap-1" @click="handleSave">
             <Check class="h-3.5 w-3.5" />
             保存并应用
           </Button>

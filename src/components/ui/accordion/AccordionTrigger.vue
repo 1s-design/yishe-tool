@@ -4,7 +4,7 @@
       v-bind="props"
       :class="
         cn(
-          'flex flex-1 items-center justify-between py-3 text-xs font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180 select-none',
+          'flex flex-1 items-center justify-between py-3 text-[11px] font-[450] transition-all hover:underline [&[data-state=open]>svg]:rotate-180 select-none',
           $attrs.class ?? ''
         )
       "

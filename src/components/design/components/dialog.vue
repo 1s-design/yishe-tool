@@ -80,7 +80,7 @@ function close() {
 .designiy-dialog {
   background: var(--1s-container-background);
   position: fixed;
-  border-radius: 6px;
+  border-radius: var(--1s-control-radius);
 
   * {
     pointer-events: auto !important;
@@ -105,10 +105,10 @@ function close() {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #fff;
+  background-color: var(--1s-state-hover);
 
   &:hover {
-    background-color: #eee;
+    background-color: var(--1s-state-active);
   }
 }
 

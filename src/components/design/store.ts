@@ -251,7 +251,7 @@ watch(showModelInfo, async (value) => {
 })
 
 // 是否展示顶部菜单
-export const showHeader = ref(true)
+export const showHeader = ref(false)
 
 // 是否展示顶部副菜单
 export const showSubHeader = ref(true)

@@ -86,15 +86,14 @@ defineExpose({
 
 .gltf-viewer-loading {
   font-weight: bold;
-  background-color: rgba(200, 200, 200, 0.3);
+  background-color: var(--1s-loading-mask);
   position: absolute;
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  backdrop-filter: blur(4px);
-  color: #aaa;
+  color: var(--1s-text-color-secondary);
   font-size: 14px;
 }
 

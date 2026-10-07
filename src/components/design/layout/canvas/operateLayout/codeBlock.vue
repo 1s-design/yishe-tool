@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="source">
-      <AccordionTrigger>代码</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">代码</h4>
+      
         <operate-form-item>
           <template #name>源码</template>
           <template #content>
@@ -55,12 +51,12 @@
             </div>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
@@ -137,12 +133,12 @@
             </div>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="style">
-      <AccordionTrigger>样式</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">样式</h4>
+      
         <operateItemFontSize
           label="代码字号"
           v-model="currentOperatingCanvasChild.fontSize"
@@ -195,28 +191,28 @@
             />
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="config">
-      <AccordionTrigger>Config</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">Config</h4>
+      
         <operate-form-item>
           <template #name>原生配置</template>
           <template #content>
             <Button size="sm" @click="openConfigDialog">编辑配置</Button>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 
   <Dialog :modal="false" v-model:open="configDialogVisible">
     <DialogContent class="code-block-config-dialog max-w-none h-screen w-screen rounded-none">
@@ -251,12 +247,6 @@ import operateItemFontSize from '@/components/design/layout/canvas/operate/fontS
 import operateItemFontFamily from '@/components/design/layout/canvas/operate/fontFamily/fontFamily.vue'
 import operateItemBackgroundColor from '@/components/design/layout/canvas/operate/backgroundColor.vue'
 import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion'
-import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -284,7 +274,6 @@ import { currentOperatingCanvasChild } from '../index.tsx'
 import { CODE_BLOCK_LANGUAGES, CODE_BLOCK_THEMES } from '../children/codeBlock'
 import { generateCodeBlockSource } from '../children/aiCodeBlockService'
 
-const activeNames = ref(['source', 'basic', 'style', 'config', 'common'])
 const aiPopoverVisible = ref(false)
 const aiPrompt = ref('')
 const aiLoading = ref(false)

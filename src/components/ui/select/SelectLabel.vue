@@ -1,6 +1,6 @@
 <template>
   <SelectLabel
-    :class="cn('px-2 py-1.5 text-xs font-semibold text-[var(--1s-text-color-secondary)]', $attrs.class ?? '')"
+    :class="cn('px-2 py-1 text-[10px] font-[550] text-[var(--1s-menu-text-secondary)]', $attrs.class ?? '')"
   >
     <slot />
   </SelectLabel>

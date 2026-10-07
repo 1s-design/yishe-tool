@@ -1,8 +1,7 @@
 <template>
-  <Accordion type="multiple" :model-value="textCollapseActives" @update:model-value="v => textCollapseActives = v as string[]">
-    <AccordionItem value="1">
-      <AccordionTrigger>文字属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">文字属性</h4>
+      
       <operateItemTextContent v-model="currentOperatingCanvasChild.textContent">
       </operateItemTextContent>
 
@@ -53,34 +52,34 @@
         v-model:color="currentOperatingCanvasChild.textStrokeColor"
       >
       </operateItemTextStroke>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="1.5">
-      <AccordionTrigger>文字背景图</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">文字背景图</h4>
+      
       <operateItemImageSelect
         label="选择文字背景图"
         v-model="currentOperatingCanvasChild.imageInfo"
       >
       </operateItemImageSelect>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="2">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
       <operateItemCommonGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="4">
-      <AccordionTrigger>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">环形文字</div>
-      </AccordionTrigger>
-      <AccordionContent>
+      </h4>
+      
       <operateItemSwitch
         label="使用圆形文字"
         v-model="currentOperatingCanvasChild.isRoundText"
@@ -152,19 +151,19 @@
         v-model="currentOperatingCanvasChild.isCounterclockwise"
       >
       </operateItemSwitch>
-      </AccordionContent>
-    </AccordionItem>
-    <AccordionItem value="5">
-      <AccordionTrigger>
+      
+    </section>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">滤镜效果</div>
-      </AccordionTrigger>
-      <AccordionContent>
+      </h4>
+      
       <operateItemFilterGroup
         v-model="currentOperatingCanvasChild.filter"
       ></operateItemFilterGroup>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 </template>
 
 <script setup lang="ts">
@@ -178,12 +177,6 @@ import {
   nextTick,
 } from "vue";
 
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -240,7 +233,6 @@ import {
 
 import { generateRoundText } from "../children/text/aiRoundTextService";
 
-const textCollapseActives = ref(["1", "1.5", "2", "3", "4", "5"]);
 
 const aiPopoverVisible = ref(false);
 const aiPrompt = ref("");

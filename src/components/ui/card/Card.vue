@@ -2,7 +2,7 @@
   <div
     :class="
       cn(
-        'rounded-xl border bg-card text-card-foreground shadow-xs transition-colors',
+        'rounded-[var(--1s-radius-large)] border border-[var(--1s-border-color)] bg-[var(--1s-surface-background)] text-[var(--1s-text-color)] transition-colors',
         $attrs.class ?? ''
       )
     "

@@ -1,7 +1,7 @@
 <template>
   <DropdownMenuSeparator
     v-bind="props"
-    :class="cn('-mx-1 my-1 h-px bg-muted', $attrs.class ?? '')"
+    :class="cn('my-1 h-px bg-[var(--1s-menu-border)]', $attrs.class ?? '')"
   />
 </template>
 

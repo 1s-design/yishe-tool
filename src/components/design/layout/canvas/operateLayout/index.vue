@@ -1,24 +1,45 @@
 <template>
-  <ScrollArea class="canvas-operate-scrollbar">
+  <ScrollArea class="canvas-operate-scrollbar u-panel__body">
     <div class="canvas-operate-form">
-      <component v-if="activeChild" :is="CanvasChildOperationComponentMap[activeChild.type]"></component>
+      <!-- 固定图层：画布 + 代码画布 —— 直接叠放展示，不再下拉切换 -->
+      <component :is="CanvasChildOperationComponentMap['canvas']"></component>
+      <component :is="CanvasChildOperationComponentMap['html']"></component>
+
+      <!-- 选中图层：画布/代码画布之外的图层，选中后展示其属性面板 -->
+      <template v-if="extraChild">
+        <div class="canvas-operate-extra-bar">
+          <span class="canvas-operate-extra-bar__title">
+            选中图层 · {{ canvasChildLabelMap[extraChild.type] || "图层" }}
+          </span>
+          <button
+            type="button"
+            class="u-icon-btn u-icon-btn--xs u-icon-btn--danger"
+            title="删除该图层"
+            @click="remove(extraChild.id)"
+          >
+            <XCircle class="w-3 h-3" />
+          </button>
+        </div>
+        <component :is="CanvasChildOperationComponentMap[extraChild.type]"></component>
+      </template>
     </div>
   </ScrollArea>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
+import { XCircle } from "lucide-vue-next";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { currentOperatingCanvasChildId, currentOperatingCanvasChild } from "../index.tsx";
 
-const activeChild = computed(() => currentOperatingCanvasChild.value);
-const activeChildId = computed({
-  get() {
-    return currentOperatingCanvasChildId.value;
-  },
-  set(val) {
-    currentOperatingCanvasChildId.value = val;
+/* 当前选中的「非固定图层」（画布/代码画布之外），有则在双面板下方展示其操作面板 */
+const extraChild = computed(() => {
+  const child = currentOperatingCanvasChild.value;
+  if (!child) return null;
+  if (child.type === "canvas" || child.type === "html" || child.id === "this_is_html_id" || child.id === "this_is_canvas_id") {
+    return null;
   }
+  return child;
 });
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
@@ -65,7 +86,8 @@ import {
   showMainCanvas,
   CanvasChildType,
   updateRenderingCanvas,
-  CanvasChildOperationComponentMap
+  CanvasChildOperationComponentMap,
+  canvasChildLabelMap
 } from "../index.tsx";
 
 function remove(index) {
@@ -74,83 +96,61 @@ function remove(index) {
 </script>
 
 <style lang="less">
-.custom-segmented-control {
-  display: flex;
-  background-color: var(--1s-shell-background, #f1f5f9);
-  padding: 2px;
-  border-radius: 4px;
-  margin-bottom: 8px;
+.canvas-operate-form {
+  padding: 0 0 18px;
+  box-sizing: border-box;
+
+  > * {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* 平铺分节 — 属性直出，无折叠（Figma 检查器风格） */
+.operate-section {
+  padding: 10px 10px 12px;
+  border-top: 1px solid var(--1s-divider-color);
+
+  &:first-child {
+    border-top: 0;
+    padding-top: 6px;
+  }
+}
+
+.operate-section__title {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 550;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--1s-text-color-secondary);
   user-select: none;
-  cursor: pointer;
-  border: 1px solid var(--1s-border-color, rgba(226, 232, 240, 0.8));
+}
 
-  .segmented-item {
-    flex: 1;
-    text-align: center;
-    padding: 3px 6px;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--1s-text-color-secondary, #64748b);
-    border-radius: 3px;
-    transition: all 0.15s ease;
+/* 其它图层的分隔标题条 */
+.canvas-operate-extra-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 28px;
+  margin: 8px 0 2px;
+  padding: 0 7px;
+  border-top: 1px solid var(--1s-divider-color);
 
-    &:hover {
-      color: var(--1s-text-color, #0f172a);
-    }
-
-    &.active {
-      background-color: var(--1s-surface-background, #ffffff);
-      color: var(--1s-text-color, #0f172a);
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      font-weight: 600;
-    }
+  &__title {
+    font-size: var(--1s-control-font);
+    font-weight: 550;
+    color: var(--1s-text-color-secondary);
+    letter-spacing: 0.01em;
+    user-select: none;
   }
 }
 
 .sidebar-back-header {
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--1s-border-color, rgba(226, 232, 240, 0.8));
-}
-
-.canvas-operate-form {
-  padding: 4px 8px 16px;
-  box-sizing: border-box;
-
-  .el-collapse {
-    border-top: none;
-    border-bottom: none;
-  }
-
-  .el-collapse-item__header {
-    height: 28px;
-    line-height: 28px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--1s-text-color, #09090b);
-    background: transparent;
-    border-bottom: 1px solid var(--1s-border-color, #e4e4e7);
-    padding: 0 4px;
-    letter-spacing: 0.02em;
-    user-select: none;
-  }
-
-  .el-collapse-item__wrap {
-    background: transparent;
-    border-bottom: 1px solid var(--1s-border-color, #e4e4e7);
-  }
-
-  .el-collapse-item__content {
-    padding: 6px 2px 8px;
-  }
-
-  .el-input__wrapper,
-  .el-select__wrapper,
-  .el-textarea__inner {
-    background-color: var(--1s-elevated-background, #f4f4f5);
-    border-radius: 4px;
-    font-size: 11px;
-  }
+  margin: 2px 0 6px;
+  padding: 0 4px 6px;
+  border-bottom: 1px solid var(--1s-divider-color);
 }
 </style>
 

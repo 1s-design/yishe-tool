@@ -43,19 +43,18 @@ function handleClose() {
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(8px);
 }
 
 .automation-content {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 20px;
+  background: var(--1s-surface-background);
+  border-radius: var(--1s-radius-large);
   padding: 48px 40px;
   text-align: center;
   max-width: 420px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: var(--1s-shadow-overlay);
+  animation: slideIn 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--1s-border-color);
 }
 
 .close-button {
@@ -70,13 +69,12 @@ function handleClose() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background var(--1s-transition-fast);
   color: var(--1s-text-color-secondary);
-  
+
   &:hover {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--1s-hover-background);
     color: var(--1s-text-color);
-    transform: scale(1.1);
   }
 }
 
@@ -87,29 +85,29 @@ function handleClose() {
 .spinner {
   width: 56px;
   height: 56px;
-  border: 3px solid #f0f0f0;
-  border-top: 3px solid #409eff;
+  border: 3px solid var(--1s-border-color);
+  border-top: 3px solid var(--1s-accent-color);
   border-radius: 50%;
   animation: spin 1.2s linear infinite;
   margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+  box-shadow: none;
 }
 
 .automation-message {
   h3 {
     margin: 0 0 16px 0;
-    color: #2c3e50;
+    color: var(--1s-text-color);
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 550;
     letter-spacing: 0.5px;
   }
 
   .description {
     margin: 0 0 24px 0;
-    color: #5a6c7d;
+    color: var(--1s-text-color-secondary);
     font-size: 14px;
     line-height: 1.6;
-    font-weight: 400;
+    font-weight: 450;
   }
 
   .warning-box {
@@ -118,16 +116,16 @@ function handleClose() {
     justify-content: center;
     gap: 8px;
     padding: 12px 16px;
-    background: linear-gradient(135deg, #fff5f5 0%, #fef0f0 100%);
-    border-radius: 12px;
-    border: 1px solid #fecaca;
-    color: #dc2626;
+    background: color-mix(in srgb, var(--1s-text-danger) 8%, transparent);
+    border-radius: var(--1s-radius-medium);
+    border: 1px solid color-mix(in srgb, var(--1s-text-danger) 24%, transparent);
+    color: var(--1s-text-danger);
     font-size: 13px;
-    font-weight: 500;
-    
+    font-weight: 550;
+
     .warning-icon {
       font-size: 16px;
-      color: #f87171;
+      color: var(--1s-text-danger);
     }
   }
 }

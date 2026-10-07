@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="chartType">
-      <AccordionTrigger>图表类型</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">图表类型</h4>
+      
         <operate-form-item>
           <template #name>图表类型</template>
           <template #content>
@@ -26,12 +22,12 @@
             </Select>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="data">
-      <AccordionTrigger>数据</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">数据</h4>
+      
         <operate-form-item>
           <template #name>数据 (JSON)</template>
           <template #content>
@@ -51,12 +47,12 @@
             <div v-if="dataError" class="chartjs-error">{{ dataError }}</div>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="options">
-      <AccordionTrigger>配置</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">配置</h4>
+      
         <operate-form-item>
           <template #name>配置 (JSON)</template>
           <template #content>
@@ -72,12 +68,12 @@
             </div>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
@@ -87,16 +83,16 @@
         <operateItemBackgroundColor
           v-model="currentOperatingCanvasChild.backgroundColor"
         />
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 </template>
 
 <script setup lang="ts">
@@ -104,12 +100,6 @@ import { ref, computed } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import {
   Select,
   SelectTrigger,
@@ -121,7 +111,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { currentOperatingCanvasChild } from "../index.tsx";
 import { CHART_TYPES } from "../children/chartjs.tsx";
 
-const activeNames = ref(["chartType", "data", "basic", "common"]);
 const dataError = ref("");
 const optionsError = ref("");
 

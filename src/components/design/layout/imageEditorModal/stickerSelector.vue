@@ -177,15 +177,13 @@ getList()
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--1s-radius-medium);
   overflow: hidden;
-  transition: all 0.2s;
-  background: var(--1s-surface-background, #fff);
+  transition: border-color 0.2s;
+  background: var(--1s-surface-background);
   border: 1px solid var(--1s-control-border-color, transparent);
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--1s-accent-color);
   }
 }
@@ -211,15 +209,14 @@ getList()
   position: absolute;
   top: 4px;
   right: 4px;
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
+  background: var(--1s-menu-background);
+  color: var(--1s-menu-text);
   font-size: 9px;
   padding: 1px 4px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
+  border-radius: var(--1s-radius-small);
+  font-family: var(--1s-font-family-mono);
+  font-weight: 550;
   letter-spacing: 0.5px;
-  backdrop-filter: blur(4px);
   pointer-events: none;
   user-select: none;
 }

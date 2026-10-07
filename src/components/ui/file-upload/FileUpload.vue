@@ -170,7 +170,7 @@ defineExpose({
 }
 
 .file-upload.is-dragover .file-upload-trigger {
-  outline: 2px dashed var(--1s-control-border-color, #409eff);
+  outline: 2px dashed var(--1s-control-border-color, #6900ff);
   outline-offset: -2px;
 }
 

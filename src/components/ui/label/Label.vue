@@ -3,7 +3,7 @@
     v-bind="props"
     :class="
       cn(
-        'text-xs font-medium leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70 select-none',
+        'text-[11px] font-[450] leading-none text-[var(--1s-text-color-secondary)] peer-disabled:cursor-not-allowed peer-disabled:opacity-70 select-none',
         $attrs.class ?? ''
       )
     "

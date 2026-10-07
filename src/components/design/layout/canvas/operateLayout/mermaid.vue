@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="source">
-      <AccordionTrigger>源码</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">源码</h4>
+      
         <operate-form-item>
           <template #name>Mermaid</template>
           <template #content>
@@ -61,12 +57,12 @@
             </div>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
@@ -92,28 +88,28 @@
         </operate-form-item>
 
         <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor"></operateItemBackgroundColor>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="config">
-      <AccordionTrigger>Config</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">Config</h4>
+      
         <operate-form-item>
           <template #name>原生配置</template>
           <template #content>
             <Button size="sm" variant="default" @click="openConfigDialog">编辑配置</Button>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 
   <Dialog :modal="false" v-model:open="configDialogVisible">
     <DialogContent
@@ -187,12 +183,6 @@ import operateItemSize from '@/components/design/layout/canvas/operate/size/rela
 import operateItemCommonGroup from '@/components/design/layout/canvas/operate/commonGroup.vue'
 import operateItemBackgroundColor from '@/components/design/layout/canvas/operate/backgroundColor.vue'
 import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion'
-import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -217,7 +207,6 @@ import { canvasStickerOptionsOnlyChild, currentOperatingCanvasChild } from '../i
 import { formatSizeOptionToPixelValue } from '../helper'
 import { generateMermaidConfig, generateMermaidSource } from '../children/aiMermaidService'
 
-const activeNames = ref(['source', 'basic', 'config', 'common'])
 const aiPopoverVisible = ref(false)
 const aiPrompt = ref('')
 const aiLoading = ref(false)

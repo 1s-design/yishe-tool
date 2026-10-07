@@ -365,7 +365,6 @@ async function uploadThumbnail() {
   &:hover {
     border-color: var(--1s-accent-color);
     box-shadow: 0 4px 12px color-mix(in srgb, var(--1s-accent-color) 15%, transparent);
-    transform: translateY(-2px);
   }
 
   &.font-item-selected {

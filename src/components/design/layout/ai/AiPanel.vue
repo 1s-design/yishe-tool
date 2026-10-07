@@ -8,15 +8,12 @@
   >
     <!-- 顶部 Header 拖拽把手区 -->
     <div
-      class="ai-panel-header flex h-11 items-center justify-between px-3.5 select-none transition-colors"
+      class="ai-panel-header flex h-9 items-center justify-between px-3 select-none transition-colors"
       :class="isDragging ? 'cursor-grabbing' : 'cursor-grab'"
       @mousedown="onDragStart"
     >
-      <!-- 左侧：图标 + 标题 + 模式 Badge -->
+      <!-- 左侧：标题 + 模式 -->
       <div class="flex items-center gap-2 min-w-0">
-        <div class="ai-panel-logo flex h-6 w-6 items-center justify-center rounded-md shrink-0">
-          <Sparkles class="h-3.5 w-3.5" />
-        </div>
         <span class="ai-panel-title text-xs font-semibold tracking-tight">AI 设计助手</span>
 
         <!-- 运行模式 Tag -->
@@ -25,7 +22,6 @@
             <Badge
               variant="outline"
               class="ai-panel-mode-badge h-5 px-1.5 text-[10px] font-medium cursor-pointer transition-colors"
-              :class="aiSettings.mode === 'direct' ? 'border-emerald-500/30 text-emerald-600 bg-emerald-500/10' : 'border-blue-500/30 text-blue-600 bg-blue-500/10'"
               @click.stop="showSettingsModal = true"
             >
               {{ aiSettings.mode === 'direct' ? '直连' : '代理' }}
@@ -36,15 +32,9 @@
           </TooltipContent>
         </Tooltip>
 
-        <!-- 实时执行状态标签 -->
-        <Badge
-          v-if="isProcessing"
-          variant="secondary"
-          class="ai-panel-status-badge h-5 gap-1 px-1.5 text-[10px] font-medium border border-amber-400/40 bg-amber-50 text-amber-900"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-          <span class="max-w-[100px] truncate">{{ agentPhaseLabel }}</span>
-        </Badge>
+        <!-- 实时执行状态 -->
+        <span v-if="isProcessing" class="ai-panel-status-dot" />
+        <span v-if="isProcessing" class="text-[10px] text-muted-foreground truncate max-w-[100px]">{{ agentPhaseLabel }}</span>
       </div>
 
       <!-- 右侧：控制按钮组 -->
@@ -83,9 +73,9 @@
     </div>
 
     <!-- 计划执行进度条 -->
-    <div v-if="planProgress" class="ai-panel-progress relative h-1 w-full overflow-hidden">
+    <div v-if="planProgress" class="ai-panel-progress relative h-0.5 w-full overflow-hidden">
       <div
-        class="ai-panel-progress-bar h-full bg-gradient-to-r from-emerald-500 via-sky-500 to-blue-500 transition-all duration-300 ease-out"
+        class="ai-panel-progress-bar h-full transition-all duration-300 ease-out"
         :style="{ width: (planProgress.settled / planProgress.total * 100) + '%' }"
       />
     </div>
@@ -93,30 +83,26 @@
     <!-- 对话消息列表区 -->
     <div
       ref="messagesRef"
-      class="ai-panel-messages flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3.5 min-h-[320px] max-h-[560px] scroll-smooth text-xs"
+      class="ai-panel-messages flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2.5 min-h-[280px] max-h-[520px] scroll-smooth text-xs"
       @scroll="handleMessagesScroll"
     >
       <!-- 空状态：极简灵感推荐 -->
-      <div v-if="messages.length === 0" class="flex flex-col items-center justify-center py-5 text-center space-y-3.5">
-        <div class="ai-panel-empty-icon flex h-11 w-11 items-center justify-center rounded-lg border shadow-xs">
-          <Wand2 class="h-5 w-5" />
-        </div>
+      <div v-if="messages.length === 0" class="flex flex-col items-center justify-center py-4 text-center space-y-3">
         <div class="space-y-0.5 max-w-[280px]">
           <h3 class="text-xs font-semibold ai-panel-text">AI 自动制作贴纸</h3>
           <p class="text-[11px] ai-panel-text-secondary leading-relaxed">
-            描述你想要的贴纸、或点击「形式与参数」配置套组与变体，AI 将实时在画布中绘制生成
+            描述你想要的贴纸、或点击「形式与参数」配置套组与变体
           </p>
         </div>
 
-        <!-- 快捷灵感卡片 -->
-        <div class="grid grid-cols-2 gap-1.5 w-full pt-1">
+        <!-- 快捷灵感 -->
+        <div class="grid grid-cols-2 gap-1.5 w-full pt-0.5">
           <button
             v-for="q in quickPrompts"
             :key="q.label"
-            class="ai-panel-quick-card flex items-center gap-1.5 rounded-lg border p-2 text-left text-[11px] font-medium transition-all group"
+            class="ai-panel-quick-card flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-left text-[11px] transition-all"
             @click="sendQuick(q.prompt)"
           >
-            <span class="ai-panel-quick-dot h-1.5 w-1.5 rounded-full group-hover:bg-primary transition-colors shrink-0" />
             <span class="truncate">{{ q.label }}</span>
           </button>
         </div>
@@ -131,30 +117,27 @@
       <template v-for="msg in visibleMessages" :key="msg.id">
         <!-- 用户消息 -->
         <div v-if="msg.role === 'user'" class="flex justify-end w-full">
-          <div class="ai-panel-msg-user max-w-[85%] rounded-lg rounded-tr-xs px-3.5 py-2 text-xs shadow-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+          <div class="ai-panel-msg-user max-w-[85%] rounded-lg px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
             {{ msg.content }}
           </div>
         </div>
 
         <!-- AI 助手消息 -->
-        <div v-if="msg.role === 'assistant'" class="flex items-start gap-2.5 w-full min-w-0">
-          <div class="ai-panel-avatar flex h-6 w-6 items-center justify-center rounded-full shrink-0 mt-0.5">
-            <Sparkles class="h-3 w-3" />
-          </div>
-          <div class="flex-1 space-y-1.5 min-w-0 max-w-full">
+        <div v-if="msg.role === 'assistant'" class="w-full min-w-0">
+          <div class="space-y-1.5 min-w-0 max-w-full">
             <!-- 文本内容 -->
-            <div v-if="msg.content" class="ai-panel-msg-ai rounded-lg rounded-tl-xs px-3.5 py-2 text-xs shadow-2xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+            <div v-if="msg.content" class="ai-panel-msg-ai rounded-lg px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
               {{ msg.content }}
             </div>
 
-            <!-- 工具调用展示 Pill -->
+            <!-- 工具调用展示 -->
             <div v-if="msg.tool_calls?.length" class="flex flex-wrap gap-1.5 pt-0.5">
               <span
                 v-for="call in msg.tool_calls"
                 :key="call.id"
                 class="ai-panel-tool-pill inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-mono"
               >
-                <Zap class="h-2.5 w-2.5 text-amber-500" />
+                <Zap class="h-2.5 w-2.5" />
                 <span>{{ formatToolName(call.function.name) }}</span>
               </span>
             </div>
@@ -162,20 +145,18 @@
         </div>
 
         <!-- 工具执行反馈 -->
-        <div v-if="msg.role === 'tool'" class="pl-8 w-full min-w-0">
+        <div v-if="msg.role === 'tool'" class="pl-0 w-full min-w-0">
           <div class="ai-panel-tool-result flex items-start gap-1.5 rounded-md border px-2.5 py-1 text-[10px] font-mono w-full min-w-0 whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
-            <CheckCircle2 class="h-3 w-3 text-emerald-500 shrink-0 mt-0.5" />
+            <CheckCircle2 class="h-3 w-3 shrink-0 mt-0.5" />
             <span class="flex-1 min-w-0 leading-normal">{{ parseResult(msg.content).message }}</span>
           </div>
         </div>
       </template>
 
       <!-- 思考中加载态 -->
-      <div v-if="isProcessing" class="flex items-center gap-2.5 pl-1">
-        <div class="ai-panel-avatar flex h-6 w-6 items-center justify-center rounded-full shrink-0">
+      <div v-if="isProcessing" class="w-full">
+        <div class="ai-panel-thinking flex items-center gap-2 rounded-lg border px-3 py-2 text-[11px]">
           <Loader2 class="h-3 w-3 animate-spin" />
-        </div>
-        <div class="ai-panel-thinking flex items-center gap-2 rounded-lg rounded-tl-xs border px-3 py-2 text-[11px]">
           <span>AI 正在全自动制作贴纸...</span>
           <button v-if="!isWaitingForUser" class="ai-panel-stop-btn h-5 px-1.5 text-[10px] rounded" @click="handleStop">
             停止
@@ -184,16 +165,16 @@
       </div>
 
       <!-- 用户交互确认卡片 (Human in the Loop) -->
-      <div v-if="interactionData" class="ai-panel-interaction rounded-lg border border-amber-400/40 bg-amber-50/60 p-3 space-y-2.5 shadow-sm">
-        <div class="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
-          <HelpCircle class="h-3.5 w-3.5 text-amber-500" />
+      <div v-if="interactionData" class="ai-panel-interaction rounded-lg border p-3 space-y-2.5">
+        <div class="flex items-center gap-1.5 text-xs font-semibold ai-panel-text">
+          <HelpCircle class="h-3.5 w-3.5" />
           <span>{{ interactionData.question }}</span>
         </div>
         <div v-if="interactionData.options?.length" class="flex flex-wrap gap-1.5">
           <button
             v-for="opt in interactionData.options"
             :key="opt"
-            class="ai-panel-option-btn h-6 text-[11px] rounded-md border border-amber-300/60 bg-white px-2.5 hover:bg-amber-100 transition-colors"
+            class="ai-panel-option-btn h-6 text-[11px] rounded-md border px-2.5 transition-colors"
             @click="submitInteraction(opt)"
           >
             {{ opt }}
@@ -207,7 +188,7 @@
             @keydown.enter="submitInteraction(customAnswer)"
           />
           <button
-            class="ai-panel-send-btn h-7 px-2.5 text-[11px] rounded-md text-white font-medium disabled:opacity-40"
+            class="ai-panel-send-btn h-7 px-2.5 text-[11px] rounded-md font-medium disabled:opacity-40"
             :disabled="!customAnswer.trim()"
             @click="submitInteraction(customAnswer)"
           >
@@ -282,12 +263,12 @@
       </div>
 
       <!-- 参考图卡片 -->
-      <div v-if="selectedImage" class="ai-ref-image flex items-center justify-between gap-2 rounded-lg border border-amber-400/40 bg-amber-50/50 p-1.5">
+      <div v-if="selectedImage" class="ai-ref-image flex items-center justify-between gap-2 rounded-lg border p-1.5">
         <div class="flex items-center gap-2 min-w-0">
-          <img :src="selectedImage.preview" class="h-8 w-8 rounded object-cover border border-border shrink-0" />
+          <img :src="selectedImage.preview" class="h-8 w-8 rounded object-cover border shrink-0" />
           <div class="flex flex-col min-w-0">
             <span class="text-xs font-medium ai-panel-text truncate max-w-[200px]">{{ selectedImage.name }}</span>
-            <span class="text-[10px] text-amber-700">{{ selectedImage.size }} · 已开启参考图风格复刻</span>
+            <span class="text-[10px] ai-panel-text-secondary">{{ selectedImage.size }} · 已开启参考图风格复刻</span>
           </div>
         </div>
         <button class="h-6 w-6 flex items-center justify-center rounded hover:text-red-500 transition-colors" @click="removeImage">
@@ -363,7 +344,6 @@
                 <button
                   type="button"
                   class="ai-toolbar-icon-btn flex h-7 w-7 items-center justify-center rounded-lg transition-colors disabled:opacity-40"
-                  :class="{ 'text-primary bg-primary/10 border-primary/40': showPromptPicker }"
                   :disabled="isProcessing"
                   @click="showPromptPicker = !showPromptPicker"
                 >
@@ -436,12 +416,10 @@ import { aiSettings } from "@/ai/settings";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
-  Sparkles,
   Settings2,
   Copy,
   Trash2,
   X,
-  Wand2,
   Zap,
   CheckCircle2,
   Loader2,
@@ -454,10 +432,6 @@ import {
   Palette,
   Layers,
   Edit3,
-  Edit,
-  Flame,
-  Save,
-  Download,
   SlidersHorizontal,
 } from "lucide-vue-next";
 import { executeAITool } from "@/ai/shared/execute-tool";
@@ -1047,11 +1021,6 @@ function parseResult(content: string) {
   background-color: var(--1s-control-hover-background);
 }
 
-.ai-panel-logo {
-  background-color: var(--1s-accent-color);
-  color: #ffffff;
-}
-
 .ai-panel-title {
   color: var(--1s-text-color);
 }
@@ -1065,10 +1034,13 @@ function parseResult(content: string) {
   background: var(--1s-control-hover-background);
 }
 
-.ai-panel-status-badge {
-  border-color: rgba(245, 158, 11, 0.4);
-  background: #fffbeb;
-  color: #92400e;
+.ai-panel-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--1s-text-color-tertiary);
+  animation: pulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .ai-panel-icon-btn {
@@ -1099,7 +1071,7 @@ function parseResult(content: string) {
   background-color: var(--1s-control-surface-muted);
 }
 .ai-panel-progress-bar {
-  background: linear-gradient(to right, #10b981, #0ea5e9, var(--1s-accent-color));
+  background: var(--1s-text-color-secondary);
 }
 
 /* ===== Messages Area ===== */
@@ -1109,15 +1081,6 @@ function parseResult(content: string) {
 }
 
 /* Empty state */
-.ai-panel-empty-icon {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--1s-accent-color) 8%, transparent), var(--1s-control-surface-muted));
-  border-color: var(--1s-border-color);
-  color: var(--1s-accent-color);
-}
-.ai-panel-empty-icon > svg {
-  color: var(--1s-accent-color);
-}
-
 .ai-panel-quick-card {
   border-color: var(--1s-border-color);
   background-color: var(--1s-surface-background);
@@ -1126,10 +1089,6 @@ function parseResult(content: string) {
 .ai-panel-quick-card:hover {
   background-color: var(--1s-control-hover-background);
   border-color: var(--1s-border-color-strong);
-  
-}
-.ai-panel-quick-dot {
-  background-color: color-mix(in srgb, var(--1s-accent-color) 40%, transparent);
 }
 
 /* Text colors */
@@ -1145,15 +1104,10 @@ function parseResult(content: string) {
 
 /* Message bubbles */
 .ai-panel-msg-user {
-  background-color: var(--1s-accent-color);
-  color: #ffffff;
-  animation: ai-msg-in 0.2s var(--1s-easing-standard) both;
-}
-
-.ai-panel-avatar {
   background-color: var(--1s-control-surface-muted);
   border: 1px solid var(--1s-border-color);
   color: var(--1s-text-color);
+  animation: ai-msg-in 0.2s var(--1s-easing-standard) both;
 }
 
 .ai-panel-msg-ai {
@@ -1202,19 +1156,16 @@ function parseResult(content: string) {
 
 /* Interaction card */
 .ai-panel-interaction {
-  border-color: rgba(245, 158, 11, 0.4);
-  background-color: #fffbeb;
-}
-.ai-panel-interaction .text-amber-900 {
-  color: #78350f;
+  border-color: var(--1s-border-color);
+  background-color: var(--1s-control-surface-muted);
 }
 .ai-panel-option-btn {
-  border-color: rgba(245, 158, 11, 0.4);
-  background-color: var(--1s-control-surface-background);
-  color: #78350f;
+  border-color: var(--1s-border-color);
+  background-color: var(--1s-surface-background);
+  color: var(--1s-text-color);
 }
 .ai-panel-option-btn:hover {
-  background-color: #fef3c7;
+  background-color: var(--1s-control-hover-background);
 }
 .ai-panel-input {
   border-color: var(--1s-border-color);
@@ -1223,15 +1174,15 @@ function parseResult(content: string) {
 }
 .ai-panel-input:focus {
   outline: none;
-  border-color: var(--1s-accent-color);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-accent-color) 15%, transparent);
+  border-color: var(--1s-border-color-strong);
+  box-shadow: 0 0 0 2px var(--1s-control-focus-ring);
 }
 .ai-panel-send-btn {
-  background-color: var(--1s-accent-color);
-  color: #ffffff;
+  background-color: var(--1s-text-color);
+  color: var(--1s-surface-background);
 }
 .ai-panel-send-btn:hover {
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 /* Scroll to bottom button */
@@ -1251,50 +1202,37 @@ function parseResult(content: string) {
 }
 
 .ai-panel-drag-overlay {
-  background-color: color-mix(in srgb, var(--1s-surface-background) 92%, transparent);
-  backdrop-filter: blur(4px);
-  color: var(--1s-accent-color);
+  background-color: var(--1s-loading-mask);
+  color: var(--1s-text-color-secondary);
 }
 
 /* Param banner */
 .ai-param-banner {
-  border-color: var(--1s-accent-color-soft);
-  background-color: var(--1s-hover-background);
+  border-color: var(--1s-border-color);
+  background-color: var(--1s-control-surface-muted);
   transition: all 0.2s ease;
 }
 .ai-param-banner:hover {
-  border-color: var(--1s-accent-color);
-  background-color: var(--1s-active-background);
+  border-color: var(--1s-border-color-strong);
 }
 .ai-param-banner__content {
   transition: opacity 0.2s ease;
 }
 .ai-param-banner__content:hover {
-  opacity: 0.95;
+  opacity: 0.85;
 }
 .ai-param-badge {
-  background-color: var(--1s-accent-color) !important;
-  color: #ffffff !important;
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--1s-accent-color) 25%, transparent);
+  background-color: var(--1s-text-color-secondary) !important;
+  color: var(--1s-surface-background) !important;
 }
 .ai-param-badge * {
-  color: #ffffff !important;
+  color: var(--1s-surface-background) !important;
 }
 .ai-param-banner__desc {
   color: var(--1s-text-color);
-  transition: color 0.15s ease;
-}
-.ai-param-banner__content:hover .ai-param-banner__desc {
-  color: var(--1s-accent-color);
 }
 .ai-param-banner__action {
-  color: var(--1s-accent-color);
-  opacity: 0.85;
-  transition: all 0.15s ease;
-}
-.ai-param-banner__content:hover .ai-param-banner__action {
-  opacity: 1;
-  text-decoration: underline;
+  color: var(--1s-text-color-secondary);
 }
 .ai-param-clear-btn {
   background-color: var(--1s-surface-background, #ffffff);
@@ -1310,11 +1248,8 @@ function parseResult(content: string) {
 
 /* Reference image card */
 .ai-ref-image {
-  border-color: rgba(245, 158, 11, 0.4);
-  background-color: #fffbeb;
-}
-.ai-ref-image .text-amber-700 {
-  color: #92400e;
+  border-color: var(--1s-border-color);
+  background-color: var(--1s-control-surface-muted);
 }
 
 /* Input box */
@@ -1323,8 +1258,8 @@ function parseResult(content: string) {
   background-color: var(--1s-surface-background);
 }
 .ai-input-box:focus-within {
-  border-color: var(--1s-accent-color);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-accent-color) 12%, transparent);
+  border-color: var(--1s-border-color-strong);
+  box-shadow: 0 0 0 2px var(--1s-control-focus-ring);
 }
 :global(html.dark) .ai-input-box:focus-within,
 :global(.dark) .ai-input-box:focus-within,
@@ -1358,10 +1293,9 @@ function parseResult(content: string) {
   background-color: var(--1s-control-hover-background);
 }
 .ai-toolbar-btn--active {
-  background-color: var(--1s-accent-color);
-  color: #ffffff;
-  border-color: var(--1s-accent-color);
-  
+  background-color: var(--1s-text-color-secondary);
+  color: var(--1s-surface-background);
+  border-color: var(--1s-text-color-secondary);
 }
 
 .ai-toolbar-icon-btn {
@@ -1376,15 +1310,11 @@ function parseResult(content: string) {
 
 /* Send button */
 .ai-input-send-btn {
-  background-color: var(--1s-accent-color);
+  background-color: var(--1s-text-color);
   transition:
     background-color var(--1s-transition-base),
     transform var(--1s-transition-base),
     box-shadow var(--1s-transition-base);
-}
-.ai-input-send-btn:hover {
-  
-  
 }
 .ai-input-send-btn:active {
   transform: scale(0.95);
@@ -1398,33 +1328,20 @@ function parseResult(content: string) {
   border-bottom-color: var(--1s-border-color);
 }
 
-:global(html.dark) .ai-panel-status-badge,
-:global(.dark) .ai-panel-status-badge,
-:global(body.designiy-dark) .ai-panel-status-badge {
-  background: rgba(245, 158, 11, 0.1);
-  color: #fbbf24;
-}
-
 :global(html.dark) .ai-panel-interaction,
 :global(.dark) .ai-panel-interaction,
 :global(body.designiy-dark) .ai-panel-interaction {
-  background-color: rgba(120, 53, 15, 0.2);
-}
-:global(html.dark) .ai-panel-interaction .text-amber-900,
-:global(.dark) .ai-panel-interaction .text-amber-900,
-:global(body.designiy-dark) .ai-panel-interaction .text-amber-900 {
-  color: #fde68a;
+  background-color: var(--1s-control-surface-muted);
 }
 :global(html.dark) .ai-panel-option-btn,
 :global(.dark) .ai-panel-option-btn,
 :global(body.designiy-dark) .ai-panel-option-btn {
   background-color: var(--1s-surface-background);
-  color: #fde68a;
 }
 :global(html.dark) .ai-panel-option-btn:hover,
 :global(.dark) .ai-panel-option-btn:hover,
 :global(body.designiy-dark) .ai-panel-option-btn:hover {
-  background-color: rgba(245, 158, 11, 0.2);
+  background-color: var(--1s-control-hover-background);
 }
 :global(html.dark) .ai-panel-input,
 :global(.dark) .ai-panel-input,
@@ -1435,12 +1352,7 @@ function parseResult(content: string) {
 :global(html.dark) .ai-ref-image,
 :global(.dark) .ai-ref-image,
 :global(body.designiy-dark) .ai-ref-image {
-  background-color: rgba(120, 53, 15, 0.15);
-}
-:global(html.dark) .ai-ref-image .text-amber-700,
-:global(.dark) .ai-ref-image .text-amber-700,
-:global(body.designiy-dark) .ai-ref-image .text-amber-700 {
-  color: #fbbf24;
+  background-color: var(--1s-control-surface-muted);
 }
 
 :global(html.dark) .ai-panel-drag-overlay,
@@ -1452,35 +1364,19 @@ function parseResult(content: string) {
 :global(html.dark) .ai-param-banner,
 :global(.dark) .ai-param-banner,
 :global(body.designiy-dark) .ai-param-banner {
-  border-color: var(--1s-accent-color-soft);
-  background-color: var(--1s-hover-background);
+  border-color: var(--1s-border-color);
+  background-color: var(--1s-control-surface-muted);
 }
 :global(html.dark) .ai-param-banner:hover,
 :global(.dark) .ai-param-banner:hover,
 :global(body.designiy-dark) .ai-param-banner:hover {
-  border-color: var(--1s-accent-color);
-  background-color: var(--1s-active-background);
+  border-color: var(--1s-border-color-strong);
 }
 :global(html.dark) .ai-param-banner .ai-param-badge,
 :global(.dark) .ai-param-banner .ai-param-badge,
 :global(body.designiy-dark) .ai-param-banner .ai-param-badge {
-  background-color: var(--1s-accent-color) !important;
-  color: #ffffff !important;
-}
-:global(html.dark) .ai-param-banner .ai-param-banner__desc,
-:global(.dark) .ai-param-banner .ai-param-banner__desc,
-:global(body.designiy-dark) .ai-param-banner .ai-param-banner__desc {
-  color: var(--1s-text-color);
-}
-:global(html.dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc,
-:global(.dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc,
-:global(body.designiy-dark) .ai-param-banner .ai-param-banner__content:hover .ai-param-banner__desc {
-  color: var(--1s-accent-color);
-}
-:global(html.dark) .ai-param-banner .ai-param-banner__action,
-:global(.dark) .ai-param-banner .ai-param-banner__action,
-:global(body.designiy-dark) .ai-param-banner .ai-param-banner__action {
-  color: var(--1s-accent-color);
+  background-color: var(--1s-text-color-secondary) !important;
+  color: var(--1s-surface-background) !important;
 }
 
 /* ===== Scrollbar ===== */

@@ -881,6 +881,35 @@ export const currentOperatingCanvasChild: any = computed({
 });
 
 /**
+ * 固定图层绑定 —— 画布 / 代码画布各自独立。
+ * 两个操作面板可以同时渲染，不再依赖 currentOperatingCanvasChild 切换。
+ */
+function makeFixedLayerChild(id: string) {
+  return computed({
+    get() {
+      let child = canvasStickerOptions.value.children.find((c) => c.id == id);
+      if (!child) {
+        child = canvasStickerOptions.value.children.find(
+          (c) => c.type == (id === "this_is_html_id" ? "html" : "canvas"),
+        );
+      }
+      return child;
+    },
+    set(val) {
+      const index = canvasStickerOptions.value.children.findIndex(
+        (c) => c.id == id,
+      );
+      if (index !== -1) {
+        canvasStickerOptions.value.children[index] = val;
+      }
+    },
+  });
+}
+
+export const canvasLayerChild: any = makeFixedLayerChild("this_is_canvas_id");
+export const htmlLayerChild: any = makeFixedLayerChild("this_is_html_id");
+
+/**
  * @todo 增加最近删除功能
  */
 export function removeCavnasChild(id) {

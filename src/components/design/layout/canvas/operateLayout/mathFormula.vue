@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="formula">
-      <AccordionTrigger>公式</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">公式</h4>
+      
         <operate-form-item>
           <template #name>LaTeX</template>
           <template #content>
@@ -61,12 +57,12 @@
             </div>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="style">
-      <AccordionTrigger>样式</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">样式</h4>
+      
         <operateItemFontSize
           label="公式大小"
           v-model="currentOperatingCanvasChild.fontSize"
@@ -78,27 +74,27 @@
         <operateItemFontColor v-model="currentOperatingCanvasChild.fontColor"></operateItemFontColor>
         <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor"></operateItemBackgroundColor>
         <operateItemTextAlign v-model="currentOperatingCanvasChild.textAlign"></operateItemTextAlign>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="layout">
-      <AccordionTrigger>尺寸</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">尺寸</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
           v-model:height="currentOperatingCanvasChild.height"
         ></operateItemSize>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 </template>
 
 <script setup lang="ts">
@@ -111,12 +107,6 @@ import operateItemFontColor from '@/components/design/layout/canvas/operate/font
 import operateItemBackgroundColor from '@/components/design/layout/canvas/operate/backgroundColor.vue'
 import operateItemTextAlign from '@/components/design/layout/canvas/operate/textAlign.vue'
 import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion'
-import {
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -126,7 +116,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { currentOperatingCanvasChild } from '../index.tsx'
 import { generateMathFormula } from '../children/aiMathService'
 
-const activeNames = ref(['formula', 'style', 'layout', 'common'])
 const aiPopoverVisible = ref(false)
 const aiPrompt = ref('')
 const aiLoading = ref(false)

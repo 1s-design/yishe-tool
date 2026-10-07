@@ -1,6 +1,6 @@
 <template>
   <Dialog :open="open" @update:open="(val) => emit('update:open', val)">
-    <DialogContent class="sm:max-w-[580px] p-6 gap-5 bg-background/95 backdrop-blur-md border-border/80 shadow-2xl">
+    <DialogContent class="sm:max-w-[580px] p-6 gap-5">
       <DialogHeader class="space-y-1.5 text-left">
         <DialogTitle class="text-lg font-bold flex items-center gap-2">
           <div class="h-7 w-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">

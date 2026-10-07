@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="source">
-      <AccordionTrigger>分子结构</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">分子结构</h4>
+      
         <operate-form-item>
           <template #name>输入类型</template>
           <template #content>
@@ -82,32 +78,32 @@
             </div>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
           v-model:height="currentOperatingCanvasChild.height"
         ></operateItemSize>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="style">
-      <AccordionTrigger>样式</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">样式</h4>
+      
         <operateItemBackgroundColor
           v-model="currentOperatingCanvasChild.backgroundColor"
         ></operateItemBackgroundColor>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="config">
-      <AccordionTrigger>Draw Options</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">Draw Options</h4>
+      
         <operate-form-item>
           <template #name>渲染配置</template>
           <template #content>
@@ -116,18 +112,18 @@
             >
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup
           v-model="currentOperatingCanvasChild"
         ></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 
   <Dialog :modal="false" v-model:open="configDialogVisible">
     <DialogContent
@@ -161,12 +157,6 @@ import operateItemSize from "@/components/design/layout/canvas/operate/size/rela
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
-import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -190,7 +180,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { currentOperatingCanvasChild } from "../index.tsx";
 import { generateMoleculeSmiles } from "../children/aiMoleculeService";
 
-const activeNames = ref(["source", "basic", "style", "config", "common"]);
 const aiPopoverVisible = ref(false);
 const aiPrompt = ref("");
 const aiLoading = ref(false);

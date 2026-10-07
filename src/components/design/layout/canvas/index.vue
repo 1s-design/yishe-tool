@@ -1,5 +1,12 @@
 <template>
-  <div class="container flex flex-col items-center">
+  <div class="container canvas-editor-panel u-panel">
+    <header class="u-panel__header canvas-editor-header">
+      <div class="canvas-editor-heading">
+        <strong>制作贴纸</strong>
+        <span>{{ canvasStickerOptions.children?.length || 0 }} 个图层</span>
+      </div>
+    </header>
+
     <!-- 预览画布卡片 -->
     <div
       ref="canvasContainerRef"
@@ -13,7 +20,8 @@
         <Tooltip :delay-duration="0">
           <TooltipTrigger as-child>
             <button
-              class="canvas-expand-pill-btn"
+              type="button"
+              class="canvas-expand-pill-btn u-btn u-btn--sm u-btn--outline"
               @click="showMainCanvas = true"
             >
               <Maximize2 class="w-2.5 h-2.5" />
@@ -25,145 +33,72 @@
       </div>
     </div>
 
-    <!-- 顶部动作工具栏 -->
+    <!-- 产出动作：保存（整行主操作） / 更新 / 导出 / 更多 -->
     <div class="canvas-actions-panel">
-      <div class="canvas-actions-panel__row">
-        <Button
-          class="canvas-action-button canvas-action-button--primary"
-          variant="default"
-          size="sm"
-          @click="handleUploadClick"
-          :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
-        >
-          <Check class="w-3 h-3 mr-0.5" />
-          {{ currentEditingCustomStickerId ? '保存修改' : '保存作品' }}
-        </Button>
+      <button
+        type="button"
+        class="u-btn u-btn--solid u-btn--block canvas-action-primary"
+        :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
+        @click="handleUploadClick"
+      >
+        <Check class="w-3.5 h-3.5" />
+        {{ currentEditingCustomStickerId ? '保存修改' : '保存' }}
+      </button>
 
-        <Button
+      <div class="canvas-actions-panel__row">
+        <button
           v-if="shouldUpdateCanvasSticker && !isUpdatingSticker"
-          class="canvas-action-button update-required"
-          variant="outline"
-          size="sm"
-          @click="genSticker"
+          type="button"
+          class="u-btn u-btn--outline canvas-action-secondary update-required"
           :disabled="isUpdatingSticker"
+          @click="genSticker"
         >
           更新贴纸
-        </Button>
-        <Button
+        </button>
+        <button
           v-else
-          class="canvas-action-button"
-          variant="outline"
-          size="sm"
-          @click="genSticker"
+          type="button"
+          class="u-btn u-btn--outline canvas-action-secondary"
           :disabled="isUpdatingSticker"
+          @click="genSticker"
         >
-          {{ isUpdatingSticker ? '更新中...' : '已更新' }}
-        </Button>
+          {{ isUpdatingSticker ? '更新中' : (shouldUpdateCanvasSticker ? '更新' : '已更新') }}
+        </button>
 
-        <Button
-          class="canvas-action-button"
-          variant="outline"
-          size="sm"
-          @click="exportPng"
+        <button
+          type="button"
+          class="u-btn u-btn--outline canvas-action-secondary"
           :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
+          @click="exportPng"
         >
           导出
-        </Button>
-
-        <Button
-          class="canvas-action-button text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-          variant="outline"
-          size="sm"
-          @click="confirm({ title: '确定清空画布所有图层？', okText: '清空', cancelText: '取消' }).then((ok) => ok && clearCanvasChildren())"
-        >
-          清空
-        </Button>
+        </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <div class="canvas-actions-panel__dropdown-trigger">
-              <Button class="canvas-action-button canvas-action-button--more" variant="outline" size="sm">
-                •••
-              </Button>
-            </div>
+            <button type="button" class="u-btn u-btn--outline canvas-action-secondary" aria-label="更多操作">
+              •••
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent side="bottom" align="end" :side-offset="4">
             <DropdownMenuItem @select="exportTrimmedPng">
               自动去除空白边框导出
             </DropdownMenuItem>
             <DropdownMenuItem @select="consoleStikcerOptions">
               在控制台打印贴纸信息
             </DropdownMenuItem>
+            <DropdownMenuItem
+              class="text-destructive"
+              @select="confirm({ title: '确定清空画布所有图层？', okText: '清空', cancelText: '取消' }).then((ok) => ok && clearCanvasChildren())"
+            >
+              清空画布
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </div>
 
-    <!-- 图层选择条 -->
-    <div class="canvas-layer-selector">
-      <div class="canvas-layer-selector__label">
-        <span>当前编辑图层</span>
-        <span class="canvas-layer-count">({{ canvasStickerOptions.children?.length || 0 }})</span>
-      </div>
-      <div class="canvas-layer-selector__row">
-        <Select
-          :model-value="String(currentOperatingCanvasChildId)"
-          @update:model-value="v => (currentOperatingCanvasChildId = v)"
-          class="canvas-layer-select"
-        >
-          <SelectTrigger class="h-6 text-[11px]">
-            <div class="canvas-layer-selected-text">
-              <span class="canvas-layer-dot" />
-              <span>{{ canvasChildLabelMap[currentOperatingCanvasChild.type] }}</span>
-            </div>
-          </SelectTrigger>
-
-          <SelectContent>
-            <template v-for="(item, index) in canvasStickerOptions.children" :key="item.id">
-              <SelectItem
-                class="canvas-child-select-option"
-                :value="String(item.id)"
-              >
-                <div
-                  class="canvas-layer-option-item"
-                >
-                  <span>{{ canvasChildLabelMap[item.type] }}</span>
-                  <div style="flex: 1"></div>
-                  <Button
-                    v-if="item.type !== 'canvas' && item.type !== 'html' && item.id !== 'this_is_html_id'"
-                    variant="ghost"
-                    size="icon-xs"
-                    class="text-destructive hover:text-destructive"
-                    @click.stop="remove(item.id)"
-                  >
-                    <XCircle class="w-3 h-3"></XCircle>
-                  </Button>
-                </div>
-              </SelectItem>
-            </template>
-          </SelectContent>
-        </Select>
-
-        <!-- 当前选中图层的快捷删除按钮 (画布与主代码画布不展示) -->
-        <Tooltip
-          v-if="currentOperatingCanvasChild?.type !== 'canvas' && currentOperatingCanvasChild?.type !== 'html' && currentOperatingCanvasChild?.id !== 'this_is_html_id'"
-          :delay-duration="0"
-        >
-          <TooltipTrigger as-child>
-            <button
-              type="button"
-              class="canvas-layer-delete-btn"
-              title="删除当前图层"
-              @click="confirm({ title: `确定删除当前【${canvasChildLabelMap[currentOperatingCanvasChild.type] || '图层'}】？`, okText: '删除', cancelText: '取消' }).then((ok) => ok && remove(currentOperatingCanvasChild.id))"
-            >
-              <XCircle class="w-3.5 h-3.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">删除当前选中图层</TooltipContent>
-        </Tooltip>
-      </div>
-    </div>
-
+    <!-- 图层切换已移除：画布 + 代码画布直接在下方一起展示 -->
     <div class="operate">
       <operateLayout></operateLayout>
     </div>
@@ -250,7 +185,6 @@ import {
   CanvasController,
   canvasStickerOptions,
   addCanvasChild,
-  removeCavnasChild,
   CanvasChildType,
   currentOperatingCanvasChildId,
   currentOperatingCanvasChild,
@@ -258,7 +192,6 @@ import {
   currentEditingCustomStickerFolderId,
   currentEditingCustomStickerName,
   showMainCanvas,
-  canvasChildLabelMap,
   renderingLoading,
 } from "./index.tsx";
 
@@ -273,7 +206,7 @@ import {
   nextTick,
 } from "vue";
 
-import { Check, Maximize2, XCircle } from 'lucide-vue-next'
+import { Check, Maximize2 } from 'lucide-vue-next'
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 import addPopover from "./addPopover.vue";
 import Api from "@/api";
@@ -289,12 +222,6 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipTrigger,
@@ -338,10 +265,6 @@ function exportPng() {
 function exportTrimmedPng() {
   if (!checkAndUpdate()) return;
   canvasController.downloadTrimmedPng();
-}
-
-function remove(id) {
-  removeCavnasChild(id);
 }
 
 function clearCanvasChildren() {
@@ -540,13 +463,13 @@ function genSticker() {
 <style lang="less" scoped>
 .folder-tree-wrapper {
   width: 100%;
-  max-height: 300px;
+  max-height: 280px;
   overflow-y: auto;
-  border: 1px solid var(--1s-border-color, #e8e8e8);
-  border-radius: 6px;
-  padding: 4px 6px;
-  background: var(--1s-surface-background, #fafafa);
-  font-size: 12px;
+  border: 1px solid var(--1s-control-border-color);
+  border-radius: var(--1s-control-radius);
+  padding: 3px;
+  background: var(--1s-control-surface-muted);
+  font-size: var(--1s-control-font-md);
 }
 
 :deep(.folder-tree-item) {
@@ -554,29 +477,25 @@ function genSticker() {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 2px 6px;
-  border-radius: 3px;
+  height: var(--1s-control-h-sm);
+  padding: 0 6px;
+  border-radius: var(--1s-control-radius-sm);
   cursor: pointer;
   user-select: none;
-  font-size: 12px;
+  font-size: var(--1s-control-font-md);
   color: var(--1s-text-color);
-  transition: all 0.15s;
+  transition: var(--1s-control-transition);
 
   &:hover {
-    background-color: var(--1s-hover-background);
+    background-color: var(--1s-state-hover);
   }
 
   &.is-selected {
-    background-color: var(--1s-accent-color);
-    color: #fff;
-
-    &:hover {
-      background-color: var(--1s-accent-color);
-      filter: brightness(0.9);
-    }
+    background-color: var(--1s-state-selected);
+    color: var(--1s-state-selected-text);
 
     .folder-check-icon {
-      color: #fff;
+      color: var(--1s-state-selected-text);
     }
   }
 }
@@ -602,7 +521,7 @@ function genSticker() {
   flex-shrink: 0;
   color: var(--1s-text-color-tertiary);
   cursor: pointer;
-  transition: transform 0.15s;
+  transition: transform var(--1s-transition-fast);
 
   &.is-expanded {
     transform: rotate(90deg);
@@ -617,12 +536,36 @@ function genSticker() {
 .folder-tree-hint {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--1s-border-color, #e8e8e8);
-  font-size: 12px;
-  color: var(--1s-text-color-secondary, #999);
+  gap: 6px;
+  min-height: var(--1s-control-h-md);
+  margin-top: 4px;
+  padding: 4px 2px 0;
+  border-top: 1px solid var(--1s-divider-color);
+  font-size: var(--1s-control-font);
+  color: var(--1s-text-color-secondary);
+}
+
+.canvas-editor-panel {
+  background: var(--1s-panel-background);
+}
+
+.canvas-editor-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+
+  strong {
+    color: var(--1s-text-color);
+    font-size: var(--1s-control-font-md);
+    font-weight: 600;
+  }
+
+  span {
+    color: var(--1s-text-color-tertiary);
+    font-size: var(--1s-control-font);
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 .container {
@@ -631,237 +574,87 @@ function genSticker() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   overflow: hidden;
-  background: var(--1s-panel-background, #fafafa);
+  background: var(--1s-panel-background);
 }
 
 .canvas-preview-card {
   width: calc(100% - 16px);
   max-width: 320px;
-  height: min(280px, calc(100vw - 48px));
+  height: clamp(152px, 23vh, 192px);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 8px 8px 4px;
+  margin: 7px auto 3px;
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
-  border: 1px solid var(--1s-border-color, #e4e4e7);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-radius: var(--1s-control-radius);
+  border: 1px solid var(--1s-border-color);
+  background: var(--1s-canvas-shell-background);
 }
 
 .canvas-preview-badge-overlay {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  right: 6px;
+  bottom: 6px;
   z-index: 10;
 }
 
 .canvas-expand-pill-btn {
-  display: inline-flex;
-  align-items: center;
   gap: 4px;
-  height: 22px;
-  padding: 0 8px;
-  font-size: 10px;
-  font-weight: 500;
-  border-radius: 9999px;
-  background: color-mix(in srgb, var(--1s-surface-background) 85%, transparent);
-  backdrop-filter: blur(var(--1s-blur-sm));
-  color: var(--1s-text-color);
-  border: 1px solid var(--1s-border-color);
-  
-  cursor: pointer;
-  transition:
-    background-color var(--1s-transition-base),
-    box-shadow var(--1s-transition-base),
-    transform var(--1s-transition-base),
-    backdrop-filter var(--1s-transition-base);
-
-  &:hover {
-    background: var(--1s-surface-background);
-    transform: translateY(-2px);
-    box-shadow: var(--1s-shadow-md);
-    backdrop-filter: blur(var(--1s-blur-md));
-  }
-
-  &:active {
-    
-  }
-}
-
-.dark .canvas-expand-pill-btn {
-  background: rgba(24, 24, 27, 0.85);
-  color: #f4f4f5;
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-
-  &:hover {
-    background: #27272a;
-  }
+  box-shadow: var(--1s-shadow-popover);
 }
 
 .canvas-actions-panel {
   width: 100%;
-  padding: 4px 8px;
-  box-sizing: border-box;
-}
-
-.canvas-actions-panel__row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  min-width: 0;
-}
-
-.canvas-action-button {
-  margin-left: 0 !important;
-  height: 24px !important;
-  padding: 0 8px !important;
-  font-size: 11px !important;
-  border-radius: 4px !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  white-space: nowrap;
-  flex: 1 1 auto;
-}
-
-.canvas-actions-panel__dropdown-trigger {
-  display: inline-flex;
-  flex: 0 0 auto;
-}
-
-.canvas-action-button--more {
-  flex: 0 0 auto !important;
-  min-width: 24px !important;
-  padding: 0 6px !important;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-.canvas-action-button--primary {
-  font-weight: 600;
-  background: var(--1s-accent-color) !important;
-  border-color: var(--1s-accent-color) !important;
-  color: #ffffff !important;
-}
-
-body.designiy-dark .canvas-action-button--primary {
-  background: var(--1s-accent-color) !important;
-  border-color: var(--1s-accent-color) !important;
-  color: #111318 !important;
-}
-
-.canvas-layer-selector {
-  width: 100%;
-  padding: 4px 8px 6px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
+  padding: 7px 8px 8px;
   box-sizing: border-box;
+  border-bottom: 1px solid var(--1s-divider-color);
+  overflow: hidden;
+}
 
-  .canvas-layer-selector__label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--1s-text-color-secondary, #71717a);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 0 2px;
-  }
+/* 主操作 — 整行，更大 */
+.canvas-action-primary {
+  width: 100%;
+  height: 32px;
+  font-size: var(--1s-control-font-md);
+  font-weight: 600;
+  border-radius: var(--1s-control-radius);
+}
 
-  .canvas-layer-count {
-    font-size: 10px;
-    font-weight: 400;
-    color: var(--1s-text-color-tertiary, #a1a1aa);
-  }
+/* 次操作行 — 三等分对称 */
+.canvas-actions-panel__row {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  gap: 5px;
+}
 
-  .canvas-layer-selector__row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    width: 100%;
-  }
-
-  .canvas-layer-select {
-    flex: 1;
-    min-width: 0;
-
-    :deep(.el-select__wrapper) {
-      height: 26px !important;
-      min-height: 26px !important;
-      padding: 0 8px !important;
-      font-size: 11px !important;
-      border-radius: 4px !important;
-      background: var(--1s-elevated-background, #f4f4f5);
-      border: 1px solid var(--1s-border-color, #e4e4e7);
-      box-shadow: none !important;
-    }
-  }
-
-  .canvas-layer-delete-btn {
-    height: 26px;
-    width: 26px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    background: var(--1s-elevated-background, #f4f4f5);
-    border: 1px solid var(--1s-border-color, #e4e4e7);
-    color: #ef4444;
-    cursor: pointer;
-    transition: all 0.15s ease;
-
-    &:hover {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.4);
-      
-    }
-  }
-
-  .canvas-layer-selected-text {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 500;
-  }
-
-  .canvas-layer-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--1s-accent-color);
-    flex-shrink: 0;
-  }
-
-  .canvas-layer-option-item {
-    display: flex;
-    align-items: center;
-    font-size: 11px;
-    height: 100%;
-    width: 100%;
-  }
+.canvas-action-secondary {
+  min-width: 0;
+  height: 28px;
+  font-size: var(--1s-control-font-md);
+  border-radius: var(--1s-control-radius);
 }
 
 .operate {
   flex: 1;
   width: 100%;
+  min-height: 0;
   overflow: auto;
+  border-top: 1px solid var(--1s-divider-color);
+  overscroll-behavior: contain;
 }
 
-// 需要更新贴纸时的样式
 :deep(.update-required) {
-  color: #f59e0b !important;
-  border-color: #f59e0b !important;
-  font-weight: 600 !important;
+  color: var(--1s-warning-text, #f59e0b);
+  border-color: color-mix(in srgb, var(--1s-warning-text, #f59e0b) 42%, transparent);
+  background: color-mix(in srgb, var(--1s-warning-text, #f59e0b) 10%, transparent);
 }
 </style>

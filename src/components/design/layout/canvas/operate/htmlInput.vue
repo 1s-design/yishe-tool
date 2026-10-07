@@ -927,13 +927,12 @@ onBeforeUnmount(() => {
   padding: 8px 10px;
   background: var(--1s-surface-background, #ffffff);
   border: 1px solid var(--1s-border-color, #e4e4e7);
-  border-radius: 6px;
+  border-radius: var(--1s-radius-medium);
   gap: 8px;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease;
 
   &:hover {
-    border-color: var(--1s-accent-color, #09090b);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border-color: var(--1s-accent-color);
   }
 
   .variable-row-left {

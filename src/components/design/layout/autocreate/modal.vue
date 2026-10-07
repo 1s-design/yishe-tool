@@ -32,8 +32,8 @@
                 class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
                 :class="
                   config.outputKind === 'independent-batch'
-                    ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10'
-                    : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'
+                    ? 'border-primary bg-primary/10 text-foreground font-[550]'
+                    : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'
                 "
                 @click="setFormat('independent-batch')"
               >
@@ -83,8 +83,8 @@
                 class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
                 :class="
                   config.outputKind === 'group'
-                    ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground ring-4 ring-primary/20 shadow-md font-bold scale-[1.02] opacity-100 z-10'
-                    : 'border-dashed border-border/70 bg-muted/10 text-muted-foreground hover:bg-muted/40 hover:opacity-85 opacity-40 grayscale-[25%]'
+                    ? 'border-primary bg-primary/10 text-foreground font-[550]'
+                    : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'
                 "
                 @click="setFormat('group')"
               >

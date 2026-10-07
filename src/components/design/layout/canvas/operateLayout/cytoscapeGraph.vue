@@ -1,12 +1,8 @@
 <template>
-  <Accordion
-    type="multiple"
-    :model-value="activeNames"
-    @update:model-value="v => (activeNames = v as string[])"
   >
-    <AccordionItem value="elements">
-      <AccordionTrigger>节点和边</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">节点和边</h4>
+      
         <operate-form-item>
           <template #name>布局</template>
           <template #content>
@@ -49,12 +45,12 @@
             </div>
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="style">
-      <AccordionTrigger>样式</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">样式</h4>
+      
         <operate-form-item>
           <template #name>节点颜色</template>
           <template #content>
@@ -87,12 +83,12 @@
             />
           </template>
         </operate-form-item>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="basic">
-      <AccordionTrigger>基础</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">基础</h4>
+      
         <operateItemSize
           label="尺寸"
           v-model:width="currentOperatingCanvasChild.width"
@@ -102,16 +98,16 @@
         <operateItemBackgroundColor
           v-model="currentOperatingCanvasChild.backgroundColor"
         />
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="common">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
         <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-      </AccordionContent>
-    </AccordionItem>
-  </Accordion>
+      
+    </section>
+  
 </template>
 
 <script setup lang="ts">
@@ -119,12 +115,6 @@ import { ref, computed, watch } from "vue";
 import operateItemSize from "@/components/design/layout/canvas/operate/size/relativeSize.vue";
 import operateItemBackgroundColor from "@/components/design/layout/canvas/operate/backgroundColor.vue";
 import operateItemCommonGroup from "@/components/design/layout/canvas/operate/commonGroup.vue";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import {
   Select,
   SelectTrigger,
@@ -135,7 +125,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { currentOperatingCanvasChild } from "../index.tsx";
 
-const activeNames = ref(["elements", "style", "basic", "common"]);
 const jsonError = ref("");
 
 const elementsJson = computed({

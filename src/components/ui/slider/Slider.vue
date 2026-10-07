@@ -9,14 +9,14 @@
     v-bind="forwarded"
   >
     <SliderTrack
-      class="relative h-1 w-full grow overflow-hidden rounded-full bg-secondary cursor-pointer"
+      class="relative h-1 w-full grow overflow-hidden rounded-full bg-[var(--1s-control-surface-muted)] cursor-pointer"
     >
-      <SliderRange class="absolute h-full bg-primary" />
+      <SliderRange class="absolute h-full bg-[var(--1s-accent-color)]" />
     </SliderTrack>
     <SliderThumb
       v-for="(_, key) in modelValue ?? [defaultValue ?? 0]"
       :key="key"
-      class="block h-3.5 w-3.5 rounded-full border border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing shadow-xs"
+      class="block h-3.5 w-3.5 rounded-full border border-[var(--1s-accent-color)] bg-[var(--1s-surface-background)] ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--1s-focus-ring-color)] disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing"
     />
   </SliderRoot>
 </template>

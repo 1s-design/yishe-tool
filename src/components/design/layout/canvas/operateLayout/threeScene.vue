@@ -1,19 +1,18 @@
 <template>
-    <Accordion type="multiple" :model-value="collapseActives" @update:model-value="v => collapseActives = v as string[]">
-        <AccordionItem value="1">
-            <AccordionTrigger>基础属性</AccordionTrigger>
-            <AccordionContent>
+        <section class="operate-section">
+            <h4 class="operate-section__title">基础属性</h4>
+            
             <operateItemSize
                 label="尺寸"
                 v-model:width="currentOperatingCanvasChild.width"
                 v-model:height="currentOperatingCanvasChild.height"
             />
-            </AccordionContent>
-        </AccordionItem>
+            
+        </section>
 
-        <AccordionItem value="2">
-            <AccordionTrigger>场景</AccordionTrigger>
-            <AccordionContent>
+        <section class="operate-section">
+            <h4 class="operate-section__title">场景</h4>
+            
             <operate-form-item label="透明背景">
                 <Switch v-model:checked="transparentBackground" />
             </operate-form-item>
@@ -40,12 +39,12 @@
                     :step="0.001"
                 />
             </operate-form-item>
-            </AccordionContent>
-        </AccordionItem>
+            
+        </section>
 
-        <AccordionItem value="3">
-            <AccordionTrigger>场景项</AccordionTrigger>
-            <AccordionContent>
+        <section class="operate-section">
+            <h4 class="operate-section__title">场景项</h4>
+            
             <operate-form-item label="新增">
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child>
@@ -257,16 +256,16 @@
                     </operate-form-item>
                 </template>
             </template>
-            </AccordionContent>
-        </AccordionItem>
+            
+        </section>
 
-        <AccordionItem value="4">
-            <AccordionTrigger>通用属性</AccordionTrigger>
-            <AccordionContent>
+        <section class="operate-section">
+            <h4 class="operate-section__title">通用属性</h4>
+            
             <operateItemCommonGroup v-model="currentOperatingCanvasChild" />
-            </AccordionContent>
-        </AccordionItem>
-    </Accordion>
+            
+        </section>
+    
 
     <Dialog :open="asset3dDialogVisible" @update:open="v => { asset3dDialogVisible = v; if (v) loadAsset3dList(); }">
         <DialogContent class="max-w-[min(1080px,92vw)] three-scene-asset-dialog">
@@ -343,12 +342,6 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h, ref, watch } from 'vue'
-import {
-    Accordion,
-    AccordionItem,
-    AccordionTrigger,
-    AccordionContent,
-} from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -418,7 +411,6 @@ const VectorInput = defineComponent({
     },
 })
 
-const collapseActives = ref(['1', '2', '3', '4'])
 const selectedItemKey = ref('')
 const asset3dLoading = ref(false)
 const asset3dDialogVisible = ref(false)
@@ -846,12 +838,10 @@ function getLightTypeLabel(type: string) {
 .three-scene-asset-card:hover,
 .three-scene-asset-card.is-active {
     border-color: var(--1s-accent-color);
-    box-shadow: 0 6px 18px rgba(64, 158, 255, 0.14);
-    
 }
 
 .three-scene-asset-card.is-active {
-    background: #f5faff;
+    background: var(--1s-selected-background);
 }
 
 .three-scene-asset-card__preview {

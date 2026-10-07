@@ -1,19 +1,9 @@
-<!--
- * @Author: chan-max 2651308363@qq.com
- * @Date: 2023-12-19 18:50:06
- * @LastEditors: chan-max jackieontheway666@gmail.com
- * @LastEditTime: 2023-12-30 21:53:29
- * @FilePath: /1s/src/components/design/layout/bottomMenu.vue
- * @Description: 
- * 
- * Copyright (c) 2023 by 1s, All Rights Reserved. 
--->
 <template>
-  <div class="designiy-bottom-menu">
+  <div class="designiy-bottom-menu u-float-toolbar" aria-label="画布工具">
     <Tooltip>
       <TooltipTrigger as-child>
-        <button class="bottom-icon-btn" @click="openEyeDropper">
-          <Palette class="bottom-icon" />
+        <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="拾色器" @click="openEyeDropper">
+          <Palette />
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">拾色器</TooltipContent>
@@ -21,8 +11,8 @@
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <button class="bottom-icon-btn" @click="takeshot">
-          <Camera class="bottom-icon" />
+        <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="截图" @click="takeshot">
+          <Camera />
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">截图</TooltipContent>
@@ -30,8 +20,8 @@
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <button class="bottom-icon-btn" @click="showScreenshotDrawer = true">
-          <Image class="bottom-icon" />
+        <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="截图列表" @click="showScreenshotDrawer = true">
+          <Image />
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">截图列表</TooltipContent>
@@ -39,8 +29,14 @@
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <button class="bottom-icon-btn" @click="isFullScreen = !isFullScreen">
-          <Maximize2 class="bottom-icon" />
+        <button
+          class="u-icon-btn u-icon-btn--sm"
+          type="button"
+          aria-label="切换全屏"
+          :aria-pressed="isFullScreen"
+          @click="isFullScreen = !isFullScreen"
+        >
+          <Maximize2 />
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">{{ isFullScreen ? '退出全屏' : '全屏' }}</TooltipContent>
@@ -48,8 +44,14 @@
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <button class="bottom-icon-btn bottom-icon-btn--danger" @click="currentModelController.removeDecals()">
-          <Trash2 class="bottom-icon" />
+        <button
+          class="u-icon-btn u-icon-btn--sm u-icon-btn--danger"
+          type="button"
+          aria-label="移除所有贴纸"
+          :disabled="!currentModelController"
+          @click="removeAllDecals"
+        >
+          <Trash2 />
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">移除所有贴纸</TooltipContent>
@@ -57,8 +59,8 @@
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <button class="bottom-icon-btn" @click="doBuiltInAnimations">
-          <Video class="bottom-icon" />
+        <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="内置动画" @click="doBuiltInAnimations">
+          <Video />
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">内置动画</TooltipContent>
@@ -66,24 +68,69 @@
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <button class="bottom-icon-btn" @click="showCropGuideModal = true">
-          <Scissors class="bottom-icon" />
+        <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="裁剪参考线" @click="showCropGuideModal = true">
+          <Scissors />
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">裁剪参考线</TooltipContent>
     </Tooltip>
 
-    <div class="bottom-divider" />
+    <div class="u-float-toolbar__divider" />
 
     <Tooltip>
       <TooltipTrigger as-child>
-        <button class="bottom-action-btn" @click="autocreate">
-          <Sparkles class="bottom-icon" />
+        <button class="u-btn u-btn--sm u-btn--solid" type="button" aria-label="自动生成" @click="autocreate">
+          <Sparkles />
           <span>自动生成</span>
         </button>
       </TooltipTrigger>
       <TooltipContent side="top">自动根据当前控制台生成模型</TooltipContent>
     </Tooltip>
+
+    <template v-if="showMainCanvas">
+      <div class="u-float-toolbar__divider" />
+
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="重置到中心" @click="resetCanvasView">
+            <Crosshair />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">重置到中心</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="放大画布" @click="zoomCanvas(1.25)">
+            <ZoomIn />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">放大</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="缩小画布" @click="zoomCanvas(0.8)">
+            <ZoomOut />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">缩小</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <button
+            class="u-icon-btn u-icon-btn--sm u-icon-btn--danger"
+            type="button"
+            aria-label="关闭主画布"
+            @click="showMainCanvas = false"
+          >
+            <XCircle />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">关闭主画布</TooltipContent>
+      </Tooltip>
+    </template>
   </div>
 
   <screenshotDrawer></screenshotDrawer>
@@ -97,24 +144,44 @@ import {
   saveScreenshot,
   showScreenshotDrawer,
 } from "../store";
-import { Camera, Image, Maximize2, Palette, Scissors, Trash2, Video } from 'lucide-vue-next';
-import { Sparkles } from "lucide-vue-next";
+import {
+  Camera,
+  Crosshair,
+  Image,
+  Maximize2,
+  Palette,
+  Scissors,
+  Sparkles,
+  Trash2,
+  Video,
+  XCircle,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-vue-next";
 import { useEyeDropper } from "@vueuse/core";
-import { toast } from '@/components/ui/toast';
+import { toast } from "@/components/ui/toast";
 import screenshotDrawer from "@/components/design/components/screenshotDrawer.vue";
 import { showAutocreateModal } from "@/components/design/layout/autocreate/index.ts";
 import CropGuideModal from "@/components/design/layout/canvas/crop/components/CropGuideModal.vue";
 import { showCropGuideModal } from "@/components/design/layout/canvas/crop/store";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { showMainCanvas } from "@/components/design/layout/canvas/index.tsx";
+import {
+  resetCanvasView,
+  zoomCanvas,
+} from "@/components/design/layout/canvas/panzoomStore";
 
-const { isSupported, open, sRGBHex } = useEyeDropper();
+const { isSupported, open } = useEyeDropper();
 
 async function openEyeDropper() {
-  let { sRGBHex } = await open();
-  navigator.clipboard.writeText(sRGBHex);
+  if (!isSupported.value) {
+    toast.error("当前浏览器不支持拾色器");
+    return;
+  }
 
-  toast.success(`颜色 ${sRGBHex} 已复制到粘贴板`);
+  const { sRGBHex: pickedColor } = await open();
+  await navigator.clipboard.writeText(pickedColor);
+  toast.success(`颜色 ${pickedColor} 已复制到剪贴板`);
 }
 
 function takeshot() {
@@ -126,85 +193,24 @@ function autocreate() {
 }
 
 function doBuiltInAnimations() {}
+
+function removeAllDecals() {
+  currentModelController.value?.removeDecals();
+}
 </script>
 
 <style lang="less" scoped>
 .designiy-bottom-menu {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0 12px;
-  background-color: var(--1s-surface-background);
-  border-top: 1px solid var(--1s-divider-color);
-  column-gap: 2px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  height: auto;
 }
 
-.bottom-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 5px;
-  background: none;
-  color: var(--1s-text-color-secondary);
-  cursor: pointer;
-  transition: background 0.08s, color 0.08s;
-
-  &:hover {
-    background: var(--1s-hover-overlay);
-    color: var(--1s-text-color);
-  }
-
-  &:active {
-    background: var(--1s-pressed-overlay);
-  }
-
-  &--danger:hover {
-    color: var(--1s-text-color);
-    background: color-mix(in srgb, #ef4444 10%, transparent);
-  }
-}
-
-.bottom-icon {
-  width: 15px;
-  height: 15px;
-}
-
-.bottom-divider {
-  width: 1px;
-  height: 16px;
-  background: var(--1s-divider-color);
-  margin: 0 6px;
-}
-
-.bottom-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 10px;
-  border: none;
-  border-radius: 5px;
-  background: var(--1s-accent-color);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.1s;
-
-  &:hover {
-    opacity: 0.9;
-  }
-}
 
 @media (max-width: 768px) {
   .designiy-bottom-menu {
-    padding: 0 6px;
-    column-gap: 1px;
+    gap: 1px;
+    padding: 3px;
   }
 }
 </style>

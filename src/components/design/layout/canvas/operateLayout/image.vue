@@ -1,10 +1,9 @@
 <template>
-  <Accordion type="multiple" :model-value="imageCollapseActives" @update:model-value="v => imageCollapseActives = v as string[]">
-    <AccordionItem value="1">
-      <AccordionTrigger>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">基础属性</div>
-      </AccordionTrigger>
-      <AccordionContent>
+      </h4>
+      
       <operateItemImageSelect v-model="currentOperatingCanvasChild.imageInfo">
       </operateItemImageSelect>
 
@@ -17,55 +16,49 @@
 
       <operateItemObjectFit v-model="currentOperatingCanvasChild.objectFit">
       </operateItemObjectFit>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="2">
-      <AccordionTrigger>通用属性</AccordionTrigger>
-      <AccordionContent>
+    <section class="operate-section">
+      <h4 class="operate-section__title">通用属性</h4>
+      
       <operateItemCommonGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemCommonGroup>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="4">
-      <AccordionTrigger>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">滤镜效果</div>
-      </AccordionTrigger>
-      <AccordionContent>
+      </h4>
+      
       <operateItemFilterGroup
         v-model="currentOperatingCanvasChild.filter"
       ></operateItemFilterGroup>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
-    <AccordionItem value="5">
-      <AccordionTrigger>
+    <section class="operate-section">
+      <h4 class="operate-section__title">
         <div class="title">图片平铺</div>
-      </AccordionTrigger>
-      <AccordionContent>
+      </h4>
+      
       <operateItemImagePrintGroup
         v-model="currentOperatingCanvasChild"
       ></operateItemImagePrintGroup>
-      </AccordionContent>
-    </AccordionItem>
+      
+    </section>
 
     <operateItemClipPath
       v-model="currentOperatingCanvasChild.clipPath"
     ></operateItemClipPath>
-  </Accordion>
+  
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
 
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";
@@ -114,7 +107,6 @@ import {
   updateRenderingCanvas,
 } from "../index.tsx";
 
-const imageCollapseActives = ref(["1", "2", "3", "4", "5"]);
 
 </script>
 

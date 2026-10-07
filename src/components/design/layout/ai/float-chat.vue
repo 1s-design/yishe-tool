@@ -363,18 +363,15 @@ watch(() => messages.value.length, scrollToBottom);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(12px);
-
   &:hover {
-    transform: translateY(-2px);
     border-color: var(--1s-accent-color);
-    box-shadow: 0 18px 42px rgba(37, 47, 88, 0.24);
+    box-shadow: var(--1s-shadow-popover);
   }
 
   &--active {
-    color: #fff;
-    border-color: rgba(118, 75, 162, 0.36);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: var(--1s-menu-selected-text);
+    border-color: var(--1s-accent-color);
+    background: var(--1s-accent-color);
   }
 }
 
@@ -384,14 +381,14 @@ watch(() => messages.value.length, scrollToBottom);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  background: var(--1s-accent-color);
+  color: var(--1s-primary-foreground);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 550;
   flex-shrink: 0;
 
   .ai-float-chat__trigger--active & {
-    background: rgba(255, 255, 255, 0.18);
+    background: transparent;
   }
 }
 
@@ -463,9 +460,9 @@ watch(() => messages.value.length, scrollToBottom);
   height: 48px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  border-radius: var(--1s-radius-medium);
+  background: var(--1s-accent-color-soft);
+  color: var(--1s-text-color-secondary);
   font-size: 24px;
 }
 
@@ -516,8 +513,8 @@ watch(() => messages.value.length, scrollToBottom);
   word-break: break-word;
 
   .ai-float-chat__msg--user & {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
+    background: var(--1s-accent-color);
+    color: var(--1s-primary-foreground);
     border-bottom-right-radius: 4px;
   }
 

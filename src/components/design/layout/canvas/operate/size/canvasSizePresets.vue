@@ -1,20 +1,15 @@
 <template>
-  <operate-form-item>
-    <template #icon>
-      <Setting />
-    </template>
-    <template #name> 常用尺寸比例 </template>
-    <template #content>
-      <Button
-        size="sm"
-        variant="outline"
-        class="w-full h-6 text-[11px] font-medium"
-        @click="dialogVisible = true"
-      >
-        选择常用预设比例
-      </Button>
-    </template>
-  </operate-form-item>
+  <div class="size-presets-trigger">
+    <Button
+      size="sm"
+      variant="outline"
+      class="w-full"
+      @click="dialogVisible = true"
+    >
+      <Setting class="w-3.5 h-3.5" />
+      更多尺寸预设
+    </Button>
+  </div>
 
   <Dialog :modal="false" v-model:open="dialogVisible">
     <DialogContent class="max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] p-0 rounded-none gap-0 overflow-hidden flex flex-col size-presets-dialog">
@@ -159,7 +154,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import operateFormItem from "../operateFormItem.vue";
 import { getAllRatios } from "../../crop/ratioData";
 import type { RatioOption } from "../../crop/ratioData";
 
@@ -704,6 +698,18 @@ function handleSelect(item: SizeOption) {
 </script>
 
 <style scoped>
+.size-presets-trigger {
+  padding: 2px 8px 8px;
+  box-sizing: border-box;
+}
+
+.size-presets-trigger :deep(.u-btn),
+.size-presets-trigger :deep(button) {
+  height: var(--1s-control-h-sm);
+  gap: 5px;
+  font-size: var(--1s-control-font-md);
+}
+
 .preset-container {
   height: calc(100vh - 120px);
   overflow-y: auto;
@@ -721,14 +727,13 @@ function handleSelect(item: SizeOption) {
   gap: 12px;
   padding: 14px 0 16px;
   margin-bottom: 12px;
-  background: var(--1s-surface-background, #ffffff);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--1s-border-color, #e4e4e7);
+  background: var(--1s-surface-background);
+  border-bottom: 1px solid var(--1s-border-color);
 }
 
 :global(html.dark) .preset-search,
 :global(.dark) .preset-search {
-  background: color-mix(in srgb, var(--1s-surface-background) 95%, transparent);
+  background: var(--1s-surface-background);
   border-bottom-color: var(--1s-border-color);
 }
 
@@ -829,7 +834,7 @@ function handleSelect(item: SizeOption) {
   width: 100%;
   height: 100%;
   background-color: var(--1s-surface-background, #ffffff);
-  border: 1px solid var(--1s-border-color-strong, #d4d4d8);
+  border: 1px solid var(--1s-control-border-color);
   border-radius: 3px;
   transition: all 0.15s ease;
 }
@@ -921,7 +926,7 @@ function handleSelect(item: SizeOption) {
 
 .aspect-ratio-box {
   background-color: var(--1s-surface-background, #ffffff) !important;
-  border: 1px solid var(--1s-border-color-strong, #d4d4d8) !important;
+  border: 1px solid var(--1s-control-border-color) !important;
   border-radius: 3px;
 }
 

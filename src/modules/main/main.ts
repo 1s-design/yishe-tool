@@ -18,6 +18,7 @@ import router from '../main/router'
 import i18n from '@/i18n/index.ts'
 import '@/style/base.less'
 import '@/style/vars.less'
+import '@/style/controls.less'
 
 import App from './App.vue'
 import { apiInstance } from "@/api/apiInstance";

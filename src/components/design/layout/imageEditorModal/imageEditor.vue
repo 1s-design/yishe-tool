@@ -1950,12 +1950,11 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--1s-loading-mask);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
-  backdrop-filter: blur(2px);
 }
 
 .loading-content {
@@ -1986,7 +1985,7 @@ onUnmounted(() => {
 
 .fabric-canvas {
   border: 1px solid var(--1s-border-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   background: var(--1s-surface-background);
   display: block;
   max-width: 100%;

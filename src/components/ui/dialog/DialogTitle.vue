@@ -1,7 +1,7 @@
 <template>
   <DialogTitle
     v-bind="props"
-    :class="cn('text-base font-semibold leading-none tracking-tight text-foreground', $attrs.class ?? '')"
+    :class="cn('text-[13px] font-[550] leading-none tracking-tight text-[var(--1s-text-color)]', $attrs.class ?? '')"
   >
     <slot />
   </DialogTitle>

@@ -1,46 +1,39 @@
 <template>
-    <Accordion type="multiple" :model-value="backgroundCollapseActives" @update:model-value="v => backgroundCollapseActives = v as string[]">
-        <AccordionItem value="1">
-            <AccordionTrigger>背景属性</AccordionTrigger>
-            <AccordionContent>
+        <section class="operate-section">
+            <h4 class="operate-section__title">背景属性</h4>
+            
             <operateItemSize label="背景尺寸" v-model:width="currentOperatingCanvasChild.width"
                 v-model:height="currentOperatingCanvasChild.height">
             </operateItemSize>
             <operateItemBackgroundColor v-model="currentOperatingCanvasChild.backgroundColor">
             </operateItemBackgroundColor>
 
-            </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="2">
-            <AccordionTrigger>通用属性</AccordionTrigger>
-            <AccordionContent>
+            
+        </section>
+        <section class="operate-section">
+            <h4 class="operate-section__title">通用属性</h4>
+            
             <operateItemCommonGroup v-model="currentOperatingCanvasChild"></operateItemCommonGroup>
-            </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="5">
-            <AccordionTrigger>
+            
+        </section>
+        <section class="operate-section">
+            <h4 class="operate-section__title">
                 <div class="title">滤镜效果</div>
-            </AccordionTrigger>
-            <AccordionContent>
+            </h4>
+            
             <operateItemFilterGroup v-model="currentOperatingCanvasChild.filter"></operateItemFilterGroup>
-            </AccordionContent>
-        </AccordionItem>
+            
+        </section>
         <operateItemBuiltInBackground v-model="currentOperatingCanvasChild.customBackground">
         </operateItemBuiltInBackground>
 
         <operateItemClipPath v-model="currentOperatingCanvasChild.clipPath"></operateItemClipPath>
-    </Accordion>
+    
 </template>
     
 <script setup lang='ts'>
 import { onMounted, ref, computed, watch, reactive, watchEffect, nextTick } from "vue";
 
-import {
-    Accordion,
-    AccordionItem,
-    AccordionTrigger,
-    AccordionContent,
-} from "@/components/ui/accordion";
 
 import operateItemColor from "@/components/design/layout/canvas/operate/color/index.vue";
 import operateItemTextContent from "@/components/design/layout/canvas/operate/textContent.vue";
@@ -93,7 +86,6 @@ import {
 } from "../index.tsx";
 
 
-const backgroundCollapseActives = ref(["1", "2", "3", "4", '5'])
 
 
 </script>

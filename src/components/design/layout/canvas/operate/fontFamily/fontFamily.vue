@@ -739,8 +739,7 @@ watch(
 
 .font-card__actions :deep(.el-button),
 .font-card__actions button {
-  background: color-mix(in srgb, var(--1s-surface-background, #fff) 88%, transparent);
-  backdrop-filter: blur(4px);
+  background: var(--1s-surface-background);
 }
 
 

@@ -7,11 +7,12 @@
 </script>
 <style lang="less">
 .designiy-dropdown-menu {
-  box-shadow: var(--1s-shadow-md);
-  background-color: var(--1s-elevated-background);
-  color: var(--1s-text-color);
-  border: 1px solid var(--1s-border-color);
-  border-radius: 6px;
-  padding: 10px 0;
+  min-width: 196px;
+  padding: 3px;
+  border: 1px solid var(--1s-dialog-border);
+  border-radius: var(--1s-control-radius);
+  background-color: var(--1s-dialog-bg);
+  color: var(--1s-dialog-fg);
+  box-shadow: var(--1s-shadow-popover);
 }
 </style>

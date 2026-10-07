@@ -1,17 +1,7 @@
 <template>
   <loading v-if="isFirstPageLoading"></loading>
 
-  <div
-    id="layout-container"
-    class="design-layout"
-    :class="{ 'has-header': showHeader }"
-  >
-    <div v-if="showHeader" id="layout-header" class="design-layout__header">
-      <div class="design-layout__header-inner">
-        <header-menu />
-      </div>
-    </div>
-
+  <div id="layout-container" class="design-layout">
     <div id="layout-body" class="design-layout__body">
       <div
         v-if="showLeftMenu"
@@ -22,13 +12,17 @@
       </div>
 
       <div
-        v-if="leftComponent"
         id="layout-left"
-        class="design-layout__panel design-layout__panel--left"
+        class="design-layout__panel design-layout__panel--browser"
       >
         <div class="design-layout__panel-scroll">
           <keep-alive include="sticker">
-            <component :is="leftComponent"></component>
+            <component v-if="leftComponent" :is="leftComponent"></component>
+            <div v-else class="design-layout__panel-empty">
+              <span class="design-layout__panel-empty-icon">⌘</span>
+              <strong>选择一个工作区</strong>
+              <small>从左侧导航打开资源、画布或工具</small>
+            </div>
           </keep-alive>
         </div>
       </div>
@@ -93,15 +87,9 @@
         </div>
       </div>
 
-      <div
-        v-if="rightComponent"
-        id="layout-right"
-        class="design-layout__panel design-layout__panel--right"
-      >
-        <div class="design-layout__panel-scroll">
-          <component :is="rightComponent"></component>
-        </div>
-      </div>
+      <aside id="layout-ai" class="design-layout__ai">
+        <AiPanel :open="true" embedded />
+      </aside>
     </div>
   </div>
 
@@ -189,17 +177,34 @@
     </DialogContent>
   </Dialog>
 
-  <!-- 创作资源弹层 (基于 shadcn-vue Dialog) -->
-  <Dialog :modal="false" v-model:open="menuState.showProject">
-    <DialogContent class="max-w-[94vw] w-[94vw] h-[88vh] max-h-[88vh] p-0 overflow-hidden flex flex-col rounded-lg border-[var(--1s-border-color)] bg-[var(--1s-surface-background)] shadow-2xl">
-      <DialogHeader class="px-5 py-3 border-b border-[var(--1s-divider-color)] flex flex-row items-center justify-between space-y-0">
-        <div class="flex items-center gap-2">
-          <Sparkles class="h-4 w-4 text-[var(--1s-accent-color)]" />
-          <DialogTitle class="text-sm font-semibold">创作资源</DialogTitle>
-        </div>
-      </DialogHeader>
-      <div class="flex-1 overflow-hidden">
-        <projectModal />
+  <!-- 创作资源全屏资源中心 -->
+  <Dialog :modal="true" v-model:open="menuState.showProject">
+    <DialogContent class="project-resource-modal">
+      <div class="project-resource-modal__frame">
+        <header class="project-resource-modal__header">
+          <div class="project-resource-modal__heading">
+            <div class="project-resource-modal__mark" aria-hidden="true">
+              <Sparkles class="h-4 w-4" />
+            </div>
+            <div class="project-resource-modal__heading-copy">
+              <DialogTitle class="project-resource-modal__title">创作资源</DialogTitle>
+              <DialogDescription class="project-resource-modal__description">
+                集中管理贴纸、字体、文案与设计资产
+              </DialogDescription>
+            </div>
+          </div>
+
+          <div class="project-resource-modal__header-actions">
+            <span class="project-resource-modal__shortcut">资源中心</span>
+            <DialogClose class="project-resource-modal__close" aria-label="关闭创作资源">
+              <X class="h-4 w-4" />
+            </DialogClose>
+          </div>
+        </header>
+
+        <main class="project-resource-modal__body">
+          <projectResourceModal />
+        </main>
       </div>
     </DialogContent>
   </Dialog>
@@ -221,9 +226,6 @@
   <!-- 自动创建弹层 -->
   <autocreateModal></autocreateModal>
 
-  <!-- AI 设计助手面板 -->
-  <AiPanel :open="isAiPanelOpen" @close="isAiPanelOpen = false" />
-
   <!-- 登录提示弹窗 -->
   <Dialog :modal="false" v-model:open="showLoginConfirmModal">
     <DialogContent class="max-w-[320px] p-5 gap-3">
@@ -243,7 +245,6 @@ import { computed, onMounted, ref, watchEffect, watch, nextTick } from "vue";
 import { useElementSize, useLocalStorage } from "@vueuse/core";
 import { migrateLegacyWorkspaceStorage } from "@/services/designRuntime";
 import { ModelController } from "../core/controller";
-import headerMenu from "./headerMenu.vue";
 import loading from "./loading.vue";
 import { useLoginStatusStore } from "@/store/stores/login";
 import {
@@ -262,8 +263,6 @@ import {
   showImageEditorModal,
   showModelInfo,
   showDecalList,
-  showHeader,
-  showSubHeader,
   showLeftMenu,
   showBottomMenu,
   showSaveModel,
@@ -305,8 +304,6 @@ import sticker from "./sticker/index.vue";
 import customSticker from "./customSticker/index.vue";
 import qrcode from "./qrcode/index.vue";
 import customModel from "./customModel/index.vue";
-import { DirectionalLight, AmbientLight, PointLight } from "three";
-import { DecalGeometry } from "three/examples/jsm/geometries/DecalGeometry";
 import upload from "./upload/index.vue";
 import stamp from "./stamp/index.vue";
 import svgCanvas from "./svgCanvas/index.vue";
@@ -314,11 +311,11 @@ import canvasLayout from "./canvas/index.vue";
 import basicCanvas from "./basic-canvas/index.vue";
 import { showMainCanvas } from "./canvas/index.tsx";
 import stickerModal from "./sticker/modal.vue";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Sparkles, X } from "lucide-vue-next";
-import projectModal from "./project/index.vue";
+import projectResourceModal from "./project/resourceModal.vue";
 import ContextMenu from "@imengyu/vue3-context-menu";
 import { openLoginDialog } from "@/modules/main/view/user/login/index.tsx";
 import { useStickerDetailModal } from "@/components/design/layout/project/sticker/stickerModal";
@@ -344,6 +341,7 @@ const loginStore = useLoginStatusStore();
 
 const des = useDesignStore();
 const isDesign3DEnabled = DESIGN_3D_ENABLED;
+isAiPanelOpen.value = true;
 
 const showLoginConfirmModal = ref(false);
 
@@ -356,6 +354,10 @@ const basicContainerAnimation = ref({
 const basicCanvasRef = ref();
 
 const leftComponent = computed(() => {
+  // 贴纸属性和列表属于画布操作面板，和资源面板一样放在左侧。
+  if (showDecalControl.value) return decalControl;
+  if (showDecalList.value) return decalList;
+
   // 使用新的统一菜单状态管理
   const activeMenu = menuState.value.activeMenu;
 
@@ -377,15 +379,6 @@ const leftComponent = computed(() => {
       return decoration;
     default:
       return null;
-  }
-});
-
-const rightComponent = computed(() => {
-  if (showDecalControl.value) {
-    return decalControl;
-  }
-  if (showDecalList.value) {
-    return decalList;
   }
 });
 
@@ -532,30 +525,18 @@ async function initAction() {
 
 <style lang="less">
 .design-layout {
+  /* 左轨/左面板宽度由 vars.less 统一管理（含响应式断点），这里只保留本地私有变量 */
+  --1s-ai-panel-width: 360px;
+
   display: flex;
   width: 100%;
   height: 100%;
   min-width: 0;
   min-height: 0;
   flex-direction: column;
+  overflow: hidden;
   background: var(--1s-shell-background);
   color: var(--1s-text-color);
-}
-
-.design-layout__header {
-  z-index: 11;
-  flex-shrink: 0;
-  height: var(--1s-header-height);
-  border-bottom: 1px solid var(--1s-border-color);
-  background: var(--1s-surface-background);
-  box-shadow: 0 1px 0 var(--1s-border-color);
-}
-
-.design-layout__header-inner {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
 }
 
 .design-layout__body {
@@ -563,12 +544,15 @@ async function initAction() {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .design-layout__rail {
+  position: relative;
+  z-index: 8;
   width: var(--1s-left-menu-width);
-  flex-shrink: 0;
-  border-right: 1px solid var(--1s-border-color-strong);
+  flex: 0 0 var(--1s-left-menu-width);
+  border-right: 1px solid var(--1s-border-color);
   background: var(--1s-left-menu-background-color);
 }
 
@@ -579,19 +563,11 @@ async function initAction() {
   background: var(--1s-panel-background);
 }
 
-.design-layout__panel--left {
+.design-layout__panel--browser {
   width: var(--1s-left-panel-width);
-  flex-shrink: 0;
+  flex: 0 0 var(--1s-left-panel-width);
   border-right: 1px solid var(--1s-border-color);
   background: var(--1s-left-menu-container-background-color);
-}
-
-.design-layout__panel--right {
-  width: var(--1s-right-panel-width);
-  flex-shrink: 0;
-  border-left: 1px solid var(--1s-border-color);
-  box-shadow: -1px 0 0 var(--1s-border-color);
-  z-index: 4;
 }
 
 .design-layout__panel-scroll {
@@ -599,22 +575,64 @@ async function initAction() {
   height: 100%;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .design-layout__panel-scroll > * {
   width: 100%;
+  height: 100%;
   min-width: 0;
+  min-height: 0;
+}
+
+.design-layout__panel-empty {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 24px 18px;
+  color: var(--1s-text-color-tertiary);
+  text-align: center;
+}
+
+.design-layout__panel-empty strong {
+  color: var(--1s-text-color-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.design-layout__panel-empty small {
+  max-width: 170px;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.design-layout__panel-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 2px;
+  border: 1px solid var(--1s-border-color);
+  border-radius: var(--1s-control-radius);
+  background: var(--1s-control-surface-muted);
+  color: var(--1s-text-color-secondary);
+  font-size: 13px;
 }
 
 #layout-canvas {
   position: relative;
   display: flex;
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 320px;
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
+  background: var(--1s-canvas-stage-background);
 }
 
 .design-layout__canvas-stage {
@@ -623,11 +641,9 @@ async function initAction() {
   min-width: 0;
   min-height: 0;
   padding: 0;
+  overflow: hidden;
   background-color: var(--1s-canvas-stage-background);
-  background-image:
-    linear-gradient(var(--1s-grid-line-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--1s-grid-line-color) 1px, transparent 1px);
-  background-size: 20px 20px;
+  isolation: isolate;
 }
 
 .design-layout__canvas-stage--main-canvas {
@@ -659,13 +675,77 @@ async function initAction() {
 }
 
 .design-layout__bottom {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  z-index: 20;
   display: flex;
-  height: var(--1s-bottom-menu-height);
-  flex-shrink: 0;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 0 12px;
-  background: linear-gradient(to top, var(--1s-border-color), transparent);
+  transform: translateX(-50%);
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+.design-layout__ai {
+  position: relative;
+  z-index: 6;
+  width: var(--1s-ai-panel-width);
+  min-width: 288px;
+  flex: 0 0 var(--1s-ai-panel-width);
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--1s-border-color);
+  background: var(--1s-surface-background);
+}
+
+/*
+ * AiPanel.vue 当前为只读 root-owned 文件。
+ * 这里把它从悬浮拖拽形态无侵入地约束为右侧常驻 Dock，
+ * 不改业务逻辑，也不影响弹窗内部的 AI 会话能力。
+ */
+.design-layout__ai > .ai-panel {
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  z-index: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.design-layout__ai .ai-panel-header {
+  height: 40px !important;
+  min-height: 40px !important;
+  cursor: default !important;
+  padding-left: 12px !important;
+  padding-right: 10px !important;
+}
+
+.design-layout__ai .ai-panel-close-btn {
+  display: none !important;
+}
+
+.design-layout__ai .ai-panel-messages {
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 12px !important;
+}
+
+.design-layout__ai .ai-panel-input-area {
+  flex-shrink: 0;
+  padding: 10px !important;
+}
+
+.design-layout__ai .ai-input-textarea {
+  min-height: 64px !important;
 }
 
 .bg-transparent {
@@ -675,9 +755,9 @@ async function initAction() {
 .scene-control-drawer {
   position: fixed;
   top: 0;
-  right: 0;
-  width: 360px;
-  max-width: 100vw;
+  right: var(--1s-ai-panel-width);
+  width: 320px;
+  max-width: calc(100vw - var(--1s-ai-panel-width));
   height: 100vh;
   z-index: 1001;
   display: flex;
@@ -693,7 +773,7 @@ async function initAction() {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  padding: 16px 20px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--1s-border-color, hsl(var(--border)));
 }
 
@@ -701,10 +781,8 @@ async function initAction() {
   flex: 1;
   overflow: auto;
   min-height: 0;
-  padding: 16px 20px;
+  padding: 14px;
 }
-
-.auto-width-modal {}
 
 .aspect-ratio-selector {
   position: absolute;
@@ -715,7 +793,6 @@ async function initAction() {
   border: 1px solid var(--1s-border-color);
   border-radius: var(--1s-radius-sm);
   background: var(--1s-elevated-background);
-  
   overflow: hidden;
 }
 
@@ -724,9 +801,225 @@ async function initAction() {
   font-size: 11px;
 }
 
-@media (max-width: 1366px) {
-  .design-layout__canvas-stage {
-    background-size: 18px 18px;
+/* 创作资源全屏资源中心 */
+.project-resource-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--1s-surface-background) !important;
+  color: var(--1s-text-color) !important;
+  transform: none !important;
+  box-shadow: none !important;
+  grid-template-rows: 1fr !important;
+}
+
+.project-resource-modal > button.absolute {
+  display: none !important;
+}
+
+.project-resource-modal__frame {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--1s-surface-background);
+}
+
+.project-resource-modal__header {
+  display: flex;
+  min-height: 68px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--1s-border-color);
+  background: var(--1s-surface-background);
+}
+
+.project-resource-modal__heading,
+.project-resource-modal__header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.project-resource-modal__heading {
+  min-width: 0;
+  gap: 12px;
+}
+
+.project-resource-modal__mark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--1s-accent-color) 35%, transparent);
+  border-radius: 9px;
+  background: var(--1s-accent-color-soft);
+  color: var(--1s-accent-color);
+}
+
+.project-resource-modal__heading-copy {
+  min-width: 0;
+}
+
+.project-resource-modal__title {
+  color: var(--1s-text-color) !important;
+  font-size: 15px !important;
+  font-weight: 650 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.project-resource-modal__description {
+  margin-top: 3px;
+  color: var(--1s-text-color-tertiary) !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
+.project-resource-modal__header-actions {
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.project-resource-modal__shortcut {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--1s-border-color);
+  border-radius: var(--1s-control-radius);
+  background: var(--1s-control-surface-muted);
+  color: var(--1s-text-color-tertiary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.project-resource-modal__close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--1s-text-color-secondary);
+  cursor: pointer;
+  transition: var(--1s-control-transition);
+
+  &:hover {
+    background: var(--1s-state-hover);
+    color: var(--1s-text-color);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+  }
+}
+
+.project-resource-modal__body {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  background: var(--1s-panel-background);
+}
+
+.project-resource-modal__body > .project-shell,
+.project-resource-modal__body .project-shell {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--1s-panel-background);
+}
+
+.project-resource-modal__body .project-shell__main {
+  min-height: 0;
+  overflow: auto;
+  background: var(--1s-panel-background);
+  scrollbar-gutter: stable;
+}
+
+.project-resource-modal__body .project-page {
+  min-height: 100%;
+  background: var(--1s-panel-background);
+}
+
+.project-resource-modal__body .project-toolbar {
+  min-height: 56px;
+  padding: 10px 20px;
+  gap: 12px;
+  background: var(--1s-surface-background);
+  border-bottom-color: var(--1s-border-color);
+}
+
+.project-resource-modal__body .project-toolbar__controls {
+  gap: 8px;
+}
+
+.project-resource-modal__body .project-toolbar__caption {
+  color: var(--1s-text-color-tertiary);
+}
+
+.project-resource-modal__body [role='tablist'] {
+  min-height: 32px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--1s-border-color);
+  border-radius: var(--1s-control-radius);
+  background: var(--1s-control-surface-muted);
+}
+
+.project-resource-modal__body [role='tab'] {
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: var(--1s-control-radius);
+  color: var(--1s-text-color-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.project-resource-modal__body [role='tab'][data-state='active'] {
+  background: var(--1s-surface-background);
+  color: var(--1s-text-color);
+  box-shadow: var(--1s-shadow-xs);
+}
+
+.project-resource-modal__body .project-gallery-card {
+  background: var(--1s-surface-background);
+  border-color: var(--1s-border-color);
+  border-radius: var(--1s-control-radius);
+}
+
+.project-resource-modal__body .project-gallery-card:hover {
+  border-color: color-mix(in srgb, var(--1s-accent-color) 45%, var(--1s-border-color));
+  box-shadow: var(--1s-shadow-md);
+}
+
+.project-resource-modal__body .project-footer {
+  background: var(--1s-surface-background);
+  border-top-color: var(--1s-border-color);
+}
+
+@media (max-width: 1440px) {
+  .design-layout {
+    --1s-ai-panel-width: 320px;
   }
 
   .aspect-ratio-selector {
@@ -736,15 +1029,42 @@ async function initAction() {
   }
 }
 
-@media (max-width: 1080px) {
-  .design-layout__canvas-stage {
-    background-size: 16px 16px;
+@media (max-width: 1180px) {
+  .design-layout {
+    --1s-ai-panel-width: 292px;
+  }
+
+  #layout-canvas {
+    min-width: 280px;
+  }
+
+  .aspect-ratio-selector {
+    width: 100px;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 980px) {
+  .design-layout {
+    --1s-ai-panel-width: 276px;
+  }
+
+  #layout-canvas {
+    min-width: 250px;
+  }
+}
+
+@media (max-width: 760px) {
+  .design-layout {
+    --1s-ai-panel-width: min(42vw, 276px);
+  }
+
+  .design-layout__panel--browser {
+    display: none;
+  }
+
   .design-layout__bottom {
     padding: 0 8px;
+    bottom: 8px;
   }
 
   .aspect-ratio-selector {

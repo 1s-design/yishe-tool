@@ -30,3 +30,38 @@ export function resumeCanvasDrag() {
     panzoomInstance.resume()
   }
 }
+
+/**
+ * 画布视图控制（供底部工具栏调用）
+ */
+export function resetCanvasView() {
+  const instance = getPanzoomInstance()
+  const container = document.getElementById('basic-canvas-canvas-container')
+  const target = document.querySelector<HTMLElement>(
+    '#basic-canvas-canvas-container [data-panzoom-target], #basic-canvas-canvas-container .panzoom-wrapper',
+  )
+
+  if (!instance || !container || !target) {
+    return
+  }
+
+  instance.zoomAbs(0, 0, 1)
+  const x = (container.clientWidth - target.offsetWidth) / 2
+  const y = (container.clientHeight - target.offsetHeight) / 2
+  instance.moveTo(x, y)
+}
+
+export function zoomCanvas(scale: number) {
+  const instance = getPanzoomInstance()
+  const container = document.getElementById('basic-canvas-canvas-container')
+
+  if (!instance || !container) {
+    return
+  }
+
+  instance.smoothZoom(
+    container.clientWidth / 2,
+    container.clientHeight / 2,
+    scale,
+  )
+}
