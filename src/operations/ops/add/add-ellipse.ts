@@ -1,6 +1,6 @@
 import { registerOperation } from "../../registry";
 
-registerOperation({
+void ({
   id: "canvas.addEllipse",
   name: "添加椭圆",
   description:

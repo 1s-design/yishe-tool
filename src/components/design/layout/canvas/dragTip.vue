@@ -32,7 +32,7 @@ import iconFingerMove from "@/icon/mobile/fingerMove.svg?component";
     width: 30px;
     height: 30px;
     color: #fff;
-    filter: drop-shadow(0px 1px 5px rgba(0, 0, 0, 0.4));
+    filter: drop-(0px 1px 5px rgba(0, 0, 0, 0.4));
 }
 .touch-point {
     width: 10px;
@@ -40,14 +40,14 @@ import iconFingerMove from "@/icon/mobile/fingerMove.svg?component";
     border-radius: var(--1s-radius-full);
     transform: translate(-3px, 10px);
     background-color: var(--1s-accent-color);
-    box-shadow: 0 0 0 3px var(--1s-focus-ring-color);
+    box-: none;
 }
 
 .text {
     color: #fff;
     font-size: 1rem;
     font-weight: bold;
-    text-shadow: 0px 1px 5px rgba(0, 0, 0, 0.7);
+    text-: 0px 1px 5px rgba(0, 0, 0, 0.7);
     text-align: center;
 }
 

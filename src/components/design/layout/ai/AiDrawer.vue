@@ -317,7 +317,7 @@ watch(() => messages.value.length, scrollToBottom);
   pointer-events: auto;
   background: var(--1s-panel-background, hsl(var(--background)));
   border-left: 1px solid var(--1s-border-color, hsl(var(--border)));
-  box-shadow: var(--1s-shadow-lg);
+  box-: none;
 }
 
 .drawer-header {
@@ -554,7 +554,7 @@ watch(() => messages.value.length, scrollToBottom);
 // 交互区域
 .interaction-section {
   background: var(--1s-surface-background);
-  border: 1px solid var(--1s-border-color);
+  border: none;
   border-radius: 12px;
   overflow: hidden;
   margin-top: 8px;
@@ -589,7 +589,7 @@ watch(() => messages.value.length, scrollToBottom);
 .option-btn {
   padding: 12px 16px;
   background: var(--1s-control-surface-muted);
-  border: 1px solid var(--1s-border-color);
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;

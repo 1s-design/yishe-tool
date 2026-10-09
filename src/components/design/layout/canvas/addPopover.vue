@@ -6,7 +6,7 @@
         <PopoverContent align="start" class="w-[340px]">
             <div class="addchild">
                 <template v-for="v, k in canvasChildLabelMap">
-                    <Button v-if="k !== 'canvas' && k !== 'html'" size="sm" class="rounded-full" @click="add(k)"> {{ v }} </Button>
+                    <Button v-if="!HIDDEN_TYPES.includes(k)" size="sm" class="rounded-full" @click="add(k)"> {{ v }} </Button>
                 </template>
 
                 <div style="flex: 1"></div>
@@ -33,6 +33,9 @@ import {
 import { Button } from '@/components/ui/button';
 
 const open = ref(false);
+
+// 旧的简单元素类型已废弃，只使用代码画布 (HTML) 形式
+const HIDDEN_TYPES = ['canvas', 'text', 'image', 'background', 'rect', 'ellipse'];
 
 function add(type) {
     addCanvasChild({

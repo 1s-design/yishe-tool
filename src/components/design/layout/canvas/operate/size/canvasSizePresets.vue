@@ -834,7 +834,7 @@ function handleSelect(item: SizeOption) {
   width: 100%;
   height: 100%;
   background-color: var(--1s-surface-background, #ffffff);
-  border: 1px solid var(--1s-control-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 3px;
   transition: all 0.15s ease;
 }
@@ -926,7 +926,7 @@ function handleSelect(item: SizeOption) {
 
 .aspect-ratio-box {
   background-color: var(--1s-surface-background, #ffffff) !important;
-  border: 1px solid var(--1s-control-border-color) !important;
+  border: 1px solid var(--1s-dialog-border) !important;
   border-radius: 3px;
 }
 

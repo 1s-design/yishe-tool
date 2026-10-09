@@ -209,7 +209,7 @@ function useCurrentBackground(item) {
     min-height: var(--1s-control-h-md);
     padding: 2px 5px;
     border: 1px solid transparent;
-    border-radius: var(--1s-control-radius-sm);
+    border-radius: 0;
     cursor: pointer;
     transition: var(--1s-control-transition);
 
@@ -228,8 +228,8 @@ function useCurrentBackground(item) {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
-    border: 1px solid var(--1s-control-border-color);
-    border-radius: var(--1s-control-radius-sm);
+    border: none;
+    border-radius: 0;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -254,8 +254,8 @@ function useCurrentBackground(item) {
     width: 30px;
     height: 22px;
     padding: 1px;
-    border: 1px solid var(--1s-control-border-color);
-    border-radius: var(--1s-control-radius-sm);
+    border: none;
+    border-radius: 0;
     background: var(--1s-control-surface-muted);
     cursor: pointer;
   }

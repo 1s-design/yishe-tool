@@ -559,7 +559,7 @@ function handleStickerImgClick() {
   min-width: 0;
   height: var(--1s-control-h-sm);
   padding: 0 5px;
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
   font-size: var(--1s-control-font);
   white-space: nowrap;
 }
@@ -600,7 +600,7 @@ function handleStickerImgClick() {
 .sticker-replace-btn {
   height: var(--1s-control-h-sm) !important;
   padding: 0 8px !important;
-  border-radius: var(--1s-control-radius-sm) !important;
+  border-radius: 0 !important;
   font-size: var(--1s-control-font) !important;
 }
 
@@ -608,8 +608,8 @@ function handleStickerImgClick() {
   width: 100%;
   margin: 2px 0 2px;
   padding: 7px;
-  border: 1px solid var(--1s-border-color);
-  border-radius: var(--1s-control-radius);
+  border: 1px solid var(--1s-dialog-border);
+  border-radius: 0;
   background: var(--1s-control-surface-muted);
 }
 
@@ -629,8 +629,8 @@ function handleStickerImgClick() {
 
 .direction-center {
   display: block;
-  border: 1px solid var(--1s-border-color);
-  border-radius: var(--1s-control-radius-sm);
+  border: 1px solid var(--1s-dialog-border);
+  border-radius: 0;
   background: var(--1s-surface-background);
 }
 
@@ -653,7 +653,7 @@ function handleStickerImgClick() {
   height: var(--1s-control-h-sm);
   margin-top: 7px;
   font-size: var(--1s-control-font);
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
 }
 
 .direction-btn {
@@ -661,13 +661,13 @@ function handleStickerImgClick() {
   height: var(--1s-control-h-sm);
   min-width: var(--1s-control-h-sm);
   padding: 0;
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
   transition: var(--1s-control-transition);
 
   &:hover {
     background: var(--1s-state-hover);
     border-color: var(--1s-border-color-strong);
-    box-shadow: none;
+    box-: none;
   }
 
   &:active {
@@ -700,13 +700,13 @@ function handleStickerImgClick() {
   align-items: center;
   gap: 6px;
   padding: 6px;
-  border: 1px solid var(--1s-border-color);
-  border-radius: var(--1s-control-radius);
+  border: 1px solid var(--1s-dialog-border);
+  border-radius: 0;
   transition: var(--1s-control-transition);
 
   &:hover {
     border-color: var(--1s-accent-color);
-    box-shadow: none;
+    box-: none;
     background: var(--1s-state-hover);
   }
 }
@@ -715,7 +715,7 @@ function handleStickerImgClick() {
   width: 100% !important;
   height: 92px !important;
   background: var(--1s-checkerboard-base);
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
 }
 
 .sticker-info {

@@ -416,7 +416,7 @@ $paddingTag: 5px;
   &--focus {
     outline: 0;
     border-color: $blackColor;
-    box-shadow: 0 0 0 1px $blackColor;
+    box-: none;
   }
 
   &--error {
@@ -449,7 +449,7 @@ $paddingTag: 5px;
     background: var(--1s-surface-background);
     z-index: 1050;
     color: #475569;
-    box-shadow: 0 3px 8px 2px rgba(0, 0, 0, 0.1);
+    box-: none;
     border-radius: 0 0 6px 6px;
     .v3ti-context-item {
       padding: $paddingItem;

@@ -224,8 +224,8 @@ onMounted(loadList);
   height: 26px;
   flex-shrink: 0;
   object-fit: contain;
-  border: 1px solid var(--1s-control-border-color);
-  border-radius: var(--1s-control-radius-sm);
+  border: none;
+  border-radius: 0;
   background: var(--1s-control-surface-muted);
 }
 

@@ -465,8 +465,8 @@ function genSticker() {
   width: 100%;
   max-height: 280px;
   overflow-y: auto;
-  border: 1px solid var(--1s-control-border-color);
-  border-radius: var(--1s-control-radius);
+  border: 1px solid var(--1s-dialog-border);
+  border-radius: 0;
   padding: 3px;
   background: var(--1s-control-surface-muted);
   font-size: var(--1s-control-font-md);
@@ -479,7 +479,7 @@ function genSticker() {
   width: 100%;
   height: var(--1s-control-h-sm);
   padding: 0 6px;
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
   cursor: pointer;
   user-select: none;
   font-size: var(--1s-control-font-md);
@@ -589,8 +589,8 @@ function genSticker() {
   margin: 7px auto 3px;
   position: relative;
   overflow: hidden;
-  border-radius: var(--1s-control-radius);
-  border: 1px solid var(--1s-border-color);
+  border-radius: 0;
+  border: 1px solid var(--1s-dialog-border);
   background: var(--1s-canvas-shell-background);
 }
 
@@ -603,7 +603,7 @@ function genSticker() {
 
 .canvas-expand-pill-btn {
   gap: 4px;
-  box-shadow: var(--1s-shadow-popover);
+  box-: none;
 }
 
 .canvas-actions-panel {
@@ -623,7 +623,7 @@ function genSticker() {
   height: 32px;
   font-size: var(--1s-control-font-md);
   font-weight: 600;
-  border-radius: var(--1s-control-radius);
+  border-radius: 0;
 }
 
 /* 次操作行 — 三等分对称 */
@@ -640,7 +640,7 @@ function genSticker() {
   min-width: 0;
   height: 28px;
   font-size: var(--1s-control-font-md);
-  border-radius: var(--1s-control-radius);
+  border-radius: 0;
 }
 
 .operate {

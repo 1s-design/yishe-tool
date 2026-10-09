@@ -1,6 +1,6 @@
 import { registerOperation } from "../../registry";
 
-registerOperation({
+void ({
   id: "canvas.addImage",
   name: "添加图片",
   description: [

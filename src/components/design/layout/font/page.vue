@@ -354,7 +354,7 @@ async function uploadThumbnail() {
 
 .font-item {
   cursor: pointer;
-  border: 1px solid var(--1s-border-color);
+  border: none;
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -364,13 +364,13 @@ async function uploadThumbnail() {
 
   &:hover {
     border-color: var(--1s-accent-color);
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--1s-accent-color) 15%, transparent);
+    box-: none;
   }
 
   &.font-item-selected {
     border-color: var(--1s-accent-color);
     background: var(--1s-hover-background);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-accent-color) 20%, transparent);
+    box-: none;
     
     .font-item-name {
       color: var(--1s-accent-color);
@@ -448,7 +448,7 @@ async function uploadThumbnail() {
   padding: 1rem;
   background: var(--1s-control-surface-muted);
   border-radius: 8px;
-  border: 1px solid var(--1s-border-color);
+  border: none;
 }
 
 .font-family-label {
@@ -473,7 +473,7 @@ async function uploadThumbnail() {
   background: var(--1s-surface-background);
   padding: 0.5rem;
   border-radius: 4px;
-  border: 1px solid var(--1s-border-color);
+  border: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -508,7 +508,7 @@ async function uploadThumbnail() {
   justify-content: center;
   font-size: 12px;
   z-index: 2;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-: none;
 }
 
 .font-item-actions {

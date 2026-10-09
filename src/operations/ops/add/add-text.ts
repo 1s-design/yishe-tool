@@ -1,7 +1,7 @@
 import { registerOperation } from "../../registry";
 import { resolveCanvasTypographyFromContext } from "../../canvas-typography";
 
-registerOperation({
+void ({
   id: "canvas.addText",
   name: "添加文字",
   description:

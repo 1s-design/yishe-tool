@@ -172,15 +172,15 @@ const activeComponent = computed(() => {
   display: flex;
   flex-direction: column;
   background: var(--1s-surface-background);
-  border: 1px solid var(--1s-border-color);
+  border: none;
   border-radius: var(--1s-radius-md);
   padding: 6px;
   overflow: hidden;
   
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box- 0.15s ease;
 
   &:hover {
-    box-shadow: var(--1s-shadow-md);
+    box-: none;
     border-color: var(--1s-border-color-strong);
   }
 
@@ -235,7 +235,7 @@ const activeComponent = computed(() => {
   padding: 0 6px;
   border-radius: var(--1s-radius-xs);
   background: var(--1s-control-surface-muted);
-  border: 1px solid var(--1s-border-color);
+  border: none;
   color: var(--1s-text-color-secondary);
   font-size: 10px;
   font-weight: 500;

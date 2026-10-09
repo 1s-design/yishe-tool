@@ -28,7 +28,7 @@
           class="project-card project-gallery-card group"
         >
           <!-- 缩略图预览 -->
-          <div class="relative overflow-hidden rounded-md bg-[var(--1s-control-surface-muted)] aspect-[4/3]">
+          <div class="relative overflow-hidden  bg-[var(--1s-control-surface-muted)] aspect-[4/3]">
             <s1-img
               padding="5%"
               :src="item.url"
@@ -39,7 +39,7 @@
               v-if="currentEditingCustomStickerId === item.id"
               class="absolute top-2 left-2 z-10"
             >
-              <Badge class="bg-amber-500 text-white font-medium text-[10px] shadow-sm">
+              <Badge class="bg-amber-500 text-white font-medium text-[10px] -sm">
                 当前编辑中
               </Badge>
             </div>

@@ -84,7 +84,7 @@ defineExpose({
   right: 3em;
   bottom: 3em;
   border: 5px solid #fff;
-  box-shadow: 0px 10px 15px 0px rgba(0, 0, 0, 0.3);
+  box-: none;
   border-radius: 1em;
   background-color: #fff;
   z-index: 10;

@@ -15,7 +15,7 @@
 
       <operateItemBarcodeWidth v-model="currentOperatingCanvasChild.width">
       </operateItemBarcodeWidth>
-      <div class="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">该宽度指定的是条形码单个线的宽度</div>
+      <div class=" border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">该宽度指定的是条形码单个线的宽度</div>
 
       <operateItemBarcodeHeight v-model="currentOperatingCanvasChild.height">
       </operateItemBarcodeHeight>

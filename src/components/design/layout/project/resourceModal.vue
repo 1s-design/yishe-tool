@@ -325,14 +325,14 @@ const activeComponent = computed(() => {
   flex-direction: column;
   overflow: hidden;
   padding: 6px;
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 10px;
   background: var(--1s-surface-background);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box- 0.15s ease;
 
   &:hover {
     border-color: color-mix(in srgb, var(--1s-accent-color) 45%, var(--1s-border-color));
-    box-shadow: var(--1s-shadow-md);
+    box-: none;
   }
 
   &__media {
@@ -383,7 +383,7 @@ const activeComponent = computed(() => {
   align-items: center;
   justify-content: center;
   padding: 0 6px;
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 5px;
   background: var(--1s-control-surface-muted);
   color: var(--1s-text-color-secondary);

@@ -513,15 +513,15 @@ function useCurrentFiter(effect: SvgFilterCustomEffectType) {
     width: 88px;
     height: 88px;
     overflow: hidden;
-    transition: box-shadow 0.1s;
+    transition: box- 0.1s;
     border-radius: var(--1s-radius-small);
     cursor: pointer;
-    box-shadow: 0 0 0 1px var(--1s-border-color);
+    box-: none;
   }
 
   &.checked {
     .preview-box {
-      box-shadow: 0 0 0 2px var(--1s-accent-color);
+      box-: none;
     }
   }
 

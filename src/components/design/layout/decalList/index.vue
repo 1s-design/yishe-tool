@@ -155,8 +155,8 @@ const decals = computed(() => currentModelController.value?.decalControllers ?? 
   height: 24px;
   flex-shrink: 0;
   overflow: hidden;
-  border: 1px solid var(--1s-control-border-color);
-  border-radius: var(--1s-control-radius-sm);
+  border: 1px solid var(--1s-border-color);
+  border-radius: 0;
   background: var(--1s-control-surface-muted);
 
   :deep(img) {

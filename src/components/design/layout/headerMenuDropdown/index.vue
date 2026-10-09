@@ -51,7 +51,7 @@ onBeforeUnmount(() => document.body.removeEventListener("click", closeDropdown))
   justify-content: center;
   width: var(--1s-control-h-md);
   height: var(--1s-control-h-md);
-  border-radius: var(--1s-control-radius);
+  border-radius: 0;
   color: var(--1s-text-color-secondary);
 
   &:hover {

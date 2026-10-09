@@ -147,7 +147,7 @@
         <div class="flex flex-col sm:flex-row gap-4 items-center py-2">
           <s1-img
             :src="currentItem.thumbnail"
-            class="w-48 h-48 rounded-lg object-contain bg-[var(--1s-control-surface-muted)] border border-[var(--1s-border-color)] flex-shrink-0"
+            class="w-48 h-48  object-contain bg-[var(--1s-control-surface-muted)] border border-[var(--1s-border-color)] flex-shrink-0"
           />
           <div class="flex flex-col gap-2 flex-1 min-w-0">
             <div>

@@ -125,7 +125,7 @@
 
       <!-- 用户 -->
       <user-avatar v-if="loginStatusStore.isLogin" />
-      <Button v-else @click="login" variant="default" size="sm" class="h-6 px-2.5 text-[11px] rounded-md">登录</Button>
+      <Button v-else @click="login" variant="default" size="sm" class="h-6 px-2.5 text-[11px] ">登录</Button>
     </div>
 
     <DownloadModal v-model:open="showDownloadModal" />
@@ -372,10 +372,10 @@ function confirmExitEditMode() {
 
 .designiy-header__ghost-btn {
   background: none;
-  border: none;
+  border: 1px solid var(--1s-dialog-border);
   height: var(--1s-control-h-sm);
   padding: 0 8px;
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
   font-family: inherit;
   font-size: var(--1s-control-font);
   font-weight: 500;
@@ -393,7 +393,7 @@ function confirmExitEditMode() {
   }
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+    box-: none;
   }
 }
 
@@ -418,8 +418,8 @@ function confirmExitEditMode() {
   justify-content: center;
   width: var(--1s-control-h-md);
   height: var(--1s-control-h-md);
-  border-radius: var(--1s-control-radius);
-  border: none;
+  border-radius: 0;
+  border: 1px solid var(--1s-dialog-border);
   background: none;
   color: var(--1s-text-color-secondary);
   cursor: pointer;
@@ -443,7 +443,7 @@ function confirmExitEditMode() {
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+    box-: none;
   }
 
   &--active,
@@ -516,8 +516,8 @@ function confirmExitEditMode() {
   gap: 5px;
   height: var(--1s-control-h-sm);
   padding: 0 8px;
-  border-radius: var(--1s-control-radius-sm);
-  border: none;
+  border-radius: 0;
+  border: 1px solid var(--1s-dialog-border);
   background: none;
   color: var(--1s-text-color-secondary);
   font-family: inherit;
@@ -544,7 +544,7 @@ function confirmExitEditMode() {
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+    box-: none;
   }
 
   &--active {

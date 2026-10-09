@@ -19,19 +19,19 @@
             <!-- 服务端代理 -->
             <button
               type="button"
-              class="flex flex-col items-start gap-2 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+              class="flex flex-col items-start gap-2 p-3  border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
               :class="form.mode === 'proxy' ? 'border-primary bg-primary/10 text-foreground font-[550]' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.mode = 'proxy'"
             >
               <div class="absolute top-2.5 right-2.5">
-                <div v-if="form.mode === 'proxy'" class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30">
+                <div v-if="form.mode === 'proxy'" class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground -sm ring-2 ring-primary/30">
                   <Check class="h-3 w-3 stroke-[3.5]" />
                 </div>
                 <div v-else class="h-4.5 w-4.5 rounded-full border-2 border-dashed border-border/80 bg-background/40" />
               </div>
 
               <div class="flex items-center gap-1.5">
-                <div class="flex h-6 w-6 items-center justify-center rounded-md" :class="form.mode === 'proxy' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-muted text-muted-foreground/60'">
+                <div class="flex h-6 w-6 items-center justify-center " :class="form.mode === 'proxy' ? 'bg-primary text-primary-foreground ' : 'bg-muted text-muted-foreground/60'">
                   <Zap class="h-3.5 w-3.5" />
                 </div>
                 <span class="text-xs" :class="form.mode === 'proxy' ? 'font-bold text-foreground' : 'font-medium'">服务端代理</span>
@@ -45,19 +45,19 @@
             <!-- 前端直连 -->
             <button
               type="button"
-              class="flex flex-col items-start gap-2 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+              class="flex flex-col items-start gap-2 p-3  border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
               :class="form.mode === 'direct' ? 'border-primary bg-primary/10 text-foreground font-[550]' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.mode = 'direct'"
             >
               <div class="absolute top-2.5 right-2.5">
-                <div v-if="form.mode === 'direct'" class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30">
+                <div v-if="form.mode === 'direct'" class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground -sm ring-2 ring-primary/30">
                   <Check class="h-3 w-3 stroke-[3.5]" />
                 </div>
                 <div v-else class="h-4.5 w-4.5 rounded-full border-2 border-dashed border-border/80 bg-background/40" />
               </div>
 
               <div class="flex items-center gap-1.5">
-                <div class="flex h-6 w-6 items-center justify-center rounded-md" :class="form.mode === 'direct' ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-muted text-muted-foreground/60'">
+                <div class="flex h-6 w-6 items-center justify-center " :class="form.mode === 'direct' ? 'bg-primary text-primary-foreground ' : 'bg-muted text-muted-foreground/60'">
                   <Link2 class="h-3.5 w-3.5" />
                 </div>
                 <span class="text-xs" :class="form.mode === 'direct' ? 'font-bold text-foreground' : 'font-medium'">前端直连</span>
@@ -70,22 +70,22 @@
         </div>
 
         <!-- 2. 直连模式专属配置 (当开启直连时高亮展开) -->
-        <div v-if="form.mode === 'direct'" class="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3.5 animate-in fade-in-50 duration-200">
+        <div v-if="form.mode === 'direct'" class="space-y-3  border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3.5 animate-in fade-in-50 duration-200">
           <div class="flex items-center justify-between">
             <span class="font-bold text-foreground text-xs">直连凭证来源</span>
             <div class="flex items-center gap-1.5">
               <button
                 type="button"
-                class="px-2 py-0.5 rounded-md text-[11px] font-medium transition-all"
-                :class="form.directKeySource === 'system' ? 'bg-primary text-primary-foreground font-bold shadow-xs' : 'bg-background/80 text-muted-foreground hover:text-foreground border border-border/60'"
+                class="px-2 py-0.5  text-[11px] font-medium transition-all"
+                :class="form.directKeySource === 'system' ? 'bg-primary text-primary-foreground font-bold ' : 'bg-background/80 text-muted-foreground hover:text-foreground border border-border/60'"
                 @click="form.directKeySource = 'system'"
               >
                 系统解密 Key
               </button>
               <button
                 type="button"
-                class="px-2 py-0.5 rounded-md text-[11px] font-medium transition-all"
-                :class="form.directKeySource === 'custom' ? 'bg-primary text-primary-foreground font-bold shadow-xs' : 'bg-background/80 text-muted-foreground hover:text-foreground border border-border/60'"
+                class="px-2 py-0.5  text-[11px] font-medium transition-all"
+                :class="form.directKeySource === 'custom' ? 'bg-primary text-primary-foreground font-bold ' : 'bg-background/80 text-muted-foreground hover:text-foreground border border-border/60'"
                 @click="form.directKeySource = 'custom'"
               >
                 自定义 API
@@ -136,7 +136,7 @@
         </div>
 
         <!-- 3. 连通性测试区 -->
-        <div class="rounded-lg border border-border/70 bg-card p-3 space-y-2">
+        <div class=" border border-border/70 bg-card p-3 space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-medium text-foreground text-xs">网络连通性诊断</span>
             <Button
@@ -155,7 +155,7 @@
           <!-- 测试结果 -->
           <div
             v-if="testResult"
-            class="rounded-lg p-2 text-xs flex items-start gap-2 border"
+            class=" p-2 text-xs flex items-start gap-2 border"
             :class="testResult.success ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200' : 'bg-destructive/10 border-destructive/30 text-destructive'"
           >
             <CheckCircle2 v-if="testResult.success" class="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />

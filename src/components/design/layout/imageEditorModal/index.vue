@@ -102,7 +102,7 @@ if (typeof window !== 'undefined') {
 
 .image-editor-close-btn {
   background: var(--1s-surface-background);
-  box-shadow: none;
+  box-: none;
 }
 
 // 动画效果

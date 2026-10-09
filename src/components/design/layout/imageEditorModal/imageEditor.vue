@@ -1984,8 +1984,8 @@ onUnmounted(() => {
 }
 
 .fabric-canvas {
-  border: 1px solid var(--1s-border-color);
-  box-shadow: none;
+  border: 1px solid var(--1s-dialog-border);
+  box-: none;
   background: var(--1s-surface-background);
   display: block;
   max-width: 100%;

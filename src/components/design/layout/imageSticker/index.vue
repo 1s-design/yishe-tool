@@ -3,7 +3,7 @@
     <div class="designiy-image-sticker-header">
       <div class="relative w-full">
         <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-        <Input v-model="input" placeholder="搜索贴纸" class="pl-8 pr-8 bg-[#f6f6f6] shadow-none text-xs" />
+        <Input v-model="input" placeholder="搜索贴纸" class="pl-8 pr-8 bg-[#f6f6f6] -none text-xs" />
         <SlidersHorizontal class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
       </div>
     </div>

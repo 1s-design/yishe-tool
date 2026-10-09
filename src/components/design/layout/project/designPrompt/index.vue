@@ -175,7 +175,7 @@
               v-model="formData.content"
               rows="5"
               placeholder="输入完整的 Prompt 描述文本..."
-              class="flex w-full rounded-lg border border-[var(--1s-border-color)] bg-[var(--1s-control-surface-muted)] px-3 py-2 text-xs text-[var(--1s-text-color)] placeholder:text-[var(--1s-text-color-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--1s-accent-color)]"
+              class="flex w-full  border border-[var(--1s-border-color)] bg-[var(--1s-control-surface-muted)] px-3 py-2 text-xs text-[var(--1s-text-color)] placeholder:text-[var(--1s-text-color-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--1s-accent-color)]"
             ></textarea>
           </div>
         </div>
@@ -374,13 +374,13 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   background: var(--1s-surface-background);
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: var(--1s-radius-lg);
   padding: 16px;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 
   &:hover {
-    box-shadow: var(--1s-shadow-md);
+    box-: none;
     border-color: var(--1s-accent-color);
   }
 

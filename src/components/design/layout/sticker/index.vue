@@ -227,8 +227,8 @@ getList();
 
 .skeleton-item {
   overflow: hidden;
-  border: 1px solid var(--1s-control-border-color);
-  border-radius: var(--1s-control-radius);
+  border: none;
+  border-radius: 0;
   background: var(--1s-control-surface-background);
 }
 
@@ -286,8 +286,8 @@ getList();
   width: 100%;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--1s-control-border-color);
-  border-radius: var(--1s-control-radius);
+  border: none;
+  border-radius: 0;
   background: var(--1s-control-surface-background);
   transition: var(--1s-control-transition);
 
@@ -326,7 +326,7 @@ getList();
   width: auto;
   height: auto;
   object-fit: contain;
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
 }
 
 .code-badge {
@@ -335,7 +335,7 @@ getList();
   right: 5px;
   padding: 2px 5px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
   background: rgba(0, 0, 0, 0.68);
   color: #fff;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

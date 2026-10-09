@@ -71,7 +71,7 @@
           >
             <div class="text-[11px] text-muted-foreground shrink-0">当前选中</div>
             <div class="flex items-center gap-2 min-w-0 flex-1">
-              <div class="w-10 h-10 rounded-md overflow-hidden border border-border bg-background shrink-0">
+              <div class="w-10 h-10  overflow-hidden border border-border bg-background shrink-0">
                 <desimage
                   v-if="(pendingFont || model)?.thumbnail"
                   :src="(pendingFont || model)!.thumbnail"
@@ -645,17 +645,17 @@ watch(
   overflow: hidden;
   cursor: pointer;
   background: var(--1s-surface-background, transparent);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box- 0.15s ease;
 }
 
 .font-card:hover {
   border-color: var(--1s-accent-color);
-  box-shadow: var(--1s-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
+  box-: none;
 }
 
 .font-card--selected {
   border-color: var(--1s-accent-color);
-  box-shadow: 0 0 0 1px var(--1s-accent-color);
+  box-: none;
 }
 
 .font-card__thumb {
@@ -753,7 +753,7 @@ watch(
 .font-detail-preview {
   width: 100%;
   height: 180px;
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 8px;
   overflow: hidden;
   background: var(--1s-control-surface-muted);

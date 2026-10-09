@@ -47,7 +47,7 @@ function formatDate(date) {
 <style lang="less" scoped>
 .decal-tooltip {
   display: flex;
-  box-shadow: var(--1s-shadow-popover);
+  box-: none;
   background-color: var(--1s-surface-background);
   border-radius: var(--1s-radius-medium);
   padding: 8px;

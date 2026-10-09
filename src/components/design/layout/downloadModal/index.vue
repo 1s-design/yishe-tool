@@ -3,7 +3,7 @@
     <DialogContent class="sm:max-w-[580px] p-6 gap-5">
       <DialogHeader class="space-y-1.5 text-left">
         <DialogTitle class="text-lg font-bold flex items-center gap-2">
-          <div class="h-7 w-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+          <div class="h-7 w-7  bg-primary/10 text-primary flex items-center justify-center">
             <Download class="h-4 w-4" />
           </div>
           <span>下载客户端与插件</span>
@@ -17,11 +17,11 @@
         <div
           v-for="card in cards"
           :key="card.key"
-          class="flex flex-col justify-between p-4 rounded-lg bg-muted/40 border border-border/60 hover:border-primary/40 transition-colors gap-3"
+          class="flex flex-col justify-between p-4  bg-muted/40 border border-border/60 hover:border-primary/40 transition-colors gap-3"
         >
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-3">
-              <div class="h-9 w-9 rounded-lg bg-background border border-border flex items-center justify-center text-foreground shrink-0 shadow-xs">
+              <div class="h-9 w-9  bg-background border border-border flex items-center justify-center text-foreground shrink-0 ">
                 <Monitor v-if="card.key === 'client-unified'" class="h-5 w-5 text-indigo-500" />
                 <Puzzle v-else class="h-5 w-5 text-emerald-500" />
               </div>
@@ -45,7 +45,7 @@
               :key="action.key"
               size="sm"
               :variant="action.key === 'windows' || action.key === 'extension-zip' ? 'default' : 'outline'"
-              class="h-8 text-xs gap-1.5 px-3 rounded-lg"
+              class="h-8 text-xs gap-1.5 px-3 "
               :disabled="!action.downloadUrl"
               @click="handleDownload(action.downloadUrl)"
             >

@@ -233,7 +233,7 @@ function applyTemplate(template: HtmlTemplateDefinition) {
 
 .html-template-library__card {
   height: 100%;
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 24px;
   background: var(--1s-surface-background);
   overflow: hidden;
@@ -259,7 +259,7 @@ function applyTemplate(template: HtmlTemplateDefinition) {
   height: 220px;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  box-: none;
   background: var(--1s-surface-background);
 }
 

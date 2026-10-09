@@ -114,7 +114,7 @@
                   {{ file.name }}
                 </div>
               </div>
-              <div class="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">该图片会作为字体预览图，并且可以手动调整内容</div>
+              <div class=" border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">该图片会作为字体预览图，并且可以手动调整内容</div>
             </template>
 
             <template v-if="Utils.type.isModelName(file.name)">

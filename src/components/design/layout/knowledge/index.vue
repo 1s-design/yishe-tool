@@ -331,7 +331,7 @@ function handleEditSuccess() {
 
 .knowledge-card {
   padding: 16px;
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;

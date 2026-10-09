@@ -406,13 +406,13 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   background: var(--1s-surface-background);
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: var(--1s-radius-lg);
   padding: 16px;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 
   &:hover {
-    box-shadow: var(--1s-shadow-md);
+    box-: none;
     border-color: var(--1s-accent-color);
   }
 

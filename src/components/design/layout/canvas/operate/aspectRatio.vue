@@ -95,8 +95,8 @@ function apply(item: { label: string; value: number }) {
   height: 26px;
   min-width: 0;
   padding: 0 6px;
-  border: 1px solid var(--1s-control-border-color);
-  border-radius: var(--1s-control-radius);
+  border: none;
+  border-radius: 0;
   background: var(--1s-surface-background);
   color: var(--1s-text-color);
   font-size: var(--1s-control-font-md);

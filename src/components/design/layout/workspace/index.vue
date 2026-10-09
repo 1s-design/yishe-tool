@@ -211,7 +211,7 @@ function clear() {
   height: 32px;
   min-height: 32px;
   text-align: left;
-  border: none;
+  border: 1px solid var(--1s-border-color);
   background: transparent;
   color: inherit;
   font-family: inherit;

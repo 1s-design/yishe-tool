@@ -80,7 +80,7 @@ function close() {
 .designiy-dialog {
   background: var(--1s-container-background);
   position: fixed;
-  border-radius: var(--1s-control-radius);
+  border-radius: 0;
 
   * {
     pointer-events: auto !important;

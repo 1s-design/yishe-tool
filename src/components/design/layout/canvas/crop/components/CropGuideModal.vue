@@ -680,7 +680,7 @@ const canvasAreaStyle = computed((): CSSProperties => {
     height: `${h * scale}px`,
     backgroundColor: 'var(--1s-checkerboard-base, #ffffff)',
     border: '2px solid var(--1s-border-color-strong, rgba(0,0,0,0.18))',
-    boxShadow: 'var(--1s-shadow-md)',
+    boxShadow: 'var(--1s--md)',
     position: 'relative',
     overflow: 'hidden',
   }
@@ -1130,14 +1130,14 @@ function getCropFrameStyle(item: { guide: any; preset: any; region: any }): CSSP
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: none;
+  border: 1px solid var(--1s-dialog-border);
   background: var(--1s-surface-background, #ffffff);
   color: var(--1s-text-color, #1f1f1f);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--1s-shadow-md);
+  box-: none;
   transition: background-color 0.15s;
 }
 
@@ -1214,7 +1214,7 @@ function getCropFrameStyle(item: { guide: any; preset: any; region: any }): CSSP
     linear-gradient(-45deg, transparent 75%, var(--1s-checkerboard-cell-dark, #f0f2f5) 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0;
-  box-shadow: var(--1s-shadow-md);
+  box-: none;
   transition: width var(--1s-duration-base, 120ms), height var(--1s-duration-base, 120ms);
 }
 
@@ -1235,7 +1235,7 @@ function getCropFrameStyle(item: { guide: any; preset: any; region: any }): CSSP
   border-radius: var(--1s-radius-xs, 4px);
   pointer-events: none;
   white-space: nowrap;
-  box-shadow: var(--1s-shadow-xs);
+  box-: none;
 }
 
 .crop-guide-fullscreen__crop-frame {

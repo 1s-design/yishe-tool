@@ -54,6 +54,7 @@ function buildRolePrompt(): string {
 - 用户要求修改/迭代现有设计时，不要清空画布，直接修改
 - **简单属性修改走快速路径**：改颜色→canvas.elementStyle；改文字→canvas.textContent；改字体→canvas.textStyle。一次调用完成，不要拆成多步
 - **不要在修改后再调 canvas.analyze**：除非用户明确要求分析
+- **强制使用代码画布**：所有设计必须通过 canvas.addHtml 创建 HTML/CSS 实现，禁止使用 canvas.addChild 添加 text、image、rect、ellipse、background 等子元素
 - 主要视觉作品使用 canvas.addHtml 创建；再次调用 canvas.addHtml 会替换当前 HTML 作品
 - 流程图/思维导图可用 canvas.addDiagram，数据图表可用 canvas.addChart
 - 每次只调用一个工具，完成后根据结果决定下一步

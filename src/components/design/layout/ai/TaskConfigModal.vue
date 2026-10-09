@@ -24,18 +24,18 @@
             <!-- 单图设计 -->
             <button
               type="button"
-              class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+              class="flex flex-col items-start gap-2.5 p-3  border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
               :class="form.outputKind === 'single' ? 'border-primary bg-primary/10 text-foreground font-[550]' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="setFormat('single')"
             >
               <div class="absolute top-2.5 right-2.5">
-                <div v-if="form.outputKind === 'single'" class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30">
+                <div v-if="form.outputKind === 'single'" class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground -sm ring-2 ring-primary/30">
                   <Check class="h-3 w-3 stroke-[3.5]" />
                 </div>
                 <div v-else class="h-4.5 w-4.5 rounded-full border-2 border-dashed border-border/80 bg-background/40" />
               </div>
 
-              <div class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors" :class="form.outputKind === 'single' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/80 text-muted-foreground/60'">
+              <div class="flex h-7 w-7 items-center justify-center  transition-colors" :class="form.outputKind === 'single' ? 'bg-primary text-primary-foreground -sm' : 'bg-muted/80 text-muted-foreground/60'">
                 <Palette class="h-4 w-4" />
               </div>
               <div>
@@ -47,18 +47,18 @@
             <!-- 系列组图 -->
             <button
               type="button"
-              class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+              class="flex flex-col items-start gap-2.5 p-3  border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
               :class="form.outputKind === 'group' ? 'border-primary bg-primary/10 text-foreground font-[550]' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="setFormat('group')"
             >
               <div class="absolute top-2.5 right-2.5">
-                <div v-if="form.outputKind === 'group'" class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30">
+                <div v-if="form.outputKind === 'group'" class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground -sm ring-2 ring-primary/30">
                   <Check class="h-3 w-3 stroke-[3.5]" />
                 </div>
                 <div v-else class="h-4.5 w-4.5 rounded-full border-2 border-dashed border-border/80 bg-background/40" />
               </div>
 
-              <div class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors" :class="form.outputKind === 'group' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/80 text-muted-foreground/60'">
+              <div class="flex h-7 w-7 items-center justify-center  transition-colors" :class="form.outputKind === 'group' ? 'bg-primary text-primary-foreground -sm' : 'bg-muted/80 text-muted-foreground/60'">
                 <Layers class="h-4 w-4" />
               </div>
               <div>
@@ -71,13 +71,13 @@
 
         <!-- 2. 数量与套数设置 -->
         <!-- 单图模式下的数量设置 -->
-        <div v-if="form.outputKind === 'single'" class="space-y-2 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200">
+        <div v-if="form.outputKind === 'single'" class="space-y-2  border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3  animate-in fade-in-50 duration-200">
           <div class="flex items-center justify-between">
             <div class="font-bold text-foreground text-xs flex items-center gap-1.5">
               <Palette class="h-3.5 w-3.5 text-primary" />
               <span>生成张数设置</span>
             </div>
-            <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-primary text-primary-foreground shadow-xs">
+            <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-primary text-primary-foreground ">
               {{ form.jobCount || 1 }} 张
             </span>
           </div>
@@ -97,20 +97,20 @@
         </div>
 
         <!-- 组图模式下的张数与套数设置 -->
-        <div v-if="form.outputKind === 'group'" class="space-y-2.5 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200">
+        <div v-if="form.outputKind === 'group'" class="space-y-2.5  border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3  animate-in fade-in-50 duration-200">
           <div class="flex items-center justify-between">
             <div class="font-bold text-foreground text-xs flex items-center gap-1.5">
               <Layers class="h-3.5 w-3.5 text-primary" />
               <span>组图张数与套数设置</span>
             </div>
-            <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-primary text-primary-foreground shadow-xs">
+            <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-primary text-primary-foreground ">
               共 {{ (form.jobCount || 1) * (form.memberCount || 4) }} 张贴纸
             </span>
           </div>
 
           <div class="grid grid-cols-2 gap-2.5 pt-1">
             <!-- 每套张数 -->
-            <div class="space-y-1 bg-background/70 p-2 rounded-lg border border-border/60">
+            <div class="space-y-1 bg-background/70 p-2  border border-border/60">
               <div class="flex items-center justify-between text-[11px]">
                 <span class="text-muted-foreground font-medium">每套组图张数:</span>
                 <span class="font-bold text-primary font-mono">{{ form.memberCount || 4 }} 张/套</span>
@@ -126,7 +126,7 @@
             </div>
 
             <!-- 套组数量 -->
-            <div class="space-y-1 bg-background/70 p-2 rounded-lg border border-border/60">
+            <div class="space-y-1 bg-background/70 p-2  border border-border/60">
               <div class="flex items-center justify-between text-[11px]">
                 <span class="text-muted-foreground font-medium">生成组图套数:</span>
                 <span class="font-bold text-primary font-mono">{{ form.jobCount || 1 }} 套</span>
@@ -153,15 +153,15 @@
           <div class="grid grid-cols-2 gap-2.5">
             <button
               type="button"
-              class="flex items-center justify-between p-2.5 rounded-lg border-2 text-left transition-all duration-150 relative select-none cursor-pointer"
-              :class="form.source === 'blank' && form.intent !== 'edit' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
+              class="flex items-center justify-between p-2.5  border-2 text-left transition-all duration-150 relative select-none cursor-pointer"
+              :class="form.source === 'blank' && form.intent !== 'edit' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30  opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.source = 'blank'; form.intent = 'create'"
             >
               <div class="flex items-center gap-2">
                 <Sparkles class="h-3.5 w-3.5" :class="form.source === 'blank' && form.intent !== 'edit' ? 'text-primary' : 'text-muted-foreground/60'" />
                 <span>从零全新设计 (清空画布)</span>
               </div>
-              <div v-if="form.source === 'blank' && form.intent !== 'edit'" class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs shrink-0">
+              <div v-if="form.source === 'blank' && form.intent !== 'edit'" class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-primary text-primary-foreground  shrink-0">
                 <Check class="h-2.5 w-2.5 stroke-[3.5]" />
               </div>
               <div v-else class="h-4.5 w-4.5 rounded-full border-2 border-dashed border-border/80 bg-background/40 shrink-0" />
@@ -169,15 +169,15 @@
 
             <button
               type="button"
-              class="flex items-center justify-between p-2.5 rounded-lg border-2 text-left transition-all duration-150 relative select-none cursor-pointer"
-              :class="form.source === 'current-canvas' || form.intent === 'edit' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
+              class="flex items-center justify-between p-2.5  border-2 text-left transition-all duration-150 relative select-none cursor-pointer"
+              :class="form.source === 'current-canvas' || form.intent === 'edit' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30  opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.source = 'current-canvas'; form.intent = 'edit'"
             >
               <div class="flex items-center gap-2">
                 <Edit3 class="h-3.5 w-3.5" :class="form.source === 'current-canvas' || form.intent === 'edit' ? 'text-primary' : 'text-muted-foreground/60'" />
                 <span>基于当前画布修改优化</span>
               </div>
-              <div v-if="form.source === 'current-canvas' || form.intent === 'edit'" class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs shrink-0">
+              <div v-if="form.source === 'current-canvas' || form.intent === 'edit'" class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-primary text-primary-foreground  shrink-0">
                 <Check class="h-2.5 w-2.5 stroke-[3.5]" />
               </div>
               <div v-else class="h-4.5 w-4.5 rounded-full border-2 border-dashed border-border/80 bg-background/40 shrink-0" />
@@ -191,33 +191,33 @@
           <div class="grid grid-cols-3 gap-2.5">
             <button
               type="button"
-              class="p-2.5 rounded-lg border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
-              :class="form.delivery === 'canvas' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
+              class="p-2.5  border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
+              :class="form.delivery === 'canvas' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30  opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.delivery = 'canvas'"
             >
-              <div v-if="form.delivery === 'canvas'" class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs">
+              <div v-if="form.delivery === 'canvas'" class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground ">
                 <Check class="h-2 w-2 stroke-[3.5]" />
               </div>
               <span>仅渲染到画布</span>
             </button>
             <button
               type="button"
-              class="p-2.5 rounded-lg border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
-              :class="form.delivery === 'save' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
+              class="p-2.5  border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
+              :class="form.delivery === 'save' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30  opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.delivery = 'save'"
             >
-              <div v-if="form.delivery === 'save'" class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs">
+              <div v-if="form.delivery === 'save'" class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground ">
                 <Check class="h-2 w-2 stroke-[3.5]" />
               </div>
               <span>自动保存为贴纸</span>
             </button>
             <button
               type="button"
-              class="p-2.5 rounded-lg border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
-              :class="form.delivery === 'export' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30 shadow-xs opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
+              class="p-2.5  border-2 text-center transition-all duration-150 text-xs flex items-center justify-center gap-1.5 select-none cursor-pointer"
+              :class="form.delivery === 'export' ? 'border-primary bg-primary/20 dark:bg-primary/30 text-foreground font-bold ring-2 ring-primary/30  opacity-100' : 'border-border/70 bg-transparent text-muted-foreground hover:bg-muted/30 opacity-70'"
               @click="form.delivery = 'export'"
             >
-              <div v-if="form.delivery === 'export'" class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs">
+              <div v-if="form.delivery === 'export'" class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground ">
                 <Check class="h-2 w-2 stroke-[3.5]" />
               </div>
               <span>直接下载 PNG</span>

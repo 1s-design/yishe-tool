@@ -197,7 +197,7 @@ watch(show, async (val) => {
     background: var(--1s-control-surface-background);
     padding: 2px 6px;
     border-radius: 999px;
-    border: 1px solid var(--1s-control-border-color);
+    border: none;
     
     gap: 4px;
 }

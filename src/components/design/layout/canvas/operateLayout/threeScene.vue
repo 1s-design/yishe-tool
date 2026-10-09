@@ -825,14 +825,14 @@ function getLightTypeLabel(type: string) {
     position: relative;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--1s-border-color);
+    border: 1px solid var(--1s-dialog-border);
     border-radius: 8px;
     background: var(--1s-surface-background);
     overflow: hidden;
     padding: 0;
     text-align: left;
     cursor: pointer;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    transition: border-color 0.2s ease, box- 0.2s ease, transform 0.2s ease;
 }
 
 .three-scene-asset-card:hover,

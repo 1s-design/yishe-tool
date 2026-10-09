@@ -4,7 +4,7 @@
       <div
         v-for="t in toasts"
         :key="t.id"
-        class="pointer-events-auto min-w-[240px] max-w-[360px] rounded-[var(--1s-radius-large)] border p-3 shadow-lg"
+        class="pointer-events-auto min-w-[240px] max-w-[360px] rounded-lg border p-3 shadow-lg"
         style="
           background-color: var(--1s-menu-background);
           border-color: var(--1s-menu-border);

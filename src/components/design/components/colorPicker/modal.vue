@@ -509,11 +509,11 @@ function getDisplayColor(color: string) {
     .expert-preview-box {
       aspect-ratio: 1;
       border-radius: 12px;
-      border: 1px solid var(--1s-border-color);
+      border: 1px solid var(--1s-dialog-border);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: none;
+      box-: none;
       transition: all 0.3s ease;
 
       .preview-text {

@@ -349,15 +349,15 @@ watch(() => messages.value.length, scrollToBottom);
   width: 36px;
   height: 36px;
   padding: 0;
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 50%;
   background: var(--1s-elevated-background);
-  box-shadow: 0 14px 34px rgba(37, 47, 88, 0.18);
+  box-: none;
   color: var(--1s-text-color);
   cursor: pointer;
   transition:
     transform 0.22s ease,
-    box-shadow 0.22s ease,
+    box- 0.22s ease,
     border-color 0.22s ease;
   position: relative;
   display: flex;
@@ -365,7 +365,7 @@ watch(() => messages.value.length, scrollToBottom);
   justify-content: center;
   &:hover {
     border-color: var(--1s-accent-color);
-    box-shadow: var(--1s-shadow-popover);
+    box-: none;
   }
 
   &--active {
@@ -399,9 +399,9 @@ watch(() => messages.value.length, scrollToBottom);
   width: 380px;
   height: 520px;
   background: var(--1s-surface-background);
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 18px;
-  box-shadow: var(--1s-shadow-lg);
+  box-: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -608,7 +608,7 @@ watch(() => messages.value.length, scrollToBottom);
 .option-btn {
   padding: 10px 14px;
   background: var(--1s-control-surface-muted);
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;

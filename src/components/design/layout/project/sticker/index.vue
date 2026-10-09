@@ -440,7 +440,7 @@ function onImageLoad(event: any) {
   background: var(--1s-control-surface-muted);
   padding: 16px;
   border-radius: var(--1s-radius-lg);
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   display: flex;
   justify-content: center;
   align-items: center;

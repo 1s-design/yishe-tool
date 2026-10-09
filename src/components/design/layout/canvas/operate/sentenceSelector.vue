@@ -23,7 +23,7 @@
           <div
             v-for="item in filteredList"
             :key="item.id"
-            class="sentence-item p-3 border border-gray-200 rounded-lg mb-2 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            class="sentence-item p-3 border border-gray-200  mb-2 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
             @click="selectSentence(item)"
           >
             <div class="text-lg font-medium text-gray-800 mb-1">

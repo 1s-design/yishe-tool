@@ -10,7 +10,7 @@
             padding="5%"
             :src="item.thumbnail"
             @click="itemClick(item)"
-            class="project-thumb w-[240px] !h-[180px] rounded-lg flex-shrink-0"
+            class="project-thumb w-[240px] !h-[180px]  flex-shrink-0"
           >
           </s1-image>
           <div class="bar flex items-center justify-between w-full mt-2 px-2">

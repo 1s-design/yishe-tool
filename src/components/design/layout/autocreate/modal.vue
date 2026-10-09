@@ -29,7 +29,7 @@
               <!-- 单图设计 -->
               <button
                 type="button"
-                class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+                class="flex flex-col items-start gap-2.5 p-3  border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
                 :class="
                   config.outputKind === 'independent-batch'
                     ? 'border-primary bg-primary/10 text-foreground font-[550]'
@@ -40,7 +40,7 @@
                 <div class="absolute top-2.5 right-2.5">
                   <div
                     v-if="config.outputKind === 'independent-batch'"
-                    class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
+                    class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground -sm ring-2 ring-primary/30"
                   >
                     <Check class="h-3 w-3 stroke-[3.5]" />
                   </div>
@@ -51,10 +51,10 @@
                 </div>
 
                 <div
-                  class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                  class="flex h-7 w-7 items-center justify-center  transition-colors"
                   :class="
                     config.outputKind === 'independent-batch'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-primary text-primary-foreground -sm'
                       : 'bg-muted/80 text-muted-foreground/60'
                   "
                 >
@@ -80,7 +80,7 @@
               <!-- 系列组图 -->
               <button
                 type="button"
-                class="flex flex-col items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
+                class="flex flex-col items-start gap-2.5 p-3  border-2 text-left transition-all duration-150 relative overflow-hidden select-none cursor-pointer"
                 :class="
                   config.outputKind === 'group'
                     ? 'border-primary bg-primary/10 text-foreground font-[550]'
@@ -91,7 +91,7 @@
                 <div class="absolute top-2.5 right-2.5">
                   <div
                     v-if="config.outputKind === 'group'"
-                    class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
+                    class="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground -sm ring-2 ring-primary/30"
                   >
                     <Check class="h-3 w-3 stroke-[3.5]" />
                   </div>
@@ -102,10 +102,10 @@
                 </div>
 
                 <div
-                  class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                  class="flex h-7 w-7 items-center justify-center  transition-colors"
                   :class="
                     config.outputKind === 'group'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-primary text-primary-foreground -sm'
                       : 'bg-muted/80 text-muted-foreground/60'
                   "
                 >
@@ -134,7 +134,7 @@
           <!-- 单图模式下的数量设置 -->
           <div
             v-if="config.outputKind === 'independent-batch'"
-            class="space-y-2 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200"
+            class="space-y-2  border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3  animate-in fade-in-50 duration-200"
           >
             <div class="flex items-center justify-between">
               <div class="font-bold text-foreground text-xs flex items-center gap-1.5">
@@ -142,7 +142,7 @@
                 <span>制作张数设置</span>
               </div>
               <span
-                class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-primary text-primary-foreground shadow-xs"
+                class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-primary text-primary-foreground "
               >
                 {{ config.count || 5 }} 张
               </span>
@@ -165,7 +165,7 @@
           <!-- 组图模式下的张数与套数设置 -->
           <div
             v-if="config.outputKind === 'group'"
-            class="space-y-2.5 rounded-lg border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3 shadow-xs animate-in fade-in-50 duration-200"
+            class="space-y-2.5  border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3  animate-in fade-in-50 duration-200"
           >
             <div class="flex items-center justify-between">
               <div class="font-bold text-foreground text-xs flex items-center gap-1.5">
@@ -173,7 +173,7 @@
                 <span>组图张数与套数设置</span>
               </div>
               <span
-                class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-primary text-primary-foreground shadow-xs"
+                class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-primary text-primary-foreground "
               >
                 共 {{ (config.count || 1) * (config.membersPerGroup || 2) }} 张贴纸
               </span>
@@ -181,7 +181,7 @@
 
             <div class="grid grid-cols-2 gap-2.5 pt-1">
               <!-- 每套张数 -->
-              <div class="space-y-1 bg-background/70 p-2 rounded-lg border border-border/60">
+              <div class="space-y-1 bg-background/70 p-2  border border-border/60">
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="text-muted-foreground font-medium">每套组图张数:</span>
                   <span class="font-bold text-primary font-mono">{{ config.membersPerGroup || 2 }} 张/套</span>
@@ -197,7 +197,7 @@
               </div>
 
               <!-- 套组数量 -->
-              <div class="space-y-1 bg-background/70 p-2 rounded-lg border border-border/60">
+              <div class="space-y-1 bg-background/70 p-2  border border-border/60">
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="text-muted-foreground font-medium">生成组图套数:</span>
                   <span class="font-bold text-primary font-mono">{{ config.count || 1 }} 套</span>
@@ -233,7 +233,7 @@
             <textarea
               v-model="config.description"
               rows="3"
-              class="w-full rounded-lg border border-border/80 bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all resize-none"
+              class="w-full  border border-border/80 bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all resize-none"
               placeholder="例如：做一组 1024x1024 的黄色咖啡猫咪贴纸，日系手账风，透明背景带白边，每张有不同姿态和短文案，合格后自动保存到素材库"
             />
           </div>
@@ -249,7 +249,7 @@
           </div>
 
           <!-- 5. 高级选项：分析优化 -->
-          <div class="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-border/50">
+          <div class="flex items-center justify-between p-2.5  bg-muted/20 border border-border/50">
             <div class="flex items-center gap-2">
               <input
                 id="enable-opt"
@@ -265,7 +265,7 @@
           </div>
 
           <!-- 6. 保持当前画布尺寸 -->
-          <div class="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-border/50">
+          <div class="flex items-center justify-between p-2.5  bg-muted/20 border border-border/50">
             <div class="flex items-center gap-2">
               <input
                 id="preserve-size"
@@ -301,7 +301,7 @@
             </Button>
             <Button
               size="sm"
-              class="text-xs font-bold px-4 gap-1.5 shadow-sm"
+              class="text-xs font-bold px-4 gap-1.5 -sm"
               :disabled="!canStart"
               @click="handleStart"
             >
@@ -337,7 +337,7 @@
 
         <div class="space-y-3.5 py-1 text-xs">
           <!-- 进度条与统计 -->
-          <div class="space-y-1.5 bg-muted/20 p-3 rounded-lg border border-border/60">
+          <div class="space-y-1.5 bg-muted/20 p-3  border border-border/60">
             <div class="flex items-center justify-between text-xs font-medium">
               <span class="text-muted-foreground">整体生产进度</span>
               <span class="font-bold text-foreground font-mono">
@@ -369,7 +369,7 @@
             <div
               v-for="item in batchProgress.items"
               :key="item.index"
-              class="flex items-center justify-between p-2 rounded-lg border text-xs transition-colors"
+              class="flex items-center justify-between p-2  border text-xs transition-colors"
               :class="
                 item.status === 'done'
                   ? 'border-emerald-500/30 bg-emerald-500/10 text-foreground'
@@ -379,7 +379,7 @@
                   ? 'border-amber-500/30 bg-amber-500/10 text-muted-foreground'
                   : item.status === 'pending'
                   ? 'border-border/40 bg-muted/10 text-muted-foreground'
-                  : 'border-primary/40 bg-primary/10 text-foreground font-bold shadow-xs'
+                  : 'border-primary/40 bg-primary/10 text-foreground font-bold '
               "
             >
               <div class="flex items-center gap-2 min-w-0">
@@ -477,25 +477,25 @@
         <div class="space-y-3 py-1 text-xs">
           <!-- 统计概览卡片 -->
           <div class="grid grid-cols-4 gap-2 text-center">
-            <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <div class="p-2  bg-emerald-500/10 border border-emerald-500/20">
               <div class="text-[10px] text-muted-foreground">成功入库</div>
               <div class="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400">
                 {{ successCount }}
               </div>
             </div>
-            <div class="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <div class="p-2  bg-amber-500/10 border border-amber-500/20">
               <div class="text-[10px] text-muted-foreground">已跳过</div>
               <div class="text-sm font-bold font-mono text-amber-600 dark:text-amber-400">
                 {{ skipCount }}
               </div>
             </div>
-            <div class="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+            <div class="p-2  bg-red-500/10 border border-red-500/20">
               <div class="text-[10px] text-muted-foreground">失败</div>
               <div class="text-sm font-bold font-mono text-red-600 dark:text-red-400">
                 {{ failCount }}
               </div>
             </div>
-            <div class="p-2 rounded-lg bg-primary/10 border border-primary/20">
+            <div class="p-2  bg-primary/10 border border-primary/20">
               <div class="text-[10px] text-muted-foreground">平均得分</div>
               <div class="text-sm font-bold font-mono text-primary">
                 {{ avgScore || '-' }}
@@ -508,7 +508,7 @@
             <div
               v-for="item in batchProgress.items"
               :key="item.index"
-              class="flex items-center justify-between p-2 rounded-lg border text-xs"
+              class="flex items-center justify-between p-2  border text-xs"
               :class="
                 item.status === 'done'
                   ? 'border-emerald-500/30 bg-emerald-500/5'
@@ -553,7 +553,7 @@
           </Button>
           <Button
             size="sm"
-            class="text-xs font-bold px-4 gap-1.5 shadow-sm"
+            class="text-xs font-bold px-4 gap-1.5 -sm"
             @click="handleReset"
           >
             <RotateCcw class="h-3.5 w-3.5" />

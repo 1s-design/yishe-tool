@@ -16,7 +16,7 @@
       >
         <div
           v-if="showAlert"
-          class="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground"
+          class=" border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground"
           style="width: 100%"
         >
           点击变标签可以自动添加到输入框中
@@ -130,7 +130,7 @@ function customValidate(value) {
 .v3ti {
   min-height: 0 !important;
   background-color: #fff !important;
-  border: 1px solid var(--1s-border-color) !important;
+  border: none !important;
 }
 
 .v3ti {
@@ -154,7 +154,7 @@ function customValidate(value) {
 
 .v3ti--focus {
   border: 1px solid var(--1s-accent-color) !important;
-  box-shadow: none !important;
+  box-: none;
 }
 
 .tags-input {

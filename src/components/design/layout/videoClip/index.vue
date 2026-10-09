@@ -294,7 +294,7 @@ const handleRecordedVideo = async (blob: any) => {
   color: var(--1s-text-color);
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid var(--1s-border-color);
+  border: none;
   font-size: 12px;
   user-select: none;
 }
@@ -308,7 +308,7 @@ const handleRecordedVideo = async (blob: any) => {
   background-color: var(--1s-accent-color);
   color: white;
   border-color: var(--1s-accent-color);
-  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.3);
+  box-: none;
 }
 
 .custom-checkbox.selected:hover {

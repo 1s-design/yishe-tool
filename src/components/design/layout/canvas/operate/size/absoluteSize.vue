@@ -207,8 +207,8 @@ function flipSize() {
   width: 24px;
   height: var(--1s-control-h-sm);
   padding: 0;
-  border: 1px solid var(--1s-control-border-color);
-  border-radius: var(--1s-control-radius);
+  border: none;
+  border-radius: 0;
   background: var(--1s-surface-background);
   color: var(--1s-text-color-secondary);
   cursor: pointer;

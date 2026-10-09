@@ -328,7 +328,7 @@ registerOperation({
   id: "canvas.addChild",
   name: "添加元素",
   description:
-    "向画布添加一个新元素。【重要】对于文字、矩形、背景、图片等基础设计元素，请优先使用 HTML 类型实现，更灵活易维护。其他专业类型（图表、3D、流程图等）使用对应的专用类型。",
+    "向画布添加专业组件（图表、3D、流程图等）。【核心规则】所有基础设计（文字、图片、背景、形状）必须使用 canvas.addHtml 创建 HTML/CSS 实现，禁止使用此工具添加 text、image、rect、ellipse、background 类型！",
   group: "画布",
   params: [
     {

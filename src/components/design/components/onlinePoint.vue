@@ -53,14 +53,14 @@ window.ping = ping;
 .online-point-online {
   background-color: rgba(0, 255, 0, 0.9);
   .online-point-effect {
-    box-shadow: 0px 0px 2px 2px rgba(0, 255, 0, 0.3) inset;
+    box-: none;
   }
 }
 
 .online-point-offonline {
   background-color: red;
   .online-point-effect {
-    box-shadow: 0px 0px 2px 2px red inset;
+    box-: none;
   }
 }
 

@@ -288,7 +288,7 @@ function updateState(patch: Partial<typeof wsState>) {
 
 function startHeartbeatLoop() {
   stopHeartbeat();
-  heartbeatTimer = setInterval(() => {
+  const beat = () => {
     if (!socket?.connected) return;
     lastPingTimestamp = Date.now();
     updateState({ lastPingAt: new Date(lastPingTimestamp).toISOString() });
@@ -304,13 +304,84 @@ function startHeartbeatLoop() {
         socket?.connect();
       }
     }, HEARTBEAT_TIMEOUT);
-  }, HEARTBEAT_INTERVAL);
+    
+    // Use recursive setTimeout instead of setInterval
+    // This is less affected by tab throttling
+    heartbeatTimer = setTimeout(beat, HEARTBEAT_INTERVAL) as any;
+  };
+  beat();
 }
 
 function clearHeartbeatTimeout() {
   if (heartbeatTimeoutTimer) {
     clearTimeout(heartbeatTimeoutTimer);
     heartbeatTimeoutTimer = null;
+  }
+}
+
+
+// 处理标签页可见性变化，防止后台标签页心跳超时
+let visibilityHandler: (() => void) | null = null;
+function setupVisibilityHandler() {
+  if (visibilityHandler) return;
+  visibilityHandler = () => {
+    if (document.visibilityState === 'visible') {
+      // 标签页变为可见时，立即发送心跳并重置超时
+      if (socket?.connected) {
+        lastPingTimestamp = Date.now();
+        socket.emit('ping');
+        clearHeartbeatTimeout();
+      }
+    }
+  };
+  document.addEventListener('visibilitychange', visibilityHandler);
+}
+
+
+// Web Worker 保活 - 不受标签页节流影响
+let keepAliveWorker: Worker | null = null;
+
+function startKeepAliveWorker() {
+  try {
+    keepAliveWorker = new Worker(
+      new URL('../workers/keepAlive.worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+    keepAliveWorker.onmessage = (e) => {
+      if (e.data.type === 'heartbeat' && socket?.connected) {
+        socket.emit('ping');
+      }
+    };
+    keepAliveWorker.postMessage({ type: 'start', interval: HEARTBEAT_INTERVAL });
+  } catch (err) {
+    console.warn('[ws] Failed to start keepAlive worker:', err);
+  }
+}
+
+
+// 页面卸载时发送 beacon，防止连接被意外断开
+function setupBeaconHandler() {
+  window.addEventListener('beforeunload', () => {
+    if (socket?.connected) {
+      // 使用 sendBeacon 确保消息发送
+      const data = JSON.stringify({ type: 'ping', timestamp: Date.now() });
+      navigator.sendBeacon('/api/websocket/ping', data);
+    }
+  });
+}
+
+function stopKeepAliveWorker() {
+  if (keepAliveWorker) {
+    keepAliveWorker.postMessage({ type: 'stop' });
+    keepAliveWorker.terminate();
+    keepAliveWorker = null;
+  }
+}
+
+function cleanupVisibilityHandler() {
+  if (visibilityHandler) {
+    document.removeEventListener('visibilitychange', visibilityHandler);
+    visibilityHandler = null;
   }
 }
 
@@ -515,6 +586,9 @@ function bindSocketEvents(currentSocket: Socket) {
     });
     emitClientInfo();
     startHeartbeatLoop();
+  setupVisibilityHandler();
+  startKeepAliveWorker();
+  setupBeaconHandler();
     flushAgentStatus(true);
     void syncCurrentAgentStatus();
     void dispatchLaunchPromptIfNeeded();

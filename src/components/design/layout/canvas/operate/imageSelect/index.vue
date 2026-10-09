@@ -427,7 +427,7 @@ function handleSearchClear() {
 
 .image-item {
   position: relative;
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 8px;
   padding: 12px;
   cursor: pointer;
@@ -542,7 +542,7 @@ function handleSearchClear() {
   overflow: hidden;
   flex-shrink: 0;
   background: var(--1s-surface-background);
-  border: 1px solid var(--1s-border-color);
+  border: 1px solid var(--1s-dialog-border);
 }
 
 .image-current-selected__thumb .image-thumbnail-img {

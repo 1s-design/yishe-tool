@@ -2,7 +2,7 @@
   <div
     v-if="open || isOpen"
     ref="panelRef"
-    class="ai-panel fixed z-50 flex flex-col overflow-hidden rounded-lg shadow-lg"
+    class="ai-panel fixed z-50 flex flex-col overflow-hidden  "
     :class="{ 'is-dragging': isDragging }"
     :style="panelStyle"
   >
@@ -100,7 +100,7 @@
           <button
             v-for="q in quickPrompts"
             :key="q.label"
-            class="ai-panel-quick-card flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-left text-[11px] transition-all"
+            class="ai-panel-quick-card flex items-center gap-1.5  border px-2.5 py-1.5 text-left text-[11px] transition-all"
             @click="sendQuick(q.prompt)"
           >
             <span class="truncate">{{ q.label }}</span>
@@ -117,7 +117,7 @@
       <template v-for="msg in visibleMessages" :key="msg.id">
         <!-- 用户消息 -->
         <div v-if="msg.role === 'user'" class="flex justify-end w-full">
-          <div class="ai-panel-msg-user max-w-[85%] rounded-lg px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+          <div class="ai-panel-msg-user max-w-[85%]  px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
             {{ msg.content }}
           </div>
         </div>
@@ -126,7 +126,7 @@
         <div v-if="msg.role === 'assistant'" class="w-full min-w-0">
           <div class="space-y-1.5 min-w-0 max-w-full">
             <!-- 文本内容 -->
-            <div v-if="msg.content" class="ai-panel-msg-ai rounded-lg px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+            <div v-if="msg.content" class="ai-panel-msg-ai  px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
               {{ msg.content }}
             </div>
 
@@ -135,7 +135,7 @@
               <span
                 v-for="call in msg.tool_calls"
                 :key="call.id"
-                class="ai-panel-tool-pill inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-mono"
+                class="ai-panel-tool-pill inline-flex items-center gap-1  border px-2 py-0.5 text-[10px] font-mono"
               >
                 <Zap class="h-2.5 w-2.5" />
                 <span>{{ formatToolName(call.function.name) }}</span>
@@ -146,7 +146,7 @@
 
         <!-- 工具执行反馈 -->
         <div v-if="msg.role === 'tool'" class="pl-0 w-full min-w-0">
-          <div class="ai-panel-tool-result flex items-start gap-1.5 rounded-md border px-2.5 py-1 text-[10px] font-mono w-full min-w-0 whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+          <div class="ai-panel-tool-result flex items-start gap-1.5  border px-2.5 py-1 text-[10px] font-mono w-full min-w-0 whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
             <CheckCircle2 class="h-3 w-3 shrink-0 mt-0.5" />
             <span class="flex-1 min-w-0 leading-normal">{{ parseResult(msg.content).message }}</span>
           </div>
@@ -155,7 +155,7 @@
 
       <!-- 思考中加载态 -->
       <div v-if="isProcessing" class="w-full">
-        <div class="ai-panel-thinking flex items-center gap-2 rounded-lg border px-3 py-2 text-[11px]">
+        <div class="ai-panel-thinking flex items-center gap-2  border px-3 py-2 text-[11px]">
           <Loader2 class="h-3 w-3 animate-spin" />
           <span>AI 正在全自动制作贴纸...</span>
           <button v-if="!isWaitingForUser" class="ai-panel-stop-btn h-5 px-1.5 text-[10px] rounded" @click="handleStop">
@@ -165,7 +165,7 @@
       </div>
 
       <!-- 用户交互确认卡片 (Human in the Loop) -->
-      <div v-if="interactionData" class="ai-panel-interaction rounded-lg border p-3 space-y-2.5">
+      <div v-if="interactionData" class="ai-panel-interaction  border p-3 space-y-2.5">
         <div class="flex items-center gap-1.5 text-xs font-semibold ai-panel-text">
           <HelpCircle class="h-3.5 w-3.5" />
           <span>{{ interactionData.question }}</span>
@@ -174,7 +174,7 @@
           <button
             v-for="opt in interactionData.options"
             :key="opt"
-            class="ai-panel-option-btn h-6 text-[11px] rounded-md border px-2.5 transition-colors"
+            class="ai-panel-option-btn h-6 text-[11px]  border px-2.5 transition-colors"
             @click="submitInteraction(opt)"
           >
             {{ opt }}
@@ -184,11 +184,11 @@
           <input
             v-model="customAnswer"
             placeholder="自定义回答..."
-            class="ai-panel-input h-7 text-xs flex-1 rounded-md border px-2.5 py-1 focus:outline-none focus:ring-1"
+            class="ai-panel-input h-7 text-xs flex-1  border px-2.5 py-1 focus:outline-none focus:ring-1"
             @keydown.enter="submitInteraction(customAnswer)"
           />
           <button
-            class="ai-panel-send-btn h-7 px-2.5 text-[11px] rounded-md font-medium disabled:opacity-40"
+            class="ai-panel-send-btn h-7 px-2.5 text-[11px]  font-medium disabled:opacity-40"
             :disabled="!customAnswer.trim()"
             @click="submitInteraction(customAnswer)"
           >
@@ -230,7 +230,7 @@
       <!-- 💡 参数反显与清除胶囊 (Active Param Banner) -->
       <div
         v-if="isCustomParamActive"
-        class="ai-param-banner flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border-2 text-xs shadow-2xs select-none"
+        class="ai-param-banner flex items-center justify-between gap-2 px-2.5 py-1.5  border-2 text-xs  select-none"
       >
         <div
           class="ai-param-banner__content flex items-center gap-1.5 min-w-0 cursor-pointer group"
@@ -252,7 +252,7 @@
           <TooltipTrigger as-child>
             <button
               type="button"
-              class="ai-param-clear-btn flex h-5 w-5 items-center justify-center rounded-md border transition-colors shrink-0"
+              class="ai-param-clear-btn flex h-5 w-5 items-center justify-center  border transition-colors shrink-0"
               @click="resetParamsToDefault"
             >
               <X class="h-3 w-3" />
@@ -263,7 +263,7 @@
       </div>
 
       <!-- 参考图卡片 -->
-      <div v-if="selectedImage" class="ai-ref-image flex items-center justify-between gap-2 rounded-lg border p-1.5">
+      <div v-if="selectedImage" class="ai-ref-image flex items-center justify-between gap-2  border p-1.5">
         <div class="flex items-center gap-2 min-w-0">
           <img :src="selectedImage.preview" class="h-8 w-8 rounded object-cover border shrink-0" />
           <div class="flex flex-col min-w-0">
@@ -283,7 +283,7 @@
       </div>
 
       <!-- 输入框与工具条 -->
-      <div class="ai-input-box rounded-lg border focus-within:ring-2 shadow-xs transition-all flex flex-col overflow-hidden">
+      <div class="ai-input-box  border focus-within:ring-2  transition-all flex flex-col overflow-hidden">
         <!-- 文本域 -->
         <textarea
           ref="textareaRef"
@@ -308,7 +308,7 @@
               <TooltipTrigger as-child>
                 <button
                   type="button"
-                  class="ai-toolbar-btn flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-all"
+                  class="ai-toolbar-btn flex items-center gap-1.5 h-7 px-2.5  text-xs font-medium transition-all"
                   :class="isCustomParamActive ? 'ai-toolbar-btn--active' : 'ai-toolbar-btn--idle'"
                   :disabled="isProcessing"
                   @click="showTaskConfigModal = true"
@@ -326,7 +326,7 @@
               <TooltipTrigger as-child>
                 <button
                   type="button"
-                  class="ai-toolbar-icon-btn flex h-7 w-7 items-center justify-center rounded-lg transition-colors disabled:opacity-40"
+                  class="ai-toolbar-icon-btn flex h-7 w-7 items-center justify-center  transition-colors disabled:opacity-40"
                   :class="{ 'text-amber-600 bg-amber-100 border-amber-400': !!selectedImage }"
                   :disabled="isPreparingImage"
                   @click="triggerImageUpload"
@@ -343,7 +343,7 @@
               <TooltipTrigger as-child>
                 <button
                   type="button"
-                  class="ai-toolbar-icon-btn flex h-7 w-7 items-center justify-center rounded-lg transition-colors disabled:opacity-40"
+                  class="ai-toolbar-icon-btn flex h-7 w-7 items-center justify-center  transition-colors disabled:opacity-40"
                   :disabled="isProcessing"
                   @click="showPromptPicker = !showPromptPicker"
                 >
@@ -358,7 +358,7 @@
           <div>
             <button
               v-if="isProcessing && !isWaitingForUser"
-              class="ai-input-send-btn h-7 w-7 rounded-lg shadow-xs flex items-center justify-center bg-red-500 hover:bg-red-600"
+              class="ai-input-send-btn h-7 w-7   flex items-center justify-center bg-red-500 hover:bg-red-600"
               @click="handleStop"
               title="停止生成"
             >
@@ -366,7 +366,7 @@
             </button>
             <button
               v-else
-              class="ai-input-send-btn h-7 w-7 rounded-lg shadow-xs flex items-center justify-center transition-all disabled:opacity-40"
+              class="ai-input-send-btn h-7 w-7   flex items-center justify-center transition-all disabled:opacity-40"
               :disabled="(!inputText.trim() && !selectedImage) || (isProcessing && !isWaitingForUser)"
               @click="handleSend"
               title="发送 (Enter)"
@@ -999,13 +999,13 @@ function parseResult(content: string) {
 .ai-panel {
   background-color: var(--1s-surface-background);
   color: var(--1s-text-color);
-  border: 1px solid var(--1s-border-color);
-  box-shadow: var(--1s-shadow-popover);
-  transition: box-shadow var(--1s-transition-base);
+  border: none;
+  box-: none;
+  transition: box- var(--1s-transition-base);
 }
 
 .ai-panel.is-dragging {
-  box-shadow: var(--1s-shadow-float);
+  box-: none;
   cursor: grabbing;
 }
 
@@ -1105,14 +1105,14 @@ function parseResult(content: string) {
 /* Message bubbles */
 .ai-panel-msg-user {
   background-color: var(--1s-control-surface-muted);
-  border: 1px solid var(--1s-border-color);
+  border: none;
   color: var(--1s-text-color);
   animation: ai-msg-in 0.2s var(--1s-easing-standard) both;
 }
 
 .ai-panel-msg-ai {
   background-color: var(--1s-control-surface-muted);
-  border: 1px solid var(--1s-border-color);
+  border: none;
   color: var(--1s-text-color);
   animation: ai-msg-in 0.2s var(--1s-easing-standard) both;
 }
@@ -1175,7 +1175,7 @@ function parseResult(content: string) {
 .ai-panel-input:focus {
   outline: none;
   border-color: var(--1s-border-color-strong);
-  box-shadow: 0 0 0 2px var(--1s-control-focus-ring);
+  box-: none;
 }
 .ai-panel-send-btn {
   background-color: var(--1s-text-color);
@@ -1259,12 +1259,12 @@ function parseResult(content: string) {
 }
 .ai-input-box:focus-within {
   border-color: var(--1s-border-color-strong);
-  box-shadow: 0 0 0 2px var(--1s-control-focus-ring);
+  box-: none;
 }
 :global(html.dark) .ai-input-box:focus-within,
 :global(.dark) .ai-input-box:focus-within,
 :global(body.designiy-dark) .ai-input-box:focus-within {
-  box-shadow: 0 0 0 2px rgba(250, 250, 250, 0.15);
+  box-: none;
 }
 
 .ai-input-textarea {
@@ -1301,7 +1301,7 @@ function parseResult(content: string) {
 .ai-toolbar-icon-btn {
   color: var(--1s-text-color-secondary);
   background-color: var(--1s-control-surface-muted);
-  border: 1px solid var(--1s-border-color);
+  border: none;
 }
 .ai-toolbar-icon-btn:hover {
   color: var(--1s-text-color);
@@ -1314,7 +1314,7 @@ function parseResult(content: string) {
   transition:
     background-color var(--1s-transition-base),
     transform var(--1s-transition-base),
-    box-shadow var(--1s-transition-base);
+    box- var(--1s-transition-base);
 }
 .ai-input-send-btn:active {
   transform: scale(0.95);

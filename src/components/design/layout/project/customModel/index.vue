@@ -24,7 +24,7 @@
               @click="openDetail(item)"
               padding="5%"
               :src="item.thumbnail"
-              class="project-thumb w-[240px] !h-[180px] rounded-lg flex-shrink-0"
+              class="project-thumb w-[240px] !h-[180px]  flex-shrink-0"
             >
             </s1-image>
             <div class="template-corner-tag" v-if="item.isTemplate">母版</div>
@@ -329,7 +329,7 @@ function editInWorkspace(item) {
   }
   
   .draft-item {
-    border: 1px solid var(--1s-border-color);
+    border: 1px solid var(--1s-dialog-border);
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -340,7 +340,7 @@ function editInWorkspace(item) {
     height: fit-content;
     
     &:hover {
-      box-shadow: var(--1s-shadow-md);
+      box-: none;
       border-color: var(--primary);
     }
   }
@@ -443,7 +443,7 @@ function editInWorkspace(item) {
   min-height: 400px;
   max-height: 70vh;
   background: var(--1s-control-surface-muted);
-  border: 1px solid var(--1s-control-border-color);
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 8px;
   overflow: hidden;
   position: relative;

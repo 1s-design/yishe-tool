@@ -93,7 +93,7 @@ async function imgLoad(img) {
   height: 480px;
   flex-shrink: 0;
   border-radius: 10px;
-  border: 1px solid var(--1s-control-border-color);
+  border: 1px solid var(--1s-dialog-border);
   background: var(--1s-control-surface-muted);
 }
 
@@ -127,7 +127,7 @@ async function imgLoad(img) {
   height: 24px;
   border-radius: 12px;
   cursor: pointer;
-  border: 1px solid var(--1s-control-border-color);
-  box-shadow: var(--1s-shadow-sm);
+  border: 1px solid var(--1s-dialog-border);
+  box-: none;
 }
 </style>

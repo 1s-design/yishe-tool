@@ -314,14 +314,12 @@ watch(() => currentModelController.value, (controller) => {
 .color-item {
   width: 20px;
   height: 20px;
-  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px,
-    rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+  box-: none;
   border-radius: 3px;
   margin: 4px 0 6px 0;
 
   &:hover {
-    box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px,
-      rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    box-: none;
   }
 }
 
@@ -338,7 +336,7 @@ watch(() => currentModelController.value, (controller) => {
   width: min(100%, 200px);
   height: min(100%, 200px);
   background: var(--1s-control-surface-muted);
-  border: 1px solid var(--1s-control-border-color);
+  border: none;
   border-radius: 8px;
 }
 

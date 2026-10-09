@@ -99,7 +99,7 @@ function downloadThumbnail(item) {
   background: var(--1s-control-surface-muted);
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--1s-control-border-color);
+  border: 1px solid var(--1s-dialog-border);
 }
 
 .project-detail-side {
@@ -130,7 +130,7 @@ function downloadThumbnail(item) {
 .project-detail-thumbnail {
   width: 100%;
   border-radius: 8px;
-  border: 1px solid var(--1s-control-border-color);
+  border: 1px solid var(--1s-dialog-border);
   
 }
 

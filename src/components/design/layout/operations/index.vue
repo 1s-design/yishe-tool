@@ -228,14 +228,14 @@ async function handleExecute(op: OperationListItem) {
   cursor: pointer;
   transition:
     border-color var(--1s-transition-base),
-    box-shadow var(--1s-transition-base),
+    box- var(--1s-transition-base),
     transform var(--1s-transition-base),
     background-color var(--1s-transition-base);
   background: var(--1s-elevated-background);
 
   &:hover {
     border-color: var(--1s-accent-color);
-    box-shadow: var(--1s-shadow-md);
+    box-: none;
   }
 
   &:active {
@@ -244,7 +244,7 @@ async function handleExecute(op: OperationListItem) {
 
   &--active {
     border-color: var(--1s-accent-color);
-    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+    box-: none;
   }
 }
 

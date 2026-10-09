@@ -253,7 +253,7 @@ function handleClose() {
   height: 28px;
   padding: 0;
   background: none;
-  border: none;
+  border: 1px solid var(--1s-dialog-border);
   border-radius: 6px;
   color: var(--pl-fav);
   cursor: pointer;

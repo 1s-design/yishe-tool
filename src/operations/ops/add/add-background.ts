@@ -1,6 +1,6 @@
 import { registerOperation } from "../../registry";
 
-registerOperation({
+void ({
   id: "canvas.addBackground",
   name: "添加背景",
   description:

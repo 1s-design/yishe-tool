@@ -20,7 +20,7 @@
                 :width="36"
                 :height="36"
                 :src="img.url"
-                class="rounded-sm object-cover"
+                class=" object-cover"
               />
             </div>
           </div>
@@ -92,7 +92,7 @@ function selectModel(productModel) {
   gap: 1rem;
   padding: 1em;
   flex-shrink: 0;
-  box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;
+  box-: none;
 }
 
 .left-section {

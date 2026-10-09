@@ -568,7 +568,7 @@ function handleSpecialMenuClick(menuKey) {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 14px;
+  gap: 9px;
   padding: 8px 0 4px;
   flex-shrink: 0;
   position: relative;
@@ -579,16 +579,16 @@ function handleSpecialMenuClick(menuKey) {
   user-select: none;
   transition: var(--1s-control-transition);
 
-  /* 图标衬底 — 正方形 32×32，图标 15px 居中 */
+  /* 图标衬底 — 正方形 30×30，图标 14px 居中 */
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     background: transparent;
     transition: var(--1s-control-transition);
     z-index: 0;
@@ -599,8 +599,8 @@ function handleSpecialMenuClick(menuKey) {
   .design-nav__model-image {
     position: relative;
     z-index: 1;
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
     display: block;
     flex-shrink: 0;
   }
@@ -619,7 +619,7 @@ function handleSpecialMenuClick(menuKey) {
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+    box-: none;
   }
 
   &--accent {
@@ -630,8 +630,8 @@ function handleSpecialMenuClick(menuKey) {
 .menu-bar-item__label {
   position: relative;
   z-index: 1;
-  font-size: 9px;
-  line-height: 11px;
+  font-size: 8.5px;
+  line-height: 10px;
   font-weight: 400;
   letter-spacing: 0;
   white-space: nowrap;
@@ -708,7 +708,7 @@ function handleSpecialMenuClick(menuKey) {
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+    box-: none;
   }
 
   &--active {
@@ -759,7 +759,7 @@ function handleSpecialMenuClick(menuKey) {
   &.dot--idle,
   &.dot--done {
     background: var(--1s-bg-success);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-bg-success) 12%, transparent);
+    box-: none;
   }
 
   &.dot--connecting,
@@ -769,13 +769,13 @@ function handleSpecialMenuClick(menuKey) {
   &.dot--running,
   &.dot--preparing {
     background: var(--1s-bg-warning);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-bg-warning) 12%, transparent);
+    box-: none;
   }
 
   &.dot--error,
   &.dot--failed {
     background: var(--1s-bg-danger);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--1s-bg-danger) 12%, transparent);
+    box-: none;
   }
 
   &.dot--disconnected {

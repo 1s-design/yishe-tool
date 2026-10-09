@@ -244,7 +244,7 @@ onMounted(() => {
   padding: 12px;
   border-radius: 8px;
   background: var(--1s-control-surface-background);
-  border: 1px solid var(--1s-control-border-color);
+  border: 1px solid var(--1s-dialog-border);
   transition: all 0.2s ease;
   width: 100%;
   box-sizing: border-box;
@@ -252,7 +252,7 @@ onMounted(() => {
   &:hover {
     background: var(--1s-control-hover-background);
     
-    box-shadow: var(--1s-control-focus-ring);
+    box-: none;
   }
 }
 
@@ -265,7 +265,7 @@ onMounted(() => {
   height: 80px;
   width: 80px;
   border-radius: 8px;
-  border: 1px solid var(--1s-control-border-color);
+  border: 1px solid var(--1s-dialog-border);
 }
 
 .material-info-section {

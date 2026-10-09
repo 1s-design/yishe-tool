@@ -58,7 +58,7 @@ onBeforeUnmount(() => document.body.removeEventListener("click", closeChildren))
   min-width: 190px;
   height: var(--1s-control-h-md);
   padding: 0 7px;
-  border-radius: var(--1s-control-radius-sm);
+  border-radius: 0;
   color: var(--1s-text-color);
   font-size: var(--1s-control-font-md);
   cursor: pointer;
