@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { isAutomationRunning, automationDescription } from '@/store/stores/app';
 import { stopAutomation } from '@/common/utils/automation';
-import { X as Close, AlertTriangle as Warning } from 'lucide-vue-next';
+import { X as Close, AlertTriangle } from 'lucide-vue-next';
 
 function handleClose() {
   stopAutomation();

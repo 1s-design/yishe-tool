@@ -192,6 +192,7 @@
 </template>
 
 <script setup lang="ts">
+import Pagination from '../pagination.vue';
 import { ref, reactive, onMounted } from 'vue'
 import { message } from '@/common/message'
 import {

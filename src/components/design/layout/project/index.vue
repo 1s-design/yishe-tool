@@ -31,6 +31,7 @@ import tabSentence from "./sentence/index.vue";
 import tabDocument from "./document/index.vue";
 import tabTips from "./tips/index.vue";
 import tabDesignPrompt from "./designPrompt/index.vue";
+import tabDesignInspiration from "./designInspiration/index.vue";
 import { useLocalStorage } from "@vueuse/core";
 
 enum UserOwnSourceType {
@@ -84,6 +85,11 @@ const tabs = ref([
     key: "prompt",
     component: markRaw(tabDesignPrompt),
   },
+  {
+    label: "设计灵感",
+    key: "designInspiration",
+    component: markRaw(tabDesignInspiration),
+  },
 ]);
 
 if (!tabs.value.some((item) => item.key === activeKey.value)) {
@@ -110,8 +116,10 @@ const activeComponent = computed(() => {
     width: 100%;
     min-width: 0;
     flex: 1;
-    overflow: auto;
+    overflow: visible;
     background: var(--1s-panel-background);
+    display: flex;
+    flex-direction: column;
   }
 }
 

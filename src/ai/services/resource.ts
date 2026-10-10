@@ -100,6 +100,15 @@ export interface ImageResource {
   colorPalette: string; // 主色调，逗号分隔的 hex，如 "#ff0000,#00ff00"
 }
 
+export interface DesignInspirationResource {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  tags: string[];
+  category: string;
+}
+
 export interface SentenceResource {
   id: number;
   content: string;
@@ -635,6 +644,37 @@ export async function searchTextDocumentResources(
 
 // ============ 自定义贴纸/模板资源服务 ============
 
+export async function searchDesignInspirationResources(
+  params: { query?: string; limit?: number } = {},
+): Promise<{ items: DesignInspirationResource[]; total: number }> {
+  const cacheKey = getCacheKey("designInspiration", params);
+  const cached = getFromCache<{ items: DesignInspirationResource[]; total: number }>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const res = await apiInstance.post("/design-inspiration/page", {
+      keyword: params.query || "",
+      page: 1,
+      pageSize: params.limit || 10,
+    });
+    const data = res.data?.data || res.data || {};
+    const items = (data.list || data.items || []).map((item: any) => ({
+      id: String(item.id),
+      name: item.name || item.title || "未命名",
+      description: item.description || "",
+      url: item.url || item.imageUrl || "",
+      tags: item.tags || [],
+      category: item.category || "",
+    }));
+    const result = { items, total: data.total || items.length };
+    setCache(cacheKey, result);
+    return result;
+  } catch (error) {
+    console.warn("[Resource] searchDesignInspiration failed:", error);
+    return { items: [], total: 0 };
+  }
+}
+
 export async function searchCustomStickerResources(
   params: CustomStickerSearchParams,
 ): Promise<ResourceSearchResult> {
@@ -912,28 +952,42 @@ export const resourceTools = [
   {
     type: "function" as const,
     function: {
-      name: "resource.searchCustomSticker",
-      description: `从用户的自定义贴纸/模板库中搜索已有的成品设计与模板作品。
-当用户需要复刻、修改、或者设计与已有作品类似风格的主题时，优先调用此工具搜索模板。
-返回列表包含 id/name/description/keywords/url/hasEditableCanvasData。
-如果命中合适模板，可以直接调用 canvas.loadCustomSticker({ customStickerId: id }) 将其完整排版加载到画布上，然后在此成熟排版基底上进行文案替换、插画替换或局部微调！`,
+      name: "resource.searchDesignInspiration",
+      description: "搜索设计灵感，获取设计参考和创意灵感",
       parameters: {
         type: "object",
         properties: {
-          query: {
-            type: "string",
-            description:
-              "搜索关键词或风格描述，如：咖啡、日系、复古、中秋、标牌、国潮",
-          },
-          limit: {
-            type: "number",
-            description: "返回数量，默认 5，最大 20",
-          },
+          query: { type: "string", description: "搜索关键词" },
+          limit: { type: "number", description: "返回数量" },
         },
-        required: ["query"],
       },
     },
-  },
+    },
+    {
+      type: "function" as const,
+      function: {
+        name: "resource.searchCustomSticker",
+        description: `从用户的自定义贴纸/模板库中搜索已有的成品设计与模板作品。
+当用户需要复刻、修改、或者设计与已有作品类似风格的主题时，优先调用此工具搜索模板。
+返回列表包含 id/name/description/keywords/url/hasEditableCanvasData。
+如果命中合适模板，可以直接调用 canvas.loadCustomSticker({ customStickerId: id }) 将其完整排版加载到画布上，然后在此成熟排版基底上进行文案替换、插画替换或局部微调！`,
+        parameters: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description:
+                "搜索关键词或风格描述，如：咖啡、日系、复古、中秋、标牌、国潮",
+            },
+            limit: {
+              type: "number",
+              description: "返回数量，默认 5，最大 20",
+            },
+          },
+          required: ["query"],
+        },
+      },
+    },
 ];
 
 // ============ AI 工具执行 ============
@@ -1099,6 +1153,17 @@ export async function executeResourceTool(
       };
     }
 
+    case "resource.searchDesignInspiration": {
+      const result = await searchDesignInspirationResources({
+        query: args.query,
+        limit: args.limit,
+      });
+      return {
+        success: true,
+        message: `找到 ${result.items.length} 个设计灵感`,
+        data: result,
+      };
+    }
     case "resource.searchCustomSticker": {
       const result = await searchCustomStickerResources({
         query: args.query,

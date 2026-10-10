@@ -579,16 +579,16 @@ function handleSpecialMenuClick(menuKey) {
   user-select: none;
   transition: var(--1s-control-transition);
 
-  /* 图标衬底 — 正方形 30×30，图标 14px 居中 */
+  /* 图标衬底 — 正方形 24×24，图标 14px 居中 */
   &::before {
     content: '';
     position: absolute;
-    top: 0;
+    top: 2px;
     left: 50%;
     transform: translateX(-50%);
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
     background: transparent;
     transition: var(--1s-control-transition);
     z-index: 0;

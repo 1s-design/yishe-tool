@@ -201,6 +201,7 @@
 </template>
 
 <script setup lang="ts">
+import Pagination from '../pagination.vue';
 import { ref, onMounted } from 'vue'
 import {
   Search,

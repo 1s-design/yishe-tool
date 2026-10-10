@@ -1,5 +1,5 @@
 <template>
-  <div class="project-page flex flex-col min-h-full">
+  <div class="project-page">
     <!-- 过滤区域 -->
     <div class="project-toolbar">
       <slot name="tabs"></slot>
@@ -12,7 +12,7 @@
       <div class="project-toolbar__caption">{{ total }} 项</div>
     </div>
     
-    <div class="flex-1 relative p-4">
+    <div class="project-page__content">
       <div
         v-if="list.length > 0"
         class="grid grid-cols-1 gap-4 w-full sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
@@ -219,6 +219,7 @@
 </template>
 
 <script setup lang="ts">
+import Pagination from '../pagination.vue';
 import { ref, onMounted } from 'vue'
 import {
   MoreVertical,

@@ -177,37 +177,22 @@
     </DialogContent>
   </Dialog>
 
-  <!-- 创作资源全屏资源中心 -->
-  <Dialog :modal="true" v-model:open="menuState.showProject">
-    <DialogContent class="project-resource-modal">
-      <div class="project-resource-modal__frame">
-        <header class="project-resource-modal__header">
-          <div class="project-resource-modal__heading">
-            <div class="project-resource-modal__mark" aria-hidden="true">
-              <Sparkles class="h-4 w-4" />
-            </div>
-            <div class="project-resource-modal__heading-copy">
-              <DialogTitle class="project-resource-modal__title">创作资源</DialogTitle>
-              <DialogDescription class="project-resource-modal__description">
-                集中管理贴纸、字体、文案与设计资产
-              </DialogDescription>
-            </div>
-          </div>
-
-          <div class="project-resource-modal__header-actions">
-            <span class="project-resource-modal__shortcut">资源中心</span>
-            <DialogClose class="project-resource-modal__close" aria-label="关闭创作资源">
-              <X class="h-4 w-4" />
-            </DialogClose>
-          </div>
-        </header>
-
-        <main class="project-resource-modal__body">
+        <!-- 创作资源弹窗 -->
+  <Teleport to="body">
+    <div v-if="menuState.showProject" class="resource-overlay" @click.self="menuState.showProject = false">
+      <div class="resource-panel">
+        <div class="resource-panel__header">
+          <span class="resource-panel__title">创作资源</span>
+          <button class="resource-panel__close" @click="menuState.showProject = false">
+            <X class="h-4 w-4" />
+          </button>
+        </div>
+        <div class="resource-panel__body">
           <projectResourceModal />
-        </main>
+        </div>
       </div>
-    </DialogContent>
-  </Dialog>
+    </div>
+  </Teleport>
 
   <!-- 贴纸详细信息弹层 -->
   <stickerDetailModal></stickerDetailModal>
@@ -801,274 +786,67 @@ async function initAction() {
   font-size: 11px;
 }
 
-/* 创作资源全屏资源中心 */
-.project-resource-modal {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  max-height: none !important;
-  padding: 0 !important;
-  gap: 0 !important;
-  overflow: hidden !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: var(--1s-surface-background) !important;
-  color: var(--1s-text-color) !important;
-  transform: none !important;
-  box-: none;
-  grid-template-rows: 1fr !important;
-}
-
-.project-resource-modal > button.absolute {
-  display: none !important;
-}
-
-.project-resource-modal__frame {
+/* 创作资源弹窗 - 全屏极简 */
+.resource-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--1s-surface-background);
+  z-index: 9999;
   display: flex;
+  flex-direction: column;
+}
+
+.resource-panel {
   width: 100%;
   height: 100%;
-  min-width: 0;
-  min-height: 0;
+  display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--1s-surface-background);
 }
 
-.project-resource-modal__header {
+.resource-panel__header {
   display: flex;
-  min-height: 68px;
-  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--1s-border-color);
+  height: 40px;
+  padding: 0 16px;
+  flex-shrink: 0;
   background: var(--1s-surface-background);
 }
 
-.project-resource-modal__heading,
-.project-resource-modal__header-actions {
+.resource-panel__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--1s-text-color);
+  margin: 0;
+}
+
+.resource-panel__close {
   display: flex;
   align-items: center;
-}
-
-.project-resource-modal__heading {
-  min-width: 0;
-  gap: 12px;
-}
-
-.project-resource-modal__mark {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--1s-accent-color) 35%, transparent);
-  border-radius: 9px;
-  background: var(--1s-accent-color-soft);
-  color: var(--1s-accent-color);
-}
-
-.project-resource-modal__heading-copy {
-  min-width: 0;
-}
-
-.project-resource-modal__title {
-  color: var(--1s-text-color) !important;
-  font-size: 15px !important;
-  font-weight: 650 !important;
-  line-height: 1.25 !important;
-  letter-spacing: -0.01em !important;
-}
-
-.project-resource-modal__description {
-  margin-top: 3px;
-  color: var(--1s-text-color-tertiary) !important;
-  font-size: 11px !important;
-  line-height: 1.35 !important;
-}
-
-.project-resource-modal__header-actions {
-  flex-shrink: 0;
-  gap: 10px;
-}
-
-.project-resource-modal__shortcut {
-  display: inline-flex;
-  min-height: 24px;
-  align-items: center;
-  padding: 0 8px;
-  border: 1px solid var(--1s-dialog-border);
-  border-radius: 0;
-  background: var(--1s-control-surface-muted);
-  color: var(--1s-text-color-tertiary);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.project-resource-modal__close {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border: 0;
-  border-radius: 7px;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
   background: transparent;
   color: var(--1s-text-color-secondary);
   cursor: pointer;
-  transition: var(--1s-control-transition);
-
-  &:hover {
-    background: var(--1s-state-hover);
-    color: var(--1s-text-color);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-: none;
-  }
+  border-radius: 4px;
+  transition: background 0.15s;
 }
 
-.project-resource-modal__body {
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  overflow: hidden;
-  background: var(--1s-panel-background);
-}
-
-.project-resource-modal__body > .project-shell,
-.project-resource-modal__body .project-shell {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--1s-panel-background);
-}
-
-.project-resource-modal__body .project-shell__main {
-  min-height: 0;
-  overflow: auto;
-  background: var(--1s-panel-background);
-  scrollbar-gutter: stable;
-}
-
-.project-resource-modal__body .project-page {
-  min-height: 100%;
-  background: var(--1s-panel-background);
-}
-
-.project-resource-modal__body .project-toolbar {
-  min-height: 56px;
-  padding: 10px 20px;
-  gap: 12px;
-  background: var(--1s-surface-background);
-  border-bottom-color: var(--1s-border-color);
-}
-
-.project-resource-modal__body .project-toolbar__controls {
-  gap: 8px;
-}
-
-.project-resource-modal__body .project-toolbar__caption {
-  color: var(--1s-text-color-tertiary);
-}
-
-.project-resource-modal__body [role='tablist'] {
-  min-height: 32px;
-  padding: 3px;
-  gap: 2px;
-  border: 1px solid var(--1s-dialog-border);
-  border-radius: 0;
-  background: var(--1s-control-surface-muted);
-}
-
-.project-resource-modal__body [role='tab'] {
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 0;
-  color: var(--1s-text-color-secondary);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.project-resource-modal__body [role='tab'][data-state='active'] {
-  background: var(--1s-surface-background);
+.resource-panel__close:hover {
+  background: var(--1s-hover-background);
   color: var(--1s-text-color);
-  box-: none;
 }
 
-.project-resource-modal__body .project-gallery-card {
+.resource-panel__body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
   background: var(--1s-surface-background);
-  border-color: var(--1s-border-color);
-  border-radius: 0;
-}
-
-.project-resource-modal__body .project-gallery-card:hover {
-  border-color: color-mix(in srgb, var(--1s-accent-color) 45%, var(--1s-border-color));
-  box-: none;
-}
-
-.project-resource-modal__body .project-footer {
-  background: var(--1s-surface-background);
-  border-top-color: var(--1s-border-color);
-}
-
-@media (max-width: 1440px) {
-  .design-layout {
-    --1s-ai-panel-width: 320px;
-  }
-
-  .aspect-ratio-selector {
-    width: 104px;
-    bottom: 8px;
-    left: 8px;
-  }
-}
-
-@media (max-width: 1180px) {
-  .design-layout {
-    --1s-ai-panel-width: 292px;
-  }
-
-  #layout-canvas {
-    min-width: 280px;
-  }
-
-  .aspect-ratio-selector {
-    width: 100px;
-  }
-}
-
-@media (max-width: 980px) {
-  .design-layout {
-    --1s-ai-panel-width: 276px;
-  }
-
-  #layout-canvas {
-    min-width: 250px;
-  }
-}
-
-@media (max-width: 760px) {
-  .design-layout {
-    --1s-ai-panel-width: min(42vw, 276px);
-  }
-
-  .design-layout__panel--browser {
-    display: none;
-  }
-
-  .design-layout__bottom {
-    padding: 0 8px;
-    bottom: 8px;
-  }
-
-  .aspect-ratio-selector {
-    width: 96px;
-  }
 }
 </style>

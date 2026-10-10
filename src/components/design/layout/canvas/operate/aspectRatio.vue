@@ -17,12 +17,21 @@
         {{ item.label }}
       </button>
     </div>
+    <div class="ratio-widget__custom">
+      <input
+        v-model="customRatio"
+        class="ratio-input"
+        placeholder="自定义比例，如 5:3"
+        @keyup.enter="applyCustomRatio"
+      />
+      <button class="ratio-apply-btn" @click="applyCustomRatio">应用</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import icon from "@/components/design/assets/icon/aspect-ratio.svg?component";
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const emit = defineEmits<{
   (e: 'change', ratio: number): void
@@ -42,11 +51,26 @@ const aspectRatioOptions = [
   { label: '银比例', value: 1 / Math.sqrt(2), title: '银比例 1 : √2' },
 ]
 
+const customRatio = ref('')
+
 const activeValue = computed(() => {
   const v = Number(model.value)
   if (!v) return null
   return aspectRatioOptions.find((o) => Math.abs(o.value - v) < 0.001)?.value ?? null
 })
+
+function applyCustomRatio() {
+  const match = customRatio.value.match(/^(\d+(?:\.\d+)?)\s*[:：]\s*(\d+(?:\.\d+)?)$/)
+  if (!match) return
+  
+  const w = parseFloat(match[1])
+  const h = parseFloat(match[2])
+  if (w <= 0 || h <= 0) return
+  
+  const ratio = w / h
+  model.value = ratio
+  emit('change', ratio)
+}
 
 function apply(item: { label: string; value: number }) {
   model.value = item.value
@@ -86,6 +110,47 @@ function apply(item: { label: string; value: number }) {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
+}
+
+.ratio-widget__custom {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.ratio-input {
+  flex: 1;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--1s-border-color);
+  border-radius: 4px;
+  background: var(--1s-surface-background);
+  color: var(--1s-text-color);
+  font-size: 11px;
+  outline: none;
+  
+  &:focus {
+    border-color: var(--1s-accent-color);
+  }
+  
+  &::placeholder {
+    color: var(--1s-text-color-tertiary);
+  }
+}
+
+.ratio-apply-btn {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 4px;
+  background: var(--1s-accent-color);
+  color: white;
+  font-size: 11px;
+  cursor: pointer;
+  
+  &:hover {
+    opacity: 0.9;
+  }
 }
 
 .ratio-chip {

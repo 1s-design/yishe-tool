@@ -1,11 +1,7 @@
 <template>
   <div class="resource-center">
     <aside class="resource-center__sidebar">
-      <div class="resource-center__sidebar-header">
-        <div class="resource-center__eyebrow">RESOURCE LIBRARY</div>
-        <strong>创作资源</strong>
-        <span>按类型浏览和管理你的设计资产</span>
-      </div>
+
 
       <nav class="resource-center__nav" aria-label="资源类型">
         <button
@@ -16,16 +12,11 @@
           :class="{ 'resource-center__nav-item--active': activeKey === tab.key }"
           @click="activeKey = tab.key"
         >
-          <component :is="tab.icon" class="resource-center__nav-icon" />
-          <span>{{ tab.label }}</span>
-          <ChevronRight v-if="activeKey === tab.key" class="resource-center__nav-arrow" />
+          <span class="resource-center__nav-label">{{ tab.label }}</span>
         </button>
       </nav>
 
-      <div class="resource-center__sidebar-footer">
-        <div class="resource-center__footer-line"></div>
-        <span>所有资源均保存在当前工作区</span>
-      </div>
+
     </aside>
 
     <section class="resource-center__content">
@@ -144,8 +135,8 @@ const activeComponent = computed(() => {
 
 .resource-center__sidebar {
   display: flex;
-  width: 220px;
-  min-width: 220px;
+  width: 110px;
+  min-width: 110px;
   min-height: 0;
   flex-direction: column;
   padding: 22px 14px 16px;
@@ -196,13 +187,13 @@ const activeComponent = computed(() => {
   min-height: 38px;
   align-items: center;
   gap: 10px;
-  padding: 0 10px;
-  border: 1px solid transparent;
+  padding: 4px 8px;
+  border: none;
   border-radius: 8px;
   background: transparent;
   color: var(--1s-text-color-secondary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   text-align: left;
   transition: var(--1s-control-transition);
@@ -213,9 +204,9 @@ const activeComponent = computed(() => {
   }
 
   &--active {
-    border-color: color-mix(in srgb, var(--1s-accent-color) 24%, transparent);
-    background: var(--1s-accent-color-soft);
-    color: var(--1s-accent-color);
+    background: var(--1s-hover-background);
+    color: var(--1s-text-color);
+    font-weight: 600;
   }
 }
 
@@ -449,7 +440,7 @@ const activeComponent = computed(() => {
 
   .resource-center__nav-item {
     justify-content: center;
-    padding: 0;
+    padding: 4px 8px;
 
     span,
     .resource-center__nav-arrow {
