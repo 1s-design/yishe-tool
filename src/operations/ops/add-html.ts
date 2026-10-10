@@ -1,4 +1,5 @@
 import { registerOperation } from "../registry";
+import { validateAndFixHtml } from "@/ai/overflow-validator";
 import {
   prepareHtmlArtworkOptions,
   updateExistingHtmlArtwork,
@@ -77,7 +78,7 @@ registerOperation({
     },
   ],
   execute(params, ctx) {
-    const {
+    let {
       htmlContent,
       htmlBindings,
       htmlTemplateFields,
@@ -85,6 +86,13 @@ registerOperation({
       htmlTemplateMeta,
       allowMultipleHtml,
     } = params;
+
+    // 溢出检测和自动修复
+    const validation = validateAndFixHtml(htmlContent);
+    if (validation.wasFixed) {
+      console.log('[addHtml] 自动修复溢出问题:', validation.issues.length, '个问题');
+    }
+    htmlContent = validation.fixed;
 
     // 校验：图片绑定中是否有重复 URL 或重复 ID
     if (htmlBindings) {

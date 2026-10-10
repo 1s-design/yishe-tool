@@ -95,6 +95,12 @@ function buildHtmlQuickRefPrompt(): string {
 - --type-hero、--type-title、--type-primary、--type-subtitle、--type-body、--type-caption、--type-micro 已由画布自动提供，直接使用 font-size:var(--type-xxx)，不要重新定义
 - **强制使用字号 CSS 变量**：所有文字元素必须用 font-size:var(--type-hero/title/primary/subtitle/body/caption/micro)，禁止直接写固定字号。简单文字（1-2句）至少用 type-title + type-body；海报/多层级内容至少用 type-hero + type-body + type-caption
 - **文字一行显示**：主标题/短标语必须 white-space:nowrap + overflow:hidden 确保不换行；字号要根据画布宽度合理选择，4字标题用 type-hero，6字以上用 type-title；多行文字才允许换行
+- **【防溢出规则】必须确保文字不超出画布边界**：
+  - 所有文字元素必须用 max-width:100% + overflow:hidden + text-overflow:ellipsis
+  - 长文字自动缩小：用 clamp() 或 font-size: min(var(--type-xxx), 10vw) 确保不溢出
+  - 容器必须 overflow:hidden 防止内容溢出
+  - 优先使用 flex/grid 布局而非绝对定位
+  - 文字内容过长时主动缩减或换行，不要硬塞
 - font-size 只允许 em、百分比或上述 CSS 变量，禁止 px、pt、rem、vw、vh；写入层会把遗漏的绝对字号自动归一为相对字号
 - 主视觉只用于一个最重要的信息；主标题不超过两个；用户要求展示的重要信息最低使用 body，caption/micro 只用于非关键信息
 - 书法正文是视觉主体时归为 primaryText，并使用尺寸工具给出的 primaryText 和 bodyLineHeight；不要把书法正文缩成注释
