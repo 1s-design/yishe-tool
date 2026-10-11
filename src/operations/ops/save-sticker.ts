@@ -423,7 +423,7 @@ registerOperation({
             )
           : null;
 
-      await renderCurrentCanvasNow({ timeoutMs: 30_000 });
+      await renderCurrentCanvasNow({ timeoutMs: 60_000 });
 
       const postRenderValidationError = validateCanvasBeforeSave();
       if (postRenderValidationError) {

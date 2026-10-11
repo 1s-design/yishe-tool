@@ -1220,18 +1220,27 @@ export class CanvasController {
 
   // 渲染锁：防止并发渲染导致状态混乱
   _renderingLock = false;
+  _renderingPromise: Promise<void> | null = null;
 
   async updateRenderingCanvasJob() {
-    if (this._renderingLock) {
-      console.warn("[Canvas] 渲染进行中，跳过重复请求");
-      return;
+    if (this._renderingLock && this._renderingPromise) {
+      // 已有渲染在进行：等待其完成，而不是跳过（跳过会让 loading 卡住）
+      console.warn("[Canvas] 渲染进行中，等待现有渲染完成");
+      return this._renderingPromise;
     }
     this._renderingLock = true;
-    try {
-      await this._doUpdateRenderingCanvas();
-    } finally {
-      this._renderingLock = false;
-    }
+    this._renderingPromise = (async () => {
+      try {
+        await this._doUpdateRenderingCanvas();
+      } finally {
+        this._renderingLock = false;
+        this._renderingPromise = null;
+        // 兜底：无论如何都要释放 loading，避免截图等待卡死
+        this.loading.value = false;
+        renderingLoading.value = false;
+      }
+    })();
+    return this._renderingPromise;
   }
 
   async _doUpdateRenderingCanvas() {

@@ -3,7 +3,14 @@
     <header class="u-panel__header canvas-editor-header">
       <div class="canvas-editor-heading">
         <strong>制作贴纸</strong>
-        <span>{{ canvasStickerOptions.children?.length || 0 }} 个图层</span>
+        <span>{{ layerItems.length }} 图层</span>
+      </div>
+      <div class="u-panel__actions">
+        <addPopover>
+          <button type="button" class="u-icon-btn u-icon-btn--xs" title="添加图层" aria-label="添加图层">
+            <Plus class="w-3.5 h-3.5" />
+          </button>
+        </addPopover>
       </div>
     </header>
 
@@ -33,36 +40,50 @@
       </div>
     </div>
 
-    <!-- 产出动作：保存（整行主操作） / 更新 / 导出 / 更多 -->
-    <div class="canvas-actions-panel">
-      <button
-        type="button"
-        class="u-btn u-btn--solid u-btn--block canvas-action-primary"
-        :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
-        @click="handleUploadClick"
+    <!-- 图层列表 -->
+    <div class="layer-list">
+      <div
+        v-for="child in layerItems"
+        :key="child.id"
+        role="button"
+        tabindex="0"
+        class="u-list-row layer-row"
+        :class="{ 'is-selected': child.id === currentOperatingCanvasChildId }"
+        @click="selectLayer(child.id)"
+        @keydown.enter.prevent="selectLayer(child.id)"
       >
-        <Check class="w-3.5 h-3.5" />
-        {{ currentEditingCustomStickerId ? '保存修改' : '保存' }}
-      </button>
+        <component :is="layerIcon(child)" class="layer-row__icon" />
+        <span class="u-list-row__label">{{ layerLabel(child) }}</span>
+        <span class="u-list-row__meta">{{ layerMeta(child) }}</span>
+        <button
+          v-if="!isFixedLayer(child)"
+          type="button"
+          class="u-icon-btn u-icon-btn--xs layer-row__remove"
+          title="删除图层"
+          aria-label="删除图层"
+          @click.stop="removeLayer(child.id)"
+        >
+          <X class="w-3 h-3" />
+        </button>
+      </div>
+    </div>
 
+    <!-- 上下文属性：只显示选中图层 -->
+    <div class="operate">
+      <operateLayout></operateLayout>
+    </div>
+
+    <!-- 底部动作栏 -->
+    <div class="canvas-actions-panel">
       <div class="canvas-actions-panel__row">
         <button
-          v-if="shouldUpdateCanvasSticker && !isUpdatingSticker"
-          type="button"
-          class="u-btn u-btn--outline canvas-action-secondary update-required"
-          :disabled="isUpdatingSticker"
-          @click="genSticker"
-        >
-          更新贴纸
-        </button>
-        <button
-          v-else
           type="button"
           class="u-btn u-btn--outline canvas-action-secondary"
-          :disabled="isUpdatingSticker"
+          :class="{ 'update-required': shouldUpdateCanvasSticker && !isUpdatingSticker }"
+          :disabled="isUpdatingSticker || !shouldUpdateCanvasSticker"
           @click="genSticker"
         >
-          {{ isUpdatingSticker ? '更新中' : (shouldUpdateCanvasSticker ? '更新' : '已更新') }}
+          {{ isUpdatingSticker ? '渲染中…' : '渲染' }}
         </button>
 
         <button
@@ -74,33 +95,41 @@
           导出
         </button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <button type="button" class="u-btn u-btn--outline canvas-action-secondary" aria-label="更多操作">
-              •••
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="bottom" align="end" :side-offset="4">
-            <DropdownMenuItem @select="exportTrimmedPng">
-              自动去除空白边框导出
-            </DropdownMenuItem>
-            <DropdownMenuItem @select="consoleStikcerOptions">
-              在控制台打印贴纸信息
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              class="text-destructive"
-              @select="confirm({ title: '确定清空画布所有图层？', okText: '清空', cancelText: '取消' }).then((ok) => ok && clearCanvasChildren())"
-            >
-              清空画布
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
+        <button
+          type="button"
+          class="u-btn u-btn--outline canvas-action-secondary"
+          :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
+          @click="exportTrimmedPng"
+        >
+          裁边导出
+        </button>
 
-    <!-- 图层切换已移除：画布 + 代码画布直接在下方一起展示 -->
-    <div class="operate">
-      <operateLayout></operateLayout>
+        <button
+          type="button"
+          class="u-btn u-btn--outline canvas-action-secondary"
+          @click="consoleStikcerOptions"
+        >
+          打印信息
+        </button>
+
+        <button
+          type="button"
+          class="u-btn u-btn--outline canvas-action-secondary canvas-action-danger"
+          @click="confirm({ title: '确定清空画布所有图层？', okText: '清空', cancelText: '取消' }).then((ok) => ok && clearCanvasChildren())"
+        >
+          清空
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="u-btn u-btn--solid u-btn--block canvas-action-primary"
+        :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
+        @click="handleUploadClick"
+      >
+        <Check class="w-3.5 h-3.5" />
+        {{ currentEditingCustomStickerId ? '保存修改' : '保存' }}
+      </button>
     </div>
   </div>
 
@@ -162,13 +191,6 @@
         <Switch v-model:checked="editForm.autoTrim" />
         <span class="ml-2 text-xs text-muted-foreground">{{ editForm.autoTrim ? '是' : '否' }}</span>
       </div>
-
-      <!-- <div class="flex items-center gap-3">
-        <Label class="w-[100px] shrink-0 text-xs">是否共享:</Label>
-        <Switch
-          v-model:checked="editForm.isPublic"
-        />
-      </div> -->
     </div>
       <DialogFooter>
         <Button variant="outline" @click="showUploadModal = false">取消</Button>
@@ -184,10 +206,9 @@
 import {
   CanvasController,
   canvasStickerOptions,
-  addCanvasChild,
-  CanvasChildType,
+  removeCavnasChild,
+  canvasChildLabelMap,
   currentOperatingCanvasChildId,
-  currentOperatingCanvasChild,
   currentEditingCustomStickerId,
   currentEditingCustomStickerFolderId,
   currentEditingCustomStickerName,
@@ -197,16 +218,11 @@ import {
 
 import operateLayout from "./operateLayout/index.vue";
 import {
-  onMounted,
   ref,
   computed,
-  watch,
-  reactive,
-  watchEffect,
-  nextTick,
 } from "vue";
 
-import { Check, Maximize2 } from 'lucide-vue-next'
+import { Check, Maximize2, Plus, X, Frame, Code, Type, Image, Layers, Cloud, BarChart3, Music, PenTool, Shapes, Activity } from 'lucide-vue-next'
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 import addPopover from "./addPopover.vue";
 import Api from "@/api";
@@ -216,7 +232,6 @@ import { stickerAutoplacementTags } from "@/components/design/components/tagsInp
 import { executeAITool } from "@/ai/shared/execute-tool";
 import { clearAgentDesignProvenance } from "@/ai/design-provenance";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -248,9 +263,59 @@ const isUpdatingSticker = computed(() => {
 
 let canvass = canvasController.getRender();
 
+/* ---------- 图层列表 ---------- */
+
+const layerItems = computed(() => canvasStickerOptions.value.children || []);
+
+const FIXED_LAYER_IDS = new Set(["this_is_canvas_id", "this_is_html_id"]);
+
+function isFixedLayer(child: any) {
+  return FIXED_LAYER_IDS.has(child.id) || child.type === "canvas" || child.type === "html";
+}
+
+function selectLayer(id: string) {
+  currentOperatingCanvasChildId.value = id;
+}
+
+function removeLayer(id: string) {
+  removeCavnasChild(id);
+}
+
+function layerLabel(child: any) {
+  if (child.type === "canvas") return "画布";
+  if (child.type === "html") return "代码画布";
+  return canvasChildLabelMap[child.type] || child.type;
+}
+
+function layerMeta(child: any) {
+  if (child.type === "canvas") {
+    const w = Math.round(Number(child.width?.value) || 0);
+    const h = Math.round(Number(child.height?.value) || 0);
+    return w && h ? `${w}×${h}` : "";
+  }
+  if (child.type === "html") {
+    return child.htmlTemplateFields?.length ? "模板" : "HTML";
+  }
+  return "";
+}
+
+function layerIcon(child: any) {
+  const t = child.type;
+  if (t === "canvas") return Frame;
+  if (t === "html") return Code;
+  if (t === "text" || t === "opentypeText" || t === "figlet") return Type;
+  if (t === "image") return Image;
+  if (t === "wordCloud") return Cloud;
+  if (t === "rawCanvas" || t === "waveform" || t === "simplexNoise") return Activity;
+  if (t === "music" || t === "abcNotation" || t === "vexFlow") return Music;
+  if (t === "roughShape" || t === "trianglify") return PenTool;
+  if (String(t).includes("chart") || String(t).includes("Chart") || t === "d3" || t === "plotly" || t === "vegaLite" || t === "markmap" || t === "d3Cloud" || t === "d3Sankey") return BarChart3;
+  return Shapes;
+}
+
 function checkAndUpdate() {
   if (shouldUpdateCanvasSticker.value) {
-    message.warning("请先点击'更新贴纸'按钮更新画布内容");
+    message.warning("请先点击「渲染」按钮更新画布内容");
     return false;
   }
   return true;
@@ -361,11 +426,6 @@ function toggleFolderSelect(id: string) {
   editForm.value.folderId = editForm.value.folderId === id ? null : id;
 }
 
-function handleFolderNodeClick(data: any) {
-  // el-tree 的 node-click 由展开/折叠箭头触发，不改变选中状态
-  // 选中状态由 toggleFolderSelect 控制
-}
-
 function clearFolderSelect() {
   editForm.value.folderId = null;
 }
@@ -382,7 +442,7 @@ async function loadFolderTree() {
 
 function handleUploadClick() {
   if (shouldUpdateCanvasSticker.value) {
-    message.warning("请先点击'更新贴纸'按钮更新画布内容");
+    message.warning("请先点击「渲染」按钮更新画布内容");
     return;
   }
   loadFolderTree();
@@ -395,7 +455,7 @@ function handleUploadClick() {
 
 async function doUpload() {
   if (shouldUpdateCanvasSticker.value) {
-    message.warning("请先点击'更新贴纸'按钮更新画布内容");
+    message.warning("请先点击「渲染」按钮更新画布内容");
     return;
   }
   submitLoading.value = true;
@@ -446,14 +506,7 @@ async function doUpload() {
 }
 
 /**
- * 获取贴纸的主题色
- */
-async function getCanvasStickerColor() {
-  let colors = await canvasController.getPalette();
-}
-
-/**
- * @methods 手动生成贴纸
+ * @methods 手动渲染贴纸
  */
 function genSticker() {
   canvasController.activeUpdateRenderingCanvas();
@@ -592,6 +645,7 @@ function genSticker() {
   border-radius: 0;
   border: 1px solid var(--1s-dialog-border);
   background: var(--1s-canvas-shell-background);
+  flex-shrink: 0;
 }
 
 .canvas-preview-badge-overlay {
@@ -603,21 +657,77 @@ function genSticker() {
 
 .canvas-expand-pill-btn {
   gap: 4px;
-  box-: none;
 }
 
+/* ---- 图层列表 ---- */
+.layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0;
+  border-top: 1px solid var(--1s-divider-color);
+  border-bottom: 1px solid var(--1s-divider-color);
+  flex-shrink: 0;
+  max-height: 168px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.layer-row {
+  width: auto;
+  margin: 0 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  .layer-row__icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--1s-text-color-secondary);
+  }
+
+  &.is-selected .layer-row__icon {
+    color: var(--1s-state-selected-text);
+  }
+
+  .layer-row__remove {
+    opacity: 0;
+    margin-left: 2px;
+  }
+
+  &:hover .layer-row__remove {
+    opacity: 0.7;
+  }
+
+  .layer-row__remove:hover {
+    opacity: 1;
+    color: var(--1s-danger-text, #ef4444);
+  }
+}
+
+/* ---- 上下文属性区 ---- */
+.operate {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---- 底部动作栏 ---- */
 .canvas-actions-panel {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  padding: 7px 8px 8px;
+  padding: 8px;
   box-sizing: border-box;
-  border-bottom: 1px solid var(--1s-divider-color);
-  overflow: hidden;
+  border-top: 1px solid var(--1s-divider-color);
+  flex-shrink: 0;
+  background: var(--1s-panel-background);
 }
 
-/* 主操作 — 整行，更大 */
 .canvas-action-primary {
   width: 100%;
   height: 32px;
@@ -626,12 +736,11 @@ function genSticker() {
   border-radius: 0;
 }
 
-/* 次操作行 — 三等分对称 */
 .canvas-actions-panel__row {
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
   gap: 5px;
 }
@@ -643,13 +752,15 @@ function genSticker() {
   border-radius: 0;
 }
 
-.operate {
-  flex: 1;
-  width: 100%;
-  min-height: 0;
-  overflow: auto;
-  border-top: 1px solid var(--1s-divider-color);
-  overscroll-behavior: contain;
+.canvas-action-danger {
+  color: var(--1s-danger-text, #ef4444);
+  border-color: color-mix(in srgb, var(--1s-danger-text, #ef4444) 36%, transparent);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--1s-danger-text, #ef4444) 10%, transparent);
+    border-color: color-mix(in srgb, var(--1s-danger-text, #ef4444) 55%, transparent);
+    color: var(--1s-danger-text, #ef4444);
+  }
 }
 
 :deep(.update-required) {

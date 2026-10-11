@@ -923,22 +923,48 @@ async function handleRemoteCommand(data: any) {
             if (!tr && typeof m.content === "string") {
               try { tr = JSON.parse(m.content); } catch {}
             }
-            if (tr?.success && tr?.data) {
-              if (tr.data.customStickerId || tr.data.url) {
-                outputs.push({
-                  type: "sticker",
-                  name: tr.data.name,
-                  url: tr.data.url,
-                  customStickerId: tr.data.customStickerId,
-                  stickerId: tr.data.stickerId,
-                });
+            if (!tr && typeof m.content === "string") {
+              // content 带 progressHint 后缀时截掉再解析
+              const jsonMatch = m.content.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                try { tr = JSON.parse(jsonMatch[0]); } catch {}
               }
-              if (tr.data.groupId) {
+            }
+            // 兼容 envelope 嵌套 data.data / result.data
+            const payload =
+              tr?.data?.customStickerId || tr?.data?.url || tr?.data?.groupId
+                ? tr.data
+                : tr?.data?.data && typeof tr.data.data === "object"
+                  ? tr.data.data
+                  : tr?.result?.data || tr?.data || null;
+
+            const toolName = (m as any)?.tool_name || (m as any)?.toolName || "";
+            const isSaveTool =
+              String(toolName).includes("updateAndSaveSticker") ||
+              String(toolName).includes("createImageGroup");
+
+            if (payload && (tr?.success !== false || isSaveTool)) {
+              if (payload.customStickerId || payload.url) {
+                if (
+                  !outputs.some(
+                    (o) => o.customStickerId && o.customStickerId === payload.customStickerId,
+                  )
+                ) {
+                  outputs.push({
+                    type: "sticker",
+                    name: payload.name,
+                    url: payload.url,
+                    customStickerId: payload.customStickerId,
+                    stickerId: payload.stickerId,
+                  });
+                }
+              }
+              if (payload.groupId) {
                 outputs.push({
                   type: "image-group",
-                  name: tr.data.name,
-                  groupId: tr.data.groupId,
-                  stickersCount: tr.data.stickersCount || tr.data.stickerIds?.length,
+                  name: payload.name,
+                  groupId: payload.groupId,
+                  stickersCount: payload.stickersCount || payload.stickerIds?.length,
                 });
               }
             }

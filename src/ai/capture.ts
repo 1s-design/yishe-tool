@@ -100,15 +100,22 @@ export async function renderCurrentCanvasNow(
   if (typeof controller.updateRenderingCanvasJob === "function") {
     controller.loading.value = true;
     renderingLoading.value = true;
-    await Promise.race([
-      Promise.resolve(controller.updateRenderingCanvasJob()),
-      new Promise<never>((_, reject) => {
-        setTimeout(
-          () => reject(new Error(`画布渲染超时 (${timeoutMs}ms)`)),
-          timeoutMs,
-        );
-      }),
-    ]);
+    try {
+      await Promise.race([
+        Promise.resolve(controller.updateRenderingCanvasJob()),
+        new Promise<never>((_, reject) => {
+          setTimeout(
+            () => reject(new Error(`画布渲染超时 (${timeoutMs}ms)`)),
+            timeoutMs,
+          );
+        }),
+      ]);
+    } catch (err) {
+      // 超时/失败时释放 loading，避免后续截图一直等待
+      controller.loading.value = false;
+      renderingLoading.value = false;
+      throw err;
+    }
   } else {
     await controller.activeUpdateRenderingCanvas();
     await waitForRender(controller, timeoutMs, true);

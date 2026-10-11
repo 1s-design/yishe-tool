@@ -24,6 +24,13 @@ import {
 } from "../shared/response-parser";
 import { translateToolResult } from "@/ai/agent/tool-translator";
 import { evaluateCanvasVisual } from "../visual-evaluate";
+import {
+  isVisionAvailable,
+  markVisionUnavailable,
+  messagesContainImages,
+  stripImagesFromMessages,
+  isVisionRelatedError,
+} from "../vision-mode";
 import { websocketClient } from "@/services/websocketClient";
 import { migrateLegacyWorkspaceStorage } from "@/services/designRuntime";
 import type { VisualEvaluation } from "../visual-evaluate";
@@ -1110,7 +1117,12 @@ async function runAgentLoop(
   const allowInteraction = options.allowInteraction !== false;
   const deliveryHandledExternally =
     options.deliveryHandledExternally === true;
-  const referenceImage = String(options.referenceImage || "").trim();
+  let referenceImage = String(options.referenceImage || "").trim();
+  // 视觉模型不可用时，参考图降级：不带图片，仅按文字需求执行
+  if (referenceImage && !isVisionAvailable()) {
+    console.warn("[Agent] 视觉能力不可用，参考图降级为纯文字模式");
+    referenceImage = "";
+  }
   const taskSpec = resolveAgentTaskSpec(userMessage, options.task, {
     hasReferenceImage: Boolean(referenceImage),
     execution: allowInteraction ? "interactive" : "automatic",
@@ -1157,7 +1169,7 @@ async function runAgentLoop(
 
   // 1. 本地生成可执行计划，避免额外的 Planner 模型请求。
   const executionPlan = isPureText
-    ? { plan: null, isNewDesign: false, shouldPreflightSize: false, explicitCanvasSize: null, typographyDensity: "balanced" as const, searchQueries: { styles: [], fonts: [], sentences: [] }, perOutputCanvasSize: false }
+    ? { plan: null, isNewDesign: false, shouldPreflightSize: false, explicitCanvasSize: null, typographyDensity: "balanced" as const, searchQueries: { styles: "", fonts: "", sentences: "" }, perOutputCanvasSize: false }
     : buildExecutionPlan(userMessage, taskSpec);
   const requiresImageGroupDelivery = taskSpec.createImageGroup;
   let canvasSizeReadyForArtwork = !executionPlan.isNewDesign;
@@ -1356,7 +1368,7 @@ async function runAgentLoop(
   // 参考图模式：不传历史消息，只发 system + 当前用户消息（含参考图）
   // 原因：历史消息中可能包含 reasoning_content（thinking 模式），而视觉模型
   // 不支持 thinking，API 会因历史 thinking blocks 不完整而返回 400 错误。
-  const messagesForLLM: any[] = [
+  let messagesForLLM: any[] = [
     { role: "system", content: systemPrompt },
     ...(referenceImage ? [referenceMessage] : conversationMessages),
   ];
@@ -1453,7 +1465,7 @@ async function runAgentLoop(
         has_tool_calls: !!m.tool_calls?.length,
         content_preview: String(m.content || "").slice(0, 50),
       })), null, 2));
-      response = await directChat({
+      const llmRequest = {
         messages: finalMessages,
         tools: allTools.length > 0 ? allTools : undefined,
         maxTokens: referenceImage ? 4096 : undefined,
@@ -1461,9 +1473,49 @@ async function runAgentLoop(
         timeoutMs: AI_TIMEOUTS.chat,
         // DeepSeek 默认开启 thinking 模式，必须显式禁用
         enableThinking: false,
-      });
+      };
+      // 瞬时网络故障自动退避重试，避免任务空转
+      let lastLlmError: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          response = await directChat(llmRequest);
+          lastLlmError = null;
+          break;
+        } catch (retryErr: any) {
+          lastLlmError = retryErr;
+          const msg = String(retryErr?.message || "");
+          const transient =
+            msg.includes("Connection error") ||
+            msg.includes("ECONNRESET") ||
+            msg.includes("Failed to fetch") ||
+            msg.includes("timeout") ||
+            msg.includes("429") ||
+            msg.includes("502") ||
+            msg.includes("503") ||
+            msg.includes("Service Error");
+          if (!transient || attempt === 2) throw retryErr;
+          const waitMs = 2000 * (attempt + 1);
+          console.warn(`[Agent] LLM 瞬时错误，${waitMs}ms 后重试 (${attempt + 1}/3):`, msg.slice(0, 80));
+          await new Promise((r) => setTimeout(r, waitMs));
+        }
+      }
+      if (lastLlmError) throw lastLlmError;
     } catch (error: any) {
       console.error("[Agent] LLM error:", error);
+      // 视觉请求失败 → 降级为纯文本重试，不让任务整段失败
+      const hadImages =
+        messagesContainImages(messagesForLLM) || Boolean(referenceImage);
+      if (hadImages && (isVisionAvailable() || isVisionRelatedError(error))) {
+        markVisionUnavailable(error?.message);
+        referenceImage = "";
+        messagesForLLM = stripImagesFromMessages(messagesForLLM);
+        addMessage({
+          role: "assistant",
+          content: `视觉模型暂不可用（${error?.message || "连接失败"}），已切换为纯文本模式继续任务。`,
+          meta: { iteration, type: "vision-fallback" },
+        });
+        continue;
+      }
       failRemainingPlan(plan, `模型调用失败: ${error.message}`);
       addMessage({
         role: "assistant",
@@ -1486,12 +1538,23 @@ async function runAgentLoop(
       console.error("[Agent] No message in response:", response);
       const responseError = getChatResponseError(response);
       unparseableResponseCount += 1;
-      if (referenceImage && !responseError && unparseableResponseCount < 2) {
+
+      // 视觉请求失败/不可解析 → 降级纯文本重试
+      const hadImages =
+        messagesContainImages(messagesForLLM) || Boolean(referenceImage);
+      if (hadImages) {
+        markVisionUnavailable(responseError || "视觉响应不可解析");
+        referenceImage = "";
+        messagesForLLM = stripImagesFromMessages(messagesForLLM);
         addMessage({
           role: "assistant",
-          content: "视觉模型返回格式异常，正在重新请求设计步骤。",
-          meta: { iteration, llmResponse: response, type: "reference-response-retry" },
+          content: `视觉模型请求失败：${responseError || "响应不可解析"}。已切换为纯文本模式继续任务。`,
+          meta: { iteration, type: "vision-fallback" },
         });
+        continue;
+      }
+
+      if (!responseError && unparseableResponseCount < 2) {
         messagesForLLM.push({
           role: "system",
           content:
@@ -1503,8 +1566,8 @@ async function runAgentLoop(
       addMessage({
         role: "assistant",
         content: responseError
-          ? `视觉模型请求失败：${responseError}`
-          : "视觉模型没有返回可解析的内容，请重试或检查当前视觉模型配置。",
+          ? `模型请求失败：${responseError}`
+          : "模型没有返回可解析的内容，请重试或检查模型配置。",
         meta: { iteration, llmResponse: response },
       });
       return;
@@ -2141,7 +2204,7 @@ async function runAgentLoop(
       }
     }
 
-    // 视觉自检（每 4 轮）
+    // 视觉自检（每 4 轮）— 视觉不可用时降级为画布状态文本自检
     if (
       allowCanvasAnalysis &&
       allowPostArtworkContinuation &&
@@ -2149,38 +2212,49 @@ async function runAgentLoop(
       iteration > 0
     ) {
       try {
-        const screenshot = await captureCanvasForAI();
-        const quickEval = await directChat({
-          messages: [
-            {
-              role: "system",
-              content:
-                "用一句话评价这个设计，格式：评分(X/10) + 主要问题或优点",
-            },
-            {
-              role: "user",
-              content: [{ type: "image_url", image_url: { url: screenshot } }],
-            },
-          ],
-          temperature: 0.3,
-          maxTokens: 100,
-          timeoutMs: AI_TIMEOUTS.quickEvaluate,
-          enableThinking: false,
-        });
-        const evalContent = parseChatResponse(quickEval);
-        if (evalContent?.content) {
+        if (!isVisionAvailable()) {
+          const stateSummary = getCanvasStateSummary();
           messagesForLLM.push({
             role: "system",
-            content: `[视觉自检] ${evalContent.content}`,
+            content: `[文本自检·视觉不可用] 画布状态：${stateSummary.slice(0, 500)}。请据此自查排版与完整性并继续。`,
           });
-          addMessage({
-            role: "assistant",
-            content: `👁️ ${evalContent.content}`,
-            meta: { iteration, type: "visual-check" },
+        } else {
+          const screenshot = await captureCanvasForAI();
+          const quickEval = await directChat({
+            messages: [
+              {
+                role: "system",
+                content:
+                  "用一句话评价这个设计，格式：评分(X/10) + 主要问题或优点",
+              },
+              {
+                role: "user",
+                content: [{ type: "image_url", image_url: { url: screenshot } }],
+              },
+            ],
+            temperature: 0.3,
+            maxTokens: 100,
+            timeoutMs: AI_TIMEOUTS.quickEvaluate,
+            enableThinking: false,
           });
+          const evalContent = parseChatResponse(quickEval);
+          if (evalContent?.content) {
+            messagesForLLM.push({
+              role: "system",
+              content: `[视觉自检] ${evalContent.content}`,
+            });
+            addMessage({
+              role: "assistant",
+              content: `👁️ ${evalContent.content}`,
+              meta: { iteration, type: "visual-check" },
+            });
+          }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.warn("[Agent] 视觉检查跳过:", e);
+        if (isVisionRelatedError(e) || isVisionAvailable()) {
+          markVisionUnavailable(e?.message);
+        }
       }
     }
 
@@ -2285,22 +2359,11 @@ async function runAutoEvaluation(): Promise<EvaluationResult | null> {
   console.log("[Agent] 开始自动评估...");
 
   try {
-    const imageBase64 = await captureCanvasForAI();
     const stateSummary = getCanvasStateSummary();
-
-    const response = await directChat({
-      messages: [
-        {
-          role: "system",
-          content:
-            "你是一个专业的设计评审专家。评估设计作品的质量，只输出 JSON。",
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `评估这个设计的质量。
+    const contentParts: any[] = [
+      {
+        type: "text",
+        text: `评估这个设计的质量。
 
 画布状态：
 ${stateSummary}
@@ -2313,13 +2376,29 @@ ${stateSummary}
   "suggestions": ["具体改进建议1", "具体改进建议2"],
   "shouldIterate": true/false
 }`,
-            },
-            {
-              type: "image_url",
-              image_url: { url: imageBase64, detail: "high" },
-            },
-          ],
+      },
+    ];
+
+    if (isVisionAvailable()) {
+      try {
+        const imageBase64 = await captureCanvasForAI();
+        contentParts.push({
+          type: "image_url",
+          image_url: { url: imageBase64, detail: "high" },
+        });
+      } catch (captureErr: any) {
+        markVisionUnavailable(captureErr?.message);
+      }
+    }
+
+    const response = await directChat({
+      messages: [
+        {
+          role: "system",
+          content:
+            "你是一个专业的设计评审专家。评估设计作品的质量，只输出 JSON。",
         },
+        { role: "user", content: contentParts },
       ],
       temperature: 0.3,
       timeoutMs: AI_TIMEOUTS.quickEvaluate,
@@ -2348,6 +2427,9 @@ ${stateSummary}
     return result;
   } catch (error: any) {
     console.error("[Agent] 自动评估失败:", error);
+    if (isVisionRelatedError(error)) {
+      markVisionUnavailable(error?.message);
+    }
     return null;
   }
 }

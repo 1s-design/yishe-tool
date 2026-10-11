@@ -24,7 +24,7 @@
     />
 
     <operateItemSwitch
-      label="在主画布中显示"
+      label="主画布显示"
       v-model="showMainCanvas"
     />
   </section>
@@ -59,17 +59,17 @@ watchEffect(() => {
 });
 
 // 改变宽高比
-function aspectRatioChange(asepctRatio) {
-  /**
-   * 分为基于宽度或高度
-   */
-  let canvasChild = canvasStickerOptions.value.children.find(
+function aspectRatioChange(aspectRatio: number) {
+  const canvasChild = canvasStickerOptions.value.children.find(
     (item: any) => item.type == "canvas",
   ) as any;
 
-  canvasChild.height.value = Number(
-    (canvasChild.width.value / asepctRatio).toFixed(2),
-  );
+  if (!canvasChild || !canvasChild.width?.value) return;
+
+  // 根据比例调整高度（保持宽度不变）
+  const newHeight = Number((canvasChild.width.value / aspectRatio).toFixed(2));
+  canvasChild.height = canvasChild.height || { value: 0, unit: 'px' };
+  canvasChild.height.value = newHeight;
 }
 
 function handlePresetSelect(preset: { width: number; height: number }) {

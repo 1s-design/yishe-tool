@@ -21,10 +21,10 @@
       <input
         v-model="customRatio"
         class="ratio-input"
-        placeholder="自定义比例，如 5:3"
+        placeholder="如 5:3 或 1.5"
         @keyup.enter="applyCustomRatio"
       />
-      <button class="ratio-apply-btn" @click="applyCustomRatio">应用</button>
+      <button class="ratio-apply-btn" @click="applyCustomRatio()">应用</button>
     </div>
   </div>
 </template>
@@ -37,7 +37,7 @@ const emit = defineEmits<{
   (e: 'change', ratio: number): void
 }>()
 
-const model = defineModel({ default: '' })
+const model = defineModel<number | string>({ default: '' })
 
 const aspectRatioOptions = [
   { label: '1:1', value: 1 },
@@ -60,16 +60,43 @@ const activeValue = computed(() => {
 })
 
 function applyCustomRatio() {
-  const match = customRatio.value.match(/^(\d+(?:\.\d+)?)\s*[:：]\s*(\d+(?:\.\d+)?)$/)
-  if (!match) return
+  const input = customRatio.value.trim();
+  if (!input) return;
   
-  const w = parseFloat(match[1])
-  const h = parseFloat(match[2])
-  if (w <= 0 || h <= 0) return
+  let ratio = 0;
   
-  const ratio = w / h
-  model.value = ratio
-  emit('change', ratio)
+  // 支持多种格式：
+  // 1. 比例格式: "5:3", "16:9", "5：3"
+  // 2. 小数格式: "1.5", "0.75"
+  // 3. 百分比格式: "150%" (宽是高的150%)
+  
+  const ratioMatch = input.match(/^(\d+(?:\.\d+)?)\s*[:：]\s*(\d+(?:\.\d+)?)$/);
+  const decimalMatch = input.match(/^(\d+(?:\.\d+)?)$/);
+  const percentMatch = input.match(/^(\d+(?:\.\d+)?)\s*%$/);
+  
+  if (ratioMatch) {
+    // 格式: 5:3
+    const w = parseFloat(ratioMatch[1]);
+    const h = parseFloat(ratioMatch[2]);
+    if (w <= 0 || h <= 0) return;
+    ratio = w / h;
+  } else if (percentMatch) {
+    // 格式: 150% (宽是高的150%)
+    const percent = parseFloat(percentMatch[1]);
+    if (percent <= 0) return;
+    ratio = percent / 100;
+  } else if (decimalMatch) {
+    // 格式: 1.5 (宽是高的1.5倍)
+    const val = parseFloat(decimalMatch[1]);
+    if (val <= 0) return;
+    ratio = val;
+  } else {
+    console.error('[AspectRatio] Invalid input format:', input);
+    return;
+  }
+  
+  model.value = ratio;
+  emit('change', ratio);
 }
 
 function apply(item: { label: string; value: number }) {
@@ -85,7 +112,7 @@ function apply(item: { label: string; value: number }) {
   gap: 6px;
   width: 100%;
   min-width: 0;
-  padding: 4px 8px 6px;
+  padding: 4px 0 6px;
   box-sizing: border-box;
 }
 

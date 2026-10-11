@@ -1,24 +1,20 @@
 <template>
     <operate-form-item>
-        <template #icon>
-            <icon></icon>
-        </template>
         <template #name> 元素层级 </template>
         <template #content>
             <Tooltip>
                 <TooltipTrigger as-child>
-                    <Input style="width:80px;" type="number" :model-value="model as any" @update:model-value="v => (model = v)" class="h-6 text-[11px]" max="999" min="0"
+                    <Input style="width:72px;" type="number" :model-value="model as any" @update:model-value="v => (model = v)" max="999" min="0"
                         step="1"></Input>
                 </TooltipTrigger>
                 <TooltipContent side="top">控制元素的堆叠顺序,值越大,层级越高</TooltipContent>
             </Tooltip>
-            <Button size="sm" @click="setTopZIndex"> 设为最高 </Button>
+            <Button variant="outline" size="sm" class="shrink-0" @click="setTopZIndex"> 顶层 </Button>
         </template>
     </operate-form-item>
 </template>
 
 <script setup lang="ts">
-import icon from "@/components/design/assets/icon/z-index.svg?component";
 import { ref } from 'vue'
 import { canvasStickerOptions, currentOperatingCanvasChild, getCanvasTopZIndexChild } from "@/components/design/layout/canvas/index.tsx";
 import { Input } from '@/components/ui/input'

@@ -1,41 +1,31 @@
 <template>
   <operate-form-item>
-    <template #icon>
-      <icon></icon>
-    </template>
     <template #name> {{ label }} </template>
     <template #content>
-      <Popover>
-        <PopoverTrigger as-child>
-          <div class="relative w-[72px]">
-            <Input type="number" v-model="model.value" class="h-6 pr-8 text-[11px]" min="0" step="10" />
-            <div class="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{{ model.unit }}</div>
-          </div>
-        </PopoverTrigger>
-        <PopoverContent>
-          <div class="flex items-center justify-end">
-            <div class="w-full">
-              <RadioGroup v-model="model.unit" class="grid gap-1">
-                <label v-for="u in unitOptions" :key="u.value" class="flex items-center gap-2 cursor-pointer">
-                  <RadioGroupItem :value="u.value" />
-                  <span class="text-xs">{{ u.label }}</span>
-                </label>
-              </RadioGroup>
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
+      <div class="unit-input">
+        <input
+          class="unit-input__field"
+          type="number"
+          v-model.number="model.value"
+          min="0"
+          step="10"
+        />
+        <button
+          type="button"
+          class="unit-input__unit"
+          :title="`当前单位 ${model.unit}，点击切换`"
+          @click="cycleUnit"
+        >
+          {{ model.unit }}
+        </button>
+      </div>
     </template>
   </operate-form-item>
 </template>
 
 <script setup lang="tsx">
-import icon from "@/components/design/assets/icon/font-size.svg?component";
-import { ref, computed } from "vue";
-import { canvasStickerOptions,canvasStickerOptionsOnlyChild} from "@/components/design/layout/canvas/index.tsx";
-import { Input } from '@/components/ui/input'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { computed } from "vue";
+import { canvasStickerOptionsOnlyChild} from "@/components/design/layout/canvas/index.tsx";
 
 const props = defineProps({
   label: {
@@ -46,7 +36,7 @@ const props = defineProps({
   },
 });
 
-const model = defineModel({});
+const model = defineModel<any>({ default: () => ({ value: 0, unit: 'px' }) });
 
 const unitOptions = computed(() => {
   return [
@@ -64,6 +54,80 @@ const unitOptions = computed(() => {
     },
   ];
 });
+
+function cycleUnit() {
+  const opts = unitOptions.value;
+  const idx = opts.findIndex((o) => o.value === model.value?.unit);
+  const next = opts[(idx + 1) % opts.length];
+  model.value = { ...model.value, unit: next.value };
+}
 </script>
 
-<style></style>
+<style scoped lang="less">
+.unit-input {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  height: var(--1s-control-h-sm);
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: var(--1s-control-surface-muted);
+  padding: 0 2px 0 8px;
+  box-sizing: border-box;
+  transition: border-color 80ms, background-color 80ms;
+
+  &:hover {
+    border-color: var(--1s-border-color);
+    background: var(--1s-surface-background);
+  }
+
+  &:focus-within {
+    border-color: var(--1s-accent-color);
+    background: var(--1s-surface-background);
+    box-shadow: 0 0 0 2px var(--1s-focus-ring-color);
+  }
+}
+
+.unit-input__field {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--1s-text-color);
+  font-size: var(--1s-control-font-md);
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.unit-input__unit {
+  flex-shrink: 0;
+  height: 18px;
+  min-width: 22px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--1s-state-hover);
+  color: var(--1s-text-color-tertiary);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background: var(--1s-state-active);
+    color: var(--1s-text-color-secondary);
+  }
+}
+</style>

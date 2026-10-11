@@ -114,7 +114,7 @@ function flipSize() {
   gap: 6px;
   width: 100%;
   min-width: 0;
-  padding: 4px 8px 6px;
+  padding: 4px 0 6px;
   box-sizing: border-box;
 }
 

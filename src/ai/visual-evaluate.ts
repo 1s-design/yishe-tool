@@ -2,6 +2,11 @@ import { directChat } from "./direct-client";
 import { captureCanvasForAI, getCanvasStateSummary } from "./capture";
 import { parseChatResponse, extractJSON } from "./shared/response-parser";
 import { AI_TIMEOUTS } from "./shared/timeout";
+import {
+  isVisionAvailable,
+  markVisionUnavailable,
+  isVisionRelatedError,
+} from "./vision-mode";
 
 // ============ 类型定义 ============
 
@@ -57,22 +62,11 @@ const VISUAL_EVAL_SYSTEM_PROMPT = `你是一个专业的设计评审专家。你
 export async function evaluateCanvasVisual(): Promise<VisualEvaluation | null> {
   console.log("[VisualEval] 开始视觉评估...");
 
-  try {
-    const imageBase64 = await captureCanvasForAI();
+  const buildUserContent = (imageBase64: string | null) => {
     const stateSummary = getCanvasStateSummary();
-
-    const response = await directChat({
-      messages: [
-        {
-          role: "system",
-          content: VISUAL_EVAL_SYSTEM_PROMPT,
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `请评估这个设计作品。
+    const textPart = {
+      type: "text",
+      text: `请评估这个设计作品。
 
 ## 画布状态
 ${stateSummary}
@@ -81,14 +75,21 @@ ${stateSummary}
 - 如果画布为空（元素数量为 0），评分 1 分，建议"创建一个设计"
 - 重点检查是否有纯黑(#000000)或纯白(#ffffff)作为主色，如果有必须指出
 - 检查文字是否太小（< 60px）或太大（> 500px），异常时指出
-- 检查元素是否贴边（margin < 5%）`,
-            },
-            {
-              type: "image_url",
-              image_url: { url: imageBase64, detail: "high" },
-            },
-          ],
-        },
+- 检查元素是否贴边（margin < 5%）${imageBase64 ? "" : "\n- 当前视觉模型不可用，请仅根据画布状态数据评估"}`,
+    };
+    return imageBase64
+      ? [
+          textPart,
+          { type: "image_url", image_url: { url: imageBase64, detail: "high" } },
+        ]
+      : [textPart];
+  };
+
+  const doEvaluate = async (imageBase64: string | null) => {
+    const response = await directChat({
+      messages: [
+        { role: "system", content: VISUAL_EVAL_SYSTEM_PROMPT },
+        { role: "user", content: buildUserContent(imageBase64) },
       ],
       temperature: 0.3,
       timeoutMs: AI_TIMEOUTS.batchEvaluate,
@@ -120,8 +121,33 @@ ${stateSummary}
 
     console.log("[VisualEval] 评估完成:", result);
     return result;
+  };
+
+  try {
+    if (!isVisionAvailable()) {
+      return await doEvaluate(null);
+    }
+
+    let imageBase64: string | null = null;
+    try {
+      imageBase64 = await captureCanvasForAI();
+    } catch (captureErr: any) {
+      markVisionUnavailable(captureErr?.message);
+    }
+
+    return await doEvaluate(imageBase64);
   } catch (error: any) {
     console.error("[VisualEval] 评估失败:", error);
+    // 视觉失败 → 降级为纯文本评估
+    if (isVisionRelatedError(error) || isVisionAvailable()) {
+      markVisionUnavailable(error?.message);
+      try {
+        return await doEvaluate(null);
+      } catch (fallbackErr) {
+        console.error("[VisualEval] 文本评估也失败:", fallbackErr);
+        return null;
+      }
+    }
     return null;
   }
 }

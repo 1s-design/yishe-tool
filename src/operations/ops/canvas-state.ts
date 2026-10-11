@@ -23,6 +23,15 @@ registerOperation({
         type: c.type,
         zIndex: c.zIndex,
         textContent: c.textContent || undefined,
+        // HTML 层没有 textContent，给出可见文字预览便于内容核对
+        textPreview:
+          c.type === "html" && c.htmlContent
+            ? String(c.htmlContent)
+                .replace(/<[^>]+>/g, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 120)
+            : undefined,
         position: c.position
           ? {
               center: c.position.center,
@@ -39,7 +48,7 @@ registerOperation({
         ? elements
             .map(
               (e: any) =>
-                `${e.type}(${e.id})${e.textContent ? `:"${e.textContent.slice(0, 20)}"` : ""}`,
+                `${e.type}(${e.id})${e.textContent ? `:"${e.textContent.slice(0, 20)}"` : e.textPreview ? `:"${e.textPreview.slice(0, 20)}"` : ""}`,
             )
             .join(", ")
         : "无";
