@@ -88,7 +88,8 @@ export async function renderCurrentCanvasNow(
     throw new Error("画布控制器未初始化");
   }
 
-  const timeoutMs = options.timeoutMs ?? 60_000;
+  // 中文 web 字体 base64 嵌入后的 SVG 渲染较慢，默认预算需覆盖带字体嵌入的首次尝试
+  const timeoutMs = options.timeoutMs ?? 90_000;
 
   await nextTick();
   await waitForAnimationFrame();

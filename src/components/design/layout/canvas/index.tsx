@@ -15,9 +15,9 @@ import {
   toBlob,
   toPixelData,
   toSvg,
-  toCanvas,
-  getFontEmbedCSS,
 } from "html-to-image";
+import { buildSubsetFontEmbedCSS } from "@/ai/font-subset";
+import { renderDiagnostics } from "@/ai/render-diagnostics";
 import { downloadByFile } from "@/common/transform";
 import { useDebounceFn } from "@vueuse/core";
 import { waitImage } from "@/common";
@@ -1012,6 +1012,65 @@ function reparentCanvasChildren() {
   });
 }
 
+// ── 不依赖 requestAnimationFrame 的渲染实现 ──
+// html-to-image 的 createImage 内部用 requestAnimationFrame 才 resolve，
+// 页面处于后台标签时 rAF 不触发，会导致渲染永不结束（表现为保存/截图超时）。
+// 这里用 toSvg + 原生 onload/decode 重新实现，后台标签也能正常渲染。
+function loadImageWithoutRaf(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+    img.onload = () => {
+      if (typeof img.decode === "function") {
+        img.decode().then(
+          () => resolve(img),
+          () => resolve(img),
+        );
+      } else {
+        resolve(img);
+      }
+    };
+    img.onerror = () => reject(new Error("画布图像加载失败"));
+    img.src = url;
+  });
+}
+
+function getNodeRenderSize(node: HTMLElement) {
+  const style = window.getComputedStyle(node);
+  const px = (value: string) => parseFloat(value) || 0;
+  return {
+    width: node.clientWidth + px(style.borderLeftWidth) + px(style.borderRightWidth),
+    height: node.clientHeight + px(style.borderTopWidth) + px(style.borderBottomWidth),
+  };
+}
+
+async function renderNodeToCanvas(
+  node: HTMLElement,
+  options: Record<string, any> = {},
+): Promise<HTMLCanvasElement> {
+  const { width, height } = getNodeRenderSize(node);
+  const svgUrl = await toSvg(node, { ...options, width, height });
+  const img = await loadImageWithoutRaf(svgUrl);
+
+  const ratio = Number(options.pixelRatio) || 1;
+  const canvasWidth = Number(options.canvasWidth) || width;
+  const canvasHeight = Number(options.canvasHeight) || height;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(canvasWidth * ratio);
+  canvas.height = Math.round(canvasHeight * ratio);
+  canvas.style.width = `${canvasWidth}px`;
+  canvas.style.height = `${canvasHeight}px`;
+
+  const context = canvas.getContext("2d");
+  if (options.backgroundColor) {
+    context.fillStyle = options.backgroundColor;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  context.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
 // 二维的画布控制器
 
 export class CanvasController {
@@ -1064,14 +1123,20 @@ export class CanvasController {
       return this.fontEmbedCSSCache.value;
     }
 
+    // 优先使用「字形子集化」嵌入：中文字体全量 base64 会让 SVG data URL 膨胀到数十 MB，
+    // 导致渲染卡死（>90s）并降级丢失字体；子集化后体积下降约千倍，渲染快且字体正确。
+    const cssStart = Date.now();
     const value = await Promise.race([
-      getFontEmbedCSS(this.el),
-      new Promise<string>((resolve) => setTimeout(() => resolve(''), 8_000)),
+      buildSubsetFontEmbedCSS(this.el).catch(() => ""),
+      new Promise<string>((resolve) => setTimeout(() => resolve(""), 20_000)),
     ]);
+    renderDiagnostics.fontCssMs = Date.now() - cssStart;
+    renderDiagnostics.fontCssLen = value.length;
+
     this.fontEmbedCSSCache = {
       value,
       key: cacheKey,
-      expiresAt: now + 30_000,
+      expiresAt: now + 120_000,
     };
     return value;
   }
@@ -1221,20 +1286,35 @@ export class CanvasController {
   // 渲染锁：防止并发渲染导致状态混乱
   _renderingLock = false;
   _renderingPromise: Promise<void> | null = null;
+  _renderingStartedAt = 0;
+
+  // 渲染超过该时长仍未结束，视为僵死，允许下一次渲染重新开始
+  static readonly RENDER_STALE_MS = 180_000;
 
   async updateRenderingCanvasJob() {
     if (this._renderingLock && this._renderingPromise) {
-      // 已有渲染在进行：等待其完成，而不是跳过（跳过会让 loading 卡住）
-      console.warn("[Canvas] 渲染进行中，等待现有渲染完成");
-      return this._renderingPromise;
+      if (Date.now() - this._renderingStartedAt > CanvasController.RENDER_STALE_MS) {
+        // 僵死自愈：旧渲染长期未结束，强制重置锁，避免后续保存永远等待
+        console.warn("[Canvas] 检测到僵死渲染，重置渲染锁并重新渲染");
+        this._renderingLock = false;
+        this._renderingPromise = null;
+        this.loading.value = false;
+        renderingLoading.value = false;
+      } else {
+        // 已有渲染在进行：等待其完成，而不是跳过（跳过会让 loading 卡住）
+        console.warn("[Canvas] 渲染进行中，等待现有渲染完成");
+        return this._renderingPromise;
+      }
     }
     this._renderingLock = true;
+    this._renderingStartedAt = Date.now();
     this._renderingPromise = (async () => {
       try {
         await this._doUpdateRenderingCanvas();
       } finally {
         this._renderingLock = false;
         this._renderingPromise = null;
+        this._renderingStartedAt = 0;
         // 兜底：无论如何都要释放 loading，避免截图等待卡死
         this.loading.value = false;
         renderingLoading.value = false;
@@ -1244,6 +1324,8 @@ export class CanvasController {
   }
 
   async _doUpdateRenderingCanvas() {
+    renderDiagnostics.visibility = document.visibilityState;
+    const renderStart = Date.now();
     if (!this.el) {
       console.log("miss canvas el");
       this.loading.value = false;
@@ -1262,10 +1344,11 @@ export class CanvasController {
         // 获取字体嵌入 CSS
         const fontEmbedCSS = await this.getCachedFontEmbedCSS();
 
-        // 转换为 canvas（最多 30 秒）
-        // imagePlaceholder: 图片加载失败时的占位符，避免整体渲染失败
+        // 转换为 canvas（最多 45 秒）
+        // 字体已做字形子集化（见 @/ai/font-subset），SVG data URL 很小，正常几秒内完成。
+        const firstTryStart = Date.now();
         let _canvas = await Promise.race([
-          toCanvas(this.el, {
+          renderNodeToCanvas(this.el, {
             quality: 1,
             pixelRatio: 1,
             backgroundColor: null,
@@ -1274,9 +1357,12 @@ export class CanvasController {
             skipAutoScale: true,
           }),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('画布截图转换超时 (30s)')), 30_000),
+            setTimeout(() => reject(new Error('画布截图转换超时 (45s)')), 45_000),
           ),
         ]);
+        renderDiagnostics.firstTryMs = Date.now() - firstTryStart;
+        renderDiagnostics.firstTryOk = true;
+        renderDiagnostics.firstTryErr = "";
         console.log("html-to-image toCanvas");
 
         let width = Number(
@@ -1317,16 +1403,24 @@ export class CanvasController {
         console.timeEnd("updateRenderingCanvas");
       } catch (e) {
         console.warn("画布渲染首次失败，尝试降级重试:", e.message);
-        // 降级重试：跳过字体嵌入，使用占位图
+        renderDiagnostics.firstTryOk = false;
+        renderDiagnostics.firstTryErr = String(e?.message || e);
+        // 降级重试：跳过字体嵌入，使用占位图（有超时兜底，避免永久挂起）
+        const fallbackStart = Date.now();
         try {
-          let _canvas = await toCanvas(this.el, {
-            quality: 0.8,
-            pixelRatio: 1,
-            backgroundColor: null,
-            skipFonts: true,
-            imagePlaceholder: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjqU8L3RleHQ+PC9zdmc+',
-            skipAutoScale: true,
-          });
+          let _canvas = await Promise.race([
+            renderNodeToCanvas(this.el, {
+              quality: 0.8,
+              pixelRatio: 1,
+              backgroundColor: null,
+              skipFonts: true,
+              imagePlaceholder: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjqU8L3RleHQ+PC9zdmc+',
+              skipAutoScale: true,
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('画布降级截图转换超时 (45s)')), 45_000),
+            ),
+          ]);
           let width = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.width));
           let height = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.height));
           this.clearCanvas();
@@ -1334,8 +1428,12 @@ export class CanvasController {
           this.loading.value = false;
           renderingLoading.value = false;
           this.shouldUpdateCanvasSticker.value = false;
+          renderDiagnostics.fallbackMs = Date.now() - fallbackStart;
+          renderDiagnostics.fallbackOk = true;
           console.warn("画布降级渲染成功");
         } catch (e2) {
+          renderDiagnostics.fallbackMs = Date.now() - fallbackStart;
+          renderDiagnostics.fallbackOk = false;
           console.error("画布降级渲染也失败:", e2.message);
           this.loading.value = false;
           renderingLoading.value = false;
@@ -1351,6 +1449,7 @@ export class CanvasController {
       this.loading.value = false;
       renderingLoading.value = false;
     }
+    renderDiagnostics.totalMs = Date.now() - renderStart;
   }
 
   clearCanvas() {

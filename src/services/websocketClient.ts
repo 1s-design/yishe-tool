@@ -34,6 +34,25 @@ function generateClientId() {
   return `designtool-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/**
+ * 每标签页稳定 ID：
+ * - 用 sessionStorage 持久化，同一标签页刷新/重连后 ID 不变（服务端可识别同一工作端）
+ * - sessionStorage 按标签页隔离，多个设计端标签页各自独立 ID
+ */
+function getStableClientId() {
+  const KEY = "yishe-designtool-client-id";
+  try {
+    const saved = sessionStorage.getItem(KEY);
+    if (saved && /^designtool-/.test(saved)) return saved;
+    const id = generateClientId();
+    sessionStorage.setItem(KEY, id);
+    return id;
+  } catch {
+    // sessionStorage 不可用（隐私模式等）时退化为随机 ID
+    return generateClientId();
+  }
+}
+
 function getAccessToken(): string | undefined {
   try {
     const raw = localStorage.getItem("token");
@@ -191,7 +210,7 @@ function createEmitter<T extends Record<string, any>>() {
   };
 }
 
-const clientId = generateClientId();
+const clientId = getStableClientId();
 
 const clientInfo = reactive({
   clientId,
@@ -600,12 +619,41 @@ function bindSocketEvents(currentSocket: Socket) {
       message: `[ws] disconnected: ${reason}`,
     });
     stopHeartbeat();
+    const willAutoReconnect = !intentionalDisconnect && reason !== "io client disconnect";
     updateState({
-      status: intentionalDisconnect ? "disconnected" : "error",
+      status: willAutoReconnect ? "reconnecting" : intentionalDisconnect ? "disconnected" : "error",
       lastError: reason || null,
       connectedAt: null,
       connectionId: null,
     });
+    // 服务端主动断开（如 ping 鉴权抖动）时强制重连一次
+    if (willAutoReconnect && (reason === "io server disconnect" || reason === "ping timeout")) {
+      setTimeout(() => {
+        if (!socket?.connected && !intentionalDisconnect) {
+          emitter.emit("log", { level: "warn", message: "[ws] 强制重连" });
+          socket?.connect();
+        }
+      }, 1200 + Math.random() * 1500);
+    }
+  });
+
+  currentSocket.io.on("reconnect_attempt", (attempt: number) => {
+    updateState({ status: "reconnecting", retryCount: attempt });
+    emitter.emit("log", {
+      level: "warn",
+      message: `[ws] reconnect attempt ${attempt}`,
+    });
+  });
+
+  currentSocket.io.on("reconnect_failed", () => {
+    updateState({ status: "error", lastError: "reconnect_failed" });
+    emitter.emit("log", {
+      level: "error",
+      message: "[ws] reconnect failed, will keep trying",
+    });
+    setTimeout(() => {
+      if (!socket?.connected && !intentionalDisconnect) socket?.connect();
+    }, 8000);
   });
 
   currentSocket.on("pong", () => {
@@ -979,10 +1027,15 @@ async function handleRemoteCommand(data: any) {
       }
       case "snapshot": {
         const { captureCanvasForAI } = await import("@/ai/capture");
-        const snapshot = await captureCanvasForAI({ timeoutMs: 60_000 });
+        // 中文 web 字体 base64 嵌入后的渲染较慢，给足预算（否则稳定 60s 超时）
+        const requestedTimeout = Number(payload?.timeoutMs) || 0;
+        const snapshot = await captureCanvasForAI({
+          timeoutMs: Math.max(requestedTimeout, 120_000),
+        });
         result.success = true;
         result.snapshot = snapshot;
-        result.message = "已获取当前画布截图";
+        const { renderDiagnostics } = await import("@/ai/render-diagnostics");
+        result.message = `已获取当前画布截图 ${JSON.stringify(renderDiagnostics)}`;
         break;
       }
       case "batch-start": {
@@ -1257,9 +1310,11 @@ function connect(endpoint?: string) {
     transports: ["websocket", "polling"],
     reconnection: true,
     reconnectionAttempts: Infinity,
-    reconnectionDelay: 2000,
-    reconnectionDelayMax: 12_000,
-    timeout: 8000,
+    reconnectionDelay: 1500,
+    reconnectionDelayMax: 15_000,
+    // 随机抖动，避免服务端重启时所有设计端同时重连（惊群）
+    randomizationFactor: 0.5,
+    timeout: 10000,
     query: buildQuery(),
     auth: token ? { token } : undefined,
   });

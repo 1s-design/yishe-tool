@@ -423,7 +423,8 @@ registerOperation({
             )
           : null;
 
-      await renderCurrentCanvasNow({ timeoutMs: 60_000 });
+      // 渲染预算需覆盖「带字体嵌入的首次尝试 + 降级重试」的最坏情况
+      await renderCurrentCanvasNow({ timeoutMs: 150_000 });
 
       const postRenderValidationError = validateCanvasBeforeSave();
       if (postRenderValidationError) {

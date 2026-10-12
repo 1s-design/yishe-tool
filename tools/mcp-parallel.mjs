@@ -33,56 +33,82 @@ async function mcp(tool, input, timeoutMs = 60_000) {
 
 const TASKS = [
   {
-    text: "立春",
-    sub: "万物复苏时",
-    style: "嫩芽绿底+细明体单字放大，柳枝/小草芽装饰在两侧",
+    text: "Stay hungry. Stay foolish.",
+    sub: "求知若饥，虚心若愚 — 乔布斯",
+    style: "情绪：求知、不羁。黑白极简排版，大号英文+小号中文注脚，细线框装饰边缘",
   },
   {
-    text: "燃烧吧",
-    sub: "把热爱跑成风",
-    style: "黑红撞色底+斜体力量字，火焰/速度线装饰在四角",
+    text: "念念不忘，必有回响",
+    sub: "— 李叔同",
+    style: "情绪：信念、回响。宣纸米底+行楷，涟漪/回音波纹装饰四角",
   },
   {
-    text: "月光宝盒",
-    sub: "装满温柔与星光",
-    style: "靛蓝星空底+手写细字，月亮/宝箱/星光装饰在边缘",
+    text: "凡是过往，皆为序章",
+    sub: "— 莎士比亚",
+    style: "情绪：重启、旷达。淡青底+细衬线中英混排，翻页/浪花纹装饰边缘",
   },
   {
-    text: "慢慢喝茶",
-    sub: "浮生半日闲",
-    style: "抹茶绿底+宋体，茶杯/茶叶/热气装饰在两侧",
+    text: "The best time is now",
+    sub: "种一棵树最好的时间是现在",
+    style: "情绪：行动、当下。暖阳橙底+手写英文，小树苗/沙漏装饰四角",
   },
   {
-    text: "城市漫游",
-    sub: "在街角遇见光",
-    style: "灰调都市底+轻黑体，楼影/路灯/自行车剪影装饰在边缘",
+    text: "且将新火试新茶",
+    sub: "诗酒趁年华 — 苏轼",
+    style: "情绪：洒脱、风雅。茶绿底+宋楷，茶烟/酒壶/远山装饰边缘",
   },
   {
-    text: "热干面",
-    sub: "过早啦",
-    style: "芝麻酱棕黄底+手写胖体，小面碗/葱花装饰在四角，武汉过早风",
+    text: "Be the change",
+    sub: "欲变世界，先变其身 — 甘地",
+    style: "情绪：力量、觉醒。深蓝底+金色细字，破茧/小翅膀装饰四角",
   },
   {
-    text: "向前跑",
-    sub: "风会记住你",
-    style: "橙红渐变底+斜体动感字，跑道线/脚印/速度痕装饰在边缘",
+    text: "山高自有客行路",
+    sub: "水深自有渡船人",
+    style: "情绪：无畏、笃定。山水灰蓝底+楷体，山径/小船/飞鸟装饰边缘",
   },
   {
-    text: "见字如面",
-    sub: "纸短情长",
-    style: "信封米白底+钢笔手写体，邮票/邮戳/羽毛笔装饰在四角",
+    text: "What doesn't kill me makes me stronger",
+    sub: "杀不死我的，必使我更强大 — 尼采",
+    style: "情绪：韧性、不屈。黑底白字+裂纹金缮纹，山峰/闪电装饰四角",
+  },
+  {
+    text: "此心安处是吾乡",
+    sub: "— 苏轼",
+    style: "情绪：安定、归处。暖杏底+行楷，小屋/炊烟/月牙装饰边缘",
+  },
+  {
+    text: "Do one thing well",
+    sub: "一生做好一件事",
+    style: "情绪：专注、匠心。素白底+黑细字，刻刀/墨滴装饰四角，极简禅意",
+  },
+  {
+    text: "行到水穷处",
+    sub: "坐看云起时 — 王维",
+    style: "情绪：从容、转机。天青底+淡墨，流水/云海装饰边缘",
+  },
+  {
+    text: "把平凡的日子过成诗",
+    sub: "— 致每一个认真生活的人",
+    style: "情绪：浪漫、日常。奶油底+手写体，小诗集/小花/咖啡杯装饰四角",
   },
 ];
 
 function buildPrompt(t) {
   return [
-    `画布 canvas.setSize 3000x1376（比例2.18）后设计情绪文字鼠标垫，完成后调用 canvas.updateAndSaveSticker 保存，name 用「${t.text}·并行测试」。`,
-    `主文案「${t.text}」必须落在画布几何正中心(50%,50%)（只包主文案做 translate(-50%,-50%)），副文案「${t.sub}」挂在主文案正下方，禁止把主+副整体居中。`,
-    `风格：${t.style}。装饰用 position:absolute 铺边缘/z-index 低于文字，不挤偏主文案。四周留 ≥8% 内边距。`,
+    `画布 canvas.setSize 3000x1376（比例2.18，长款鼠标垫印花）后设计一款名言/励志情绪文字鼠标垫，完成后调用 canvas.updateAndSaveSticker 保存，name 用「${t.text.slice(0, 10)}·名言设计」。`,
+    `【核心构图·硬性】主文案「${t.text}」必须精确落在画布几何正中心(50%,50%)，水平、垂直都居中；只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)，禁止把「主文案+副文案」整体居中。副文案「${t.sub}」挂在主文案正下方，整体仍保持视觉居中。`,
+    `【极简风格·硬性】以简洁为主，只保留核心文案。严禁添加任何多余的装饰性文字：不要小号英文/拼音、不要编号/角标、不要印章落款文字、不要标语口号。除主文案与副文案外，画面上不得出现其他文字。`,
+    `【排版】主文案字号远大于副文案，主次分明；四周留出舒适的内边距（约画布宽高的 10-14%），不要挤满。`,
+    `【设计要求】${t.style}`,
+    `【背景与装饰】用克制的配色与极简背景（纯色或柔和渐变）；装饰最多是极淡的底纹或一两条细线，不要繁复图案。`,
+    `严禁出现任何产品功能词（防滑/顺滑/材质/尺寸参数等），只做名言情绪设计。用 canvas.addHtml 的 HTML/CSS 实现，字体通过 htmlBindings 绑定。`,
   ].join("\n");
 }
 
 const count = Math.max(1, Math.min(TASKS.length, Number(process.argv[2]) || TASKS.length));
+// 轮换起始：每轮换一批主题，避免重复
+const offset = Number(process.argv[3]) || (Date.now() / 60000 / 5 | 0) % TASKS.length;
 
 console.log(`[1] 查询在线设计端…`);
 const list = await mcp("system.design_tool.query_design_tools", { onlineOnly: true });
@@ -98,7 +124,7 @@ console.log(`[2] 并行派发 ${targets.length} 个任务…`);
 const t0 = Date.now();
 const sentList = await Promise.all(
   targets.map(async (connectionId, i) => {
-    const t = TASKS[i % TASKS.length];
+    const t = TASKS[(offset + i) % TASKS.length];
     console.log(`    → ${connectionId.slice(0, 22)}「${t.text}」`);
     // 忙碌则退避重试
     let sent = null;
@@ -187,7 +213,7 @@ const libRes = await fetch(
 const libNames = ((libRes?.data?.items || []).map((it) => it.name || "")).join("\n");
 let savedCount = 0;
 for (const c of checks) {
-  const savedByLib = libNames.includes(c.text + "·并行测试") || libNames.includes(c.text);
+  const savedByLib = libNames.includes(c.text.slice(0, 10)) || libNames.includes(c.text);
   const savedByOut = (c.result?.outputs || []).length > 0;
   if (savedByLib || savedByOut) savedCount++;
   console.log(
