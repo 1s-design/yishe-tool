@@ -162,17 +162,33 @@ async function getTools() {
   return (list?.items || []).map((it) => it.clientId);
 }
 
-async function libNames() {
+const RUN_START_MS = Date.now();
+
+function stickerTimestamp(url) {
+  const m = String(url || "").match(/(\d{13})_sticker/);
+  return m ? Number(m[1]) : 0;
+}
+
+async function libItems() {
   try {
     const r = await fetch("http://127.0.0.1:1520/api/custom-sticker?page=1&pageSize=100", {
       headers: { Authorization: `Bearer ${TOKEN}` },
       signal: AbortSignal.timeout(15000),
     });
     const d = await r.json();
-    return ((d?.data?.items || []).map((it) => it.name || "")).join("\n");
+    return (d?.data?.items || []).map((it) => ({ name: it.name || "", url: it.url || "" }));
   } catch {
-    return "";
+    return [];
   }
+}
+
+// 只认「本轮开始之后新落库」的贴纸，避免命中历史同名贴纸导致虚报成功
+function savedThisRun(items, name, prefix) {
+  return items.some(
+    (it) =>
+      stickerTimestamp(it.url) >= RUN_START_MS &&
+      (it.name === name || (prefix && it.name.startsWith(prefix))),
+  );
 }
 
 async function waitIdle(connectionId, timeoutMs = 300_000) {
@@ -203,7 +219,7 @@ async function resetAgent(connectionId) {
 async function produceOne(connectionId, x, idx) {
   const saveName = `${x.t.slice(0, 12)}·${idx}`;
   const prefix = x.t.slice(0, 6);
-  const inLib = (names) => names.includes(saveName) || names.includes(prefix);
+  const inLib = async () => savedThisRun(await libItems(), saveName, prefix);
 
   // 发送前等空闲，避免 rejected
   await waitIdle(connectionId, 240_000);
@@ -227,7 +243,7 @@ async function produceOne(connectionId, x, idx) {
 
   // 判定：outputs 有 或 库中已存在
   if ((res?.outputs || []).length > 0) return { ok: true, via: "outputs" };
-  if (inLib(await libNames())) return { ok: true, via: "lib" };
+  if (await inLib()) return { ok: true, via: "lib" };
 
   // 未保存 → 补存（最多 2 次）
   for (let retry = 1; retry <= 2; retry++) {
@@ -240,7 +256,7 @@ async function produceOne(connectionId, x, idx) {
       const r2 = await mcp("system.design_tool.wait_result", { requestId: s2.requestId, timeoutMs: 150_000 }, 180_000);
       if ((r2?.outputs || []).length > 0) return { ok: true, via: `save_retry${retry}` };
     }
-    if (inLib(await libNames())) return { ok: true, via: `lib_retry${retry}` };
+    if (await inLib()) return { ok: true, via: `lib_retry${retry}` };
     await new Promise((r) => setTimeout(r, 5000));
   }
   return { ok: false, phase: res?.phase };
