@@ -3007,7 +3007,10 @@ export const designAgent = {
    * - 每次调用会清空上一轮消息和搜索缓存
    * - 调用方负责在调用前/后检查暂停/停止状态
    */
-  async _runBatchItem(userMessage: string): Promise<void> {
+  async _runBatchItem(
+    userMessage: string,
+    options: { referenceImage?: string } = {},
+  ): Promise<void> {
     agentState.status = "thinking";
     agentState.error = null;
     agentState.messages.length = 0;
@@ -3023,6 +3026,7 @@ export const designAgent = {
         allowCanvasAnalysis: false,
         deliveryHandledExternally: true,
         excludeOperations: AUTO_BATCH_BLOCKED_OPERATIONS,
+        referenceImage: options.referenceImage,
         task: {
           preset: "single",
           outputKind: "single",

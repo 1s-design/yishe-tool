@@ -3,6 +3,8 @@ import { directChat } from "../direct-client";
 import { designAgent } from "./simple";
 import { evaluateCanvasVisual } from "../visual-evaluate";
 import { executeAITool } from "../shared/execute-tool";
+import { currentEditingCustomStickerId } from "@/components/design/layout/canvas";
+import { auditCurrentCanvas, repairCanvasLayout } from "../canvas-audit";
 import { parseChatResponse } from "../shared/response-parser";
 import { AI_TIMEOUTS, withTimeout } from "../shared/timeout";
 import { websocketClient } from "@/services/websocketClient";
@@ -14,15 +16,64 @@ import {
   resolveAgentTaskSpec,
   type AgentTaskPresetId,
 } from "./task-spec";
+import {
+  fetchInspirations,
+  reportInspirationProduced,
+  toInspirationDigest,
+  type DesignInspirationItem,
+} from "../inspiration-source";
 
 // ============ Types ============
 
 export type BatchSaveMode = "auto" | "draft";
 export type BatchFailureStrategy = "skip" | "stop" | "save_anyway";
 
+/** 批量任务来源：默认按描述生成；灵感模式从 design_inspiration 取待生产灵感 */
+export type BatchTaskSource =
+  | { kind: "description" }
+  | {
+      kind: "inspirations";
+      /** 指定灵感 ID；不传则按 status=pending 拉取 */
+      inspirationIds?: string[];
+      /** 每条灵感产出几个变体（同系列不同构图/配色/文案侧重） */
+      variantsPerInspiration?: number;
+      /** 目标尺寸列表：每条灵感 × 每个尺寸 × 每个变体各出一张 */
+      sizes?: Array<{ width: number; height: number; label?: string }>;
+      /** 最多取多少条灵感 */
+      limit?: number;
+      /** 是否把生产状态回写到 design_inspiration，默认 true */
+      reportBack?: boolean;
+    }
+  | {
+      kind: "replicate";
+      /** 源自定义贴纸 ID（会读取它的画布数据作为复刻基稿） */
+      sourceStickerId?: string;
+      /** 以当前画布为源 */
+      useCurrentCanvas?: boolean;
+      /** 产出多少个变体 */
+      variants?: number;
+      /** 扰动维度：配色 / 字体 / 构图 / 文案 */
+      perturb?: { palette?: boolean; font?: boolean; layout?: boolean; copy?: boolean };
+      /** 产出尺寸（不传则沿用源设计尺寸） */
+      sizes?: Array<{ width: number; height: number; label?: string }>;
+    }
+  | {
+      kind: "image";
+      /** 参考图（COS 链接或 data URL），交给视觉模型读图复刻 */
+      imageUrl: string;
+      /** 产出几个变体 */
+      variants?: number;
+      /** 产出尺寸 */
+      sizes?: Array<{ width: number; height: number; label?: string }>;
+      /** 补充要求（例如「只提取印花图案，不要商品本身」） */
+      instruction?: string;
+    };
+
 export interface AutoBatchConfig {
   description: string;
   count: number;
+  /** 任务来源（不传=按 description 生成） */
+  taskSource?: BatchTaskSource;
   taskPreset?: AgentTaskPresetId;
   outputKind?: "independent-batch" | "group";
   membersPerGroup?: number;
@@ -55,6 +106,12 @@ export interface StickerBrief {
   qualityTarget: number;
   groupIndex: number;
   memberIndex: number;
+  /** 来源灵感 ID（灵感驱动模式），用于产出后回写状态 */
+  inspirationId?: string;
+  /** 复刻模式的基稿 HTML（保留视觉语言） */
+  sourceHtml?: string;
+  /** 图片复刻模式的参考图（喂给视觉模型） */
+  referenceImage?: string;
 }
 
 export interface BatchItem {
@@ -116,6 +173,7 @@ export interface BatchRuntimeSnapshot {
 }
 
 interface NormalizedBatchConfig {
+  taskSource?: BatchTaskSource;
   style: string;
   description: string;
   count: number;
@@ -244,6 +302,7 @@ function normalizeConfig(config: AutoBatchConfig): NormalizedBatchConfig {
   const maxJobs = Math.max(1, Math.floor(100 / membersPerGroup));
 
   return {
+    taskSource: config.taskSource,
     style: config.style || "",
     description,
     count: clampNumber(config.count, 1, maxJobs, 5),
@@ -352,6 +411,22 @@ async function generateBriefs(
   configInput: AutoBatchConfig,
 ): Promise<StickerBrief[]> {
   const config = normalizeConfig(configInput);
+
+  // 灵感驱动：从 design_inspiration 取待生产灵感并编译成 brief
+  if (config.taskSource?.kind === "inspirations") {
+    return generateInspirationBriefs(config);
+  }
+
+  // 复刻驱动：以某张已有设计为基稿，产出带扰动的变体
+  if (config.taskSource?.kind === "replicate") {
+    return generateReplicateBriefs(config);
+  }
+
+  // 图片复刻：以用户提供的图（商品图/印花图）为视觉参考重建设计
+  if (config.taskSource?.kind === "image") {
+    return generateImageBriefs(config);
+  }
+
   const totalDesignCount = getTotalDesignCount(config);
   const outputInstruction =
     config.outputKind === "group"
@@ -437,6 +512,530 @@ ${config.customInstructions ? `- 自定义约束：${config.customInstructions}`
   }
 
   return ensureExactBriefs(briefs, config);
+}
+
+/**
+ * 灵感驱动：从 design_inspiration 取待生产灵感，用 LLM 把每条灵感编译成
+ * variantsPerInspiration 个可执行 brief（同系列、有差异），并记录来源灵感 ID。
+ */
+interface InspirationSlot {
+  inspirationIndex: number;
+  inspirationId: string;
+  size: { width: number; height: number; label: string };
+  variant: number;
+}
+
+function ratioLabel(width: number, height: number): string {
+  const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
+  const d = gcd(Math.round(width), Math.round(height)) || 1;
+  const w = Math.round(width) / d;
+  const h = Math.round(height) / d;
+  if (w <= 40 && h <= 40) return `${w}:${h}`;
+  return `${(width / height).toFixed(2)}:1`;
+}
+
+/** 归一化目标尺寸列表；未指定时退回 config 尺寸或长款鼠标垫默认值 */
+function normalizeInspirationSizes(
+  sizes: Array<{ width: number; height: number; label?: string }> | undefined,
+  config: NormalizedBatchConfig,
+) {
+  const list = (sizes || []).filter(
+    (item) => Number(item?.width) > 0 && Number(item?.height) > 0,
+  );
+  const normalized = list.map((item) => {
+    const width = Math.round(Number(item.width));
+    const height = Math.round(Number(item.height));
+    return {
+      width,
+      height,
+      label: String(item.label || "").trim() || ratioLabel(width, height),
+    };
+  });
+  if (normalized.length) return normalized;
+  const width = config.width || 3000;
+  const height = config.height || 1376;
+  return [{ width, height, label: ratioLabel(width, height) }];
+}
+
+/** 取复刻基稿：当前画布 或 已保存的自定义贴纸（meta.data 里有完整画布数据） */
+async function loadReplicateSource(source: {
+  sourceStickerId?: string;
+  useCurrentCanvas?: boolean;
+}): Promise<{
+  htmlContent: string;
+  name: string;
+  description: string;
+  width?: number;
+  height?: number;
+} | null> {
+  const pickHtml = (children: any[]): string =>
+    String(children?.find?.((c: any) => c?.type === "html")?.htmlContent || "");
+
+  if (source.useCurrentCanvas) {
+    try {
+      const mod: any = await import("@/components/design/layout/canvas");
+      const children = mod.canvasStickerOptions?.value?.children || [];
+      const htmlContent = pickHtml(children);
+      if (htmlContent) {
+        return { htmlContent, name: "当前画布", description: "" };
+      }
+    } catch (error) {
+      console.warn("[Batch] 读取当前画布失败:", error);
+    }
+    return null;
+  }
+
+  if (source.sourceStickerId) {
+    try {
+      const api: any = await import("@/api");
+      const rec = await api.getCustomSticker(String(source.sourceStickerId));
+      const data = rec?.meta?.data || rec?.meta || {};
+      const htmlContent = pickHtml(data?.children || []);
+      if (htmlContent) {
+        return {
+          htmlContent,
+          name: String(rec?.name || "源贴纸"),
+          description: String(rec?.description || ""),
+          width: Number(rec?.width) || undefined,
+          height: Number(rec?.height) || undefined,
+        };
+      }
+    } catch (error) {
+      console.warn("[Batch] 读取源贴纸失败:", error);
+    }
+    return null;
+  }
+  return null;
+}
+
+/**
+ * 复刻驱动：以基稿 HTML 为底，产出带扰动（配色/字体/构图/文案）的变体 brief。
+ * 复刻是「保留视觉语言」而非像素级复制，扰动维度可由调用方指定。
+ */
+async function generateReplicateBriefs(
+  config: NormalizedBatchConfig,
+): Promise<StickerBrief[]> {
+  const source = config.taskSource;
+  if (source?.kind !== "replicate") return [];
+
+  const variants = clampNumber(source.variants, 1, 10, 2);
+  const sizes = normalizeInspirationSizes(source.sizes, config);
+  const base = await loadReplicateSource(source);
+  if (!base) {
+    throw new Error("复刻模式：未能取到基稿 HTML（请提供 sourceStickerId 或 useCurrentCanvas）");
+  }
+
+  const perturb = source.perturb || {};
+  const dims: string[] = [];
+  if (perturb.palette !== false) dims.push("配色");
+  if (perturb.font !== false) dims.push("字体");
+  if (perturb.layout !== false) dims.push("构图");
+  if (perturb.copy !== false) dims.push("文案");
+  if (!dims.length) dims.push("配色", "字体");
+
+  const total = variants * sizes.length;
+  const plan = sizes
+    .map((size, si) =>
+      Array.from({ length: variants }, (_, v) =>
+        `${si * variants + v + 1}. 尺寸 ${size.width}x${size.height}（${size.label}） 变体${v + 1}（扰动：${dims[(si * variants + v) % dims.length]}）`,
+      ).join("\n"),
+    )
+    .join("\n");
+
+  let response: any;
+  try {
+    response = await directChat({
+      messages: [
+        {
+          role: "system",
+          content: `你是设计复刻策划助手。用户会给你一张「基稿设计 HTML」和一张「变体槽位表」。请为每个槽位产出一个复刻变体 brief。
+
+要求：
+- 【同系列兄弟款·硬性】变体必须与基稿属于同一主题、同一气质：主文案含义保持相近或相同，不得换成完全不同的主题/情绪（例如基稿是「小猪存钱罐·可爱治愈」，变体不能变成「紫金神秘·偏财运」）。
+- 【保持不变】主题、配色家族（同一色系内可微调色相/明度）、字体气质、构图骨架、装饰逻辑。
+- 【只在指定维度变化·幅度有限】换配色=同色系内换色相/明度/冷暖；换字体=同气质字体族内替换（如手写↔手写、宋↔宋）；换构图=镜像/主文案微移/装饰换位换形；换文案=同义改写（不换主题）。不是简单换背景色，也不是整套重来。
+- 主文案几何中心必须落在画布正中心 (50%,50%)，只对主文案容器用 translate(-50%,-50%)；副文案挂在正下方；不要把主+副整体居中。
+- 文字必须完整显示、不得截断；字号不超过画布高度的 26%（两行时每行 ≤14%）；禁止 vw/vh/clamp 做字号。
+- 背景至少三层（渐变底 + 纹理肌理 + 至少两个具象插画/光影），不要大片纯色空白。
+- 不要画外框/圆环/角括号等边框装饰。
+- 输出必须是 JSON 数组，顺序与槽位表一致，共 ${total} 项。每项格式：
+{ "title": "短标题", "prompt": "给设计 agent 的完整自然语言需求", "width": 0, "height": 0, "transparentBackground": false, "resourceHints": [], "saveName": "保存名称", "description": "简短描述", "keywords": [], "qualityTarget": 7 }
+- 不要在 brief 里要求保存，保存由生产流水线处理。`,
+        },
+        {
+          role: "user",
+          content: `基稿名称：${base.name}\n${base.description ? `基稿说明：${base.description}\n` : ""}\n变体槽位表（共 ${total} 项，输出顺序必须与此一致）：\n${plan}\n\n基稿 HTML：\n${base.htmlContent.slice(0, 20000)}`,
+        },
+      ],
+      temperature: 0.8,
+      maxTokens: 5000,
+      timeoutMs: AI_TIMEOUTS.brief,
+    });
+  } catch (error) {
+    console.warn("[Batch] 复刻 brief 编译失败，改用本地模板:", error);
+    return buildReplicateFallbackBriefs(base, sizes, variants, dims, config);
+  }
+
+  const parsed = parseChatResponse(response);
+  const rawItems = parseJsonArray(parsed?.content || "");
+  if (!rawItems.length) {
+    console.warn("[Batch] 复刻 brief 解析为空，改用本地模板");
+    return buildReplicateFallbackBriefs(base, sizes, variants, dims, config);
+  }
+
+  const briefs: StickerBrief[] = [];
+  rawItems.forEach((rawItem, i) => {
+    const sizeIndex = Math.floor(i / variants);
+    const variantIndex = i % variants;
+    const size = sizes[sizeIndex] || sizes[0];
+    if (!size) return;
+    const brief = normalizeBrief(rawItem, briefs.length, config);
+    brief.width = size.width;
+    brief.height = size.height;
+    brief.sourceHtml = base.htmlContent;
+    brief.saveName = truncateText(
+      `复刻·${base.name.slice(0, 8)}·${size.label}·v${variantIndex + 1}`,
+      30,
+    );
+    brief.title = brief.saveName;
+    briefs.push(brief);
+  });
+
+  if (!briefs.length) {
+    console.warn("[Batch] 复刻 brief 全部被丢弃，改用本地模板");
+    return buildReplicateFallbackBriefs(base, sizes, variants, dims, config);
+  }
+  console.log(`[Batch] 复刻：「${base.name}」→ ${briefs.length} 个变体`);
+  return briefs;
+}
+
+/** 复刻本地兜底：直接按槽位生成扰动 brief */
+function buildReplicateFallbackBriefs(
+  base: { htmlContent: string; name: string; description: string },
+  sizes: Array<{ width: number; height: number; label: string }>,
+  variants: number,
+  dims: string[],
+  config: NormalizedBatchConfig,
+): StickerBrief[] {
+  const briefs: StickerBrief[] = [];
+  sizes.forEach((size) => {
+    for (let v = 0; v < variants; v++) {
+      const dim = dims[(briefs.length) % dims.length];
+      const saveName = truncateText(`复刻·${base.name.slice(0, 8)}·${size.label}·v${v + 1}`, 30);
+      briefs.push({
+        title: saveName,
+        prompt: [
+          `请复刻下面这张设计，产出一个「${dim}」维度有明显变化的变体。`,
+          `基稿说明：${base.description || base.name}。`,
+          `要求：保留基稿的配色气质/字体气质/构图骨架；这次主要在【${dim}】上做变化，不要只是换背景色。`,
+          `画布 ${size.width}x${size.height}（${size.label}）；主文案几何中心落在画布正中心(50%,50%)，副文案挂其下；文字完整不截断、字号不超过画布高度的 26%；背景至少三层、不要大片纯色空白；不要画边框。`,
+          `基稿 HTML：\n${base.htmlContent.slice(0, 12000)}`,
+        ].join("\n"),
+        width: size.width,
+        height: size.height,
+        transparentBackground: false,
+        resourceHints: [],
+        saveName,
+        description: `复刻「${base.name}」的${dim}变体`,
+        keywords: ["复刻", dim, base.name],
+        qualityTarget: 7,
+        groupIndex: 0,
+        memberIndex: v,
+        sourceHtml: base.htmlContent,
+      });
+    }
+  });
+  return briefs;
+}
+
+/**
+ * 图片复刻：以用户提供的图片为视觉参考（作为 referenceImage 喂给视觉模型），
+ * 让模型读图后重建出 HTML 设计（神似路线，不直接贴图）。
+ */
+async function generateImageBriefs(
+  config: NormalizedBatchConfig,
+): Promise<StickerBrief[]> {
+  const source = config.taskSource;
+  if (source?.kind !== "image") return [];
+
+  const imageUrl = String(source.imageUrl || "").trim();
+  if (!imageUrl) throw new Error("图片复刻模式：缺少 imageUrl");
+
+  const variants = clampNumber(source.variants, 1, 10, 1);
+  const sizes = normalizeInspirationSizes(source.sizes, config);
+
+  const briefs: StickerBrief[] = [];
+  sizes.forEach((size) => {
+    for (let v = 0; v < variants; v++) {
+      const saveName = truncateText(`图片复刻·${size.label}·v${v + 1}`, 30);
+      const prompt = [
+        "参考图是用户提供的设计参考（可能是商品图或印花图）。请仔细看图，提取其中的印花图案、配色、字体气质与构图，重建成一份完整的 HTML 设计。",
+        "【主副文案必须照抄·最高优先级】参考图上出现的文字必须**逐字原样保留**（主文案就是参考图的主文案，副文案同理），严禁自创主题、换词或改成别的句子。若参考图上确实没有任何文字，才允许自行拟一句贴合其气质的文案。",
+        "【配色与气质以参考图为准】必须提取参考图的主色、明暗关系与整体氛围（例如暗棕/电影感/低饱和/金色点缀），严禁换成其它色系或更鲜艳的通用风格。",
+        "【字体气质对齐】参考图是宋体就用宋体、是手写就用同气质手写体。",
+        "【重要】不要直接把参考图贴进画布，也不要出现商品本体、包装、拍摄背景；只重建「印花图案本身」。",
+        source.instruction ? `补充要求：${source.instruction}` : "",
+        `画布尺寸必须为 ${size.width}x${size.height}（${size.label}）。`,
+        "主文案的几何中心必须落在画布正中心 (50%,50%)，只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)；副文案挂在主文案正下方；不要把主+副整体居中。",
+        "文字必须完整显示、不截断；字号不超过画布高度的 26%（两行时每行 ≤14%）；禁止用 vw/vh/clamp 做字号。",
+        "背景至少三层（主题色渐变底 + 纹理肌理 + 至少两个具象插画/光影），不要大片纯色空白；不要画外框/圆环/角括号。",
+        "用 canvas.addHtml 输出完整 HTML/CSS；完成后不要保存，保存由流水线处理。",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      briefs.push({
+        title: saveName,
+        prompt,
+        width: size.width,
+        height: size.height,
+        transparentBackground: false,
+        resourceHints: [],
+        saveName,
+        description: `图片复刻（${size.label} v${v + 1}）`,
+        keywords: ["图片复刻", size.label],
+        qualityTarget: 7,
+        groupIndex: 0,
+        memberIndex: v,
+        referenceImage: imageUrl,
+      });
+    }
+  });
+
+  console.log(`[Batch] 图片复刻：${imageUrl.slice(0, 60)} → ${briefs.length} 个 brief`);
+  return briefs;
+}
+
+async function generateInspirationBriefs(
+  config: NormalizedBatchConfig,
+): Promise<StickerBrief[]> {
+  const source = config.taskSource;
+  if (source?.kind !== "inspirations") return [];
+
+  const variants = clampNumber(source.variantsPerInspiration, 1, 10, 1);
+  const limit = clampNumber(source.limit, 1, 50, 10);
+
+  const items = await fetchInspirations({
+    ids: source.inspirationIds,
+    limit,
+  });
+  if (!items.length) {
+    throw new Error(
+      `灵感模式：未取到待生产灵感（指定 ids=${source.inspirationIds?.length ?? 0} 个，limit=${limit}）`,
+    );
+  }
+
+  // 尺寸组合在代码里确定性生成，不依赖 LLM 自觉
+  const sizes = normalizeInspirationSizes(source.sizes, config);
+  const slots: InspirationSlot[] = [];
+  items.forEach((item, inspirationIndex) => {
+    sizes.forEach((size) => {
+      for (let variant = 0; variant < variants; variant++) {
+        slots.push({ inspirationIndex, inspirationId: item.id, size, variant });
+      }
+    });
+  });
+  const total = slots.length;
+
+  const slotPlan = slots
+    .map(
+      (slot, i) =>
+        `${i + 1}. 灵感#${slot.inspirationIndex + 1}「${
+          items[slot.inspirationIndex].title
+        }」 尺寸 ${slot.size.width}x${slot.size.height}（${slot.size.label}） 变体${
+          slot.variant + 1
+        }`,
+    )
+    .join("\n");
+
+  const digests = items.map((item, index) => toInspirationDigest(item, index));
+
+  let response: any;
+  try {
+    response = await directChat({
+      messages: [
+        {
+          role: "system",
+          content: `你是设计生产任务策划助手。用户会给你一组「设计灵感」和一张「生产槽位表」，请为每个槽位编译一个可直接执行的设计 brief。
+
+输出必须是 JSON 数组，不要写 Markdown 或解释。数组里每项格式如下：
+{
+  "title": "短标题",
+  "prompt": "给设计 agent 的完整自然语言需求",
+  "width": 3000,
+  "height": 2000,
+  "transparentBackground": false,
+  "resourceHints": ["素材或字体检索方向"],
+  "saveName": "保存名称",
+  "description": "保存到自定义贴纸库的简短描述",
+  "keywords": ["关键词1", "关键词2"],
+  "qualityTarget": 7
+}
+
+要求：
+- 必须输出正好 ${total} 项，顺序与槽位表严格一一对应（第 N 项对应槽位表第 N 行）。
+- 每项 width/height 必须与所属槽位尺寸一致，并在 prompt 里明确写出画布尺寸。
+- 同一灵感的不同尺寸/变体必须同系列（配色与字体气质一致），但构图、装饰元素、文案侧重要有差异；方形与横向构图要分别重新设计版面，不要简单拉伸。
+- 把灵感里模糊的想法落成明确的执行指令：主文案、副文案、配色（给具体色值）、字体方向、构图、装饰元素。
+- 必须遵守每条灵感的 avoidNotes（避让事项）。
+- 【主文案居中·硬性】主文案的**几何中心**必须落在画布正中心 (50%,50%)，只对主文案容器用 translate(-50%,-50%)；副文案挂在主文案正下方。**绝不能把主+副文案整体居中**（那样主文案会偏上、视觉不居中）。这两行文字是画面主角，字号要有明显主次。
+- 设计请大胆自由发挥，不要过度限制：装饰、纹样、光影、边框、材质肌理、插画元素、配色与字体风格都鼓励尝试，画面要丰富、有层次、有氛围，避免空洞单调。
+- 只避免与主题无关的杂乱填充文字（无意义编号、水印、乱码英文）；如确有必要，允许少量呼应主题的英文或拼音点缀。
+- 背景要有内容、不要大片空白。
+- 【文字必须完整显示】主副文案必须完整落在画布内、不得溢出或被裁切：长文案要允许换行（white-space:normal; overflow-wrap:anywhere）或按字数减小字号；禁止使用 text-overflow:ellipsis、white-space:nowrap 等会把文案截断的写法。
+- 【字号上限·硬性】主文案单行高度不得超过画布高度的 26%（两行时每行 ≤14%），副文案约为主文案的 1/4-1/3；字号用 var(--type-xxx) 或基于画布尺寸的 px，**禁止用 vw/vh/clamp（那是浏览器视口单位，会和画布尺寸不匹配）**；整体文字块宽度不得超过画布宽度的 84%。
+- 如需要图片或字体资源，只写检索方向，不要编造 URL 或资源 ID。
+- 不要在 brief 里要求保存，保存由生产流水线处理。`,
+        },
+        {
+          role: "user",
+          content: `灵感列表（JSON）：
+${JSON.stringify(digests, null, 2)}
+
+生产槽位表（共 ${total} 项，输出顺序必须与此一致）：
+${slotPlan}
+
+${config.customInstructions ? `额外约束：${config.customInstructions}\n` : ""}请输出 ${total} 个 brief。`,
+        },
+      ],
+      temperature: 0.85,
+      maxTokens: 6000,
+      timeoutMs: AI_TIMEOUTS.brief,
+    });
+  } catch (error) {
+    console.warn("[Batch] 灵感 brief 编译失败，改用本地模板:", error);
+    batchProgress.error = `灵感模式：LLM 编译失败（${
+      (error as any)?.message || error
+    }），已用本地模板生成 brief`;
+    return buildInspirationFallbackBriefs(items, slots, config);
+  }
+
+  const parsed = parseChatResponse(response);
+  const rawItems = parseJsonArray(parsed?.content || "");
+  if (!rawItems.length) {
+    console.warn("[Batch] 灵感 brief 解析为空，改用本地模板");
+    batchProgress.error =
+      "灵感模式：LLM 未返回可用 brief，已用本地模板生成 brief";
+    return buildInspirationFallbackBriefs(items, slots, config);
+  }
+
+  const briefs: StickerBrief[] = [];
+  rawItems.forEach((rawItem, i) => {
+    const slot = slots[i];
+    if (!slot) return;
+    const brief = normalizeBrief(rawItem, briefs.length, config);
+    // 尺寸以槽位为准，避免 LLM 写错
+    brief.width = slot.size.width;
+    brief.height = slot.size.height;
+    brief.inspirationId = slot.inspirationId;
+    brief.groupIndex = 0;
+    brief.memberIndex = slot.variant;
+    const base = truncateText(items[slot.inspirationIndex].title, 10);
+    brief.saveName = truncateText(
+      `${base}·${slot.size.label}${variants > 1 ? `·v${slot.variant + 1}` : ""}`,
+      30,
+    );
+    brief.title = brief.saveName;
+    briefs.push(brief);
+  });
+
+  if (!briefs.length) {
+    console.warn("[Batch] 灵感 brief 全部被丢弃，改用本地模板");
+    batchProgress.error =
+      "灵感模式：LLM 返回的 brief 无法对应到槽位，已用本地模板生成 brief";
+    return buildInspirationFallbackBriefs(items, slots, config);
+  }
+
+  console.log(
+    `[Batch] 灵感驱动：${items.length} 条灵感 × ${sizes.length} 尺寸 × ${variants} 变体 → ${briefs.length} 个 brief`,
+  );
+  return briefs;
+}
+
+const INSPIRATION_VARIATIONS = [
+  "主文案居中偏上，副文案紧跟其下，背景用远山与雾霭铺满，整体留白克制",
+  "主文案居中，四周用花枝草木与柔和光晕环绕，画面饱满通透",
+  "主文案居中，背景用大面积渐变天光加地景剪影，情绪开阔",
+  "主文案居中，背景用细密纸纹肌理与淡雅水波，安静内敛",
+];
+
+/**
+ * LLM 编译失败时的本地兜底：按槽位表直接用灵感字段拼出可执行 brief，
+ * 保证「灵感 → 生产」不断链。
+ */
+function buildInspirationFallbackBriefs(
+  items: DesignInspirationItem[],
+  slots: InspirationSlot[],
+  config: NormalizedBatchConfig,
+): StickerBrief[] {
+  return slots.map((slot, index) => {
+    const item = items[slot.inspirationIndex];
+    const variation =
+      INSPIRATION_VARIATIONS[index % INSPIRATION_VARIATIONS.length];
+    const prompt = [
+      `请设计一张 ${slot.size.width}x${slot.size.height}（${slot.size.label}）的设计作品，主题：${item.title}。`,
+      `灵感描述：${item.content}`,
+      item.promptHints ? `明确要求：${item.promptHints}` : "",
+      item.keywords?.length ? `关键词：${item.keywords.join("、")}` : "",
+      `构图方向：${variation}。`,
+      item.avoidNotes ? `必须避让：${item.avoidNotes}` : "",
+      "主文案与副文案从灵感描述中提炼，主文案水平垂直居中，副文案紧贴其下；只允许主副文案两行文字，不要印章、编号、英文、落款；背景要有内容不要大片空白；不要画边框。",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const base = truncateText(item.title, 10);
+    const saveName = truncateText(
+      `${base}·${slot.size.label}${
+        slot.variant > 0 ? `·v${slot.variant + 1}` : ""
+      }`,
+      30,
+    );
+
+    return {
+      title: saveName,
+      prompt,
+      width: slot.size.width,
+      height: slot.size.height,
+      transparentBackground: false,
+      resourceHints: [...(item.keywords || []), item.category || ""].filter(
+        Boolean,
+      ),
+      saveName,
+      description: `${item.title}（灵感驱动自动生产 · ${slot.size.label}）`,
+      keywords: item.keywords || [],
+      qualityTarget: 7,
+      groupIndex: 0,
+      memberIndex: slot.variant,
+      inspirationId: item.id,
+    };
+  });
+}
+
+/**
+ * 产出后回写灵感状态（成功置 done 并累计数量；失败保持 pending 以便下次重试）。
+ */
+async function reportInspirationIfNeeded(
+  item: BatchItem,
+  config: NormalizedBatchConfig,
+) {
+  const source = config.taskSource;
+  if (source?.kind !== "inspirations") return;
+  if (source.reportBack === false) return;
+  const id = item.brief?.inspirationId;
+  if (!id) return;
+
+  if (item.status === "done") {
+    await reportInspirationProduced(id, {
+      status: "done",
+      productUrl: item.savedUrl,
+      producedDelta: 1,
+    });
+  } else {
+    console.warn(
+      `[Batch] 灵感 ${id} 本轮未产出（${item.status}），保持待生产以便重试`,
+    );
+  }
 }
 
 function parseJsonArray(content: string): any[] {
@@ -630,6 +1229,104 @@ function normalizeBrief(
 
 // ============ Single Item Pipeline ============
 
+/**
+ * 保存前自动审查：直接测量画布 DOM，检查尺寸/主文案居中/文字溢出/字号上限。
+ * 无法测量时返回通过（不阻塞生产）。
+ */
+/** 从 brief 的 prompt 里提取主/副文案，用于「文案是否真的在画面上」的检查 */
+function extractBriefTexts(brief: StickerBrief): string[] {
+  const prompt = brief?.prompt || "";
+  const out: string[] = [];
+  const main = prompt.match(/主文案[「"'\[]([^」"'\]]+)[」"'\]]/);
+  const sub = prompt.match(/副文案[「"'\[]([^」"'\]]+)[」"'\]]/);
+  if (main?.[1]) out.push(main[1]);
+  if (sub?.[1]) out.push(sub[1]);
+  return out;
+}
+
+/** 保存前审查（调用共享审查模块：尺寸/文案/居中/溢出/字号/背景丰富度） */
+async function auditCanvasBeforeSave(item: BatchItem) {
+  const result = await auditCurrentCanvas({
+    expectedWidth: Number(item.brief.width) || undefined,
+    expectedHeight: Number(item.brief.height) || undefined,
+    expectedTexts: extractBriefTexts(item.brief),
+  });
+  if (result.measured && result.issues.length) {
+    console.log(
+      `[Batch] 第 ${item.index + 1} 张审查指标:`,
+      JSON.stringify(result.metrics),
+    );
+  }
+  return result;
+}
+
+function buildAuditFixPrompt(brief: StickerBrief, issues: string[]): string {
+  return [
+    "上一版设计未通过自动审查，请只做必要修正，用 canvas.addHtml 重新输出完整 HTML 覆盖当前画面，不要更换主题。",
+    `【必须修正】${issues.join("；")}`,
+    "【硬性要求】主文案的几何中心落在画布正中心 (50%,50%)，只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)，副文案挂在主文案正下方；所有文字与元素不得超出画布边界；文字完整不截断（不要 ellipsis/nowrap）；主文案字高不超过画布高度的 26%。",
+    `画布尺寸必须为 ${brief.width}x${brief.height}。主题：${brief.title}。`,
+  ].join("\n");
+}
+
+/**
+ * 保存前审查：不通过则重做一次；仍不通过返回 false（调用方跳过保存）。
+ */
+async function ensureAuditPassed(
+  item: BatchItem,
+  signal: typeof controlSignal,
+): Promise<boolean> {
+  let audit = await auditCanvasBeforeSave(item);
+  if (audit.ok) {
+    if (audit.advisoryIssues.length) {
+      console.log(`[Batch] 第 ${item.index + 1} 张审查建议：${audit.advisoryIssues.join("；")}`);
+    }
+    return true;
+  }
+
+  // ① 机械修复：缩小过大的主文案字号、给溢出文字限宽换行（改动会体现在随后渲染保存的成品里）
+  try {
+    const mod: any = await import("@/components/design/layout/canvas");
+    const root: HTMLElement | null =
+      (mod.currentCanvasControllerInstance?.value?.el as HTMLElement) ||
+      (document.querySelector("#this_is_canvas_id") as HTMLElement | null);
+    if (root) {
+      const fixes = repairCanvasLayout(root);
+      if (fixes.length) {
+        console.log(`[Batch] 第 ${item.index + 1} 张自动修复：${fixes.join("；")}`);
+        audit = await auditCanvasBeforeSave(item);
+        if (audit.ok) return true;
+      }
+    }
+  } catch (error) {
+    console.warn("[Batch] 自动修复失败:", error);
+  }
+
+  // ② 仍不通过则让模型重做一次
+  for (let attempt = 1; attempt <= 1; attempt++) {
+    if (isStopped(signal)) return false;
+    console.warn(
+      `[Batch] 第 ${item.index + 1} 张审查未通过：${audit.issues.join("；")}，重做一次`,
+    );
+    item.status = "revising";
+    try {
+      await withTimeout(
+        designAgent._runBatchItem(buildAuditFixPrompt(item.brief, audit.issues)),
+        AI_TIMEOUTS.batchDesign,
+        `第 ${item.index + 1} 张审查修正`,
+      );
+    } catch (error) {
+      console.warn("[Batch] 审查修正失败:", error);
+      break;
+    }
+    audit = await auditCanvasBeforeSave(item);
+    if (audit.ok) return true;
+  }
+
+  item.error = `审查未通过：${audit.issues.join("；")}`;
+  return false;
+}
+
 async function runSingleDesign(
   item: BatchItem,
   config: NormalizedBatchConfig,
@@ -664,6 +1361,12 @@ async function runSingleDesign(
   if (!config.enableAnalysisOptimization) {
     if (config.saveMode === "draft") {
       item.status = "done";
+      return;
+    }
+    // 保存前自动审查：不通过则重做一次，仍不通过则不保存
+    const passed = await ensureAuditPassed(item, signal);
+    if (!passed) {
+      failItem(item, item.error || "审查未通过，已跳过保存");
       return;
     }
     await saveItem(item, config);
@@ -728,6 +1431,13 @@ async function runSingleDesign(
     return;
   }
 
+  // 保存前自动审查（与无优化分支同一套硬指标）
+  const passed = await ensureAuditPassed(item, signal);
+  if (!passed) {
+    failItem(item, item.error || "审查未通过，已跳过保存");
+    return;
+  }
+
   await saveItem(item, config);
 }
 
@@ -753,10 +1463,12 @@ function buildDesignPrompt(
 
 ${sizeInstruction}
 ${brief.transparentBackground ? "背景要求：适合贴纸使用，可以做透明感、白边或便于抠边的主体。" : "背景要求：按设计效果自由处理。"}
+${buildSizeGuide(brief)}
 主题：${brief.title}
 需求：${brief.prompt}
 ${resourceHint}
 ${groupContext}
+${brief.sourceHtml ? `【复刻基稿】以下是原设计 HTML，请在保留其视觉语言（配色气质/字体气质/构图骨架/装饰逻辑）的基础上完成本次变体：\n${brief.sourceHtml.slice(0, 16000)}` : ""}
 ${config?.customInstructions ? `附加约束：${config.customInstructions}` : ""}
 
 只制作这一张，不要启动批量任务。请完成画布设计即可，不要询问用户，不要请求反馈，不要调用分析、评估、保存或导出工具。`;
@@ -780,6 +1492,22 @@ async function evaluateItem(item: BatchItem): Promise<number | null> {
   return null;
 }
 
+/** 按画布尺寸给出具体字号/内边距建议（比抽象描述更易被模型遵守） */
+function buildSizeGuide(brief: StickerBrief): string {
+  const W = Number(brief.width) || 3000;
+  const H = Number(brief.height) || 1376;
+  const short = Math.min(W, H);
+  const mainPx = Math.round(short * 0.16);
+  const mainMaxPx = Math.round(H * 0.24);
+  const subPx = Math.max(16, Math.round(mainPx * 0.34));
+  const pad = Math.round(short * 0.10);
+  return [
+    `【尺寸与字号建议·画布 ${W}x${H} px】`,
+    `主文案 font-size 建议 ${mainPx}px（不得超过 ${mainMaxPx}px，即画布高的 24%）；副文案约 ${subPx}px；四周内边距约 ${pad}px；文字块宽度不超过画布宽的 84%。`,
+    `字号请优先用 var(--type-xxx)（已按画布短边自动换算），如需绝对值请用上述 px；禁止用 vw/vh/clamp。`,
+  ].join("\n");
+}
+
 function buildRevisionPrompt(score: number, brief: StickerBrief): string {
   return `当前这张「${brief.title}」贴纸评分为 ${score}/10，目标是 ${brief.qualityTarget}/10。
 
@@ -791,6 +1519,8 @@ async function saveItem(
   config?: NormalizedBatchConfig,
 ): Promise<void> {
   item.status = "saving";
+  // 兜底：确保本次保存是「新建」而不是覆盖上一张
+  currentEditingCustomStickerId.value = null;
   let lastError = "保存失败";
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
@@ -818,7 +1548,8 @@ async function saveItem(
     }
     if (attempt < 3) {
       item.error = `上传失败，正在重试 ${attempt}/3`;
-      await new Promise((resolve) => setTimeout(resolve, attempt * 800));
+      // COS 偶发 502/503，需要更长退避才能恢复
+      await new Promise((resolve) => setTimeout(resolve, attempt * 4000));
     }
   }
   failItem(item, `保存失败，已重试 3 次: ${lastError}`);
@@ -963,6 +1694,9 @@ export async function startBatch(configInput: AutoBatchConfig): Promise<void> {
       }
 
       batchProgress.current = i;
+      // 每张都必须新建 custom_sticker：清掉残留的「编辑中」ID，
+      // 否则本张保存会变成更新上一张的记录（多尺寸批量会丢图）
+      currentEditingCustomStickerId.value = null;
       try {
         await runSingleDesign(batchProgress.items[i], config, controlSignal);
       } catch (error: any) {
@@ -972,6 +1706,8 @@ export async function startBatch(configInput: AutoBatchConfig): Promise<void> {
           error?.message || "单张制作异常，已跳过",
         );
       }
+
+      await reportInspirationIfNeeded(batchProgress.items[i], config);
 
       if (
         config.outputKind === "group" &&
@@ -1039,7 +1775,10 @@ export function stopBatch(): void {
 }
 
 export function resetBatch(): void {
-  controlSignal.value = "running";
+  // 注意：这里必须置为 stopped。历史上设成 running 会把「先 stop 再 reset」的清理动作
+  // 变成撤销停止，导致僵尸批次一直占用设计端。
+  // startBatch 开始新批次时会显式把它置回 running。
+  controlSignal.value = "stopped";
   batchProgress.status = "idle";
   batchProgress.items = [];
   batchProgress.current = 0;

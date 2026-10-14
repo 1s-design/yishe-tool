@@ -10,6 +10,8 @@ const LOG = `${LOG_DIR}/produce.log`;
 
 const TARGET = Number(process.argv[2]) || 1000;
 const CONCURRENCY = Number(process.argv[3]) || 4;
+// 起始序号：续跑时传入已产出的数量，避免序号/主题重复
+const START_IDX = Number(process.argv[4]) || 0;
 
 function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
@@ -126,15 +128,25 @@ const THEMES = [
 ];
 
 function buildPrompt(x, idx) {
+  const rules = [
+    `主文案「${x.t}」精确落在画布几何中心 (50%,50%)，水平垂直都居中；只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)，不要把主+副整体居中。`,
+    `副文案「${x.s}」紧贴主文案正下方，整体保持视觉居中。`,
+    `本次任务从空白画布开始：保存前确认画布上只有本次的主文案与副文案，不得残留上一轮的任何文字、元素或背景；画布尺寸必须为 3000x1376。`,
+    `画面上只允许这两行文字，不要额外补充作者简介、年份、出处、版本、编号、英文、拼音、标语、印章、水印。`,
+    `背景必须由至少 4 层叠加而成，缺一不可，整张画布都要有内容、不许出现大片纯色：`,
+    `　① 底色层：贴合主题的渐变（linear-gradient / radial-gradient）；`,
+    `　② 纹理层：用 repeating-linear-gradient 或细密 radial-gradient 做纸纹/布纹/颗粒肌理；`,
+    `　③ 主题插画层：用 CSS 图形画出 2-3 个具象元素，例如——远山用 clip-path 或 border-radius 做多边形剪影；水波用重复的椭圆/repeating-radial-gradient；云用多个重叠的白色 radial-gradient 圆斑；花枝用旋转的细长圆角矩形 + 椭圆叶片；星光用多个小 radial-gradient 点阵；飞鸟用 CSS 边框拼出的弧线。`,
+    `　④ 光影层：大范围柔和光晕 radial-gradient + 四角暗角，让画面有明暗层次。`,
+    `禁止任何边框：外框、内框、圆环、角括号、装饰线框一律不画。`,
+    `主文案字号远大于副文案（主文案字高约为画布高度的 18-26%，副文案约为主文案的 1/4-1/3）。`,
+    `主题风格：${x.y}。字体与配色贴合本主题气质，不要用系统默认字体，不要套用固定模板。`,
+  ];
   return [
-    `画布 canvas.setSize 3000x1376（比例2.18，长款鼠标垫印花）后设计一款名言/情绪文字鼠标垫，完成后必须调用 canvas.updateAndSaveSticker 保存，name 用「${x.t.slice(0, 12)}·${idx}」。`,
-    `【核心构图·硬性】画面只有一段核心文案：主文案「${x.t}」必须精确落在画布几何正中心(50%,50%)，水平、垂直都居中；只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)，禁止把「主文案+副文案」整体居中。副文案「${x.s}」挂在主文案正下方，整体仍保持视觉居中。`,
-    `【极简风格·硬性】以简洁为主，只保留核心文案。严禁添加任何多余的装饰性文字：不要小号英文/拼音、不要编号/角标、不要印章落款文字、不要标语口号、不要副标题以外的任何文字。除主文案与副文案外，画面上不得出现其他文字。`,
-    `【排版层级】主文案字号远大于副文案（主文案字高约为画布高度的 18-26%，副文案约为主文案的 1/4-1/3），主次分明、清晰可读；四周留出舒适的内边距（约画布宽高的 10-14%），不要挤满画面。`,
-    `【背景与装饰】用克制的配色与极简背景（纯色或柔和渐变）；装饰最多是极淡的底纹或一两条细线，不要繁复图案、不要堆砌元素。`,
-    `【主题风格】${x.y}`,
-    `【多样性】配色与字体都要贴合本主题气质，不要套用固定模板。`,
-    `严禁出现任何产品功能词（防滑/顺滑/材质/尺寸参数等）。用 canvas.addHtml 的 HTML/CSS 实现，字体通过 htmlBindings 绑定。`,
+    `画布 canvas.setSize 3000x1376（比例2.18，长款鼠标垫印花）后设计一款名言文字海报，用 canvas.addHtml 的 HTML/CSS 实现（字体通过 htmlBindings 绑定），完成后必须调用 canvas.updateAndSaveSticker 保存，name 用「${x.t.slice(0, 12)}·${idx}」。`,
+    `严格遵守以下全部规则，任何一条违反都算设计失败：`,
+    ...rules.map((rule, i) => `${i + 1}. ${rule}`),
+    `严禁出现产品功能词（防滑/顺滑/材质/尺寸参数）。`,
   ].join("\n");
 }
 
@@ -216,6 +228,19 @@ async function resetAgent(connectionId) {
   await mcp("system.design_tool.clear_conversation", { connectionId }, 20_000).catch(() => {});
 }
 
+function normalizeForCompare(value) {
+  // 设计端常把主文案逐字拆分（textPreview 形如「慢 慢 喜 欢 你」），
+  // 比对前去掉空白与常见标点，避免把正确内容误判为「残留旧画布」
+  return String(value || "").replace(/[\s\u3000·、，。：；！？,.:;!?"'“”‘’()（）【】《》〈〉\-—–_/|~]/g, "");
+}
+
+async function canvasHasText(connectionId, text) {
+  const st = await mcp("system.design_tool.get_state", { connectionId }, 25_000);
+  const raw = JSON.stringify(st?.canvasState || st?.raw?.canvasState || {});
+  const needle = normalizeForCompare(text);
+  return needle.length > 0 && normalizeForCompare(raw).includes(needle);
+}
+
 async function produceOne(connectionId, x, idx) {
   const saveName = `${x.t.slice(0, 12)}·${idx}`;
   const prefix = x.t.slice(0, 6);
@@ -241,9 +266,23 @@ async function produceOne(connectionId, x, idx) {
     await new Promise((r) => setTimeout(r, 8_000 * attempt));
   }
 
-  // 判定：outputs 有 或 库中已存在
-  if ((res?.outputs || []).length > 0) return { ok: true, via: "outputs" };
-  if (await inLib()) return { ok: true, via: "lib" };
+  // 内容核对：画布主文案必须与本主题一致（防「保存了残留的上一轮画布」）
+  let contentOk = await canvasHasText(connectionId, x.t);
+  if (!contentOk) {
+    console.log(`    ⚠️「${x.t}」画布内容不符（疑似残留旧画布），完整重做一次…`);
+    await resetAgent(connectionId);
+    const again = await mcp("system.design_tool.send_task", { connectionId, message: buildPrompt(x, idx) }, 30_000);
+    if (again?.requestId) {
+      const againRes = await mcp("system.design_tool.wait_result", { requestId: again.requestId, timeoutMs: 300_000 }, 330_000);
+      if ((againRes?.outputs || []).length > 0) res = againRes;
+    }
+    contentOk = await canvasHasText(connectionId, x.t);
+  }
+
+  // 判定：内容一致 且（outputs 有 或 库中已存在）
+  if (contentOk && (res?.outputs || []).length > 0) return { ok: true, via: "outputs" };
+  if (contentOk && (await inLib())) return { ok: true, via: "lib" };
+  if (!contentOk) return { ok: false, phase: "content-mismatch" };
 
   // 未保存 → 补存（最多 2 次）
   for (let retry = 1; retry <= 2; retry++) {
@@ -254,7 +293,7 @@ async function produceOne(connectionId, x, idx) {
     }, 30_000);
     if (s2?.requestId) {
       const r2 = await mcp("system.design_tool.wait_result", { requestId: s2.requestId, timeoutMs: 150_000 }, 180_000);
-      if ((r2?.outputs || []).length > 0) return { ok: true, via: `save_retry${retry}` };
+      if ((r2?.outputs || []).length > 0 && (await canvasHasText(connectionId, x.t))) return { ok: true, via: `save_retry${retry}` };
     }
     if (await inLib()) return { ok: true, via: `lib_retry${retry}` };
     await new Promise((r) => setTimeout(r, 5000));
@@ -267,7 +306,7 @@ async function main() {
 
   let produced = 0;
   let attempt = 0;
-  let idx = 1;
+  let idx = START_IDX + 1;
 
   while (produced < TARGET) {
     const tools = await getTools();
@@ -278,7 +317,7 @@ async function main() {
     }
     const batch = tools.slice(0, CONCURRENCY);
     const jobs = batch.map((id, i) => {
-      const x = THEMES[(attempt * CONCURRENCY + i) % THEMES.length];
+      const x = THEMES[(START_IDX + attempt * CONCURRENCY + i) % THEMES.length];
       return produceOne(id, x, idx + i).then((r) => ({ x, id, r }));
     });
     const results = await Promise.allSettled(jobs);

@@ -212,6 +212,9 @@ function createEmitter<T extends Record<string, any>>() {
 
 const clientId = getStableClientId();
 
+// 页面加载时间戳：用于验证「刷新是否真的生效」
+const CLIENT_LOADED_AT = new Date().toISOString();
+
 const clientInfo = reactive({
   clientId,
   source: CLIENT_SOURCE,
@@ -1075,7 +1078,16 @@ async function handleRemoteCommand(data: any) {
           2,
           Math.min(12, Number(payload?.membersPerGroup) || 2),
         );
-        if (!description) throw new Error("缺少自动制作需求");
+        const taskSource = payload?.taskSource as
+          | { kind?: string }
+          | undefined;
+        // 任务来源模式（灵感驱动 / 复刻驱动）不需要描述文本
+        const isTaskSourceMode = ["inspirations", "replicate", "image"].includes(
+          String(taskSource?.kind || ""),
+        );
+        if (!description && !isTaskSourceMode) {
+          throw new Error("缺少自动制作需求");
+        }
 
         resetBatch();
         setBatchProgress(getBatchRuntimeSnapshot());
@@ -1098,6 +1110,7 @@ async function handleRemoteCommand(data: any) {
         await startBatch({
           description,
           count,
+          taskSource: payload?.taskSource,
           taskPreset,
           outputKind,
           membersPerGroup,
@@ -1168,6 +1181,109 @@ async function handleRemoteCommand(data: any) {
         result.message = "已获取自动制作状态";
         break;
       }
+      case "audit": {
+        const { auditCurrentCanvas } = await import("@/ai/canvas-audit");
+        const auditResult = await auditCurrentCanvas({
+          expectedWidth: Number(payload?.expectedWidth) || undefined,
+          expectedHeight: Number(payload?.expectedHeight) || undefined,
+          expectedTexts: Array.isArray(payload?.expectedTexts)
+            ? payload.expectedTexts.map((x: any) => String(x))
+            : undefined,
+        });
+        result.success = auditResult.ok;
+        result.phase = auditResult.ok ? "completed" : "failed";
+        result.audit = {
+          ok: auditResult.ok,
+          issues: auditResult.issues,
+          criticalIssues: auditResult.criticalIssues,
+          advisoryIssues: auditResult.advisoryIssues,
+          metrics: auditResult.metrics,
+          measured: auditResult.measured,
+        };
+        result.message = auditResult.measured
+          ? auditResult.ok
+            ? `审查通过（硬伤 0）· 画布 ${auditResult.metrics.width}x${auditResult.metrics.height} · 可见图层 ${auditResult.metrics.visualLayers}${
+                auditResult.advisoryIssues.length
+                  ? ` · 建议 ${auditResult.advisoryIssues.length} 条：${auditResult.advisoryIssues.join("；")}`
+                  : ""
+              }`
+            : `审查未通过（硬伤 ${auditResult.criticalIssues.length} 条）：${auditResult.criticalIssues.join("；")}${
+                auditResult.advisoryIssues.length
+                  ? ` · 建议：${auditResult.advisoryIssues.join("；")}`
+                  : ""
+              }`
+          : "无法测量画布，已按通过处理";
+        break;
+      }
+
+      case "version": {
+        result.success = true;
+        result.version = {
+          appVersion:
+            (import.meta.env.VITE_APP_VERSION as string | undefined) || null,
+          mode: import.meta.env.MODE,
+          dev: import.meta.env.DEV,
+          loadedAt: CLIENT_LOADED_AT,
+          clientId,
+          connectedAt: wsState.connectedAt,
+        };
+        result.message = `客户端 ${import.meta.env.MODE} · 页面加载于 ${CLIENT_LOADED_AT}`;
+        break;
+      }
+
+      case "reset": {
+        const { designAgent } = await import("@/ai/langgraph");
+        const { batchProgress, resetBatch, stopBatch } = await import(
+          "@/ai/agent/batch"
+        );
+        const busy =
+          ["thinking", "executing"].includes(
+            String(designAgent.state.status || ""),
+          ) ||
+          ["preparing", "running", "paused"].includes(batchProgress.status);
+        if (busy && payload?.force !== true) {
+          result.phase = "rejected";
+          result.error = "设计实例正在执行任务，如需强制复位请传 force=true";
+          result.message = result.error;
+          break;
+        }
+        // 顺序很重要：先 reset 清状态，最后 stop 停信号
+        // （反过来会被 resetBatch() 把 controlSignal 重新置为 running，等于撤销停止）
+        resetBatch();
+        stopBatch();
+        try {
+          const { currentEditingCustomStickerId } = await import(
+            "@/components/design/layout/canvas"
+          );
+          currentEditingCustomStickerId.value = null;
+        } catch {}
+        result.success = true;
+        result.message = "已复位：Agent 停止、批次重置、编辑态清空";
+        break;
+      }
+
+      case "reload": {
+        const { designAgent } = await import("@/ai/langgraph");
+        const { batchProgress } = await import("@/ai/agent/batch");
+        const busy =
+          ["thinking", "executing"].includes(
+            String(designAgent.state.status || ""),
+          ) ||
+          ["preparing", "running", "paused"].includes(batchProgress.status);
+        if (busy && payload?.force !== true) {
+          result.phase = "rejected";
+          result.error = "设计实例正在执行任务，暂不刷新（可传 force=true 强制）";
+          result.message = result.error;
+          break;
+        }
+        result.success = true;
+        result.message = "将在 300ms 后刷新页面";
+        result.version = { loadedAt: CLIENT_LOADED_AT };
+        // 先让结果发出去，再刷新
+        setTimeout(() => window.location.reload(), 300);
+        break;
+      }
+
       case "stop": {
         const { designAgent } = await import("@/ai/langgraph");
         const targetRequestId = String(

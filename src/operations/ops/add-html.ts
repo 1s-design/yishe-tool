@@ -87,10 +87,30 @@ registerOperation({
       allowMultipleHtml,
     } = params;
 
-    // 溢出检测和自动修复
-    const validation = validateAndFixHtml(htmlContent);
+    // 溢出检测和自动修复（带画布尺寸：字号按画布封顶，避免文字撑出画布）
+    const canvasSize = (() => {
+      try {
+        return ctx?.getCanvasSize?.() || null;
+      } catch {
+        return null;
+      }
+    })();
+    const typographyCtx = getCanvasTypographyContext(ctx);
+    const validation = validateAndFixHtml(htmlContent, {
+      canvasWidth: Number(canvasSize?.width) || undefined,
+      canvasHeight: Number(canvasSize?.height) || undefined,
+      baseFontSize: Number(typographyCtx?.baseFontSize) || undefined,
+    });
     if (validation.wasFixed) {
-      console.log('[addHtml] 自动修复溢出问题:', validation.issues.length, '个问题');
+      console.log(
+        '[addHtml] 自动修复溢出问题:',
+        validation.issues.length,
+        '个问题',
+        '画布',
+        canvasSize?.width,
+        'x',
+        canvasSize?.height,
+      );
     }
     htmlContent = validation.fixed;
 

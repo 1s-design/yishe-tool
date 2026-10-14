@@ -299,14 +299,20 @@ export function updateExistingHtmlArtwork(ctx: any, options: Record<string, any>
       message: directExternalResourceError,
     };
   }
-  const currentLength = getHtmlContentLength(target);
-  const nextLength = String(preparedOptions.htmlContent || "").trim().length;
-  if (currentLength > 1200 && nextLength > 0 && nextLength < currentLength * 0.65) {
+  // 只按「是否像完整作品」判断，不能按长度比例。
+  // 历史实现用 nextLength < currentLength * 0.65 就拒绝，会误杀「比上一张更简洁」的合法设计，
+  // 结果是新设计被拒、画布残留旧内容，后续审查/保存都会拿到错误画面。
+  const nextHtml = String(preparedOptions.htmlContent || "").trim();
+  const looksLikeFragment =
+    !nextHtml ||
+    nextHtml.length < 200 ||
+    (!/<(div|section|main|p|svg)\b/i.test(nextHtml) && !/<[a-z][^>]*>.*?<\/[a-z]+>/i.test(nextHtml));
+  if (looksLikeFragment) {
     return {
       id: target.id,
       rejected: true,
       message:
-        "检测到已有完整 HTML 作品，本次 htmlContent 明显更短，像是局部片段。请重新提交一份包含背景、装饰、文字、印章等全部内容的完整 htmlContent。",
+        "本次 htmlContent 像是局部片段（缺少完整根元素或内容过短），请重新提交一份包含背景、装饰、文字的完整 htmlContent。",
     };
   }
 

@@ -27,6 +27,9 @@ registerOperation({
         textPreview:
           c.type === "html" && c.htmlContent
             ? String(c.htmlContent)
+                // 先去掉 <style>/<script>（里面是 CSS 选择器文本，不是画面文案）
+                .replace(/<style[\s\S]*?<\/style>/gi, " ")
+                .replace(/<script[\s\S]*?<\/script>/gi, " ")
                 .replace(/<[^>]+>/g, " ")
                 .replace(/\s+/g, " ")
                 .trim()
