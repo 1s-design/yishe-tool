@@ -112,7 +112,7 @@
               >
                 <div class="font-item-image">
                   <s1-image
-                    :src="item.thumbnail"
+                    :src="thumbOf(item)"
                     fit="contain"
                     style="width: 100%; height: 100%;"
                   ></s1-image>
@@ -156,6 +156,46 @@
 </template>
 
 <script setup lang="ts">
+export interface FontThumbnailItem {
+  thumbnail: string
+  text?: string
+}
+
+/** 归一化读取缩略图对象数组：优先 thumbnails，兜底单图 thumbnail，兼容历史纯字符串数组 */
+function thumbItemsOf_(item: any): FontThumbnailItem[] {
+  const arr = item?.thumbnails
+  if (Array.isArray(arr) && arr.length) {
+    const list: FontThumbnailItem[] = []
+    for (const t of arr) {
+      if (!t) continue
+      if (typeof t === 'string') {
+        const s = t.trim()
+        if (s) list.push({ thumbnail: s, text: '' })
+      } else if (typeof t === 'object') {
+        const thumb = String(t.thumbnail || t.url || '').trim()
+        if (thumb) {
+          list.push({
+            thumbnail: thumb,
+            text: typeof t.text === 'string' ? t.text : '',
+          })
+        }
+      }
+    }
+    return list
+  }
+  const single = String(item?.thumbnail || '').trim()
+  return single ? [{ thumbnail: single, text: '' }] : []
+}
+
+/** 归一化读取缩略图 URL 数组：优先 thumbnails，兜底单图 thumbnail */
+function thumbOf_(item: any): string[] {
+  return thumbItemsOf_(item).map((it) => it.thumbnail)
+}
+/** 首图 */
+function thumbOf(item: any): string {
+  return thumbOf_(item)[0] || ''
+}
+
 import { ref, onBeforeMount, computed } from "vue";
 import { getFontListApi } from "@/api";
 import {
@@ -319,19 +359,25 @@ async function uploadThumbnail() {
       isThumbnail: true,
     });
 
-    // 更新字体记录
+    // 获取当前试文字文案
+    const currentText = previewTextareaRef.value?.innerText?.trim() || activeFont.value.templateText || activeFont.value.name || '';
+
+    // 更新字体记录（追加到缩略图数组）
+    const nextThumbs = [...thumbItemsOf_(activeFont.value), { thumbnail: thumbnailCos.url, text: currentText }];
     await updateFontTemplate({
       id: activeFont.value.id,
-      thumbnail: thumbnailCos.url,
+      thumbnails: nextThumbs,
     });
 
     // 更新本地数据
-    activeFont.value.thumbnail = thumbnailCos.url;
+    activeFont.value.thumbnails = nextThumbs;
+    activeFont.value.thumbnail = nextThumbs[0]?.thumbnail || '';
     
     // 更新列表中的对应项
     const listItem = list.value.find(item => item.id === activeFont.value.id);
     if (listItem) {
-      listItem.thumbnail = thumbnailCos.url;
+      listItem.thumbnails = nextThumbs;
+      listItem.thumbnail = nextThumbs[0]?.thumbnail || '';
     }
 
     message.success("缩略图更新成功！");

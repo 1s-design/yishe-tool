@@ -73,8 +73,8 @@
             <div class="flex items-center gap-2 min-w-0 flex-1">
               <div class="w-10 h-10  overflow-hidden border border-border bg-background shrink-0">
                 <desimage
-                  v-if="(pendingFont || model)?.thumbnail"
-                  :src="(pendingFont || model)!.thumbnail"
+                  v-if="thumbOf(pendingFont || model)"
+                  :src="thumbOf(pendingFont || model)"
                   class="w-full h-full object-cover"
                 />
               </div>
@@ -113,8 +113,8 @@
               >
                 <div class="font-card__thumb">
                   <desimage
-                    v-if="item.thumbnail"
-                    :src="item.thumbnail"
+                    v-if="thumbOf(item)"
+                    :src="thumbOf(item)"
                     class="w-full h-full object-cover"
                   />
                   <div v-else class="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
@@ -206,12 +206,36 @@
         <div v-if="detailFont" class="font-detail-content">
           <div class="font-detail-preview">
             <desimage
-              v-if="detailFont.thumbnail"
-              :src="detailFont.thumbnail"
+              v-if="thumbItemsOf(detailFont).length"
+              :src="thumbItemsOf(detailFont)[detailThumbIndex]?.thumbnail || thumbItemsOf(detailFont)[0]?.thumbnail"
               class="font-detail-thumbnail"
             ></desimage>
             <div v-else class="font-detail-preview-empty">
               暂无预览
+            </div>
+            <!-- 当前缩略图文案 -->
+            <div
+              v-if="thumbItemsOf(detailFont)[detailThumbIndex]?.text"
+              class="font-detail-thumb-caption"
+              :title="thumbItemsOf(detailFont)[detailThumbIndex]?.text"
+            >
+              <span class="caption-tag">试文字</span>
+              <span class="caption-text">{{ thumbItemsOf(detailFont)[detailThumbIndex]?.text }}</span>
+            </div>
+            <div v-if="thumbItemsOf(detailFont).length > 1" class="font-detail-thumbstrip">
+              <div
+                v-for="(t, i) in thumbItemsOf(detailFont)"
+                :key="t.thumbnail + i"
+                class="font-detail-thumb-item-wrap"
+                :class="{ active: i === detailThumbIndex }"
+                @click="detailThumbIndex = i"
+              >
+                <img
+                  :src="t.thumbnail"
+                  class="font-detail-thumb-item"
+                />
+                <span v-if="t.text" class="thumb-mini-text" :title="t.text">{{ t.text }}</span>
+              </div>
             </div>
           </div>
 
@@ -286,6 +310,48 @@
 </template>
 
 <script setup lang="ts">
+export interface FontThumbnailItem {
+  thumbnail: string;
+  text?: string;
+}
+
+/** 归一化读取缩略图对象数组：优先 thumbnails，兜底单图 thumbnail，兼容历史纯字符串数组 */
+function thumbItemsOf(item: any): FontThumbnailItem[] {
+  const arr = item?.thumbnails
+  if (Array.isArray(arr) && arr.length) {
+    const list: FontThumbnailItem[] = []
+    for (const t of arr) {
+      if (!t) continue
+      if (typeof t === 'string') {
+        const s = t.trim()
+        if (s) list.push({ thumbnail: s, text: '' })
+      } else if (typeof t === 'object') {
+        const thumb = String(t.thumbnail || t.url || '').trim()
+        if (thumb) {
+          list.push({
+            thumbnail: thumb,
+            text: typeof t.text === 'string' ? t.text : '',
+          })
+        }
+      }
+    }
+    return list
+  }
+  const single = String(item?.thumbnail || '').trim()
+  return single ? [{ thumbnail: single, text: '' }] : []
+}
+
+/** 缩略图 URL 列表 */
+function thumbsOf(item: any): string[] {
+  return thumbItemsOf(item).map((it) => it.thumbnail)
+}
+
+/** 首图 */
+function thumbOf(item: any): string {
+  return thumbsOf(item)[0] || ''
+}
+const detailThumbIndex = ref(0)
+
 import icon from "@/components/design/assets/icon/font-family.svg?component";
 import { ref, watch, computed, nextTick } from "vue";
 import desimage from "@/components/image.vue";
@@ -383,6 +449,7 @@ function openFontDetail(item?: FontItem | null) {
     return;
   }
   detailFont.value = item;
+  detailThumbIndex.value = 0;
   detailVisible.value = true;
 }
 
@@ -887,5 +954,68 @@ watch(
     grid-template-columns: 1fr;
     gap: 4px;
   }
+}
+
+.font-detail-thumbstrip {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+.font-detail-thumb-caption {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 190px;
+  font-size: 11px;
+  background: var(--1s-control-surface-muted);
+  border: 1px solid var(--1s-border-color);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.font-detail-thumb-caption .caption-tag {
+  font-size: 10px;
+  color: var(--1s-color-primary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.font-detail-thumb-caption .caption-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.font-detail-thumb-item-wrap {
+  position: relative;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: var(--1s-control-surface-muted);
+}
+.font-detail-thumb-item-wrap.active {
+  border-color: var(--1s-color-primary);
+}
+.font-detail-thumb-item {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  display: block;
+}
+.font-detail-thumb-item-wrap .thumb-mini-text {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 9px;
+  line-height: 12px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 1px;
+  pointer-events: none;
 }
 </style>

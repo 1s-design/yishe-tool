@@ -35,7 +35,7 @@
         <ResourceCard
           :title="item.name"
           :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
-          :media="item.thumbnail"
+          :media="itemThumbs(item)[0]"
           resource-type="font"
           :badges="[
             ...(item.family ? [{ label: item.family, variant: 'tonal' as const }] : []),
@@ -59,10 +59,38 @@
         </DialogHeader>
 
         <div class="flex flex-col sm:flex-row gap-4 items-center py-2">
-          <s1-img
-            :src="currentItem.thumbnail"
-            class="w-48 h-48  object-contain bg-[var(--1s-control-surface-muted)] border border-[var(--1s-border-color)] flex-shrink-0"
-          />
+          <div class="flex flex-col gap-2 flex-shrink-0">
+            <s1-img
+              :src="itemThumbItems(currentItem)[detailThumbIndex]?.thumbnail || itemThumbItems(currentItem)[0]?.thumbnail"
+              class="w-48 h-48 object-contain bg-[var(--1s-control-surface-muted)] border border-[var(--1s-border-color)]"
+            />
+            <!-- 当前缩略图对应试文字文案 -->
+            <div
+              v-if="itemThumbItems(currentItem)[detailThumbIndex]?.text"
+              class="text-xs px-2 py-1 bg-[var(--1s-control-surface-muted)] border border-[var(--1s-border-color)] rounded text-center truncate max-w-[192px]"
+              :title="itemThumbItems(currentItem)[detailThumbIndex]?.text"
+            >
+              <span class="text-[10px] text-[var(--1s-color-primary)] font-medium mr-1">试文字:</span>
+              <span>{{ itemThumbItems(currentItem)[detailThumbIndex]?.text }}</span>
+            </div>
+            <div v-if="itemThumbItems(currentItem).length > 1" class="flex gap-1.5 flex-wrap w-48 justify-center">
+              <div
+                v-for="(t, i) in itemThumbItems(currentItem)"
+                :key="t.thumbnail + i"
+                class="relative cursor-pointer border rounded overflow-hidden"
+                :class="i === detailThumbIndex ? 'border-[var(--1s-color-primary)]' : 'border-[var(--1s-border-color)]'"
+                @click="detailThumbIndex = i"
+              >
+                <s1-img
+                  :src="t.thumbnail"
+                  class="w-10 h-10 object-contain"
+                />
+                <span v-if="t.text" class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] truncate px-0.5 text-center leading-3 pointer-events-none">
+                  {{ t.text }}
+                </span>
+              </div>
+            </div>
+          </div>
           <div class="flex flex-col gap-2 flex-1 min-w-0">
             <div>
               <span class="text-xs text-[var(--1s-text-color-tertiary)]">描述：</span>
@@ -258,14 +286,53 @@ function downloadFile(item: any) {
 }
 
 function downloadThumbnail(item: any) {
-  Api.downloadCOSFile(item.thumbnail)
+  const first = itemThumbs(item)[0]
+  if (first) Api.downloadCOSFile(first)
+}
+
+export interface FontThumbnailItem {
+  thumbnail: string
+  text?: string
+}
+
+/** 归一化读取缩略图对象数组：优先 thumbnails，兜底单图 thumbnail，兼容历史纯字符串数组 */
+function itemThumbItems(item: any): FontThumbnailItem[] {
+  const arr = item?.thumbnails
+  if (Array.isArray(arr) && arr.length) {
+    const list: FontThumbnailItem[] = []
+    for (const t of arr) {
+      if (!t) continue
+      if (typeof t === 'string') {
+        const s = t.trim()
+        if (s) list.push({ thumbnail: s, text: '' })
+      } else if (typeof t === 'object') {
+        const thumb = String(t.thumbnail || t.url || '').trim()
+        if (thumb) {
+          list.push({
+            thumbnail: thumb,
+            text: typeof t.text === 'string' ? t.text : '',
+          })
+        }
+      }
+    }
+    return list
+  }
+  const single = String(item?.thumbnail || '').trim()
+  return single ? [{ thumbnail: single, text: '' }] : []
+}
+
+/** 归一化读取缩略图数组：优先 thumbnails，兜底单图 thumbnail */
+function itemThumbs(item: any): string[] {
+  return itemThumbItems(item).map((it) => it.thumbnail)
 }
 
 const currentItem = ref({} as any)
 const showPreviewModal = ref(false)
+const detailThumbIndex = ref(0)
 
 function itemClick(item: any) {
   currentItem.value = item
+  detailThumbIndex.value = 0
   showPreviewModal.value = true
 }
 
