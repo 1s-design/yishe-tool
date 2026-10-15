@@ -283,7 +283,20 @@
       </div>
 
       <!-- 输入框与工具条 -->
-      <div class="ai-input-box  border focus-within:ring-2  transition-all flex flex-col overflow-hidden">
+      <div class="ai-input-box border focus-within:ring-2 transition-all flex flex-col overflow-hidden">
+        <!-- 创作资源托盘：跨 tab 加入的资源在这里，随消息一起发给 agent -->
+        <PromptAttachmentTray
+          class="px-2.5 pt-2"
+          :class="{ 'ring-1 ring-[var(--1s-accent-color)]/30 bg-[var(--1s-hover-background)]/50': isInputFocused && attachmentRefs.length > 0 }"
+        />
+        <div
+          v-if="isInputFocused && attachmentRefs.length > 0"
+          class="flex items-center gap-1.5 px-3 py-1 bg-[var(--1s-hover-background)] text-[10px] text-[var(--1s-accent-color)] border-t border-[var(--1s-border-color)] transition-all"
+        >
+          <Sparkles class="h-3 w-3 flex-shrink-0" />
+          <span>已选 {{ attachmentRefs.length }} 项创作资源，发送时将自动编译为设计思路与资源绑定</span>
+        </div>
+
         <!-- 文本域 -->
         <textarea
           ref="textareaRef"
@@ -293,6 +306,8 @@
           :disabled="isPreparingImage || (isProcessing && !isWaitingForUser)"
           rows="3"
           style="min-height: 76px;"
+          @focus="isInputFocused = true"
+          @blur="isInputFocused = false"
           @input="adjustTextareaHeight"
           @keydown.enter="handleKeydownEnter"
           @paste="handlePaste"
@@ -403,6 +418,9 @@ import { designAgent } from "@/ai/langgraph";
 import { resolveAIToolName } from "@/ai/shared/tools";
 import { pendingPromptInput } from "@/ai/store";
 import { prepareImageForAI } from "@/ai/image-preprocess";
+import PromptAttachmentTray from "../promptAttachments/Tray.vue";
+import { usePromptAttachments } from "@/composables/usePromptAttachments";
+import { buildResourceContext } from "@/ai/resource-refs";
 import { getAgentPhaseLabel } from "@/ai/agent/presentation";
 import {
   resolveAgentTaskSpec,
@@ -433,6 +451,7 @@ import {
   Layers,
   Edit3,
   SlidersHorizontal,
+  Sparkles,
 } from "lucide-vue-next";
 import { executeAITool } from "@/ai/shared/execute-tool";
 import { currentCanvasControllerInstance } from "@/components/design/layout/canvas/index.tsx";
@@ -755,8 +774,34 @@ onUnmounted(() => {
   unsubscribe?.();
 });
 
+const { refs: attachmentRefs, clear: clearAttachments } = usePromptAttachments();
+const isInputFocused = ref(false);
+
+/** 把托盘里的资源编译成「设计思路 + 资源绑定」并进 prompt，然后清空托盘 */
+async function composeWithResources(text: string) {
+  if (!attachmentRefs.value.length) return text;
+  try {
+    const ctx = await buildResourceContext(attachmentRefs.value);
+    ctx.warnings.forEach((w) => console.warn("[资源]", w));
+    const blocks = [
+      text,
+      ctx.promptContext ? `【参考资源·设计思路】\n${ctx.promptContext}` : "",
+      Object.keys(ctx.htmlBindings?.font || {}).length ||
+      Object.keys(ctx.htmlBindings?.image || {}).length
+        ? `【资源绑定】请把这些绑定原样传给 canvas.addHtml 的 htmlBindings 参数，并在 HTML 中用 {{image.键.url}} / {{font.键.family}} 引用：\n${JSON.stringify(ctx.htmlBindings)}`
+        : "",
+    ].filter(Boolean);
+    return blocks.join("\n\n");
+  } catch (error) {
+    console.warn("[资源] 编译失败:", error);
+    return text;
+  } finally {
+    clearAttachments();
+  }
+}
+
 // Send handler
-function handleSend() {
+async function handleSend() {
   if (isComposing.value) return;
   if (selectedImage.value) {
     const text = inputText.value.trim() || "请分析这张参考图片的设计风格，并全自动制作一个高品质的类似贴纸设计";
@@ -770,7 +815,7 @@ function handleSend() {
       alert(taskError);
       return;
     }
-    agent.chatWithImage(text, selectedImage.value.preview, {
+    agent.chatWithImage(await composeWithResources(text), selectedImage.value.preview, {
       task: { ...taskOptions.value },
     });
     selectedImage.value = null;
@@ -797,7 +842,7 @@ function handleSend() {
     alert(taskError);
     return;
   }
-  agent.chat(text, { task: { ...taskOptions.value } });
+  agent.chat(await composeWithResources(text), { task: { ...taskOptions.value } });
   resetTextareaHeight();
   scrollToBottom(true);
 }

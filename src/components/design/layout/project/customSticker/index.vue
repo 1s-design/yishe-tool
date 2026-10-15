@@ -1,132 +1,54 @@
 <template>
-  <div class="project-page flex flex-col min-h-full">
-    <!-- 顶部工具条与 Tabs -->
-    <div class="project-toolbar">
+  <ResourceListShell
+    :loading="loading"
+    :total="list.length"
+    :current-page="1"
+    :page-size="100"
+    :item-count="list.length"
+    empty-title="暂无自定义贴纸工程"
+    empty-description="点击右上角「新建空白贴纸」在画布中设计并保存作品"
+    empty-action-label="新建空白贴纸"
+    @empty-action="createNew"
+  >
+    <template #tabs>
       <slot name="tabs"></slot>
-      <div class="project-toolbar__controls">
-        <Button size="sm" @click="createNew" class="h-7 text-xs gap-1.5">
-          <Plus class="h-3.5 w-3.5" />
-          新建空白贴纸
-        </Button>
-        <Button variant="outline" size="sm" @click="loadList" :disabled="loading" class="h-7 text-xs gap-1.5">
-          <RotateCw class="h-3.5 w-3.5" :class="{ 'animate-spin': loading }" />
-          刷新
-        </Button>
-      </div>
-      <div class="project-toolbar__caption">{{ list.length }} 项作品</div>
+    </template>
+
+    <template #toolbar-right>
+      <Button size="sm" @click="createNew" class="h-7 text-xs gap-1.5">
+        <Plus class="h-3.5 w-3.5" />
+        新建空白贴纸
+      </Button>
+      <Button variant="outline" size="sm" @click="loadList" :disabled="loading" class="h-7 text-xs gap-1.5">
+        <RotateCw class="h-3.5 w-3.5" :class="{ 'animate-spin': loading }" />
+        刷新
+      </Button>
+    </template>
+
+    <div v-for="item in list" :key="item.id">
+      <ResourceCard
+        :title="item.name || item.title"
+        :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
+        :media="item.url || item.previewUrl"
+        resource-type="customSticker"
+        aspect-ratio="1/1"
+        :badges="[]"
+        :tags="(item as any).tags || (item as any).keywords || []"
+        :footer-note="Utils.time.timeago(item.updateTime || item.createTime) || ''"
+        :actions="cardActions(item)"
+        :on-select="() => editOriginal(item)"
+      />
     </div>
-
-    <!-- 列表内容区 -->
-    <div class="flex-1 relative p-4">
-      <div
-        v-if="list.length > 0"
-        class="grid grid-cols-1 gap-4 w-full sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-      >
-        <div
-          v-for="item in list"
-          :key="item.id"
-          class="project-card project-gallery-card group"
-        >
-          <!-- 缩略图预览 -->
-          <div class="relative overflow-hidden  bg-[var(--1s-control-surface-muted)] aspect-[4/3]">
-            <s1-img
-              padding="5%"
-              :src="item.url"
-              class="w-full h-full object-contain"
-            />
-            <!-- 当前正在编辑的高亮标识 -->
-            <div
-              v-if="currentEditingCustomStickerId === item.id"
-              class="absolute top-2 left-2 z-10"
-            >
-              <Badge class="bg-amber-500 text-white font-medium text-[10px] -sm">
-                当前编辑中
-              </Badge>
-            </div>
-          </div>
-
-          <!-- 卡片信息与操作 -->
-          <div class="project-gallery-card__body flex flex-col gap-2">
-            <div class="flex items-start justify-between gap-2 min-w-0">
-              <div class="flex-1 min-w-0">
-                <div class="project-gallery-card__title text-ellipsis text-xs font-semibold" :title="item.name">
-                  {{ item.name || "未命名贴纸" }}
-                </div>
-                <div class="project-timeago text-[11px] text-muted-foreground mt-0.5">
-                  {{ Utils.time.timeago(item.updateTime || item.createTime) }}
-                </div>
-              </div>
-
-              <!-- 更多操作菜单 -->
-              <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                  <Button variant="ghost" size="icon-xs" class="h-6 w-6 opacity-60 group-hover:opacity-100 shrink-0">
-                    <MoreVertical class="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem @click="importItem(item)">
-                    <FolderInput class="h-3.5 w-3.5 mr-2" />
-                    导入到素材库
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem @click="removeItem(item)" class="text-destructive focus:text-destructive">
-                    <Trash2 class="h-3.5 w-3.5 mr-2" />
-                    删除作品
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <!-- 明确的双操作按钮：编辑 vs 基于此新建 -->
-            <div class="grid grid-cols-2 gap-1.5 pt-1">
-              <Button
-                variant="default"
-                size="xs"
-                class="w-full text-[11px] h-6 font-medium gap-1"
-                @click="editOriginal(item)"
-              >
-                <Pencil class="h-3 w-3" />
-                编辑原作品
-              </Button>
-              <Button
-                variant="outline"
-                size="xs"
-                class="w-full text-[11px] h-6 font-medium gap-1 hover:bg-accent"
-                @click="forkAsNew(item)"
-              >
-                <Copy class="h-3 w-3" />
-                基于此新建
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 空状态 -->
-      <div
-        v-else-if="!loading"
-        class="flex flex-col items-center justify-center h-64 text-center"
-      >
-        <Sparkles class="h-10 w-10 text-[var(--1s-text-color-tertiary)] mb-2 opacity-50" />
-        <div class="text-sm font-medium text-[var(--1s-text-color-secondary)]">暂无自定义贴纸工程</div>
-        <div class="text-xs text-[var(--1s-text-color-tertiary)] mt-1">点击右上角「新建空白贴纸」在画布中设计并保存作品</div>
-      </div>
-
-      <!-- 加载遮罩 -->
-      <div
-        v-if="loading"
-        class="absolute inset-0 bg-[var(--1s-panel-background)]/60 flex items-center justify-center"
-      >
-        <div class="animate-spin rounded-full h-8 w-8 border-2 border-[var(--1s-accent-color)] border-t-transparent"></div>
-      </div>
-    </div>
-  </div>
+  </ResourceListShell>
 </template>
 
 <script setup lang="ts">
+import ResourceListShell from '../ResourceListShell.vue'
+import ResourceCard from '../ResourceCard.vue'
 import { ref, onMounted } from "vue";
-import { message, Modal } from '@/common/message';
+import { message, Modal } from '@/common/message'
+import { usePromptAttachments } from '@/composables/usePromptAttachments'
+const { toggle: toggleResource, has: hasResource } = usePromptAttachments();
 import {
   getCustomStickerList,
   importCustomStickerToLibrary,
@@ -166,6 +88,19 @@ import {
 const list = ref<any[]>([]);
 const loading = ref(false);
 const importingId = ref<string | null>(null);
+
+function cardActions(item: any) {
+  const added = hasResource('sticker', String(item.id))
+  return [
+    {
+      key: 'add',
+      label: added ? '移出提示词' : '加入提示词',
+      onSelect: () => toggleResource({ type: 'sticker', id: String(item.id), label: item.name || item.title, payload: item }),
+    },
+    { key: 'import', label: '导入素材库', onSelect: () => importItem(item) },
+    { key: 'remove', label: '删除', onSelect: () => removeItem(item), danger: true },
+  ]
+}
 
 async function loadList() {
   loading.value = true;

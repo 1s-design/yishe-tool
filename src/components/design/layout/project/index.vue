@@ -4,7 +4,9 @@
       <component :is="activeComponent">
         <template #tabs>
           <Tabs v-model="activeKey" class="w-auto">
-            <TabsList>
+            <!-- 必须允许换行：8 个 tab 不换行会超出容器被 overflow:hidden 裁掉，
+                 导致最后一个「设计灵感」看不见 -->
+            <TabsList class="flex-wrap h-auto min-h-8 gap-1">
               <TabsTrigger
                 v-for="tab in tabs"
                 :key="tab.key"

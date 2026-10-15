@@ -60,6 +60,43 @@ export async function fetchInspirations(
   return (data?.list || []) as DesignInspirationItem[];
 }
 
+export interface InspirationPage {
+  list: DesignInspirationItem[];
+  total: number;
+  currentPage: number;
+  pageSize: number;
+  totalPage: number;
+}
+
+/**
+ * 分页取灵感（服务端分页 + 关键词/分类/状态过滤）
+ */
+export async function fetchInspirationPage(
+  query: {
+    currentPage?: number;
+    pageSize?: number;
+    keyword?: string;
+    category?: string;
+    status?: string;
+  } = {},
+): Promise<InspirationPage> {
+  const res = await apiInstance.post("/api/design-inspiration/page", {
+    currentPage: Math.max(1, Number(query.currentPage) || 1),
+    pageSize: Math.max(1, Math.min(100, Number(query.pageSize) || 20)),
+    keyword: query.keyword || undefined,
+    category: query.category || undefined,
+    status: query.status || undefined,
+  });
+  const data = unwrap(res);
+  return {
+    list: data?.list || [],
+    total: Number(data?.total) || 0,
+    currentPage: Number(data?.currentPage) || 1,
+    pageSize: Number(data?.pageSize) || 20,
+    totalPage: Number(data?.totalPage) || 1,
+  };
+}
+
 /**
  * 回写灵感生产状态。失败只告警，不影响生产主流程。
  */

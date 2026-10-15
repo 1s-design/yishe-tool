@@ -182,8 +182,11 @@
     <div v-if="menuState.showProject" class="resource-overlay" @click.self="menuState.showProject = false">
       <div class="resource-panel">
         <div class="resource-panel__header">
-          <span class="resource-panel__title">创作资源</span>
-          <button class="resource-panel__close" @click="menuState.showProject = false">
+          <div class="flex items-center gap-2">
+            <span class="resource-panel__title">创作资源中心</span>
+            <span class="text-[11px] text-[var(--1s-text-color-tertiary)] hidden sm:inline">| 素材库 · 内容库 · 知识库</span>
+          </div>
+          <button class="resource-panel__close" title="关闭 (Esc)" @click="menuState.showProject = false">
             <X class="h-4 w-4" />
           </button>
         </div>
@@ -815,6 +818,7 @@ async function initAction() {
   padding: 0 16px;
   flex-shrink: 0;
   background: var(--1s-surface-background);
+  border-bottom: 1px solid var(--1s-border-color);
 }
 
 .resource-panel__title {

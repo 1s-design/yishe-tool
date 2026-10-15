@@ -1,135 +1,56 @@
 <template>
   <div class="project-page flex flex-col min-h-full">
-    <!-- 顶部操作与筛选栏 -->
-    <div class="project-toolbar">
-      <slot name="tabs"></slot>
-      <div class="project-toolbar__controls">
+    <ResourceListShell
+      :loading="loading"
+      :total="total"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      :item-count="list.length"
+      empty-title="暂无文案句子"
+      empty-description="添加常用文案与排版句子，设计时快速调用"
+      empty-action-label="立即添加"
+      @empty-action="openCreateModal"
+      @update:current-page="changePage"
+    >
+      <template #tabs>
+        <slot name="tabs"></slot>
+      </template>
+
+      <template #toolbar-left>
         <Input
           v-model="searchText"
           placeholder="搜索文案句子内容"
-          class="w-48"
+          class="w-48 h-7 text-xs"
           @keyup.enter="handleSearch"
         />
-        <Button variant="outline" size="sm" @click="handleSearch" :disabled="loading">
-          <Search class="h-3.5 w-3.5 mr-1" />
+        <Button variant="outline" size="sm" @click="handleSearch" :disabled="loading" class="h-7 text-xs gap-1">
+          <Search class="h-3.5 w-3.5" />
           搜索
         </Button>
-        <Button variant="tonal" size="sm" @click="openCreateModal">
-          <Plus class="h-3.5 w-3.5 mr-1" />
+      </template>
+
+      <template #toolbar-right>
+        <Button variant="default" size="sm" @click="openCreateModal" class="h-7 text-xs gap-1">
+          <Plus class="h-3.5 w-3.5" />
           添加文案
         </Button>
+      </template>
+
+      <div v-for="item in list" :key="item.id">
+        <ResourceCard
+          :title="item.content || item.description"
+          :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
+          resource-type="sentence"
+          :badges="[
+            ...((item as any).category ? [{ label: (item as any).category, variant: 'tonal' as const }] : []),
+          ]"
+          :tags="(item as any).tags || (item as any).keywords || []"
+          :footer-note="Utils.time.timeago((item as any).updateTime || (item as any).updatedAt || (item as any).createTime) || ''"
+          :actions="cardActions(item)"
+          :on-select="() => cardActions(item).find((a) => a.key === 'edit')?.onSelect?.()"
+        />
       </div>
-      <div class="project-toolbar__caption">{{ total }} 条</div>
-    </div>
-
-    <!-- 句子卡片网格 -->
-    <div class="flex-1 relative p-4">
-      <div
-        v-if="list.length > 0"
-        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
-        <div
-          v-for="item in list"
-          :key="item.id"
-          class="sentence-card group"
-        >
-          <div class="flex items-start justify-between gap-2 mb-2">
-            <span class="text-[11px] font-mono text-[var(--1s-text-color-tertiary)]">
-              #{{ item.id }}
-            </span>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger as-child>
-                <Button variant="ghost" size="icon-sm" class="opacity-70 group-hover:opacity-100">
-                  <MoreVertical class="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem @click="copySentence(item)">
-                  <Copy class="h-3.5 w-3.5 mr-2" />
-                  复制内容
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="editItem(item)">
-                  <Pencil class="h-3.5 w-3.5 mr-2" />
-                  编辑文案
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem @click="deleteItem(item)" class="text-red-500 focus:text-red-500">
-                  <Trash2 class="h-3.5 w-3.5 mr-2" />
-                  删除
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div class="sentence-card__content">{{ item.content }}</div>
-          <div v-if="item.description" class="sentence-card__description">
-            {{ item.description }}
-          </div>
-
-          <div class="sentence-card__footer">
-            <span class="text-[11px] text-[var(--1s-text-color-tertiary)]">
-              {{ Utils.time.timeago(item.updatedAt || item.createdAt) }}
-            </span>
-            <Button
-              variant="secondary"
-              size="sm"
-              class="h-6 text-[11px] px-2"
-              @click="copySentence(item)"
-            >
-              <Copy class="h-3 w-3 mr-1" />
-              复制
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 空状态 -->
-      <div
-        v-else-if="!loading"
-        class="flex flex-col items-center justify-center h-64 text-center"
-      >
-        <Quote class="h-10 w-10 text-[var(--1s-text-color-tertiary)] mb-2 opacity-50" />
-        <div class="text-sm font-medium text-[var(--1s-text-color-secondary)]">暂无文案句子</div>
-        <div class="text-xs text-[var(--1s-text-color-tertiary)] mt-1">添加常用文案与排版句子，设计时快速调用</div>
-        <Button variant="tonal" size="sm" class="mt-4" @click="openCreateModal">
-          <Plus class="h-3.5 w-3.5 mr-1" />
-          立即添加
-        </Button>
-      </div>
-
-      <!-- 加载遮罩 -->
-      <div v-if="loading" class="absolute inset-0 bg-[var(--1s-panel-background)]/60 flex items-center justify-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-2 border-[var(--1s-accent-color)] border-t-transparent"></div>
-      </div>
-    </div>
-
-    <!-- 分页 -->
-    <div class="project-footer">
-      <div class="flex items-center justify-between px-2">
-        <div class="text-xs text-[var(--1s-text-color-tertiary)]">
-          第 {{ currentPage }} 页 / 共 {{ Math.ceil(total / pageSize) || 1 }} 页
-        </div>
-        <div class="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="currentPage <= 1 || loading"
-            @click="changePage(currentPage - 1)"
-          >
-            上一页
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="currentPage * pageSize >= total || loading"
-            @click="changePage(currentPage + 1)"
-          >
-            下一页
-          </Button>
-        </div>
-      </div>
-    </div>
+    </ResourceListShell>
 
     <!-- 创建 / 编辑弹窗 -->
     <Dialog :modal="false" v-model:open="showFormModal">
@@ -173,7 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import Pagination from '../pagination.vue';
+import ResourceListShell from '../ResourceListShell.vue'
+import ResourceCard from '../ResourceCard.vue'
 import { ref, onMounted } from 'vue'
 import {
   Search,
@@ -205,6 +127,8 @@ import {
 import Utils from '@/common/utils'
 import Api from '@/api'
 import { s1Confirm } from '@/common/message'
+import { usePromptAttachments } from '@/composables/usePromptAttachments'
+const { toggle: toggleResource, has: hasResource } = usePromptAttachments()
 import { message } from '@/common/message'
 
 interface SentenceItem {
@@ -236,6 +160,21 @@ const form = ref({
 })
 
 // 获取句子列表
+function cardActions(item: any) {
+  const added = hasResource('sentence', String(item.id))
+  return [
+    {
+      key: 'add',
+      label: added ? '移出提示词' : '加入提示词',
+      onSelect: () => toggleResource({ type: 'sentence', id: String(item.id), label: item.content || item.description, payload: item }),
+    },
+    { key: 'add', label: '加入提示词', onSelect: () => toggleResource({ type: 'sentence', id: String(item.id), label: item.content || item.description, payload: item }) },
+    { key: 'copy', label: '复制内容', onSelect: () => copySentence(item) },
+    { key: 'edit', label: '编辑', onSelect: () => editItem(item) },
+    { key: 'delete', label: '删除', onSelect: () => deleteItem(item), danger: true },
+  ]
+}
+
 async function getList() {
   loading.value = true
   try {

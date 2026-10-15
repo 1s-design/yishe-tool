@@ -1111,6 +1111,7 @@ async function handleRemoteCommand(data: any) {
           description,
           count,
           taskSource: payload?.taskSource,
+          resources: Array.isArray(payload?.resources) ? payload.resources : undefined,
           taskPreset,
           outputKind,
           membersPerGroup,
@@ -1213,6 +1214,91 @@ async function handleRemoteCommand(data: any) {
                   : ""
               }`
           : "无法测量画布，已按通过处理";
+        break;
+      }
+
+      case "list-resources": {
+        // 按类型分页列资源，供外部 agent「挑资源再下单」
+        const type = String(payload?.type || "").trim();
+        const keyword = String(payload?.keyword || "").trim();
+        const page = Math.max(1, Number(payload?.page) || 1);
+        const pageSize = Math.min(50, Math.max(1, Number(payload?.pageSize) || 20));
+        const api: any = await import("@/api");
+        const { apiInstance } = await import("@/api/apiInstance");
+        let list: any[] = [];
+        let total = 0;
+
+        const pick = (d: any) => {
+          const items = d?.list || d?.items || d?.records || (Array.isArray(d) ? d : []);
+          return { items, total: Number(d?.total) || items.length };
+        };
+
+        switch (type) {
+          case "inspiration": {
+            const r = await apiInstance.post("/api/design-inspiration/page", {
+              currentPage: page, pageSize, keyword: keyword || undefined,
+            });
+            const d = r?.data?.data ?? r?.data ?? r;
+            const p = pick(d);
+            list = p.items; total = p.total;
+            break;
+          }
+          case "font": {
+            const p = pick(await api.getFontList({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            list = p.items; total = p.total;
+            break;
+          }
+          case "sticker":
+          case "image": {
+            const p = pick(await api.getCustomStickerList({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            list = p.items; total = p.total;
+            break;
+          }
+          case "sentence": {
+            const p = pick(await api.getSentenceList({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            list = p.items; total = p.total;
+            break;
+          }
+          case "document": {
+            const p = pick(await api.getTextDocumentList({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            list = p.items; total = p.total;
+            break;
+          }
+          case "tip": {
+            const p = pick(await api.getDesignKnowledgePage({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            list = p.items; total = p.total;
+            break;
+          }
+          case "prompt": {
+            const mod: any = await import("@/ai/design-prompts/api");
+            const p = pick(await mod.queryDesignPromptPage({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            list = p.items; total = p.total;
+            break;
+          }
+          default:
+            result.phase = "failed";
+            result.error = `不支持的资源类型：${type || "(空)"}`;
+            result.message = result.error;
+            break;
+        }
+
+        if (result.phase !== "failed") {
+          const refs = list.map((it: any) => ({
+            type: type || "inspiration",
+            id: String(it.id || ""),
+            label: String(it.name || it.title || it.text || it.id || "").slice(0, 40),
+            payload: {
+              name: it.name || it.title || undefined,
+              url: it.url || it.previewUrl || undefined,
+              content: it.content || it.text || it.description || undefined,
+            },
+          }));
+          result.success = true;
+          result.phase = "completed";
+          result.resources = refs;
+          result.total = total;
+          result.message = `${type} 共 ${total} 条，本页 ${refs.length} 条`;
+        }
         break;
       }
 

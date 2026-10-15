@@ -1,32 +1,45 @@
 <template>
   <div class="pagination">
-    <button
-      class="pagination__btn"
-      :disabled="currentPage <= 1"
-      @click="$emit('update:currentPage', currentPage - 1)"
-    >
-      <ChevronLeft class="h-3 w-3" />
-    </button>
+    <div v-if="total !== undefined" class="pagination__info">
+      共 {{ total }} 项
+    </div>
     
-    <template v-for="page in visiblePages" :key="page">
+    <div class="pagination__controls">
       <button
-        v-if="page !== '...'"
-        class="pagination__page"
-        :class="{ 'pagination__page--active': page === currentPage }"
-        @click="$emit('update:currentPage', page)"
+        type="button"
+        class="pagination__btn"
+        :disabled="currentPage <= 1"
+        title="上一页"
+        aria-label="上一页"
+        @click="$emit('update:currentPage', currentPage - 1)"
       >
-        {{ page }}
+        <ChevronLeft class="h-3.5 w-3.5" />
       </button>
-      <span v-else class="pagination__ellipsis">...</span>
-    </template>
-    
-    <button
-      class="pagination__btn"
-      :disabled="currentPage >= totalPages"
-      @click="$emit('update:currentPage', currentPage + 1)"
-    >
-      <ChevronRight class="h-3 w-3" />
-    </button>
+      
+      <template v-for="(page, idx) in visiblePages" :key="idx">
+        <button
+          v-if="page !== '...'"
+          type="button"
+          class="pagination__page"
+          :class="{ 'pagination__page--active': page === currentPage }"
+          @click="$emit('update:currentPage', Number(page))"
+        >
+          {{ page }}
+        </button>
+        <span v-else class="pagination__ellipsis">…</span>
+      </template>
+      
+      <button
+        type="button"
+        class="pagination__btn"
+        :disabled="currentPage >= totalPages"
+        title="下一页"
+        aria-label="下一页"
+        @click="$emit('update:currentPage', currentPage + 1)"
+      >
+        <ChevronRight class="h-3.5 w-3.5" />
+      </button>
+    </div>
   </div>
 </template>
 
@@ -34,10 +47,16 @@
 import { computed } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
-const props = defineProps<{
-  currentPage: number
-  totalPages: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    currentPage: number
+    totalPages: number
+    total?: number
+  }>(),
+  {
+    total: undefined,
+  },
+)
 
 defineEmits<{
   'update:currentPage': [page: number]
@@ -71,46 +90,66 @@ const visiblePages = computed(() => {
 .pagination {
   display: flex;
   align-items: center;
-  gap: 2px;
+  justify-content: space-between;
+  gap: 12px;
   padding: 8px 16px;
+  width: 100%;
+}
+
+.pagination__info {
+  font-size: 11px;
+  color: var(--1s-text-color-secondary);
+  white-space: nowrap;
+}
+
+.pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
 
 .pagination__btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--1s-border-color);
+  border-radius: 6px;
+  background: var(--1s-surface-background);
   color: var(--1s-text-color-secondary);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
 }
 
 .pagination__btn:hover:not(:disabled) {
   background: var(--1s-hover-background);
+  border-color: var(--1s-text-color-tertiary);
   color: var(--1s-text-color);
 }
 
 .pagination__btn:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: not-allowed;
+  border-color: transparent;
 }
 
 .pagination__page {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  height: 24px;
+  min-width: 26px;
+  height: 26px;
   padding: 0 6px;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
   background: transparent;
   color: var(--1s-text-color-secondary);
   font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
 }
 
 .pagination__page:hover {
@@ -120,17 +159,19 @@ const visiblePages = computed(() => {
 
 .pagination__page--active {
   background: var(--1s-accent-color);
-  color: white;
-  font-weight: 500;
+  border-color: var(--1s-accent-color);
+  color: #fff;
+  font-weight: 600;
 }
 
 .pagination__ellipsis {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  height: 24px;
+  min-width: 22px;
+  height: 26px;
   color: var(--1s-text-color-tertiary);
   font-size: 11px;
+  user-select: none;
 }
 </style>

@@ -5,6 +5,10 @@ import { evaluateCanvasVisual } from "../visual-evaluate";
 import { executeAITool } from "../shared/execute-tool";
 import { currentEditingCustomStickerId } from "@/components/design/layout/canvas";
 import { auditCurrentCanvas, repairCanvasLayout } from "../canvas-audit";
+import {
+  buildResourceContext,
+  type DesignResourceRef,
+} from "../resource-refs";
 import { parseChatResponse } from "../shared/response-parser";
 import { AI_TIMEOUTS, withTimeout } from "../shared/timeout";
 import { websocketClient } from "@/services/websocketClient";
@@ -74,6 +78,8 @@ export interface AutoBatchConfig {
   count: number;
   /** 任务来源（不传=按 description 生成） */
   taskSource?: BatchTaskSource;
+  /** 资源引用：灵感/字体/图片/贴纸/文案/文档/技巧/提示词，编译成「思路 + 绑定」给 agent */
+  resources?: DesignResourceRef[];
   taskPreset?: AgentTaskPresetId;
   outputKind?: "independent-batch" | "group";
   membersPerGroup?: number;
@@ -112,6 +118,10 @@ export interface StickerBrief {
   sourceHtml?: string;
   /** 图片复刻模式的参考图（喂给视觉模型） */
   referenceImage?: string;
+  /** 资源引用编译出的思路上下文（进 prompt） */
+  resourceContext?: string;
+  /** 资源引用编译出的绑定资源（agent 需传给 canvas.addHtml 的 htmlBindings） */
+  htmlBindings?: Record<string, any>;
 }
 
 export interface BatchItem {
@@ -174,6 +184,7 @@ export interface BatchRuntimeSnapshot {
 
 interface NormalizedBatchConfig {
   taskSource?: BatchTaskSource;
+  resources?: DesignResourceRef[];
   style: string;
   description: string;
   count: number;
@@ -303,6 +314,7 @@ function normalizeConfig(config: AutoBatchConfig): NormalizedBatchConfig {
 
   return {
     taskSource: config.taskSource,
+    resources: config.resources,
     style: config.style || "",
     description,
     count: clampNumber(config.count, 1, maxJobs, 5),
@@ -414,17 +426,17 @@ async function generateBriefs(
 
   // 灵感驱动：从 design_inspiration 取待生产灵感并编译成 brief
   if (config.taskSource?.kind === "inspirations") {
-    return generateInspirationBriefs(config);
+    return attachResources(await generateInspirationBriefs(config), config);
   }
 
   // 复刻驱动：以某张已有设计为基稿，产出带扰动的变体
   if (config.taskSource?.kind === "replicate") {
-    return generateReplicateBriefs(config);
+    return attachResources(await generateReplicateBriefs(config), config);
   }
 
   // 图片复刻：以用户提供的图（商品图/印花图）为视觉参考重建设计
   if (config.taskSource?.kind === "image") {
-    return generateImageBriefs(config);
+    return attachResources(await generateImageBriefs(config), config);
   }
 
   const totalDesignCount = getTotalDesignCount(config);
@@ -1266,7 +1278,12 @@ function buildAuditFixPrompt(brief: StickerBrief, issues: string[]): string {
     `【必须修正】${issues.join("；")}`,
     "【硬性要求】主文案的几何中心落在画布正中心 (50%,50%)，只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)，副文案挂在主文案正下方；所有文字与元素不得超出画布边界；文字完整不截断（不要 ellipsis/nowrap）；主文案字高不超过画布高度的 26%。",
     `画布尺寸必须为 ${brief.width}x${brief.height}。主题：${brief.title}。`,
-  ].join("\n");
+    // 重做必须沿用参考资源，否则会把已绑定的图片/字体/思路一并丢掉
+    brief.resourceContext ? `【参考资源·必须保留】\n${brief.resourceContext}` : "",
+    brief.htmlBindings && Object.keys(brief.htmlBindings).length
+      ? `【资源绑定·必须继续使用】这些绑定必须原样传给 canvas.addHtml 的 htmlBindings，并在 HTML 中继续使用（图片 {{image.键.url}}、字体 font-family:{{font.键.family}}）：\n${JSON.stringify(brief.htmlBindings)}`
+      : "",
+  ].filter(Boolean).join("\n");
 }
 
 /**
@@ -1469,6 +1486,8 @@ ${buildSizeGuide(brief)}
 ${resourceHint}
 ${groupContext}
 ${brief.sourceHtml ? `【复刻基稿】以下是原设计 HTML，请在保留其视觉语言（配色气质/字体气质/构图骨架/装饰逻辑）的基础上完成本次变体：\n${brief.sourceHtml.slice(0, 16000)}` : ""}
+${brief.resourceContext ? `【参考资源·设计思路】\n${brief.resourceContext}` : ""}
+${brief.htmlBindings && Object.keys(brief.htmlBindings).length ? `【资源绑定·必须使用】请把这些绑定原样传给 canvas.addHtml 的 htmlBindings 参数，并在 HTML 中至少各使用一次（图片用 {{image.键.url}}，字体用 font-family:{{font.键.family}}）。绑定资源未被使用视为不合格：\n${JSON.stringify(brief.htmlBindings)}` : ""}
 ${config?.customInstructions ? `附加约束：${config.customInstructions}` : ""}
 
 只制作这一张，不要启动批量任务。请完成画布设计即可，不要询问用户，不要请求反馈，不要调用分析、评估、保存或导出工具。`;
@@ -1492,6 +1511,32 @@ async function evaluateItem(item: BatchItem): Promise<number | null> {
   return null;
 }
 
+/**
+ * 把资源引用编译出的「思路上下文 + 绑定资源 + 视觉参考」附到每个 brief 上。
+ * 编译一次、全部 brief 共用；取数失败只告警不阻塞。
+ */
+async function attachResources(
+  briefs: StickerBrief[],
+  config: NormalizedBatchConfig,
+): Promise<StickerBrief[]> {
+  const refs = config.resources || [];
+  // 诊断：把资源接入情况写进 batchProgress.error，便于外部（MCP）观测
+  batchProgress.error = `资源诊断: resources=${refs.length} 任务来源=${config.taskSource?.kind || "description"}`;
+  if (!refs.length) return briefs;
+
+  const ctx = await buildResourceContext(refs);
+  ctx.warnings.forEach((w) => console.warn("[Batch][资源] " + w));
+  batchProgress.error = `资源诊断: resources=${refs.length} 上下文=${ctx.promptContext.length}字 绑定=${JSON.stringify(ctx.htmlBindings).length}字 警告=${ctx.warnings.length}`;
+
+  return briefs.map((brief) => ({
+    ...brief,
+    resourceContext: [brief.resourceContext, ctx.promptContext].filter(Boolean).join("\n\n"),
+    htmlBindings: { ...(brief.htmlBindings || {}), ...ctx.htmlBindings },
+    resourceHints: Array.from(new Set([...(brief.resourceHints || []), ...ctx.resourceHints])),
+    referenceImage: brief.referenceImage || ctx.referenceImage,
+  }));
+}
+
 /** 按画布尺寸给出具体字号/内边距建议（比抽象描述更易被模型遵守） */
 function buildSizeGuide(brief: StickerBrief): string {
   const W = Number(brief.width) || 3000;
@@ -1509,9 +1554,14 @@ function buildSizeGuide(brief: StickerBrief): string {
 }
 
 function buildRevisionPrompt(score: number, brief: StickerBrief): string {
-  return `当前这张「${brief.title}」贴纸评分为 ${score}/10，目标是 ${brief.qualityTarget}/10。
-
-请基于当前画布做一次关键优化，优先处理构图、层级、文字可读性和素材融合问题。保持主题不变，不要重新开始，不要询问用户，也不要保存。`;
+  return [
+    `当前这张「${brief.title}」贴纸评分为 ${score}/10，目标是 ${brief.qualityTarget}/10。`,
+    "请基于当前画布做一次关键优化，优先处理构图、层级、文字可读性和素材融合问题。保持主题不变，不要重新开始，不要询问用户，也不要保存。",
+    brief.resourceContext ? `【参考资源·必须保留】\n${brief.resourceContext}` : "",
+    brief.htmlBindings && Object.keys(brief.htmlBindings).length
+      ? `【资源绑定·必须继续使用】${JSON.stringify(brief.htmlBindings)}`
+      : "",
+  ].filter(Boolean).join("\n\n");
 }
 
 async function saveItem(
