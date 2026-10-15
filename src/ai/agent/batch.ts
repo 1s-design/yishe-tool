@@ -887,8 +887,9 @@ async function generateInspirationBriefs(
 要求：
 - 必须输出正好 ${total} 项，顺序与槽位表严格一一对应（第 N 项对应槽位表第 N 行）。
 - 每项 width/height 必须与所属槽位尺寸一致，并在 prompt 里明确写出画布尺寸。
+- 【带参考图的灵感·最高优先级】digest 里有 referenceImages 的灵感，后续设计 agent 会**看图执行**。这类灵感的 brief 严禁发明主题、主副文案、配色、字体：prompt 里只写「严格按参考图重建其印花设计：图上文字逐字保留、配色与字体气质对齐参考图、构图与装饰逻辑复现参考图」+ 本条灵感的 promptHints/avoidNotes + 版式尺寸要求。把你对画面的猜测全部省略，交给看图环节。
+- 不带图的灵感才允许把模糊想法落成明确的执行指令：主文案、副文案、配色（给具体色值）、字体方向、构图、装饰元素。
 - 同一灵感的不同尺寸/变体必须同系列（配色与字体气质一致），但构图、装饰元素、文案侧重要有差异；方形与横向构图要分别重新设计版面，不要简单拉伸。
-- 把灵感里模糊的想法落成明确的执行指令：主文案、副文案、配色（给具体色值）、字体方向、构图、装饰元素。
 - 必须遵守每条灵感的 avoidNotes（避让事项）。
 - 【主文案居中·硬性】主文案的**几何中心**必须落在画布正中心 (50%,50%)，只对主文案容器用 translate(-50%,-50%)；副文案挂在主文案正下方。**绝不能把主+副文案整体居中**（那样主文案会偏上、视觉不居中）。这两行文字是画面主角，字号要有明显主次。
 - 设计请大胆自由发挥，不要过度限制：装饰、纹样、光影、边框、材质肌理、插画元素、配色与字体风格都鼓励尝试，画面要丰富、有层次、有氛围，避免空洞单调。
@@ -942,6 +943,12 @@ ${config.customInstructions ? `额外约束：${config.customInstructions}\n` : 
     brief.inspirationId = slot.inspirationId;
     brief.groupIndex = 0;
     brief.memberIndex = slot.variant;
+    // 灵感带图时必须作为视觉参考传给设计 agent：像「鼠标垫印花」这种正文只有标题、
+    // 设计意图全在图里的灵感，丢了图就等于丢了全部信息。
+    const refImages = items[slot.inspirationIndex].images || [];
+    if (refImages.length) {
+      brief.referenceImage = refImages[0];
+    }
     const base = truncateText(items[slot.inspirationIndex].title, 10);
     brief.saveName = truncateText(
       `${base}·${slot.size.label}${variants > 1 ? `·v${slot.variant + 1}` : ""}`,
@@ -984,17 +991,28 @@ function buildInspirationFallbackBriefs(
     const item = items[slot.inspirationIndex];
     const variation =
       INSPIRATION_VARIATIONS[index % INSPIRATION_VARIATIONS.length];
-    const prompt = [
-      `请设计一张 ${slot.size.width}x${slot.size.height}（${slot.size.label}）的设计作品，主题：${item.title}。`,
-      `灵感描述：${item.content}`,
-      item.promptHints ? `明确要求：${item.promptHints}` : "",
-      item.keywords?.length ? `关键词：${item.keywords.join("、")}` : "",
-      `构图方向：${variation}。`,
-      item.avoidNotes ? `必须避让：${item.avoidNotes}` : "",
-      "主文案与副文案从灵感描述中提炼，主文案水平垂直居中，副文案紧贴其下；只允许主副文案两行文字，不要印章、编号、英文、落款；背景要有内容不要大片空白；不要画边框。",
-    ]
-      .filter(Boolean)
-      .join("\n");
+    const hasImage = (item.images || []).length > 0;
+    const prompt = hasImage
+      ? [
+          `请设计一张 ${slot.size.width}x${slot.size.height}（${slot.size.label}）的设计作品。`,
+          `参考图是本灵感的唯一事实来源，必须严格按参考图重建其印花设计：图上出现的文字逐字原样保留（主文案=参考图主文案），配色、字体气质、构图与装饰逻辑全部对齐参考图，严禁自行发明主题或换成别的色系；不要把参考图直接贴进画布，也不要出现商品本体、包装、拍摄背景。`,
+          item.promptHints ? `补充要求：${item.promptHints}` : "",
+          item.avoidNotes ? `必须避让：${item.avoidNotes}` : "",
+          `画布尺寸严格为 ${slot.size.width}x${slot.size.height}，主文案几何中心落在画布正中心(50%,50%)，只对主文案容器用 translate(-50%,-50%)，副文案挂其正下方；文字完整不截断；背景要有内容不要大片空白；不要画边框。`,
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : [
+          `请设计一张 ${slot.size.width}x${slot.size.height}（${slot.size.label}）的设计作品，主题：${item.title}。`,
+          `灵感描述：${item.content}`,
+          item.promptHints ? `明确要求：${item.promptHints}` : "",
+          item.keywords?.length ? `关键词：${item.keywords.join("、")}` : "",
+          `构图方向：${variation}。`,
+          item.avoidNotes ? `必须避让：${item.avoidNotes}` : "",
+          "主文案与副文案从灵感描述中提炼，主文案水平垂直居中，副文案紧贴其下；只允许主副文案两行文字，不要印章、编号、英文、落款；背景要有内容不要大片空白；不要画边框。",
+        ]
+          .filter(Boolean)
+          .join("\n");
 
     const base = truncateText(item.title, 10);
     const saveName = truncateText(
@@ -1020,6 +1038,7 @@ function buildInspirationFallbackBriefs(
       groupIndex: 0,
       memberIndex: slot.variant,
       inspirationId: item.id,
+      referenceImage: (item.images || [])[0],
     };
   });
 }
@@ -1328,7 +1347,9 @@ async function ensureAuditPassed(
     item.status = "revising";
     try {
       await withTimeout(
-        designAgent._runBatchItem(buildAuditFixPrompt(item.brief, audit.issues)),
+        designAgent._runBatchItem(buildAuditFixPrompt(item.brief, audit.issues), {
+          referenceImage: item.brief.referenceImage,
+        }),
         AI_TIMEOUTS.batchDesign,
         `第 ${item.index + 1} 张审查修正`,
       );
@@ -1357,11 +1378,16 @@ async function runSingleDesign(
 
   item.status = "designing";
   try {
+    // 带视觉参考图的任务读图+设计更耗时，超时预算上浮 50%
+    const designTimeout = item.brief.referenceImage
+      ? Math.round(AI_TIMEOUTS.batchDesign * 1.5)
+      : AI_TIMEOUTS.batchDesign;
     await withTimeout(
       designAgent._runBatchItem(
         buildDesignPrompt(item.brief, item.index, config),
+        { referenceImage: item.brief.referenceImage },
       ),
-      AI_TIMEOUTS.batchDesign,
+      designTimeout,
       `第 ${item.index + 1} 张设计`,
     );
   } catch (e: any) {
@@ -1408,7 +1434,9 @@ async function runSingleDesign(
     item.revisionCount += 1;
     try {
       await withTimeout(
-        designAgent._runBatchItem(buildRevisionPrompt(score, item.brief)),
+        designAgent._runBatchItem(buildRevisionPrompt(score, item.brief), {
+          referenceImage: item.brief.referenceImage,
+        }),
         AI_TIMEOUTS.batchDesign,
         `第 ${item.index + 1} 张修订`,
       );
@@ -1485,6 +1513,13 @@ ${buildSizeGuide(brief)}
 需求：${brief.prompt}
 ${resourceHint}
 ${groupContext}
+${brief.referenceImage ? `【视觉参考图·必须先看图】参考图是本次设计的唯一事实来源，动手前必须仔细读图并严格执行：
+- 【冲突裁决】上方 brief 里的主题/主副文案/配色若与参考图冲突，**一律以参考图为准，忽略 brief 的冲突部分**。
+- 参考图上出现的文字必须**逐字原样保留**（主文案=参考图主文案，副文案同理），严禁自创主题、换词或改写成别的句子；只有参考图确实无文字时才可自拟一句贴合气质的文案。
+- 配色以参考图为准：提取主色、明暗关系与整体氛围，严禁换成别的色系或更鲜艳的通用风格。
+- 字体气质对齐：参考图是宋体就用宋体、是手写就用同气质手写体。
+- 构图与装饰逻辑（印花图案、元素布局、留白节奏）尽量复现参考图的视觉语言。
+- 不要直接把参考图贴进画布，也不要出现商品本体、包装、拍摄背景；只重建设计/印花本身。` : ""}
 ${brief.sourceHtml ? `【复刻基稿】以下是原设计 HTML，请在保留其视觉语言（配色气质/字体气质/构图骨架/装饰逻辑）的基础上完成本次变体：\n${brief.sourceHtml.slice(0, 16000)}` : ""}
 ${brief.resourceContext ? `【参考资源·设计思路】\n${brief.resourceContext}` : ""}
 ${brief.htmlBindings && Object.keys(brief.htmlBindings).length ? `【资源绑定·必须使用】请把这些绑定原样传给 canvas.addHtml 的 htmlBindings 参数，并在 HTML 中至少各使用一次（图片用 {{image.键.url}}，字体用 font-family:{{font.键.family}}）。绑定资源未被使用视为不合格：\n${JSON.stringify(brief.htmlBindings)}` : ""}

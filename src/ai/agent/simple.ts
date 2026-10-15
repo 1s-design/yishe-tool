@@ -30,6 +30,7 @@ import {
   messagesContainImages,
   stripImagesFromMessages,
   isVisionRelatedError,
+  getVisionUnavailableReason,
 } from "../vision-mode";
 import { websocketClient } from "@/services/websocketClient";
 import { migrateLegacyWorkspaceStorage } from "@/services/designRuntime";
@@ -1118,9 +1119,15 @@ async function runAgentLoop(
   const deliveryHandledExternally =
     options.deliveryHandledExternally === true;
   let referenceImage = String(options.referenceImage || "").trim();
-  // 视觉模型不可用时，参考图降级：不带图片，仅按文字需求执行
+  // 视觉模型不可用时，参考图降级：不带图片，仅按文字需求执行（显式记录，不再静默）
   if (referenceImage && !isVisionAvailable()) {
-    console.warn("[Agent] 视觉能力不可用，参考图降级为纯文字模式");
+    const reason = getVisionUnavailableReason() || "视觉模型未响应";
+    console.warn(`[Agent] 视觉能力不可用（${reason}），参考图降级为纯文字模式`);
+    addMessage({
+      role: "assistant",
+      content: `⚠️ 视觉参考图未生效：${reason}。本次已降级为纯文字执行，产出将不基于参考图，如需还原参考图视觉请检查视觉模型配置后重试。`,
+      meta: { type: "warning" },
+    });
     referenceImage = "";
   }
   const taskSpec = resolveAgentTaskSpec(userMessage, options.task, {
@@ -1615,11 +1622,15 @@ async function runAgentLoop(
           console.warn(
             "[Agent] 参考图已分析，但画布作品尚未创建，继续执行",
           );
-          messagesForLLM.push({
-            role: "system",
-            content:
-              "参考图分析已经完成，但当前画布还没有实际 HTML 作品。请继续执行下一步并调用 canvas.addHtml；不要只描述方案，也不要表示已经完成。",
-          });
+          // 只保留一条催促：重复堆叠会撑爆上下文，导致模型停止输出工具调用
+          const nag =
+            "参考图分析已经完成，但当前画布还没有实际 HTML 作品。请继续执行下一步并调用 canvas.addHtml；不要只描述方案，也不要表示已经完成。";
+          for (let mi = messagesForLLM.length - 1; mi >= 0; mi--) {
+            if (messagesForLLM[mi]?.role === "system" && messagesForLLM[mi]?.content === nag) {
+              messagesForLLM.splice(mi, 1);
+            }
+          }
+          messagesForLLM.push({ role: "system", content: nag });
           continue;
         }
         addMessage({
