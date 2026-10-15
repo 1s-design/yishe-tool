@@ -460,6 +460,17 @@ export function createHtmlTemplateContext(options: any) {
     currentValue.family = currentValue.id ? `font_${currentValue.id}` : "Arial";
   });
 
+  // 支持 AI agent 或资源绑定直传形式（htmlBindings.font[key]）
+  if (bindings.font && typeof bindings.font === "object") {
+    Object.values(bindings.font).forEach((val: any) => {
+      if (val && typeof val === "object") {
+        if (!val.family && val.id) {
+          val.family = `font_${val.id}`;
+        }
+      }
+    });
+  }
+
   const canvasWidth = formatToNativeSizeString(canvasStickerOptionsOnlyChild.value.width);
   const canvasHeight = formatToNativeSizeString(canvasStickerOptionsOnlyChild.value.height);
   const canvasFontSize = formatToNativeSizeString(
@@ -540,14 +551,26 @@ export async function ensureHtmlTemplateFontsLoaded(
   bindings: Record<string, any> = {}
 ) {
   const fontFields = fields.filter((field) => field.type === "font");
+  const fontList: Array<{ id: string; url: string; name: string }> = [];
+
+  fontFields.forEach((field) => {
+    const value = getValueByPath(bindings, field.key);
+    if (value?.id && value?.url && value?.name) {
+      fontList.push({ id: value.id, url: value.url, name: value.name });
+    }
+  });
+
+  // 支持 bindings.font.* 形式（AI agent / 外部资源引用的直接绑定）
+  if (bindings.font && typeof bindings.font === "object") {
+    Object.values(bindings.font).forEach((value: any) => {
+      if (value?.id && value?.url) {
+        fontList.push({ id: value.id, url: value.url, name: value.name || value.id });
+      }
+    });
+  }
 
   await Promise.all(
-    fontFields.map(async (field) => {
-      const value = getValueByPath(bindings, field.key);
-      if (!value?.id || !value?.url || !value?.name) {
-        return;
-      }
-
+    fontList.map(async (value) => {
       try {
         await fetchFontFace({
           id: value.id,
@@ -555,7 +578,7 @@ export async function ensureHtmlTemplateFontsLoaded(
           name: value.name,
         });
       } catch (error) {
-        console.warn("[htmlTemplate] failed to load font binding", field.key, error);
+        console.warn("[htmlTemplate] failed to load font binding", value.id, error);
       }
     })
   );

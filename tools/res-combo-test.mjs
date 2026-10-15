@@ -51,7 +51,7 @@ const CASES = [
   {
     name: "T2 字体+技巧+文案",
     payload: {
-      description: "做一张长款鼠标垫印花：暗底金线，主文案「人间值得」，结合设计技巧与文案资源。",
+      description: "做一张长款鼠标垫印花：1440x640，暗底金线，主文案「人间值得」，结合设计技巧与文案资源。",
       resources: [FONT_B, TIP, SENTENCE],
     },
   },
@@ -65,8 +65,22 @@ const CASES = [
   {
     name: "T4 四资源组合(字体+图片+技巧+提示词)",
     payload: {
-      description: "做一张长款鼠标垫印花：国潮红金，主文案「财源滚滚」，把字体、图片、技巧、提示词四种资源全部用上。",
+      description: "做一张长款鼠标垫印花：1440x640，国潮红金，主文案「财源滚滚」，把字体、图片、技巧、提示词四种资源全部用上。",
       resources: [FONT_A, STICKER, TIP, PROMPT],
+    },
+  },
+  {
+    name: "T5 带图灵感+字体+技巧(灵感驱动全要素)",
+    payload: {
+      description: "",
+      taskSource: {
+        kind: "inspirations",
+        inspirationIds: ["7700ff58-4fa9-4ec9-8b84-667f5d6d2a34"],
+        variantsPerInspiration: 1,
+        sizes: SIZE,
+        reportBack: true,
+      },
+      resources: [FONT_A, TIP],
     },
   },
 ];
@@ -81,10 +95,10 @@ async function runCase(c, idx) {
     enableAnalysisOptimization: false,
     saveMode: "auto",
     ...c.payload,
-    timeoutMs: 900000,
-  }, 900000);
+    timeoutMs: 1200000,
+  }, 1200000);
   log(`   受理: phase=${r?.phase} ${String(r?.message || r?.error || "").slice(0, 100)}`);
-  for (let i = 0; i < 45; i++) {
+  for (let i = 0; i < 70; i++) {
     await sleep(20000);
     const st = await mcp("system.design_tool.batch_get_state", { connectionId: CID }, 60000).catch(() => ({}));
     const b = (st?.raw || {}).batch || st?.batch || {};
@@ -102,10 +116,17 @@ async function runCase(c, idx) {
   return { name: c.name, status: "timeout" };
 }
 
+const targetCaseIdx = process.argv[3] ? Number(process.argv[3]) : null;
+const selectedCases = targetCaseIdx
+  ? CASES.filter((_, idx) => idx + 1 === targetCaseIdx)
+  : CASES;
+
 const results = [];
-for (let i = 0; i < CASES.length; i++) {
-  results.push(await runCase(CASES[i], i + 1));
-  await sleep(8000);
+for (let i = 0; i < selectedCases.length; i++) {
+  const c = selectedCases[i];
+  const idx = targetCaseIdx || (i + 1);
+  results.push(await runCase(c, idx));
+  if (i < selectedCases.length - 1) await sleep(8000);
 }
 log("==== 汇总 ====");
 for (const r of results) log(`  ${r.name}: ${r.status} ${r.url ? "| " + r.url.slice(0, 90) : ""}${r.error ? " | " + String(r.error).slice(0, 80) : ""}`);

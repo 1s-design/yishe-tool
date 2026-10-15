@@ -106,9 +106,29 @@ async function resolveResource(
         const res = await apiInstance.get(`/api/custom-sticker/${encodeURIComponent(id)}`);
         return unwrap(res) || null;
       }
+      case "font": {
+        const res = await apiInstance.get(`/api/font-template/${encodeURIComponent(id)}`);
+        return unwrap(res) || null;
+      }
+      case "sentence": {
+        const res = await apiInstance.get(`/api/sentences/${encodeURIComponent(id)}`);
+        return unwrap(res) || null;
+      }
+      case "tip": {
+        const res = await apiInstance.get(`/api/design-knowledge/${encodeURIComponent(id)}`);
+        return unwrap(res) || null;
+      }
+      case "document": {
+        const res = await apiInstance.get(`/api/text-document/${encodeURIComponent(id)}`);
+        return unwrap(res) || null;
+      }
+      case "prompt": {
+        const res = await apiInstance.get(`/api/design-prompt/${encodeURIComponent(id)}`);
+        return unwrap(res) || null;
+      }
       default:
         warnings.push(
-          `${TYPE_LABELS[type] || type}「${ref.label || id}」未提供 payload，且该类型暂不支持按 id 取数，已跳过`,
+          `${TYPE_LABELS[type] || type}「${ref.label || id}」未识别该资源类型，已跳过`,
         );
         return null;
     }
@@ -155,7 +175,7 @@ export async function buildResourceContext(
       case "sentence": {
         const body = data.content || data.text || data.description || label;
         promptContext.push(
-          `【可用文案·必须用上】请把下面这段文案用在画面里（可作主文案、副文案或小幅装饰文字）：\n${truncate(body, 200)}`,
+          `【文案资源】若需求中已明确指定主文案，必须保留该主文案作为视觉大标题，本段文案作为副文案、摘录金句或背景装饰排版；若未明确指定，则直接提取本段文案的核心词句作为主/副文案：\n${truncate(body, 200)}`,
         );
         break;
       }

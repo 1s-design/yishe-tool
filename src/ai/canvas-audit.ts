@@ -147,21 +147,51 @@ function textUnionRect(container: HTMLElement) {
  * 而不是死查某一种 CSS 写法（模型用 flex 居中同样算居中）。
  */
 function pickMainTextElement(root: HTMLElement): HTMLElement | null {
-  const byTranslate = root.querySelector<HTMLElement>('[style*="translate(-50%"]');
-  if (byTranslate) return byTranslate;
-  let best: HTMLElement | null = null;
-  let bestLen = 0;
+  const allTextElements: { el: HTMLElement; text: string; fontSize: number; isCentered: boolean }[] = [];
+
   root.querySelectorAll<HTMLElement>("*").forEach((el) => {
+    if (/^(SCRIPT|STYLE|SVG|PATH|IMG|CANVAS|AUDIO|VIDEO)$/i.test(el.tagName)) return;
     const own = Array.from(el.childNodes)
       .filter((node) => node.nodeType === Node.TEXT_NODE)
       .map((node) => String(node.textContent || "").trim())
       .join("");
-    if (own.length > bestLen) {
-      bestLen = own.length;
-      best = el;
+    if (!own) return;
+
+    let p: HTMLElement | null = el;
+    let isCentered = false;
+    while (p && p !== root) {
+      const inlineStyle = p.getAttribute("style") || "";
+      if (inlineStyle.includes("translate(-50%")) {
+        isCentered = true;
+        break;
+      }
+      p = p.parentElement;
     }
+
+    const fontSize = parseFloat(window.getComputedStyle(el).fontSize) || 0;
+    allTextElements.push({ el, text: own, fontSize, isCentered });
   });
-  return best;
+
+  if (!allTextElements.length) return null;
+
+  // 1) 优先查找带居中定位的文案组中字号最大的元素对应容器
+  const centeredCandidates = allTextElements.filter((item) => item.isCentered);
+  if (centeredCandidates.length > 0) {
+    centeredCandidates.sort((a, b) => b.fontSize - a.fontSize);
+    let p: HTMLElement = centeredCandidates[0].el;
+    while (
+      p.parentElement &&
+      p.parentElement !== root &&
+      (p.parentElement.getAttribute("style") || "").includes("translate(-50%")
+    ) {
+      p = p.parentElement;
+    }
+    return p;
+  }
+
+  // 2) 若无显式 translate(-50%)，按字号最大挑选主大标题
+  allTextElements.sort((a, b) => b.fontSize - a.fontSize);
+  return allTextElements[0].el;
 }
 
 function hasOwnText(el: HTMLElement): boolean {
@@ -252,6 +282,22 @@ export function repairCanvasLayout(root: HTMLElement): string[] {
       fixes.push("主文案已限宽并允许换行");
     }
   }
+
+  // 2) 检查所有含文字元素，若超出画布左右边界则自动限宽并换行
+  root.querySelectorAll<HTMLElement>("*").forEach((el) => {
+    const hasText = Array.from(el.childNodes).some(
+      (node) => node.nodeType === Node.TEXT_NODE && String(node.textContent || "").trim(),
+    );
+    if (!hasText) return;
+    const r = el.getBoundingClientRect();
+    if (r.right > rootRect.right + 2 || r.left < rootRect.left - 2) {
+      el.style.maxWidth = "90%";
+      el.style.whiteSpace = "normal";
+      el.style.overflowWrap = "break-word";
+      el.style.wordBreak = "break-word";
+      fixes.push("文字元素已自动限宽收拢以防止超出画布");
+    }
+  });
 
   // 2) 溢出的文字元素：限宽 + 换行，去掉截断写法
   const tolX = rootRect.width * 0.02;

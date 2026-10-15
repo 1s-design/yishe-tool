@@ -1244,18 +1244,43 @@ async function handleRemoteCommand(data: any) {
             break;
           }
           case "font": {
-            const p = pick(await api.getFontList({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            const p = pick(
+              await api.getFontList({
+                currentPage: page,
+                page,
+                pageSize,
+                searchKeyword: keyword || undefined,
+                keyword: keyword || undefined,
+                name: keyword || undefined,
+              }),
+            );
             list = p.items; total = p.total;
             break;
           }
           case "sticker":
           case "image": {
-            const p = pick(await api.getCustomStickerList({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            const p = pick(
+              await api.getCustomStickerList({
+                currentPage: page,
+                page,
+                pageSize,
+                searchText: keyword || undefined,
+                keyword: keyword || undefined,
+              }),
+            );
             list = p.items; total = p.total;
             break;
           }
           case "sentence": {
-            const p = pick(await api.getSentenceList({ currentPage: page, page, pageSize, keyword: keyword || undefined }));
+            const p = pick(
+              await api.getSentenceList({
+                currentPage: page,
+                page,
+                pageSize,
+                search: keyword || undefined,
+                keyword: keyword || undefined,
+              }),
+            );
             list = p.items; total = p.total;
             break;
           }
