@@ -37,3 +37,4 @@ tools/*.exe
 docs/.vitepress/cache/
 test-reports/
 tools/.test-token
+.batch-logs/
