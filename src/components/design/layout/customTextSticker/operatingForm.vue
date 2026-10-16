@@ -76,7 +76,13 @@
                       @click="showFontModal = true"
                       style="background: #f3f4f6; border-radius: 0.2em; height: 2.4em"
                       class="object-contain cursor-pointer"
-                      :src="operatingTextStickerOptions.fontFamilyInfo.thumbnail?.url"
+                      :src="
+                        (typeof operatingTextStickerOptions.fontFamilyInfo.thumbnails?.[0] === 'object'
+                          ? operatingTextStickerOptions.fontFamilyInfo.thumbnails?.[0]?.thumbnail
+                          : operatingTextStickerOptions.fontFamilyInfo.thumbnails?.[0]) ||
+                        operatingTextStickerOptions.fontFamilyInfo.thumbnail?.url ||
+                        operatingTextStickerOptions.fontFamilyInfo.thumbnail
+                      "
                       alt=""
                     />
                   </template>
