@@ -1,4 +1,5 @@
 import type { OperationContext } from "./types";
+import { getCanvasSizeLock } from "./canvas-size-lock";
 import {
   canvasStickerOptions,
   canvasStickerOptionsOnlyChild,
@@ -45,6 +46,13 @@ export function createDesignOperationContext(): OperationContext {
     },
 
     setCanvasSize(width, height, unit) {
+      // 尺寸锁（批量/复刻任务）：锁定期间忽略任何改尺寸请求
+      const lock = getCanvasSizeLock();
+      if (lock) {
+        width = lock.width;
+        height = lock.height;
+        unit = lock.unit;
+      }
       const child = getCanvasChild() as any;
       if (!child) return;
       const finalUnit = unit || child.width.unit;

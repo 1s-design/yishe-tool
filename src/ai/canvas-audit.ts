@@ -23,6 +23,45 @@ export interface CanvasAuditOptions {
   expectedBackground?: string
   /** 主文案必须竖排成单列（高>宽）；横排/多列群组算硬伤 */
   expectVerticalMain?: boolean
+  /** 要求的真实图片图层数下限（印章/肌理等外部素材，缺了算硬伤） */
+  requireImageLayers?: number
+}
+
+/** 长文案折列检测：逐字外接框聚类，任何一列都装不齐全部字 = 折列/散列 */
+function longTextColumnIssues(root: HTMLElement, text: string): string[] {
+  const chars = Array.from(normalize(text)).filter((c) => /\S/.test(c));
+  if (chars.length < 8) return [];
+  const uniq = Array.from(new Set(chars));
+  const all: { ch: string; cx: number }[] = [];
+  for (const ch of uniq) {
+    for (const rect of findCharRects(root, ch)) {
+      all.push({ ch, cx: rect.left + rect.width / 2 });
+    }
+  }
+  if (!all.length) return [];
+  all.sort((a, b) => a.cx - b.cx);
+  const clusters: typeof all[] = [];
+  let cur: typeof all = [all[0]];
+  for (let i = 1; i < all.length; i++) {
+    if (all[i].cx - cur[cur.length - 1].cx > 80) {
+      clusters.push(cur);
+      cur = [all[i]];
+    } else {
+      cur.push(all[i]);
+    }
+  }
+  clusters.push(cur);
+  let bestCover = 0;
+  for (const c of clusters) {
+    const set = new Set(c.map((x) => x.ch));
+    bestCover = Math.max(bestCover, uniq.filter((u) => set.has(u)).length);
+  }
+  if (bestCover < uniq.length) {
+    return [
+      `副文案「${text.slice(0, 10)}…」未排成单列（各字分散在多个水平位置，疑似折成多列），必须 nowrap 单列到底`,
+    ];
+  }
+  return [];
 }
 
 export interface CanvasAuditMetrics {
@@ -83,9 +122,39 @@ function emptyMetrics(): CanvasAuditMetrics {
 }
 
 function normalize(text: string): string {
-  return String(text || "")
-    .replace(/\s+/g, "")
-    .replace(/[，。、：；！？,.:;!?"'“”‘’()（）【】《》〈〉\-—–_/|~·]/g, "")
+  return foldT2S(
+    String(text || "")
+      .replace(/\s+/g, "")
+      .replace(/[，。、：；！？,.:;!?"'“”‘’()（）【】《》〈〉\-—–_/|~·]/g, ""),
+  )
+}
+
+/** 繁简归一（仅用于比较，不影响显示）：书法/繁体文案与简体清单视为同文 */
+const T2S_PAIRS: [string, string][] = [
+  ["戶", "户"], ["氣", "气"], ["對", "对"], ["勝", "胜"], ["給", "给"], ["榮", "荣"],
+  ["億", "亿"], ["隨", "随"], ["頂", "顶"], ["無", "无"], ["負", "负"], ["選", "选"],
+  ["這", "这"], ["個", "个"], ["們", "们"], ["說", "说"], ["話", "话"], ["語", "语"],
+  ["讀", "读"], ["書", "书"], ["學", "学"], ["會", "会"], ["時", "时"], ["間", "间"],
+  ["來", "来"], ["東", "东"], ["車", "车"], ["馬", "马"], ["買", "买"], ["賣", "卖"],
+  ["錢", "钱"], ["銀", "银"], ["開", "开"], ["關", "关"], ["門", "门"], ["風", "风"],
+  ["雲", "云"], ["電", "电"], ["頭", "头"], ["題", "题"], ["顏", "颜"], ["紅", "红"],
+  ["綠", "绿"], ["藍", "蓝"], ["黃", "黄"], ["鳥", "鸟"], ["魚", "鱼"], ["龍", "龙"],
+  ["鳳", "凤"], ["華", "华"], ["國", "国"], ["圓", "圆"], ["圖", "图"], ["園", "园"],
+  ["樣", "样"], ["種", "种"], ["條", "条"], ["葉", "叶"], ["藝", "艺"], ["業", "业"],
+  ["產", "产"], ["總", "总"], ["務", "务"], ["動", "动"], ["輕", "轻"], ["轉", "转"],
+  ["輪", "轮"], ["廣", "广"], ["鄉", "乡"], ["鐘", "钟"], ["鋼", "钢"], ["鐵", "铁"],
+  ["飛", "飞"], ["驗", "验"], ["體", "体"], ["讓", "让"], ["認", "认"], ["識", "识"],
+  ["記", "记"], ["詞", "词"], ["課", "课"], ["護", "护"], ["醫", "医"], ["麼", "么"],
+  ["齊", "齐"], ["齒", "齿"], ["虧", "亏"], ["漲", "涨"], ["價", "价"], ["貨", "货"],
+  ["資", "资"], ["債", "债"], ["豐", "丰"], ["達", "达"], ["運", "运"], ["過", "过"],
+  ["進", "进"], ["遠", "远"], ["邊", "边"], ["還", "还"], ["適", "适"], ["應", "应"],
+  ["當", "当"], ["眾", "众"], ["優", "优"], ["傳", "传"], ["傷", "伤"], ["儀", "仪"],
+];
+const T2S_MAP = new Map(T2S_PAIRS);
+function foldT2S(text: string): string {
+  let out = "";
+  for (const ch of text) out += T2S_MAP.get(ch) || ch;
+  return out;
 }
 
 /** 最长公共子串长度（文案短，O(n*m) 可接受） */
@@ -212,6 +281,107 @@ function textUnionRect(container: HTMLElement) {
   return { left, top, right, bottom, width: right - left, height: bottom - top };
 }
 
+/** 找出画布上某个字符的所有字形外接框（逐字符 Range 测量；style/script 不计） */
+function findCharRects(root: HTMLElement, ch: string): DOMRect[] {
+  const out: DOMRect[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node: Node | null = walker.nextNode();
+  while (node) {
+    const parent = node.parentElement;
+    if (parent && /^(STYLE|SCRIPT)$/i.test(parent.tagName)) {
+      node = walker.nextNode();
+      continue;
+    }
+    const text = String(node.textContent || "");
+    for (let i = 0; i < text.length; i++) {
+      if (foldT2S(text[i]) !== foldT2S(ch)) continue;
+      try {
+        const range = document.createRange();
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        const rect = range.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) out.push(rect as DOMRect);
+      } catch {}
+    }
+    node = walker.nextNode();
+  }
+  return out;
+}
+
+/**
+ * 主文案单列竖排的逐字几何检查（2+1 群组 / 横排 / 多列拆块都会被打回）。
+ * 逐字取最大字形外接框（避免徽章同字干扰），要求：各字水平中心对齐、自上而下、并集高>宽、并集高 ≥55% 画布高。
+ */
+function checkMainVerticalColumn(
+  root: HTMLElement,
+  mainText: string,
+  rootRect: DOMRect,
+): {
+  critical: string[];
+  advisory: string[];
+  union: { width: number; height: number } | null;
+} {
+  const critical: string[] = [];
+  const advisory: string[] = [];
+  const chars = Array.from(normalize(mainText)).filter((c) => /\S/.test(c));
+  if (chars.length < 2) return { critical, advisory, union: null };
+  const picked: { ch: string; rect: DOMRect }[] = [];
+  for (const ch of chars) {
+    const rects = findCharRects(root, ch);
+    if (!rects.length) continue;
+    rects.sort((a, b) => b.width * b.height - a.width * a.height);
+    picked.push({ ch, rect: rects[0] });
+  }
+  if (picked.length < chars.length) return { critical, advisory, union: null };
+
+  const widths = picked.map((p) => p.rect.width).sort((a, b) => a - b);
+  const medW = widths[Math.floor(widths.length / 2)] || 1;
+  const cxs = picked.map((p) => p.rect.left + p.rect.width / 2);
+  const cx0 = cxs[0];
+  if (cxs.some((cx) => Math.abs(cx - cx0) > medW * 0.55)) {
+    critical.push(
+      "主文案未排成一列（各字水平中心分散，疑似拆成多列或 2+1 群组）",
+    );
+  }
+  for (let i = 1; i < picked.length; i++) {
+    const prev = picked[i - 1].rect;
+    const cur = picked[i].rect;
+    const prevCy = prev.top + prev.height / 2;
+    const curCy = cur.top + cur.height / 2;
+    if (curCy <= prevCy + prev.height * 0.2) {
+      critical.push(
+        `主文案竖排顺序错误（「${picked[i - 1].ch}」与「${picked[i].ch}」未自上而下排列）`,
+      );
+      break;
+    }
+  }
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const p of picked) {
+    left = Math.min(left, p.rect.left);
+    top = Math.min(top, p.rect.top);
+    right = Math.max(right, p.rect.right);
+    bottom = Math.max(bottom, p.rect.bottom);
+  }
+  const union = { width: right - left, height: bottom - top };
+  if (union.height <= union.width * 1.15) {
+    critical.push(
+      `主文案未竖排成单列（逐字外接框 ${Math.round(union.width)}×${Math.round(union.height)}，需要高明显大于宽）`,
+    );
+  }
+  const hRatio = union.height / rootRect.height;
+  if (hRatio < 0.55) {
+    critical.push(
+      `主文案过小 占画布高 ${(hRatio * 100).toFixed(0)}%（竖排大字需 ≥55%）`,
+    );
+  } else if (hRatio > 0.9) {
+    advisory.push(`主文案偏高 占画布高 ${(hRatio * 100).toFixed(0)}%`);
+  }
+  return { critical, advisory, union };
+}
+
 /**
  * 找出「主文案元素」：优先用居中容器（translate(-50%,-50%)），
  * 否则退回「自有文字最长的那个元素」——这样能测量实际居中效果，
@@ -295,17 +465,227 @@ function mainTextRect(container: HTMLElement) {
 }
 
 /**
+ * 主文案合并单列（确定性机械修复）：模型爱把竖排大字画成 2+1 群组/横排，
+ * 提示词+审查反复纠正仍不稳。这里逐文本节点把主字抠出，替换为一个竖排单列容器。
+ * 不依赖元素结构（有的整段文本挤在一个文本节点里）。
+ */
+function collapseMainToSingleColumn(
+  root: HTMLElement,
+  mainText: string,
+  rootRect: DOMRect,
+): string | null {
+  const rawChars = Array.from(
+    String(mainText || "")
+      .replace(/\s+/g, "")
+      .replace(/[，。、：；！？,.:;!?"'“”‘’()（）【】《》〈〉\-—–_/|~·]/g, ""),
+  ).filter((c) => /\S/.test(c));
+  if (rawChars.length < 2) return null;
+  const foldedSet = new Set(rawChars.map((c) => foldT2S(c)));
+
+  // 1) 逐文本节点抠掉主字字符；记录字号最大的来源（复制字体/颜色）
+  let fontFamily = "";
+  let fontColor = "";
+  let maxFs = 0;
+  let removed = 0;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  let node: Node | null = walker.nextNode();
+  while (node) {
+    nodes.push(node as Text);
+    node = walker.nextNode();
+  }
+  for (const textNode of nodes) {
+    const parent = textNode.parentElement;
+    if (parent && /^(STYLE|SCRIPT)$/i.test(parent.tagName)) continue;
+    const text = String(textNode.textContent || "");
+    if (!text) continue;
+    let hasMain = false;
+    for (const ch of text) {
+      if (foldedSet.has(foldT2S(ch))) {
+        hasMain = true;
+        break;
+      }
+    }
+    if (!hasMain) continue;
+    const cs = parent ? window.getComputedStyle(parent) : null;
+    const fs = cs ? parseFloat(cs.fontSize) || 0 : 0;
+    if (fs > maxFs) {
+      maxFs = fs;
+      fontFamily = cs?.fontFamily || fontFamily;
+      fontColor = cs?.color || fontColor;
+    }
+    const cleaned = Array.from(text)
+      .filter((ch) => !foldedSet.has(foldT2S(ch)))
+      .join("");
+    textNode.textContent = cleaned;
+    removed += 1;
+  }
+  if (!removed) return null;
+
+  // 2) 插入竖排单列容器（显示用原文字符）
+  const div = document.createElement("div");
+  div.textContent = rawChars.join("");
+  const fontSize = Math.round(rootRect.height * 0.23);
+  div.setAttribute(
+    "style",
+    [
+      "position:absolute",
+      "left:50%",
+      "top:50%",
+      "height:72%",
+      "transform:translate(-50%,-50%)",
+      "writing-mode:vertical-rl",
+      "text-orientation:upright",
+      "white-space:nowrap",
+      `font-size:${fontSize}px`,
+      "font-weight:900",
+      "line-height:1.05",
+      "letter-spacing:0.06em",
+      fontFamily ? `font-family:${fontFamily}` : "",
+      fontColor ? `color:${fontColor}` : "",
+    ]
+      .filter(Boolean)
+      .join(";"),
+  );
+  root.appendChild(div);
+  return `主文案已机械合并为竖排单列（${rawChars.join("")}）`;
+}
+
+/**
+ * 长副文案折列/横排 → 机械合并为竖排单列（文本节点手术，不依赖元素结构）。
+ * 只处理与长句有实质重叠（≥3 个共同字）的文本节点，徽章单字等不会误伤。
+ */
+function collapseLongTextToSingleColumn(
+  root: HTMLElement,
+  text: string,
+  rootRect: DOMRect,
+): string | null {
+  const rawChars = Array.from(
+    String(text || "")
+      .replace(/\s+/g, "")
+      .replace(/[，。、：；！？,.:;!?"'“”‘’()（）【】《》〈〉\-—–_/|~·]/g, ""),
+  ).filter((c) => /\S/.test(c));
+  if (rawChars.length < 8) return null;
+  const folded = rawChars.map((c) => foldT2S(c));
+  const foldedSet = new Set(folded);
+  const uniqueFolded = Array.from(foldedSet);
+
+  // 定位：该句现有块的平均中心
+  let sumCx = 0;
+  let count = 0;
+  let top = Infinity;
+  let bottom = -Infinity;
+  let fontFamily = "";
+  let fontColor = "";
+  let maxFs = 0;
+  let removed = 0;
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  let node: Node | null = walker.nextNode();
+  while (node) {
+    nodes.push(node as Text);
+    node = walker.nextNode();
+  }
+
+  for (const textNode of nodes) {
+    const parent = textNode.parentElement;
+    if (parent && /^(STYLE|SCRIPT)$/i.test(parent.tagName)) continue;
+    const textContent = String(textNode.textContent || "");
+    if (!textContent) continue;
+    const nodeFolded = foldT2S(normalize(textContent));
+    if (nodeFolded.length < 2) continue;
+    const overlap = uniqueFolded.filter((c) => nodeFolded.includes(c)).length;
+    if (overlap < Math.min(3, uniqueFolded.length)) continue;
+
+    const parentEl = parent as HTMLElement | null;
+    if (parentEl) {
+      const r = parentEl.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) {
+        sumCx += r.left + r.width / 2;
+        count += 1;
+        top = Math.min(top, r.top);
+        bottom = Math.max(bottom, r.bottom);
+        const cs = window.getComputedStyle(parentEl);
+        const fs = parseFloat(cs.fontSize) || 0;
+        if (fs > maxFs) {
+          maxFs = fs;
+          fontFamily = cs.fontFamily || fontFamily;
+          fontColor = cs.color || fontColor;
+        }
+      }
+    }
+    textNode.textContent = Array.from(textContent)
+      .filter((ch) => !foldedSet.has(foldT2S(ch)))
+      .join("");
+    removed += 1;
+  }
+  if (!removed || !count) return null;
+
+  const cx = sumCx / count;
+  const cy = (top + bottom) / 2;
+  const xPct = ((cx - rootRect.left) / rootRect.width) * 100;
+  const yPct = ((cy - rootRect.top) / rootRect.height) * 100;
+
+  const div = document.createElement("div");
+  div.textContent = rawChars.join("");
+  const fontSize = maxFs > 8 ? Math.round(maxFs) : Math.round(rootRect.height * 0.035);
+  div.setAttribute(
+    "style",
+    [
+      "position:absolute",
+      `left:${xPct.toFixed(1)}%`,
+      `top:${yPct.toFixed(1)}%`,
+      "transform:translate(-50%,-50%)",
+      "writing-mode:vertical-rl",
+      "text-orientation:upright",
+      "white-space:nowrap",
+      `font-size:${fontSize}px`,
+      "line-height:1.15",
+      fontFamily ? `font-family:${fontFamily}` : "",
+      fontColor ? `color:${fontColor}` : "",
+    ]
+      .filter(Boolean)
+      .join(";"),
+  );
+  root.appendChild(div);
+  return `长文案「${rawChars.slice(0, 8).join("")}…」已机械合并为竖排单列`;
+}
+
+/**
  * 保存前自动修复：对可机械修复的问题直接改 DOM（随后立即渲染保存，改动会体现在成品里）。
  * 只做「不破坏设计」的最小改动：主文案按比例缩小、溢出文字限宽换行、去掉截断写法。
  * 返回修复说明（用于记录）。
  */
 export function repairCanvasLayout(
   root: HTMLElement,
-  opts?: { allowTallMain?: boolean },
+  opts?: { allowTallMain?: boolean; mainText?: string; texts?: string[] },
 ): string[] {
   const fixes: string[] = [];
   const rootRect = root.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return fixes;
+
+  // 0) 竖排大字 2+1/横排 → 机械合并为单列（必须在缩放/居中之前）
+  if (opts?.allowTallMain && opts?.mainText) {
+    try {
+      const msg = collapseMainToSingleColumn(root, opts.mainText, rootRect);
+      if (msg) fixes.push(msg);
+    } catch (error) {
+      console.warn("[CanvasAudit] 主文案合并失败:", error);
+    }
+  }
+  // 0b) 长副文案折列/横排 → 机械合并为单列
+  if (opts?.allowTallMain && Array.isArray(opts?.texts)) {
+    for (const t of opts.texts) {
+      if (!t || t === opts.mainText) continue;
+      try {
+        const msg = collapseLongTextToSingleColumn(root, t, rootRect);
+        if (msg) fixes.push(msg);
+      } catch (error) {
+        console.warn("[CanvasAudit] 副文案合并失败:", error);
+      }
+    }
+  }
 
   // 1) 主文案：高度超限则按比例缩小字号
   const centered = pickMainTextElement(root);
@@ -471,8 +851,15 @@ export async function auditCurrentCanvas(
               );
             }
           }
+          // 折列检测：各块水平中心分散 ≥2 列即硬伤（机械修复可合并）
+          criticalIssues.push(...longTextColumnIssues(root, expected));
         }
         if (pageText.includes(needle)) return;
+        // 短语（徽章单字环等）拆在多个元素时整串永远拼不齐——逐字齐就算在场
+        if (needle.length <= 6) {
+          const missing = Array.from(needle).filter((c) => !pageText.includes(c));
+          if (!missing.length) return;
+        }
         // 用最长公共子串比例判定：brief 里的文案可能比画布实际文案长
         // （例如把「躺赚·小金库」整个标题写成主文案），严格全等会误报
         const ratio = longestCommonSubstring(needle, pageText) / needle.length;
@@ -487,6 +874,16 @@ export async function auditCurrentCanvas(
           advisoryIssues.push(`${msg}（匹配 ${Math.round(ratio * 100)}%）`);
         } else {
           advisoryIssues.push(`副文案缺失「${expected}」`);
+        }
+      });
+
+      // 2a) 短语逐字存在性（徽章字/短标语被拆进多元素时整串匹配会失效，逐字兜底）
+      options.expectedTexts.forEach((expected) => {
+        const needle = normalize(expected);
+        if (needle.length < 2 || needle.length > 6) return;
+        const missing = Array.from(needle).filter((c) => !pageText.includes(c));
+        if (missing.length) {
+          criticalIssues.push(`文案「${expected}」缺字：${missing.join("、")}`);
         }
       });
 
@@ -573,20 +970,32 @@ export async function auditCurrentCanvas(
       }
       const hRatio = r.height / rootRect.height;
       const wRatio = r.width / rootRect.width;
-      // 竖排单列硬性：要求主文案外接框“高>宽”（横排/2+1 群组会宽>高）
-      if (options.expectVerticalMain && r.height <= r.width * 1.05) {
-        criticalIssues.push(
-          `主文案未竖排成单列（外接框 ${Math.round(r.width)}×${Math.round(r.height)}，需要高明显大于宽）`,
-        );
-      }
-      // 主文案高度：竖排书法模式给下限+放宽上限；常规模式只作建议
+      // 竖排单列硬性：逐字外接框检查优先（2+1 群组/多列拆块都会被打回）；无逐字数据时退回整体外接框
       if (options.expectVerticalMain) {
-        if (hRatio < 0.35) {
-          criticalIssues.push(
-            `主文案过小 占画布高 ${(hRatio * 100).toFixed(0)}%（竖排大字需 ≥35%）`,
+        const mainText = (options.expectedTexts && options.expectedTexts[0]) || "";
+        const col = checkMainVerticalColumn(root, mainText, rootRect);
+        if (col.union) {
+          criticalIssues.push(...col.critical);
+          advisoryIssues.push(...col.advisory);
+          metrics.mainHeightRatio = Number(
+            (col.union.height / rootRect.height).toFixed(3),
           );
-        } else if (hRatio > 0.88) {
-          advisoryIssues.push(`主文案偏高 占画布高 ${(hRatio * 100).toFixed(0)}%`);
+          metrics.mainWidthRatio = Number(
+            (col.union.width / rootRect.width).toFixed(3),
+          );
+        } else {
+          if (r.height <= r.width * 1.05) {
+            criticalIssues.push(
+              `主文案未竖排成单列（外接框 ${Math.round(r.width)}×${Math.round(r.height)}，需要高明显大于宽）`,
+            );
+          }
+          if (hRatio < 0.55) {
+            criticalIssues.push(
+              `主文案过小 占画布高 ${(hRatio * 100).toFixed(0)}%（竖排大字需 ≥55%）`,
+            );
+          } else if (hRatio > 0.9) {
+            advisoryIssues.push(`主文案偏高 占画布高 ${(hRatio * 100).toFixed(0)}%`);
+          }
         }
       } else if (hRatio > MAIN_MAX_HEIGHT_RATIO) {
         advisoryIssues.push(`主文案偏高 占画布高 ${(hRatio * 100).toFixed(0)}%`);
@@ -607,13 +1016,39 @@ export async function auditCurrentCanvas(
     root.querySelectorAll<HTMLElement>("*").forEach((el) => {
       const cs = window.getComputedStyle(el);
       const bgImage = cs.backgroundImage || "none";
+      // tagName 统一转大写比较：SVG 元素在 DOM 里是小写（svg/rect/path…），大小写敏感会漏计
+      const tag = String(el.tagName || "").toUpperCase();
+      if (tag === "IMG" || tag === "IMAGE") images += 1;
       if (bgImage.includes("gradient")) gradients += 1;
       else if (bgImage !== "none") images += 1;
+      // SVG 只有「可见且带渐变/滤镜/嵌图」才算图片图层（印章金渐变、feTurbulence 肌理）；
+      // 纯描边圆环/折线只是几何装饰，零尺寸/透明的 SVG 也不能冒充印章/肌理过图层闸门
+      if (tag === "SVG") {
+        const inner = el.innerHTML || "";
+        const r = el.getBoundingClientRect();
+        const opacity = parseFloat(cs.opacity || "1");
+        const visible =
+          r.width > 2 &&
+          r.height > 2 &&
+          opacity > 0.05 &&
+          cs.display !== "none" &&
+          cs.visibility !== "hidden";
+        if (
+          visible &&
+          /feTurbulence|linearGradient|radialGradient|<image\b/i.test(inner)
+        ) {
+          images += 1;
+        }
+      }
       if (cs.filter && cs.filter !== "none") filters += 1;
       if (cs.boxShadow && cs.boxShadow !== "none") shadows += 1;
       if (parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== "none") borders += 1;
-      if (/^(SVG|PATH|CIRCLE|ELLIPSE|POLYGON|RECT|LINE|IMG|CANVAS)$/.test(el.tagName)) shapes += 1;
+      if (/^(SVG|PATH|CIRCLE|ELLIPSE|POLYGON|RECT|LINE|IMG|CANVAS)$/.test(tag)) shapes += 1;
     });
+    // 根节点满版肌理（background 挂在画布根上时不在 querySelectorAll("*") 里）
+    const rootBg = window.getComputedStyle(root).backgroundImage || "none";
+    if (rootBg.includes("gradient")) gradients += 1;
+    else if (rootBg !== "none") images += 1;
     metrics.gradients = gradients;
     metrics.images = images;
     metrics.filters = filters;
@@ -622,6 +1057,16 @@ export async function auditCurrentCanvas(
     metrics.shapes = shapes;
     const visualLayers = gradients + images + filters + shadows + borders + shapes;
     metrics.visualLayers = visualLayers;
+
+    // 外部图片素材（印章/肌理等）数量硬查：只认真图片图层（img/背景图/带渐变滤镜的 SVG），
+    // 纯几何描边（圆环/折线）不算——否则徽章环会冒充印章/肌理误放行
+    if (options.requireImageLayers) {
+      if (images < options.requireImageLayers) {
+        criticalIssues.push(
+          `外部图片素材不足：画面仅有 ${images} 个图片图层（要求 ≥${options.requireImageLayers}；印章须带渐变的 <svg>、肌理须带 feTurbulence 的 <svg> 或真实图片，纯几何描边不算）`,
+        );
+      }
+    }
 
     const concreteLayers = images + filters + shadows + borders + shapes;
     if (visualLayers < MIN_VISUAL_LAYERS) {

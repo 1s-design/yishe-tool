@@ -1,6 +1,7 @@
 import { reactive, ref, computed } from "vue";
 import { aiChat } from "@/ai/api";
 import { directChat } from "@/ai/direct-client";
+import { DESIGN_TOOL_FEATURE_CODES } from "@/ai/feature-codes";
 import {
   executeOperation,
   createDesignOperationContext,
@@ -255,7 +256,7 @@ async function runAgentLoop() {
     } else {
       // 通过服务端调用
       response = await aiChat({
-        featureCode: "design_agent",
+        featureCode: DESIGN_TOOL_FEATURE_CODES.chat,
         messages: messagesForLLM,
         tools: allTools,
       });

@@ -76,17 +76,24 @@ registerOperation({
     } = params;
     const current = ctx.getCanvasSize();
     ctx.setCanvasSize(width, height, unit);
+    // 尺寸锁可能钳制了请求值——以实际生效尺寸为准报告，避免误导 agent
+    const actual = ctx.getCanvasSize();
+    const lockNote =
+      Math.round(actual.width) !== Math.round(width) ||
+      Math.round(actual.height) !== Math.round(height)
+        ? `（画布尺寸已锁定为 ${actual.width}×${actual.height} ${actual.unit}，忽略传入的 ${width}×${height}；请按锁定尺寸排版，禁止改画布尺寸）`
+        : "";
     const typography = applyCanvasBaseFontSize(ctx, {
-      width,
-      height,
-      unit,
+      width: actual.width,
+      height: actual.height,
+      unit: actual.unit,
       density: typographyDensity as CanvasTypographyDensity,
       fontSize: baseFontSize,
     });
     return {
       success: true,
-      message: `画布尺寸已从 ${current.width}×${current.height} ${current.unit} 设置为 ${width}×${height} ${unit}；基础字号 ${typography.baseFontSize}px（${typography.typographyDensityLabel}）`,
-      data: { width, height, unit, ...typography },
+      message: `画布尺寸已从 ${current.width}×${current.height} ${current.unit} 设置为 ${actual.width}×${actual.height} ${actual.unit}${lockNote}；基础字号 ${typography.baseFontSize}px（${typography.typographyDensityLabel}）`,
+      data: { width: actual.width, height: actual.height, unit: actual.unit, ...typography },
     };
   },
 });

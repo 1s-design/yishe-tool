@@ -98,7 +98,7 @@ function buildHtmlQuickRefPrompt(): string {
 - canvas.addHtml 接收 htmlContent 和 htmlBindings；根节点建议使用 width:100%; height:100%; position:relative; overflow:hidden; box-sizing:border-box
 - 写 HTML 前先按内容量选择层级：dense 用于长文/标签/参数，balanced 用于常规海报，display 用于单字/短标语；同一画面最多设置 6-7 个字号角色
 - --type-hero、--type-title、--type-primary、--type-subtitle、--type-body、--type-caption、--type-micro 已由画布自动提供，直接使用 font-size:var(--type-xxx)，不要重新定义
-- **强制使用字号 CSS 变量**：所有文字元素必须用 font-size:var(--type-hero/title/primary/subtitle/body/caption/micro)，禁止直接写固定字号。简单文字（1-2句）至少用 type-title + type-body；海报/多层级内容至少用 type-hero + type-body + type-caption
+- **强制使用字号 CSS 变量**：所有文字元素必须用 font-size:var(--type-hero/title/primary/subtitle/body/caption/micro)，禁止直接写固定字号。简单文字（1-2句）至少用 type-title + type-body；海报/多层级内容至少用 type-hero + type-body + type-caption。**例外**：复刻/比例锁定类任务若明确要求 calc(var(--canvas-html-vh/vw) * N) 字号（1 单位=画布高/宽 1%，与基础字号无关），以任务要求为准——这是确定性比例字号，优先级高于 --type-xxx
 - **文字一行显示**：主标题/短标语必须 white-space:nowrap + overflow:hidden 确保不换行；字号要根据画布宽度合理选择，4字标题用 type-hero，6字以上用 type-title；多行文字才允许换行
 - **【防溢出规则】必须确保文字不超出画布边界**：
   - 所有文字元素必须用 max-width:100% + overflow:hidden + text-overflow:ellipsis
@@ -204,6 +204,10 @@ export function buildSystemPrompt(options: PromptOptions = {}): string {
 export function buildImageAnalysisPrompt(): string {
   return `你是专业设计分析与复刻助手。用户上传参考图片，你需要精准识别并复刻其设计语言：
 
+0. **【方向辨别与本体提取·必须最先做】**：
+   - 参考图**不保证规整正立**：可能旋转了 90°/180°、斜角透视、局部裁切，或带 App 界面（状态栏、进度点、评论面板、按钮、水印）。
+   - 先圈定印花本体区域（忽略界面文字与控件、桌面/键盘/地板/包装/光影/反光），再判断让图中文字自然阅读的「可读正立方向」，按需要把画面在脑中转正后再提取一切元素位置。
+   - **画布方向跟印花本体的成图构图走**：竖排文字为主的竖幅构图 → 竖幅画布；横排为主的 → 横幅画布。**严禁按照片画幅/手机竖屏比例设尺寸**。
 1. **【核心印花识别·排除摄影环境干扰】**：
    - 参考图通常是商品实拍图或样机渲染图（如桌垫平铺在木桌/电脑桌上，带有键盘、鼠标、留白边框或环境光照）。
    - **周围的桌面、地板、键盘、外侧留白/米色摄影背景布属于拍摄场景，绝不是设计印花本身**！
@@ -211,7 +215,7 @@ export function buildImageAnalysisPrompt(): string {
 2. **【文字逐字保留】**：
    - 图上出现的文字是设计的核心灵魂，必须逐字原样还原（主文案=图上主文案，副文案同理），严禁自创别的主题文案。
 3. **【构图与字体气质】**：
-   - 提取主体元素的构图关系（居中/对称/四周留白）和字体形态（书法/黑体/宋体/手写体）。
+   - 提取主体元素的构图关系（居中/对称/四周留白）和字体形态（书法/黑体/宋体/手写体），位置比例都按正立后的印花本体坐标系描述。
 4. **【先分析再执行】**：
    - 清空画布和设置尺寸只是准备步骤，必须继续调用 canvas.addHtml 创建实际作品。
    - canvas.addHtml 成功前禁止表示已经完成复刻。

@@ -103,6 +103,18 @@ export interface PrintResourcePlan {
   cssElements: string[];
 }
 
+/** 方向辨别与本体提取（任意旋转/透视/带 UI 的创意图都要先做这一步） */
+export interface PrintExtraction {
+  /** 印花本体在原图中的位置与形态描述 */
+  designBody: string;
+  /** 顺时针旋转多少度参考图后印花文字正立（0/90/180/270） */
+  uprightRotation: 0 | 90 | 180 | 270;
+  /** 印花本体成图方向：portrait=竖幅构图 / landscape=横幅构图 / square=方图 */
+  canvasOrientation: "portrait" | "landscape" | "square" | "";
+  /** 忽略的非设计内容（界面控件、拍摄环境等） */
+  ignored: string[];
+}
+
 export interface PrintAnalysisResult {
   /** 全图文字逐条拆解 */
   texts: PrintTextItem[];
@@ -114,8 +126,16 @@ export interface PrintAnalysisResult {
   adaptability: PrintAdaptability;
   /** 复刻资源清单（字体/外部图片/CSS 三分） */
   resourcePlan: PrintResourcePlan;
-  /** 原图实际像素尺寸（复刻时画布必须用这个尺寸） */
+  /** 原图实际像素尺寸（仅参考/展示，不要当复刻画布尺寸） */
   sourceSize: { width: number; height: number } | null;
+  /** 复刻画布（印花本体成图方向与宽高比；实拍/截图必须按印花本体而非照片画幅） */
+  designCanvas: {
+    width: number;
+    height: number;
+    reason: string;
+  } | null;
+  /** 方向辨别与本体提取结果 */
+  extraction: PrintExtraction | null;
   /** 一句话概括这张印花 */
   summary: string;
   /** 原始模型输出（调试/兜底） */
@@ -132,6 +152,15 @@ export const PRINT_ANALYSIS_SYSTEM_PROMPT = `你是资深印花/平面设计解�
 2. **文字逐字原样**：图上所有文字逐字识别，不得改写、不得意译；识别不确定的字用「□」占位并在 effects 里注明。
 3. **颜色给 HEX**：每个关键色给出十六进制色值（可用近似值），不要只给「红色」这类描述。
 4. **诚实保守**：看不清的项给空字符串或空数组，不要编造。
+
+## 方向辨别与本体提取（必须最先做，创意图方向/视角不规整）
+
+用户给你的创意图**不保证是规整正立的**：可能旋转了 90°/180°、斜角透视拍摄、局部裁切、或带 App 界面（状态栏、进度点、评论面板、按钮、水印）的手机截图。先按下面步骤做，再做其它识别：
+
+1. **圈定印花本体**：找出设计画面本身在照片中的区域；App 界面文字与控件、桌面/键盘/地板/包装/光影/反光一律归入 ignored，不参与任何提取。
+2. **判断可读正立方向**：找到让图中文字自然阅读的方向（中文竖排自上而下、横排从左到右或传统右起），那就是设计的正立方向；记录「顺时针旋转多少度可正立」到 uprightRotation（只取 0/90/180/270 中最接近的值）。透视倾斜不用转正，按本体自身轴线判断。
+3. **在正立坐标系下提取**：所有文字/图形的位置描述，都按脑中转正后的印花本体坐标系（上/下/左/右、居中/环绕），不要按照片画幅。
+4. **成图方向**：canvasOrientation 按正立后的构图填 portrait（竖排主文案/上下徽章排/竖幅本体）、landscape（横排主文案/横幅本体）或 square。designCanvas 的宽高比必须跟 canvasOrientation 一致——**照片画幅、手机竖屏比例、拍摄透视都不算数**。
 
 ## 输出格式
 
@@ -181,6 +210,13 @@ export const PRINT_ANALYSIS_SYSTEM_PROMPT = `你是资深印花/平面设计解�
     "images": [{ "name": "锦鲤插画", "keywords": ["锦鲤", "中国风"], "reason": "复杂插画需外部素材" }],
     "cssElements": ["纯色背景", "底部渐变"]
   },
+  "designCanvas": { "width": 1333, "height": 3000, "reason": "印花本体为竖幅构图（竖排主文案+上下徽章排），按 400:900 成图" },
+  "extraction": {
+    "designBody": "印花本体是画面中部竖置的红色垫面，长轴竖直",
+    "uprightRotation": 0,
+    "canvasOrientation": "portrait",
+    "ignored": ["手机状态栏", "右上角键盘", "底部评论面板"]
+  },
   "summary": "一句话概括这张印花的设计主题与气质"
 }
 
@@ -201,7 +237,11 @@ export const PRINT_ANALYSIS_SYSTEM_PROMPT = `你是资深印花/平面设计解�
 - **colors**：按 底色 → 主色 → 辅色 → 点缀色 → 文字色 顺序，给 3-8 个关键色。
 - **composition**：只描述印花画面内部的构图，不管样机摆拍角度。
 - **adaptability**：主体是否集中居中、四周留边是否够裁切、远看能否识别主体。
-- **resourcePlan**：汇总「要搜的字体」「要搜的外部图片」「可 CSS 实现」三份清单，与 texts/graphics 的 impl 字段一致。`;
+- **resourcePlan**：汇总「要搜的字体」「要搜的外部图片」「可 CSS 实现」三份清单，与 texts/graphics 的 impl 字段一致。
+- **designCanvas**：复刻画布的像素尺寸（宽/高），**必须按印花本体的成图方向和宽高比**，不是照片/截图的像素：
+  1. 先判断印花画面的「成图方向」：竖排主文案/上下徽章排/左右竖列 = 竖幅构图；横排主文案/左右竖排对联 = 横幅构图。
+  2. 再按印花本体宽高比给像素（长边约 3000px）：竖幅 900×400mm 桌垫竖放成图 → 竖幅 1333×3000；3:2 竖幅 → 2000×3000；方图 → 2400×2400；横幅 900×400 横放成图 → 3000×1333。
+  3. reason 一句话说明方向与依据。实拍/手机截图的画幅比例与拍摄透视都不算数，只看印花画面本身。`;
 
 // ============ 输入归一 ============
 
@@ -436,6 +476,35 @@ export function normalizePrintAnalysis(
       sourceSize && sourceSize.width > 0 && sourceSize.height > 0
         ? sourceSize
         : null,
+    designCanvas: (() => {
+      const dc = (json as any)?.designCanvas;
+      const w = Math.round(Number(dc?.width) || 0);
+      const h = Math.round(Number(dc?.height) || 0);
+      if (w > 0 && h > 0) {
+        return { width: w, height: h, reason: String(dc?.reason || "").trim() };
+      }
+      return null;
+    })(),
+    extraction: (() => {
+      const ex = (json as any)?.extraction;
+      if (!ex || typeof ex !== "object") return null;
+      const rot = Math.round(Number(ex.uprightRotation) || 0);
+      const uprightRotation = ([0, 90, 180, 270] as const).includes(
+        ((rot % 360) + 360) % 360 as 0 | 90 | 180 | 270,
+      )
+        ? (((rot % 360) + 360) % 360 as 0 | 90 | 180 | 270)
+        : 0;
+      const orientation = String(ex.canvasOrientation || "").trim().toLowerCase();
+      return {
+        designBody: String(ex.designBody || "").trim(),
+        uprightRotation,
+        canvasOrientation:
+          orientation === "portrait" || orientation === "landscape" || orientation === "square"
+            ? (orientation as "portrait" | "landscape" | "square")
+            : "",
+        ignored: toStringArray(ex.ignored),
+      };
+    })(),
     summary: String(json?.summary || "").trim(),
     raw,
   };

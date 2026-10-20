@@ -98,6 +98,9 @@ export function buildReplicateBrief(
     lines.push(
       "- 禁止使用 canvas.smartSize / setSizeByPreset；禁止使用其他任何数字作尺寸（毫米/厘米/成品物理规格都不是像素）",
     );
+    lines.push(
+      "- 画布是按印花本体成图方向锁定的（已做方向辨别与本体提取）；下面所有位置比例均相对印花本体，与参考照片的画幅/拍摄角度无关",
+    );
   } else {
     lines.push(
       "- 第一步用 canvas.setSize 明确像素数值（按印花本体宽高比），禁止不设尺寸就开始画",
@@ -163,11 +166,14 @@ export function buildReplicateBrief(
       '```html',
     );
     lines.push(
-      `<div style="position:absolute;left:50%;top:50%;height:70%;transform:translate(-50%,-50%);writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;font-size:calc(var(--type-hero) * 2.6);font-weight:900;line-height:1.05;letter-spacing:0.06em">${main.content}</div>`,
+      `<div style="position:absolute;left:50%;top:50%;height:70%;transform:translate(-50%,-50%);writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;font-size:calc(var(--canvas-html-vh) * 23);font-weight:900;line-height:1.05;letter-spacing:0.06em">${main.content}</div>`,
     );
     lines.push("```");
     lines.push(
       "（主文案文本直接写在一个容器里；white-space:nowrap 防止竖排换列拆成多列，容器 height 给足 70%；不要拆成多个绝对定位块）",
+    );
+    lines.push(
+      "（字号只允许 calc(var(--canvas-html-vh) * N) 或 calc(var(--canvas-html-vw) * N)：1 个单位=画布高/宽 1%，与基础字号无关，比例确定；主字单字高约画布高 23%）",
     );
   }
   lines.push("");
