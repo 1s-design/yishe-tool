@@ -201,6 +201,8 @@
   <stickerDetailModal></stickerDetailModal>
   <!-- 自定义模型弹层 -->
   <customModelDetailModal></customModelDetailModal>
+  <!-- 印花解构分析弹层 -->
+  <printAnalysisModal></printAnalysisModal>
 
   <!-- 贴纸覆盖时显示的提示框 -->
   <decalTooltip></decalTooltip>
@@ -309,6 +311,7 @@ import { openLoginDialog } from "@/modules/main/view/user/login/index.tsx";
 import { useStickerDetailModal } from "@/components/design/layout/project/sticker/stickerModal";
 
 import { useCustomModelDetailModal } from "@/components/design/layout/project/customModel/customModelModal";
+import { usePrintAnalysisModal } from "@/components/design/layout/printAnalysis/printAnalysisModal";
 import decalTooltip from "./decalTooltip/index.vue";
 import materialDrawer from "./material/drawer.vue";
 import shareCardModal from "@/components/design/layout/shareCard/modal.vue";
@@ -324,6 +327,7 @@ import { DESIGN_3D_ENABLED } from "../featureFlags";
 
 const { component: stickerDetailModal } = useStickerDetailModal();
 const { component: customModelDetailModal } = useCustomModelDetailModal();
+const { component: printAnalysisModal } = usePrintAnalysisModal();
 
 const loginStore = useLoginStatusStore();
 

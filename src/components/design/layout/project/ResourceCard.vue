@@ -376,17 +376,23 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onDocKeydown))
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .resource-card__media--sticker {
   aspect-ratio: 1 / 1;
   background: var(--1s-hover-background);
   padding: 12px;
+  box-sizing: border-box;
 }
 
+/* max-width/height + auto 让图片按比例收缩，由父级 flex 真正居中；
+   避免 width/height:100% 在 aspect-ratio 容器里解析异常导致贴边或被裁 */
 .resource-card__img-contain {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
   display: block;
 }
@@ -415,6 +421,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onDocKeydown))
   aspect-ratio: 16 / 9;
   padding: 12px;
   background: var(--1s-hover-background);
+  box-sizing: border-box;
 }
 
 .resource-card__font-preview {

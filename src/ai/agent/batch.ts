@@ -118,6 +118,12 @@ export interface StickerBrief {
   sourceHtml?: string;
   /** 图片复刻模式的参考图（喂给视觉模型） */
   referenceImage?: string;
+  /** 严格文字白名单（防自创清单外文字），由带文案清单的复刻任务开启 */
+  strictTextWhitelist?: boolean;
+  /** 期望背景色 HEX（配色锁），由文案清单提取 */
+  expectedBackground?: string;
+  /** 主文案必须竖排单列 */
+  expectVerticalMain?: boolean;
   /** 资源引用编译出的思路上下文（进 prompt） */
   resourceContext?: string;
   /** 资源引用编译出的绑定资源（agent 需传给 canvas.addHtml 的 htmlBindings） */
@@ -777,20 +783,38 @@ async function generateImageBriefs(
   const sizes = normalizeInspirationSizes(source.sizes, config);
 
   const briefs: StickerBrief[] = [];
+  // 带文案清单的 instruction：开启文字白名单 + 尽量提取期望背景色做配色锁
+  const instruction = String(source.instruction || "");
+  const bgMatch = instruction.match(/底色?\s*(#[0-9a-fA-F]{6})|background:\s*(#[0-9a-fA-F]{6})/);
+  const expectedBackground = bgMatch ? (bgMatch[1] || bgMatch[2]) : undefined;
+  const hasCopyList = /文案清单|文案唯一来源/.test(instruction);
+  const expectVerticalMain = /竖排|writing-mode/.test(instruction);
+
   sizes.forEach((size) => {
     for (let v = 0; v < variants; v++) {
       const saveName = truncateText(`图片复刻·${size.label}·v${v + 1}`, 30);
+      // instruction 带文案清单时：清单是唯一文案来源；否则回落到「照抄图上文字」
+      const hasCustomCopy = Boolean(source.instruction);
       const prompt = [
         "参考图是用户提供的设计参考（可能是商品图或印花图）。请仔细看图，提取其中的印花图案、配色、字体气质与构图，重建成一份完整的 HTML 设计。",
-        "【主副文案必须照抄·最高优先级】参考图上出现的文字必须**逐字原样保留**（主文案就是参考图的主文案，副文案同理），严禁自创主题、换词或改成别的句子。若参考图上确实没有任何文字，才允许自行拟一句贴合其气质的文案。",
+        hasCustomCopy
+          ? "【文案唯一来源·最高优先级】「补充要求」里的文案清单是本设计唯一文案来源，必须逐字使用清单文本；禁止重新解读/OCR 参考图上的文字来替代清单（图上书法/狂草极易误读）；禁止自创、增删或改写清单之外的任何文字（含拼音、英文、年份、口号、落款等装饰文字）。"
+          : "【主副文案必须照抄·最高优先级】参考图上出现的文字必须**逐字原样保留**（主文案就是参考图的主文案，副文案同理），严禁自创主题、换词或改成别的句子。若参考图上确实没有任何文字，才允许自行拟一句贴合其气质的文案。",
         "【配色与气质以参考图为准】必须提取参考图的主色、明暗关系与整体氛围（例如暗棕/电影感/低饱和/金色点缀），严禁换成其它色系或更鲜艳的通用风格。",
         "【字体气质对齐】参考图是宋体就用宋体、是手写就用同气质手写体。",
         "【重要】不要直接把参考图贴进画布，也不要出现商品本体、包装、拍摄背景；只重建「印花图案本身」。",
-        source.instruction ? `补充要求：${source.instruction}` : "",
+        "【禁止搜索空转】每类资源（字体/贴纸）最多检索 2 次；仍无果就选最接近候选，或用 CSS/SVG 兜底（印章/箭头等纯装饰允许 SVG），然后立即继续。禁止反复重搜同一类资源。必须在 10 次工具调用以内调用 canvas.addHtml 输出作品，addHtml 之前禁止宣告完成。",
+        source.instruction
+          ? `【补充要求（文案与布局以此为准，优先级高于下方默认布局建议）】\n${source.instruction}`
+          : "",
         `画布尺寸必须为 ${size.width}x${size.height}（${size.label}）。`,
-        "主文案的几何中心必须落在画布正中心 (50%,50%)，只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)；副文案挂在主文案正下方；不要把主+副整体居中。",
+        hasCustomCopy
+          ? "主文案几何中心落在画布正中心 (50%,50%)；文案位置关系按补充要求执行。"
+          : "主文案的几何中心必须落在画布正中心 (50%,50%)，只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)；副文案挂在主文案正下方；不要把主+副整体居中。",
         "文字必须完整显示、不截断；字号不超过画布高度的 26%（两行时每行 ≤14%）；禁止用 vw/vh/clamp 做字号。",
-        "背景至少三层（主题色渐变底 + 纹理肌理 + 至少两个具象插画/光影），不要大片纯色空白；不要画外框/圆环/角括号。",
+        hasCustomCopy
+          ? "背景配色与装饰按补充要求执行；无要求的部分可加主题色渐变底与纹理肌理。"
+          : "背景至少三层（主题色渐变底 + 纹理肌理 + 至少两个具象插画/光影），不要大片纯色空白；不要画外框/圆环/角括号。",
         "用 canvas.addHtml 输出完整 HTML/CSS；完成后不要保存，保存由流水线处理。",
       ]
         .filter(Boolean)
@@ -810,6 +834,9 @@ async function generateImageBriefs(
         groupIndex: 0,
         memberIndex: v,
         referenceImage: imageUrl,
+        strictTextWhitelist: hasCopyList,
+        expectedBackground,
+        expectVerticalMain,
       });
     }
   });
@@ -1276,15 +1303,40 @@ function extractBriefTexts(brief: StickerBrief): string[] {
     if (!main?.[1]) out.push("");
     out.push(sub[1]);
   }
+  // 严格白名单场景：把 prompt 里所有「」引号文案全部纳入期望（徽章单字、竖排列等）
+  if (brief?.strictTextWhitelist) {
+    // 元词（提示词自身的措辞）不算文案，避免误报「缺副文案」或污染白名单
+    const META = /补充要求|文案清单|文案|清单|参考图|印花图|画布|禁止|检索|布局|骨架|色值|主文案|副文案|标题|圆圈|印章|箭头|背景|保存|检索词|像素|单位|骨架|HTML|searchFont|searchSticker|font|image|复刻|名称|收尾|含/i;
+    const all = prompt.match(/「([^」]{1,40})」/g) || [];
+    for (const q of all) {
+      const t = q.slice(1, -1);
+      if (!t || META.test(t)) continue;
+      if (!out.includes(t)) out.push(t);
+    }
+  }
   return out;
 }
 
 /** 保存前审查（调用共享审查模块：尺寸/文案/居中/溢出/字号/背景丰富度） */
 async function auditCanvasBeforeSave(item: BatchItem) {
+  // 尺寸确定性归一：不依赖模型自觉，审查前强制把画布设回 brief 尺寸
+  // （实测出现过画布卡在默认 158×158、模型 setSize 重复旧值的失败）
+  const w = Number(item.brief.width) || 0;
+  const h = Number(item.brief.height) || 0;
+  if (w > 0 && h > 0 && !item.brief.preserveCanvasSize) {
+    try {
+      await executeAITool("canvas.setSize", { width: w, height: h, unit: "px" });
+    } catch (error) {
+      console.warn("[Batch] 审查前强制 setSize 失败:", error);
+    }
+  }
   const result = await auditCurrentCanvas({
     expectedWidth: Number(item.brief.width) || undefined,
     expectedHeight: Number(item.brief.height) || undefined,
     expectedTexts: extractBriefTexts(item.brief),
+    strictTextWhitelist: item.brief.strictTextWhitelist,
+    expectedBackground: item.brief.expectedBackground,
+    expectVerticalMain: item.brief.expectVerticalMain,
   });
   if (result.measured && result.issues.length) {
     console.log(
@@ -1296,10 +1348,18 @@ async function auditCanvasBeforeSave(item: BatchItem) {
 }
 
 function buildAuditFixPrompt(brief: StickerBrief, issues: string[]): string {
+  const hasCustomLayout =
+    /HTML 骨架|writing-mode|竖排|右侧一列|左侧一列/.test(brief?.prompt || "");
   return [
     "上一版设计未通过自动审查，请只做必要修正，用 canvas.addHtml 重新输出完整 HTML 覆盖当前画面，不要更换主题。",
     `【必须修正】${issues.join("；")}`,
-    "【硬性要求】主文案的几何中心落在画布正中心 (50%,50%)，只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)，副文案挂在主文案正下方；所有文字与元素不得超出画布边界；文字完整不截断（不要 ellipsis/nowrap）；主文案字高不超过画布高度的 26%。",
+    hasCustomLayout
+      ? "【硬性要求】保持原 brief 的布局骨架（竖排列关系按 brief 执行）；主文案几何中心落在画布正中心 (50%,50%)；所有文字与元素不得超出画布边界；文字完整不截断（不要 ellipsis/nowrap）。禁止自创清单外文字，配色按 brief 色值。"
+      : "【硬性要求】主文案的几何中心落在画布正中心 (50%,50%)，只对主文案容器用 position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)，副文案挂在主文案正下方；所有文字与元素不得超出画布边界；文字完整不截断（不要 ellipsis/nowrap）；主文案字高不超过画布高度的 26%。",
+    brief?.expectVerticalMain
+      ? "【主文案竖排·必须】主文案必须是【一个容器一条竖列】：writing-mode:vertical-rl + text-orientation:upright + white-space:nowrap（防换列），文本直接写在一个 div 里，容器 height 给足（≥65%）；禁止拆成多个块/禁止 2+1 群组/禁止横排。"
+      : "",
+    "【禁止装饰文字】画面上不得出现清单之外的任何文字——包括拼音（如 RONGYIDE）、英文、年份、口号、落款、编号。发现一律删除。",
     `画布尺寸必须为 ${brief.width}x${brief.height}。主题：${brief.title}。`,
     // 重做必须沿用参考资源，否则会把已绑定的图片/字体/思路一并丢掉
     brief.resourceContext ? `【参考资源·必须保留】\n${brief.resourceContext}` : "",
@@ -1331,7 +1391,9 @@ async function ensureAuditPassed(
       (mod.currentCanvasControllerInstance?.value?.el as HTMLElement) ||
       (document.querySelector("#this_is_canvas_id") as HTMLElement | null);
     if (root) {
-      const fixes = repairCanvasLayout(root);
+      const fixes = repairCanvasLayout(root, {
+        allowTallMain: item.brief.expectVerticalMain,
+      });
       if (fixes.length) {
         console.log(`[Batch] 第 ${item.index + 1} 张自动修复：${fixes.join("；")}`);
         audit = await auditCanvasBeforeSave(item);
@@ -1342,8 +1404,8 @@ async function ensureAuditPassed(
     console.warn("[Batch] 自动修复失败:", error);
   }
 
-  // ② 仍不通过则让模型重做一次
-  for (let attempt = 1; attempt <= 1; attempt++) {
+  // ② 仍不通过则让模型重做（最多 2 次）
+  for (let attempt = 1; attempt <= 2; attempt++) {
     if (isStopped(signal)) return false;
     console.warn(
       `[Batch] 第 ${item.index + 1} 张审查未通过：${audit.issues.join("；")}，重做一次`,

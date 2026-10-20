@@ -70,6 +70,11 @@ function buildRolePrompt(): string {
 function buildResourceGuidePrompt(): string {
   return `## 素材库 / 模板库 / 字体 / 文案 / 文档
 
+- **【资源优先·禁止盲目代码实现】复杂视觉一律先搜外部资源再画**：
+  - 文字（尤其书法/手写/艺术字/标题字）→ resource.searchFont 选真实字体，经 htmlBindings 用 {{font.xxx.family}} 渲染；禁止用默认字体或 CSS 变形伪造书法笔触
+  - 主体插画、人物/动物/花卉、祥云/花枝等纹样、角饰、图标、纸纹/布纹肌理、烫金质感 → resource.searchSticker 搜外部图片素材，经 htmlBindings 用 {{image.xxx.url}} 呈现；禁止用 CSS/SVG 硬画这类复杂图形
+  - CSS 只允许实现纯几何：纯色块、线性/径向渐变、分割线、简单描边框
+  - 搜索无果时最多再换 1 次关键词，或从已返回候选中挑最接近的；仍无果就用 CSS/SVG 兜底（纯装饰）并立即继续。禁止反复重搜同一类资源导致空转，必须尽快调用 canvas.addHtml 出图
 - resource.searchCustomSticker：搜索用户的自定义贴纸/成品设计模板。当用户希望参考、复刻、或制作与已有作品类似风格的主题时优先使用。命中后可调用 canvas.loadCustomSticker 直接载入完整排版，然后进行文案替换与素材微调
 - resource.searchDesignInspiration：搜索设计灵感，获取设计参考和创意灵感。当用户需要设计参考、创意灵感、风格借鉴时使用
 - resource.searchSticker：搜索图片/贴纸/插画等基础原子素材
@@ -78,7 +83,6 @@ function buildResourceGuidePrompt(): string {
 - resource.searchTextDocument：搜索长文本/知识文档候选
 - 搜索结果只是候选，可选择、忽略或继续搜索
 - 图片搜索 query 使用 2-4 个核心名词，不要堆叠中英文同义词；系统会在一次调用内自动放宽过滤并简化关键词
-- 搜索为空时不要连续重复调用；改用 SVG/CSS，或从已返回候选中选择真正兼容的资源
 - 资源只有在最终画面中清晰可见并承担实际视觉作用时才算“使用”，禁止以极低透明度、极小尺寸或隐藏图层形式凑数
 - 不兼容当前配色、背景和印刷方式的素材应放弃，不要为了满足“使用素材”而破坏设计
 - resource.searchFont 返回 id/url/name 后，HTML 设计直接通过 htmlBindings.font 使用，不要再调用 canvas.loadFont 请求字体详情

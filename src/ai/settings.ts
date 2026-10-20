@@ -3,30 +3,19 @@ import { postAgentProxy } from "./proxy-client";
 import { DESIGN_TOOL_FEATURE_CODES } from "./feature-codes";
 
 export type AiRequestMode = "proxy" | "direct";
-export type DirectKeySource = "system" | "custom";
 
-export interface AiCustomConfig {
-  baseURL: string;
-  apiKey: string;
-  model: string;
-  temperature?: number;
-}
-
+/**
+ * AI 设置。
+ *
+ * 硬保证：直连也只允许使用「AI 使用设置」中为本功能绑定的 Key，
+ * 因此不再提供自定义 BaseURL / API Key / 模型 的配置项。
+ */
 export interface AiSettings {
   mode: AiRequestMode;
-  directKeySource: DirectKeySource;
-  customConfig: AiCustomConfig;
 }
 
 export const DEFAULT_AI_SETTINGS: AiSettings = {
   mode: "proxy",
-  directKeySource: "system",
-  customConfig: {
-    baseURL: "https://api.openai.com/v1",
-    apiKey: "",
-    model: "gpt-4o",
-    temperature: 0.7,
-  },
 };
 
 export const aiSettings = useLocalStorage<AiSettings>(
@@ -38,17 +27,12 @@ export const aiSettings = useLocalStorage<AiSettings>(
 );
 
 export function getAiSettings(): AiSettings {
-  return aiSettings.value;
+  return { mode: aiSettings.value.mode || "proxy" };
 }
 
 export function updateAiSettings(partial: Partial<AiSettings>) {
   aiSettings.value = {
-    ...aiSettings.value,
-    ...partial,
-    customConfig: {
-      ...aiSettings.value.customConfig,
-      ...(partial.customConfig || {}),
-    },
+    mode: partial.mode || aiSettings.value.mode || "proxy",
   };
 }
 
@@ -70,16 +54,10 @@ export interface ConnectionTestResult {
 export async function testAiConnection(
   targetConfig?: Partial<AiSettings>,
 ): Promise<ConnectionTestResult> {
-  const current = targetConfig
-    ? {
-        ...aiSettings.value,
-        ...targetConfig,
-        customConfig: {
-          ...aiSettings.value.customConfig,
-          ...(targetConfig.customConfig || {}),
-        },
-      }
-    : aiSettings.value;
+  const current = {
+    ...aiSettings.value,
+    ...(targetConfig || {}),
+  };
 
   const startTime = Date.now();
 
@@ -118,39 +96,22 @@ export async function testAiConnection(
     }
   }
 
-  // 直连模式测试
-  const isCustom = current.directKeySource === "custom";
+  // 直连模式测试：只用「AI 使用设置」中绑定的 Key
   let baseURL = "";
   let apiKey = "";
   let model = "";
-
-  if (isCustom) {
-    baseURL = (current.customConfig.baseURL || "").trim();
-    apiKey = (current.customConfig.apiKey || "").trim();
-    model = (current.customConfig.model || "").trim() || "gpt-4o";
-
-    if (!baseURL) {
-      return {
-        success: false,
-        latencyMs: 0,
-        message: "请填写直连 Base URL",
-      };
-    }
-  } else {
-    // 系统解密 Key
-    try {
-      const { getAIConfig } = await import("./direct-client");
-      const sysConfig = await getAIConfig();
-      baseURL = sysConfig.baseURL;
-      apiKey = sysConfig.apiKey;
-      model = sysConfig.model || "gpt-4o";
-    } catch (err: any) {
-      return {
-        success: false,
-        latencyMs: 0,
-        message: `获取系统 API Key 失败: ${err.message || err}`,
-      };
-    }
+  try {
+    const { getAIConfig } = await import("./direct-client");
+    const sysConfig = await getAIConfig();
+    baseURL = sysConfig.baseURL;
+    apiKey = sysConfig.apiKey;
+    model = sysConfig.model;
+  } catch (err: any) {
+    return {
+      success: false,
+      latencyMs: 0,
+      message: `获取系统 API Key 失败: ${err.message || err}`,
+    };
   }
 
   const endpoint = `${baseURL.replace(/\/+$/, "")}/chat/completions`;

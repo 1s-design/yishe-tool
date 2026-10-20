@@ -16,12 +16,12 @@ function unwrapResponseData<T>(response: any): T {
 /**
  * 构建 OpenAI 风格的响应对象（从 fetch 响应解析）
  */
-function buildChatResponse(data: any, model: string): AiChatResponse {
+function buildChatResponse(data: any): AiChatResponse {
   return {
     id: data.id || `chatcmpl-${Date.now()}`,
     object: data.object || "chat.completion",
     created: data.created || Math.floor(Date.now() / 1000),
-    model: data.model || model,
+    model: data.model || "",
     choices: data.choices || [],
     usage: data.usage,
   };
@@ -30,8 +30,6 @@ function buildChatResponse(data: any, model: string): AiChatResponse {
 export async function aiChat(options: AiChatOptions): Promise<AiChatResponse> {
   const {
     messages,
-    model,
-    keyId,
     featureCode,
     temperature,
     maxTokens,
@@ -40,23 +38,19 @@ export async function aiChat(options: AiChatOptions): Promise<AiChatResponse> {
 
   const data: any = await directChat({
     featureCode: featureCode || DESIGN_TOOL_FEATURE_CODES.chat,
-    keyId,
-    model,
     messages: messages as any,
     temperature: temperature ?? 0.7,
     maxTokens,
     ...rest,
   });
 
-  return buildChatResponse(data, model || data.model || "");
+  return buildChatResponse(data);
 }
 
 export async function aiText(options: AiTextOptions): Promise<AiChatResponse> {
   const {
     prompt,
     systemPrompt,
-    model,
-    keyId,
     featureCode,
     temperature,
     maxTokens,
@@ -73,8 +67,6 @@ export async function aiText(options: AiTextOptions): Promise<AiChatResponse> {
 
   const data: any = await directChat({
     featureCode: featureCode || DESIGN_TOOL_FEATURE_CODES.chat,
-    keyId,
-    model,
     messages: messages as any,
     temperature: temperature ?? 0.7,
     maxTokens,
@@ -82,22 +74,22 @@ export async function aiText(options: AiTextOptions): Promise<AiChatResponse> {
     ...rest,
   });
 
-  return buildChatResponse(data, model || data.model || "");
+  return buildChatResponse(data);
 }
 
 export async function aiVision(
   options: AiVisionOptions,
 ): Promise<AiChatResponse> {
-  const { prompt, imageUrls, systemPrompt, model, keyId, featureCode, ...rest } = options;
+  const { prompt, imageUrls, systemPrompt, featureCode, ...rest } = options;
 
   // 构建消息内容（支持图文）
   const contentParts: Array<{ type: string; text?: string; image_url?: { url: string } }> = [];
-  
+
   // 添加图片
   for (const url of imageUrls) {
     contentParts.push({ type: "image_url", image_url: { url } });
   }
-  
+
   // 添加文本
   contentParts.push({ type: "text", text: prompt });
 
@@ -109,14 +101,12 @@ export async function aiVision(
 
   const data: any = await directChat({
     featureCode: featureCode || DESIGN_TOOL_FEATURE_CODES.chat,
-    keyId,
-    model,
     messages: messages as any,
     temperature: 0.7,
     ...rest,
   });
 
-  return buildChatResponse(data, model || data.model || "");
+  return buildChatResponse(data);
 }
 
 export async function aiGetUsageOptions(): Promise<any[]> {
@@ -130,20 +120,17 @@ export async function aiGetFeatureRegistry(): Promise<any[]> {
 }
 
 /**
- * 获取用户的 API Key（通用，支持多种功能）
- * @param feature 功能标识，如 'ai_chat', 'ai_image', 'sms', 'email' 等
- * @param keyId 指定 key ID（可选）
+ * 获取用户的 API Key（只能取该功能自己绑定的 Key）
+ * @param feature 功能标识，如 'design.tool.ai.chat'
  */
 export async function getUserApiKey(
   feature: string,
-  keyId?: number | null,
 ): Promise<{
   encryptedKey: string;
   config: Record<string, any>;
   name: string;
 }> {
   const payload: Record<string, any> = { feature };
-  if (keyId != null) payload.keyId = keyId;
 
   const res = await apiInstance.post(Url.USER_GET_API_KEY, payload);
   return unwrapResponseData<{

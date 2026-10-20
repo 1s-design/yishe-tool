@@ -353,6 +353,21 @@
             </Tooltip>
             <input ref="imageInputRef" type="file" accept="image/*" class="hidden" @change="handleImageUpload" />
 
+            <!-- 印花解构分析 -->
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <button
+                  type="button"
+                  class="ai-toolbar-icon-btn flex h-7 w-7 items-center justify-center  transition-colors disabled:opacity-40"
+                  :disabled="isProcessing"
+                  @click="openPrintAnalysis"
+                >
+                  <ScanSearch class="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">印花解构分析（文字/字体/图形/色系）</TooltipContent>
+            </Tooltip>
+
             <!-- 提示词灵感库 -->
             <Tooltip>
               <TooltipTrigger as-child>
@@ -418,6 +433,7 @@ import { designAgent } from "@/ai/langgraph";
 import { resolveAIToolName } from "@/ai/shared/tools";
 import { pendingPromptInput } from "@/ai/store";
 import { prepareImageForAI } from "@/ai/image-preprocess";
+import { usePrintAnalysisModal } from "@/components/design/layout/printAnalysis/printAnalysisModal";
 import PromptAttachmentTray from "../promptAttachments/Tray.vue";
 import { usePromptAttachments } from "@/composables/usePromptAttachments";
 import { buildResourceContext } from "@/ai/resource-refs";
@@ -447,6 +463,7 @@ import {
   Square,
   ImageIcon,
   BookOpen,
+  ScanSearch,
   Palette,
   Layers,
   Edit3,
@@ -900,6 +917,13 @@ function copyConversationLog() {
 
 function triggerImageUpload() {
   imageInputRef.value?.click();
+}
+
+const { open: openPrintAnalysisModal } = usePrintAnalysisModal();
+
+/** 打开印花解构分析；若面板里已有参考图则预填 */
+function openPrintAnalysis() {
+  openPrintAnalysisModal(selectedImage.value?.preview || "");
 }
 
 async function handleImageUpload(event: Event) {

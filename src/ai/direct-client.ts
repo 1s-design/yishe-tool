@@ -6,10 +6,18 @@ import { AI_TIMEOUTS } from "./shared/timeout";
 import { aiSettings } from "./settings";
 
 // 加密密钥（需要与服务端 AI_API_KEY_RESPONSE_ENCRYPT_SECRET 一致）
-const ENCRYPT_SECRET =
-  String(
-    import.meta.env.VITE_AI_API_KEY_RESPONSE_ENCRYPT_SECRET || "",
-  ).trim() || "1s-design-encrypt-key";
+const FALLBACK_ENCRYPT_SECRET = "1s-design-encrypt-key";
+const configuredSecret = String(
+  import.meta.env.VITE_AI_API_KEY_RESPONSE_ENCRYPT_SECRET || "",
+).trim();
+const ENCRYPT_SECRET = configuredSecret || FALLBACK_ENCRYPT_SECRET;
+
+if (!configuredSecret) {
+  console.warn(
+    "[AI Client] VITE_AI_API_KEY_RESPONSE_ENCRYPT_SECRET 未配置，正在使用默认加密密钥；" +
+      "请在 .env 中显式配置，并与服务端 AI_API_KEY_RESPONSE_ENCRYPT_SECRET 保持一致",
+  );
+}
 
 // 缓存解密后的配置
 type CachedAiConfig = {
@@ -21,8 +29,8 @@ type CachedAiConfig = {
 
 const cachedConfigMap = new Map<string, CachedAiConfig>();
 
-function getCacheKey(featureCode: string, keyId?: number | null): string {
-  return `${featureCode}:${keyId ?? "default"}`;
+function getCacheKey(featureCode: string): string {
+  return featureCode;
 }
 
 // 初始化状态
@@ -90,9 +98,10 @@ export function isAIInitialized(): boolean {
 
 /**
  * 获取系统配置绑定的 AI Key（带缓存）
+ *
+ * 硬保证：只使用「该功能自己绑定的 Key」，不接受调用方指定其它 Key 或模型。
  */
 export async function getAIConfig(
-  keyId?: number | null,
   featureCode: string = DESIGN_TOOL_FEATURE_CODES.chat,
 ): Promise<{
   apiKey: string;
@@ -100,17 +109,30 @@ export async function getAIConfig(
   baseURL: string;
   name: string;
 }> {
-  const cacheKey = getCacheKey(featureCode, keyId);
+  const cacheKey = getCacheKey(featureCode);
   const cachedConfig = cachedConfigMap.get(cacheKey);
   if (cachedConfig) {
     return cachedConfig;
   }
 
   try {
-    // 从服务端获取加密的 key
-    const result = await getUserApiKey(featureCode, keyId);
+    // 从服务端获取加密的 key（服务端只允许取该功能自己绑定的 Key）
+    const result = await getUserApiKey(featureCode);
     if (!result?.encryptedKey) {
       throw new Error("接口未返回可用的 API Key");
+    }
+
+    const model = String(result.config?.model || "").trim();
+    if (!model) {
+      throw new Error(
+        `功能「${featureCode}」绑定的 AI Key 未填写默认模型，请到「AI 使用设置」中补全`,
+      );
+    }
+    const baseURL = String(result.config?.baseURL || "").trim();
+    if (!baseURL) {
+      throw new Error(
+        `功能「${featureCode}」绑定的 AI Key 未填写 Base URL，请到「AI 使用设置」中补全`,
+      );
     }
 
     // 解密 key
@@ -119,8 +141,8 @@ export async function getAIConfig(
     // 缓存配置
     const nextConfig = {
       apiKey,
-      model: result.config?.model || "gpt-4o",
-      baseURL: result.config?.baseURL || "https://api.openai.com/v1",
+      model,
+      baseURL,
       name: result.name,
     };
 
@@ -140,48 +162,35 @@ export function clearAIConfigCache(): void {
 }
 
 /**
- * 解析直连模式下的运行时参数
+ * 解析直连模式下的运行时参数。
+ *
+ * 硬保证：只使用「该功能自己绑定的 Key」及其绑定模型，
+ * 不读取「自定义配置」，也不接受调用方传入的模型覆盖。
  */
 async function resolveDirectConfig(
-  keyId?: number | null,
   featureCode?: string,
-  modelOverride?: string,
 ): Promise<{ baseURL: string; apiKey: string; model: string }> {
-  const settings = aiSettings.value;
-  if (settings.directKeySource === "custom") {
-    const custom = settings.customConfig;
-    if (!custom.baseURL) {
-      throw new Error("直连模式未配置 Base URL，请在「AI 设置」中配置");
-    }
-    return {
-      baseURL: custom.baseURL.trim(),
-      apiKey: (custom.apiKey || "").trim(),
-      model: modelOverride || custom.model || "gpt-4o",
-    };
-  }
-
-  // 默认使用系统分配并解密的 key
   const sysConfig = await getAIConfig(
-    keyId,
     featureCode || DESIGN_TOOL_FEATURE_CODES.chat,
   );
   return {
     baseURL: sysConfig.baseURL,
     apiKey: sysConfig.apiKey,
-    model: modelOverride || sysConfig.model || "gpt-4o",
+    model: sysConfig.model,
   };
 }
 
 /**
- * 前端调用 OpenAI Chat API（支持代理模式与直连模式）
+ * 前端调用 OpenAI Chat API（支持代理模式与直连模式）。
+ *
+ * 硬保证：Key 与模型固定取「AI 使用设置」中该功能绑定的配置，
+ * 不接受调用方指定 keyId / model。
  */
 export async function directChat(options: {
   messages: Array<{ role: string; content: string | any[] }>;
   tools?: any[];
-  model?: string;
   temperature?: number;
   maxTokens?: number;
-  keyId?: number | null;
   featureCode?: string;
   timeoutMs?: number;
   reasoningEffort?: string;
@@ -190,10 +199,8 @@ export async function directChat(options: {
   const {
     messages,
     tools,
-    model,
     temperature,
     maxTokens,
-    keyId,
     featureCode,
     timeoutMs,
     reasoningEffort,
@@ -206,8 +213,6 @@ export async function directChat(options: {
   if (mode === "proxy") {
     const body: any = {
       featureCode: featureCode || DESIGN_TOOL_FEATURE_CODES.chat,
-      keyId,
-      model,
       messages,
       temperature: temperature ?? 0.7,
     };
@@ -223,7 +228,7 @@ export async function directChat(options: {
   }
 
   // 2. 前端直连模式
-  const config = await resolveDirectConfig(keyId, featureCode, model);
+  const config = await resolveDirectConfig(featureCode);
   const endpoint = `${config.baseURL.replace(/\/+$/, "")}/chat/completions`;
   const timeout = timeoutMs ?? AI_TIMEOUTS.chat;
 
@@ -280,15 +285,16 @@ export async function directChat(options: {
 }
 
 /**
- * 前端调用 OpenAI Chat API（流式，支持代理与直连）
+ * 前端调用 OpenAI Chat API（流式，支持代理与直连）。
+ *
+ * 硬保证：Key 与模型固定取「AI 使用设置」中该功能绑定的配置，
+ * 不接受调用方指定 keyId / model。
  */
 export async function* directChatStream(options: {
   messages: Array<{ role: string; content: string | any[] }>;
   tools?: any[];
-  model?: string;
   temperature?: number;
   maxTokens?: number;
-  keyId?: number | null;
   featureCode?: string;
   timeoutMs?: number;
   reasoningEffort?: string;
@@ -296,10 +302,8 @@ export async function* directChatStream(options: {
   const {
     messages,
     tools,
-    model,
     temperature,
     maxTokens,
-    keyId,
     featureCode,
     timeoutMs,
     reasoningEffort,
@@ -311,8 +315,6 @@ export async function* directChatStream(options: {
   if (mode === "proxy") {
     const body: any = {
       featureCode: featureCode || DESIGN_TOOL_FEATURE_CODES.chat,
-      keyId,
-      model,
       messages,
       temperature: temperature ?? 0.7,
     };
@@ -329,7 +331,7 @@ export async function* directChatStream(options: {
   }
 
   // 2. 前端直连流式
-  const config = await resolveDirectConfig(keyId, featureCode, model);
+  const config = await resolveDirectConfig(featureCode);
   const endpoint = `${config.baseURL.replace(/\/+$/, "")}/chat/completions`;
   const timeout = timeoutMs ?? AI_TIMEOUTS.chat;
 

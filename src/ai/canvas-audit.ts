@@ -17,6 +17,12 @@ export interface CanvasAuditOptions {
   expectedHeight?: number
   /** 期望出现在画面上的文案（主文案、副文案） */
   expectedTexts?: string[]
+  /** 严格文字白名单：画面上任何不在 expectedTexts 里的文字都算硬伤（防自创标语/副标题） */
+  strictTextWhitelist?: boolean
+  /** 期望背景色（#RRGGBB）；色相/明度偏离过大记硬伤 */
+  expectedBackground?: string
+  /** 主文案必须竖排成单列（高>宽）；横排/多列群组算硬伤 */
+  expectVerticalMain?: boolean
 }
 
 export interface CanvasAuditMetrics {
@@ -107,6 +113,71 @@ function collectVisibleText(root: HTMLElement): string {
   const clone = root.cloneNode(true) as HTMLElement;
   clone.querySelectorAll("style, script").forEach((el) => el.remove());
   return normalize(clone.textContent || "");
+}
+
+/** 收集可见文字片段（逐文本节点，排除 style/script），用于白名单比对 */
+function collectTextSegments(root: HTMLElement): string[] {
+  const clone = root.cloneNode(true) as HTMLElement;
+  clone.querySelectorAll("style, script").forEach((el) => el.remove());
+  const segs: string[] = [];
+  const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    const t = normalize(node.textContent || "");
+    if (t) segs.push(t);
+  }
+  return segs;
+}
+
+/** 片段是否被白名单覆盖：片段包含于某条期望文案，或包含某条期望文案 */
+function isSegmentAllowed(seg: string, allowed: string[]): boolean {
+  for (const a of allowed) {
+    if (!a) continue;
+    if (a.includes(seg) || seg.includes(a)) return true;
+  }
+  return false;
+}
+
+/** 按文案找包含该文案的元素（用于副文案竖排几何检查）；只认覆盖率 ≥85% 的元素 */
+function findElementByText(root: HTMLElement, rawText: string): HTMLElement | null {
+  const needle = normalize(rawText);
+  if (!needle) return null;
+  let best: HTMLElement | null = null;
+  let bestCoverage = 0.85; // 低于 85% 覆盖率的碎片不认
+  const all = root.querySelectorAll<HTMLElement>("*");
+  for (const el of all) {
+    const own = Array.from(el.childNodes)
+      .filter((n) => n.nodeType === Node.TEXT_NODE)
+      .map((n) => normalize(n.textContent || ""))
+      .join("");
+    if (!own || own.length < needle.length * 0.85) continue;
+    // 仅认「元素文案完整包含期望」或覆盖率 ≥85% 的大块，避免单字碎片误匹配
+    const coverage = own.includes(needle) ? 1 : own.length / needle.length;
+    if (coverage >= bestCoverage) {
+      if (!best || el.querySelectorAll("*").length < best.querySelectorAll("*").length) {
+        best = el;
+        bestCoverage = coverage;
+      }
+    }
+  }
+  return best;
+}
+
+function parseHexColor(hex: string): [number, number, number] | null {
+  const m = String(hex || "").trim().match(/^#?([0-9a-f]{6})$/i);
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function parseCssRgb(value: string): [number, number, number] | null {
+  const m = String(value || "").match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (!m) return null;
+  return [Number(m[1]), Number(m[2]), Number(m[3])];
+}
+
+function colorDistance(a: [number, number, number], b: [number, number, number]): number {
+  return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
 }
 
 /**
@@ -228,7 +299,10 @@ function mainTextRect(container: HTMLElement) {
  * 只做「不破坏设计」的最小改动：主文案按比例缩小、溢出文字限宽换行、去掉截断写法。
  * 返回修复说明（用于记录）。
  */
-export function repairCanvasLayout(root: HTMLElement): string[] {
+export function repairCanvasLayout(
+  root: HTMLElement,
+  opts?: { allowTallMain?: boolean },
+): string[] {
   const fixes: string[] = [];
   const rootRect = root.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return fixes;
@@ -246,7 +320,8 @@ export function repairCanvasLayout(root: HTMLElement): string[] {
     });
 
     let r = mainTextRect(centered) || textUnionRect(centered) || centered.getBoundingClientRect();
-    const targetHeight = rootRect.height * 0.26;
+    // 竖排书法大字允许占画布高 85%；常规主文案仍按 26% 收敛
+    const targetHeight = rootRect.height * (opts?.allowTallMain ? 0.85 : 0.26);
     if (r.height > targetHeight && r.height > 0) {
       // 一次算准缩放比例，避免逐次 0.85 缩到次数用尽仍不达标
       const factor = Math.max(0.25, Math.min(0.95, targetHeight / r.height));
@@ -378,6 +453,25 @@ export async function auditCurrentCanvas(
       options.expectedTexts.forEach((expected, index) => {
         const needle = normalize(expected);
         if (!needle) return;
+        // 竖排模式：长副文案必须竖排单列（高>宽），折列/横排算硬伤
+        if (options.expectVerticalMain && needle.length >= 8) {
+          const el = findElementByText(root, expected);
+          if (el) {
+            const er = el.getBoundingClientRect();
+            const areaRatio =
+              (er.width * er.height) / Math.max(1, rootRect.width * rootRect.height);
+            if (
+              er.width > 0 &&
+              er.height > 0 &&
+              areaRatio > 0.005 &&
+              er.width >= er.height
+            ) {
+              criticalIssues.push(
+                `副文案「${expected.slice(0, 12)}…」未竖排单列（外接框 ${Math.round(er.width)}×${Math.round(er.height)}）`,
+              );
+            }
+          }
+        }
         if (pageText.includes(needle)) return;
         // 用最长公共子串比例判定：brief 里的文案可能比画布实际文案长
         // （例如把「躺赚·小金库」整个标题写成主文案），严格全等会误报
@@ -395,6 +489,40 @@ export async function auditCurrentCanvas(
           advisoryIssues.push(`副文案缺失「${expected}」`);
         }
       });
+
+      // 2b) 严格白名单：画面上不得出现清单外的自创文字（防自创标语/副标题）
+      if (options.strictTextWhitelist) {
+        const allowed = options.expectedTexts
+          .map((t) => normalize(t))
+          .filter(Boolean);
+        const segments = collectTextSegments(root);
+        // 单字片段放行（徽章单字等）；2 字以上必须落在清单内
+        const extras = segments.filter(
+          (seg) => seg.length >= 2 && !isSegmentAllowed(seg, allowed),
+        );
+        if (extras.length) {
+          const shown = Array.from(new Set(extras)).slice(0, 6).join("、");
+          criticalIssues.push(`画面出现清单外文字：${shown}`);
+        }
+      }
+    }
+
+    // 2c) 背景色锁定：与期望 HEX 偏离过大记硬伤
+    if (options.expectedBackground) {
+      const expectedRgb = parseHexColor(options.expectedBackground);
+      const computedBg =
+        typeof getComputedStyle === "function"
+          ? getComputedStyle(root).backgroundColor
+          : "";
+      const actualRgb = parseCssRgb(computedBg || "");
+      if (expectedRgb && actualRgb) {
+        const dist = colorDistance(expectedRgb, actualRgb);
+        if (dist > 90) {
+          criticalIssues.push(
+            `背景色不符：期望 ${options.expectedBackground}，实际 ${computedBg}`,
+          );
+        }
+      }
     }
 
     // 3) 文字溢出（只查含文字的元素；装饰层有意出血是正常设计，不算问题）
@@ -445,8 +573,22 @@ export async function auditCurrentCanvas(
       }
       const hRatio = r.height / rootRect.height;
       const wRatio = r.width / rootRect.width;
-      // 主文案高度只作建议：竖排/堆叠标题本来就高，判成硬伤会大量误杀
-      if (hRatio > MAIN_MAX_HEIGHT_RATIO) {
+      // 竖排单列硬性：要求主文案外接框“高>宽”（横排/2+1 群组会宽>高）
+      if (options.expectVerticalMain && r.height <= r.width * 1.05) {
+        criticalIssues.push(
+          `主文案未竖排成单列（外接框 ${Math.round(r.width)}×${Math.round(r.height)}，需要高明显大于宽）`,
+        );
+      }
+      // 主文案高度：竖排书法模式给下限+放宽上限；常规模式只作建议
+      if (options.expectVerticalMain) {
+        if (hRatio < 0.35) {
+          criticalIssues.push(
+            `主文案过小 占画布高 ${(hRatio * 100).toFixed(0)}%（竖排大字需 ≥35%）`,
+          );
+        } else if (hRatio > 0.88) {
+          advisoryIssues.push(`主文案偏高 占画布高 ${(hRatio * 100).toFixed(0)}%`);
+        }
+      } else if (hRatio > MAIN_MAX_HEIGHT_RATIO) {
         advisoryIssues.push(`主文案偏高 占画布高 ${(hRatio * 100).toFixed(0)}%`);
       }
       // 过宽若导致溢出会被「文字溢出」硬伤捕获，这里只作建议

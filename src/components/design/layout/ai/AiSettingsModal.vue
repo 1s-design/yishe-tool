@@ -73,65 +73,12 @@
         <div v-if="form.mode === 'direct'" class="space-y-3  border-2 border-primary/40 bg-primary/10 dark:bg-primary/20 p-3.5 animate-in fade-in-50 duration-200">
           <div class="flex items-center justify-between">
             <span class="font-bold text-foreground text-xs">直连凭证来源</span>
-            <div class="flex items-center gap-1.5">
-              <button
-                type="button"
-                class="px-2 py-0.5  text-[11px] font-medium transition-all"
-                :class="form.directKeySource === 'system' ? 'bg-primary text-primary-foreground font-bold ' : 'bg-background/80 text-muted-foreground hover:text-foreground border border-border/60'"
-                @click="form.directKeySource = 'system'"
-              >
-                系统解密 Key
-              </button>
-              <button
-                type="button"
-                class="px-2 py-0.5  text-[11px] font-medium transition-all"
-                :class="form.directKeySource === 'custom' ? 'bg-primary text-primary-foreground font-bold ' : 'bg-background/80 text-muted-foreground hover:text-foreground border border-border/60'"
-                @click="form.directKeySource = 'custom'"
-              >
-                自定义 API
-              </button>
-            </div>
+            <span class="px-2 py-0.5 text-[11px] font-bold bg-primary text-primary-foreground">
+              系统解密 Key
+            </span>
           </div>
-
-          <!-- 自定义 API 表单 -->
-          <div v-if="form.directKeySource === 'custom'" class="space-y-2 pt-1 border-t border-border/60">
-            <div class="space-y-1">
-              <label class="font-medium text-foreground text-[11px]">API Base URL</label>
-              <Input
-                v-model="form.customConfig.baseURL"
-                placeholder="例如 https://api.openai.com/v1 或 http://localhost:11434/v1"
-                class="h-7 text-xs bg-background"
-              />
-            </div>
-
-            <div class="space-y-1">
-              <label class="font-medium text-foreground text-[11px]">API Key (本地可留空)</label>
-              <div class="relative">
-                <Input
-                  v-model="form.customConfig.apiKey"
-                  :type="showApiKey ? 'text' : 'password'"
-                  placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
-                  class="h-7 text-xs bg-background pr-7"
-                />
-                <button
-                  type="button"
-                  class="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  @click="showApiKey = !showApiKey"
-                >
-                  <Eye v-if="!showApiKey" class="h-3.5 w-3.5" />
-                  <EyeOff v-else class="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-
-            <div class="space-y-1">
-              <label class="font-medium text-foreground text-[11px]">模型名称 (Model)</label>
-              <Input
-                v-model="form.customConfig.model"
-                placeholder="例如 gpt-4o, deepseek-chat, llama3"
-                class="h-7 text-xs bg-background"
-              />
-            </div>
+          <div class="text-[10px] text-muted-foreground leading-tight">
+            只能使用「AI 使用设置」中为本功能绑定的 Key，模型与 Base URL 取该 Key 的绑定配置。
           </div>
         </div>
 
@@ -210,7 +157,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Sliders,
   Zap,
@@ -219,8 +165,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Eye,
-  EyeOff,
 } from "lucide-vue-next";
 
 const props = defineProps<{
@@ -232,30 +176,15 @@ const emit = defineEmits<{
   (e: "saved"): void;
 }>();
 
-const showApiKey = ref(false);
 const testing = ref(false);
 const testResult = ref<ConnectionTestResult | null>(null);
 
 const form = reactive<AiSettings>({
   mode: "proxy",
-  directKeySource: "system",
-  customConfig: {
-    baseURL: "https://api.openai.com/v1",
-    apiKey: "",
-    model: "gpt-4o",
-    temperature: 0.7,
-  },
 });
 
 function initForm() {
   form.mode = aiSettings.value.mode || "proxy";
-  form.directKeySource = aiSettings.value.directKeySource || "system";
-  form.customConfig = {
-    baseURL: aiSettings.value.customConfig?.baseURL || "https://api.openai.com/v1",
-    apiKey: aiSettings.value.customConfig?.apiKey || "",
-    model: aiSettings.value.customConfig?.model || "gpt-4o",
-    temperature: aiSettings.value.customConfig?.temperature ?? 0.7,
-  };
   testResult.value = null;
 }
 
@@ -293,13 +222,6 @@ async function handleTestConnection() {
 function handleSave() {
   updateAiSettings({
     mode: form.mode,
-    directKeySource: form.directKeySource,
-    customConfig: {
-      baseURL: form.customConfig.baseURL,
-      apiKey: form.customConfig.apiKey,
-      model: form.customConfig.model,
-      temperature: form.customConfig.temperature,
-    },
   });
   emit("saved");
   handleClose();

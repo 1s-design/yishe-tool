@@ -32,8 +32,6 @@ export {
 } from "./settings";
 export type {
   AiRequestMode,
-  DirectKeySource,
-  AiCustomConfig,
   AiSettings,
   ConnectionTestResult,
 } from "./settings";

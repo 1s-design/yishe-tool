@@ -9,11 +9,15 @@ export interface AiChatContentPart {
   image_url?: { url: string }
 }
 
+/**
+ * 请求选项。
+ *
+ * 硬保证：Key 与模型固定取「AI 使用设置」中该功能绑定的配置，
+ * 因此不提供 model / keyId 覆盖项。
+ */
 export interface AiChatOptions {
   featureCode: string
   messages: AiChatMessage[]
-  model?: string
-  keyId?: number | null
   stream?: boolean
   temperature?: number
   maxTokens?: number
@@ -24,8 +28,6 @@ export interface AiTextOptions {
   featureCode: string
   prompt: string
   systemPrompt?: string
-  model?: string
-  keyId?: number | null
   stream?: boolean
   temperature?: number
   maxTokens?: number
@@ -38,8 +40,6 @@ export interface AiVisionOptions {
   prompt: string
   imageUrls: string[]
   systemPrompt?: string
-  model?: string
-  keyId?: number | null
   [key: string]: any
 }
 
