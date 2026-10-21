@@ -53,7 +53,7 @@ async function chatLLM(body, timeoutMs = 180000) {
   const res = await fetch(`${API}/api/ai/agent-proxy`, {
     method: "POST",
     headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ featureCode: "ai.chat.vision", keyId: 22, ...body }),
+    body: JSON.stringify({ featureCode: "design.tool.ai.chat", ...body }),
     signal: AbortSignal.timeout(timeoutMs),
   });
   return await res.json();

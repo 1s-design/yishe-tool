@@ -26,18 +26,18 @@ export interface OverflowFixOptions {
 const MAX_FONT_HEIGHT_RATIO = 0.26
 const MAX_FONT_WIDTH_RATIO = 0.5
 
-/** 会被注入到 HTML 顶部的全局防溢出样式（只做「适配」，不裁切文字） */
+/** 会被注入到 HTML 顶部的全局防溢出样式（只做「适配」，不裁切文字；尊重显式 nowrap 与竖排） */
 const OVERFLOW_GUARD_STYLE = `<style data-ai-overflow-guard="1">
-  div, p, h1, h2, h3, h4, h5, h6, span, strong, em {
+  div:not([style*="nowrap"]):not([style*="vertical"]),
+  p:not([style*="nowrap"]),
+  h1:not([style*="nowrap"]), h2:not([style*="nowrap"]), h3:not([style*="nowrap"]),
+  span:not([style*="nowrap"]) {
     overflow-wrap: anywhere;
     word-break: break-word;
-    text-overflow: clip;
-    white-space: normal;
   }
-  [style*="translate(-50%"] {
-    max-width: 88% !important;
-    max-height: 84% !important;
-    white-space: normal !important;
+  [style*="translate(-50%"]:not([style*="nowrap"]) {
+    max-width: 96%;
+    max-height: 90%;
     text-wrap: balance;
   }
 </style>`
@@ -72,6 +72,18 @@ function resolvePx(value: string, c: { w: number; h: number; base: number }): nu
   }
   if ((m = v.match(/^clamp\(\s*([^,]+),([^,]+),([^)]+)\s*\)$/i))) {
     return resolvePx(m[2].trim(), c) ?? resolvePx(m[1].trim(), c)
+  }
+  if ((m = v.match(/^min\(\s*([^,]+),([^)]+)\s*\)$/i))) {
+    const a = resolvePx(m[1].trim(), c)
+    const b = resolvePx(m[2].trim(), c)
+    if (a != null && b != null) return Math.min(a, b)
+    return a ?? b
+  }
+  if ((m = v.match(/^max\(\s*([^,]+),([^)]+)\s*\)$/i))) {
+    const a = resolvePx(m[1].trim(), c)
+    const b = resolvePx(m[2].trim(), c)
+    if (a != null && b != null) return Math.max(a, b)
+    return a ?? b
   }
   return null
 }
@@ -150,12 +162,10 @@ export function autoFixOverflow(
   const c = defaultOptions(options)
   let fixed = htmlContent
 
-  // 1) 去掉会截断文案的写法
-  fixed = fixed.replace(/text-overflow:\s*ellipsis;?/gi, 'text-overflow:clip;')
-  fixed = fixed.replace(
-    /white-space:\s*nowrap;?/gi,
-    'white-space:normal;overflow-wrap:anywhere;',
-  )
+  // 1) 去掉会强行截断文案的写法（避免末尾字断笔缺字）
+  fixed = fixed.replace(/text-overflow:\s*(?:ellipsis|clip);?/gi, '')
+  // 去除在包含 nowrap 的文字元素上直接修饰的 overflow:hidden，防止末尾字被切掉
+  fixed = fixed.replace(/(white-space\s*:\s*nowrap\s*;[^;"]*?)overflow\s*:\s*hidden\s*;?/gi, '$1')
 
   // 2) 字号按画布尺寸封顶（vw/vh/clamp/em/px 统一换算成 px 后截断）
   const maxFontPx = Math.round(Math.min(c.h * MAX_FONT_HEIGHT_RATIO, c.w * MAX_FONT_WIDTH_RATIO))

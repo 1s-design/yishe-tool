@@ -12,6 +12,8 @@
  * 无法测量时（拿不到画布 DOM）返回通过，避免阻塞生产。
  */
 
+import { canvasStickerOptions } from "@/components/design/layout/canvas";
+
 export interface CanvasAuditOptions {
   expectedWidth?: number
   expectedHeight?: number
@@ -25,6 +27,8 @@ export interface CanvasAuditOptions {
   expectVerticalMain?: boolean
   /** 要求的真实图片图层数下限（印章/肌理等外部素材，缺了算硬伤） */
   requireImageLayers?: number
+  /** 要求金箔印章图层（rotate+linearGradient 的 <svg>），缺了算硬伤 */
+  requireSeal?: boolean
 }
 
 /** 长文案折列检测：逐字外接框聚类，任何一列都装不齐全部字 = 折列/散列 */
@@ -464,10 +468,129 @@ function mainTextRect(container: HTMLElement) {
   return best ? textUnionRect(best) : null;
 }
 
+/** 收集所有含文字块的「文字实际外接框」+ 标签（用于遮挡检测） */
+function collectTextBlocks(root: HTMLElement): {
+  el: HTMLElement;
+  rect: { left: number; top: number; right: number; bottom: number; width: number; height: number };
+  label: string;
+}[] {
+  const blocks: {
+    el: HTMLElement;
+    rect: { left: number; top: number; right: number; bottom: number; width: number; height: number };
+    label: string;
+  }[] = [];
+  root.querySelectorAll<HTMLElement>("*").forEach((el) => {
+    if (/^(STYLE|SCRIPT|SVG)$/i.test(el.tagName)) return;
+    const own = Array.from(el.childNodes)
+      .filter((n) => n.nodeType === Node.TEXT_NODE)
+      .map((n) => String(n.textContent || "").trim())
+      .join("");
+    if (!own) return;
+    // 纯标点碎片（竖排文本被拆出的「，」「、」span）不是视觉块，不参与遮挡检测
+    if (!normalize(own)) return;
+    const r = textUnionRect(el) || el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    blocks.push({ el, rect: r, label: own.slice(0, 6) });
+  });
+  return blocks;
+}
+
+/** 文字块两两遮挡检测：重叠面积超过较小块的 18% 即硬伤 */
+function textOverlapIssues(root: HTMLElement): string[] {
+  const blocks = collectTextBlocks(root);
+  const issues: string[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < blocks.length; i++) {
+    for (let j = i + 1; j < blocks.length; j++) {
+      // 父子嵌套的文字块（如列容器与其内的标点 span）天然重叠，不算遮挡
+      if (
+        blocks[i].el.contains(blocks[j].el) ||
+        blocks[j].el.contains(blocks[i].el)
+      ) {
+        continue;
+      }
+      const a = blocks[i].rect;
+      const b = blocks[j].rect;
+      const ix = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const iy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      const inter = ix * iy;
+      if (inter <= 0) continue;
+      const smaller = Math.min(a.width * a.height, b.width * b.height);
+      if (smaller > 0 && inter / smaller > 0.18) {
+        const key = `${blocks[i].label}|${blocks[j].label}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        issues.push(
+          `文字遮挡：「${blocks[i].label}」与「${blocks[j].label}」互相压盖（重叠 ${Math.round((inter / smaller) * 100)}%），必须分开排布`,
+        );
+      }
+    }
+  }
+  return issues;
+}
+
+/** 找到画布上的 html 模型子元素（机械修复写模型，重绘冲不掉） */
+function getHtmlModelChild(): any | null {
+  try {
+    const store = (canvasStickerOptions as any)?.value;
+    const children = store?.children || [];
+    return children.find((c: any) => c && c.type === "html") || null;
+  } catch {
+    return null;
+  }
+}
+
+function forceCanvasRerender() {
+  try {
+    const children = (canvasStickerOptions as any)?.value?.children;
+    if (children && children.length) {
+      const idx = children.findIndex((c: any) => c && c.type === "html");
+      if (idx >= 0) children.splice(idx, 1, children[idx]);
+    }
+  } catch {}
+}
+
+/** 从 HTML 字符串的文本段里抠掉指定字符（不动标签） */
+function stripCharsInHtml(
+  html: string,
+  foldedSet: Set<string>,
+  onlySegmentsWith?: string[],
+): string {
+  const unique = onlySegmentsWith ? Array.from(new Set(onlySegmentsWith)) : null;
+  return String(html || "").replace(/>([^<]+)</g, (match, text: string) => {
+    if (unique) {
+      const segFolded = foldT2S(normalize(text));
+      if (segFolded.length < 2) return match;
+      const overlap = unique.filter((c) => segFolded.includes(c)).length;
+      if (overlap < Math.min(3, unique.length)) return match;
+    }
+    const cleaned = Array.from(text)
+      .filter((ch) => !foldedSet.has(foldT2S(ch)))
+      .join("");
+    return `>${cleaned}<`;
+  });
+}
+
+/** 机械补印章：brief 要求印章但 HTML 里没有渐变金块时，确定性插入（模型级，不惧重绘） */
+function ensureSealInModel(): string | null {
+  const child = getHtmlModelChild();
+  if (!child || typeof child.htmlContent !== "string" || !child.htmlContent) return null;
+  // 已有印章才算存在：seal_gold 标记，或「旋转 + 渐变」组合（任意 linearGradient 不算）
+  const hasSeal =
+    /seal_gold/i.test(child.htmlContent) ||
+    (/rotate\(\s*1[0-9]/i.test(child.htmlContent) &&
+      /linearGradient/i.test(child.htmlContent));
+  if (hasSeal) return null;
+  const sealSvg = `<svg style="position:absolute;left:88%;top:58%;width:calc(var(--canvas-html-vh) * 9);height:calc(var(--canvas-html-vh) * 9);transform:translate(-50%,-50%) rotate(15deg)" viewBox="0 0 100 100"><defs><linearGradient id="seal_gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8D9B5"/><stop offset="1" stop-color="#C9A24A"/></linearGradient></defs><rect width="100" height="100" rx="8" fill="url(#seal_gold)"/></svg>`;
+  child.htmlContent = child.htmlContent + sealSvg;
+  forceCanvasRerender();
+  return "金箔印章已机械插入（模型级）";
+}
+
 /**
- * 主文案合并单列（确定性机械修复）：模型爱把竖排大字画成 2+1 群组/横排，
- * 提示词+审查反复纠正仍不稳。这里逐文本节点把主字抠出，替换为一个竖排单列容器。
- * 不依赖元素结构（有的整段文本挤在一个文本节点里）。
+ * 主文案合并单列（确定性机械修复）：模型级手术优先——
+ * 直接改 html 子元素的 htmlContent（内嵌竖排单列容器 + 抠掉散落的主字），
+ * 跟着渲染管线走，不惧 Vue 重绘；无模型时退回 DOM 手术。
  */
 function collapseMainToSingleColumn(
   root: HTMLElement,
@@ -481,8 +604,24 @@ function collapseMainToSingleColumn(
   ).filter((c) => /\S/.test(c));
   if (rawChars.length < 2) return null;
   const foldedSet = new Set(rawChars.map((c) => foldT2S(c)));
+  const display = rawChars.join("");
+  const verticalDiv = `<div style="position:absolute;left:50%;top:50%;height:72%;transform:translate(-50%,-50%);writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;font-size:calc(var(--canvas-html-vh) * 23);font-weight:900;line-height:1.05;letter-spacing:0.06em">${display}</div>`;
 
-  // 1) 逐文本节点抠掉主字字符；记录字号最大的来源（复制字体/颜色）
+  // 1) 模型级手术（首选）
+  const child = getHtmlModelChild();
+  if (child && typeof child.htmlContent === "string" && child.htmlContent) {
+    const before = child.htmlContent;
+    const hasMain = Array.from(foldedSet).some((c) =>
+      before.split("<").some((seg) => foldT2S(seg).includes(c)),
+    );
+    if (hasMain || before.includes(display)) {
+      child.htmlContent = stripCharsInHtml(before, foldedSet) + verticalDiv;
+      forceCanvasRerender();
+      return `主文案已机械合并为竖排单列·模型级（${display}）`;
+    }
+  }
+
+  // 2) DOM 手术（兜底）
   let fontFamily = "";
   let fontColor = "";
   let maxFs = 0;
@@ -514,17 +653,15 @@ function collapseMainToSingleColumn(
       fontFamily = cs?.fontFamily || fontFamily;
       fontColor = cs?.color || fontColor;
     }
-    const cleaned = Array.from(text)
+    textNode.textContent = Array.from(text)
       .filter((ch) => !foldedSet.has(foldT2S(ch)))
       .join("");
-    textNode.textContent = cleaned;
     removed += 1;
   }
   if (!removed) return null;
 
-  // 2) 插入竖排单列容器（显示用原文字符）
   const div = document.createElement("div");
-  div.textContent = rawChars.join("");
+  div.textContent = display;
   const fontSize = Math.round(rootRect.height * 0.23);
   div.setAttribute(
     "style",
@@ -548,12 +685,12 @@ function collapseMainToSingleColumn(
       .join(";"),
   );
   root.appendChild(div);
-  return `主文案已机械合并为竖排单列（${rawChars.join("")}）`;
+  return `主文案已机械合并为竖排单列·DOM级（${display}）`;
 }
 
 /**
- * 长副文案折列/横排 → 机械合并为竖排单列（文本节点手术，不依赖元素结构）。
- * 只处理与长句有实质重叠（≥3 个共同字）的文本节点，徽章单字等不会误伤。
+ * 长副文案折列/横排 → 机械合并为竖排单列（模型级手术优先）。
+ * 只处理与长句有实质重叠（≥3 个共同字）的文本段，徽章单字等不会误伤。
  */
 function collapseLongTextToSingleColumn(
   root: HTMLElement,
@@ -569,16 +706,14 @@ function collapseLongTextToSingleColumn(
   const folded = rawChars.map((c) => foldT2S(c));
   const foldedSet = new Set(folded);
   const uniqueFolded = Array.from(foldedSet);
+  const display = rawChars.join("");
 
-  // 定位：该句现有块的平均中心
+  // 定位：该句现有块的平均中心（从 DOM 测量）
   let sumCx = 0;
   let count = 0;
   let top = Infinity;
   let bottom = -Infinity;
-  let fontFamily = "";
-  let fontColor = "";
   let maxFs = 0;
-  let removed = 0;
 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes: Text[] = [];
@@ -587,7 +722,6 @@ function collapseLongTextToSingleColumn(
     nodes.push(node as Text);
     node = walker.nextNode();
   }
-
   for (const textNode of nodes) {
     const parent = textNode.parentElement;
     if (parent && /^(STYLE|SCRIPT)$/i.test(parent.tagName)) continue;
@@ -597,7 +731,6 @@ function collapseLongTextToSingleColumn(
     if (nodeFolded.length < 2) continue;
     const overlap = uniqueFolded.filter((c) => nodeFolded.includes(c)).length;
     if (overlap < Math.min(3, uniqueFolded.length)) continue;
-
     const parentEl = parent as HTMLElement | null;
     if (parentEl) {
       const r = parentEl.getBoundingClientRect();
@@ -606,30 +739,55 @@ function collapseLongTextToSingleColumn(
         count += 1;
         top = Math.min(top, r.top);
         bottom = Math.max(bottom, r.bottom);
-        const cs = window.getComputedStyle(parentEl);
-        const fs = parseFloat(cs.fontSize) || 0;
-        if (fs > maxFs) {
-          maxFs = fs;
-          fontFamily = cs.fontFamily || fontFamily;
-          fontColor = cs.color || fontColor;
-        }
+        const fs = parseFloat(window.getComputedStyle(parentEl).fontSize) || 0;
+        if (fs > maxFs) maxFs = fs;
       }
     }
-    textNode.textContent = Array.from(textContent)
-      .filter((ch) => !foldedSet.has(foldT2S(ch)))
-      .join("");
-    removed += 1;
   }
-  if (!removed || !count) return null;
+  if (!count) return null;
 
   const cx = sumCx / count;
   const cy = (top + bottom) / 2;
   const xPct = ((cx - rootRect.left) / rootRect.width) * 100;
   const yPct = ((cy - rootRect.top) / rootRect.height) * 100;
+  const fontSize =
+    maxFs > 8 ? Math.round(maxFs) : Math.round(rootRect.height * 0.035);
+  const columnDiv = `<div style="position:absolute;left:${xPct.toFixed(1)}%;top:${yPct.toFixed(1)}%;transform:translate(-50%,-50%);writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;font-size:${fontSize}px;line-height:1.15">${display}</div>`;
+
+  // 1) 模型级手术（首选）：strip + append 都写进 htmlContent，重绘冲不掉
+  const child = getHtmlModelChild();
+  if (child && typeof child.htmlContent === "string" && child.htmlContent) {
+    const before = child.htmlContent;
+    const hasText = uniqueFolded.some((c) =>
+      foldT2S(normalize(before.replace(/<[^>]+>/g, ""))).includes(c),
+    );
+    if (hasText) {
+      child.htmlContent = stripCharsInHtml(before, foldedSet, uniqueFolded) + columnDiv;
+      forceCanvasRerender();
+      return `长文案「${display.slice(0, 8)}…」已机械合并为竖排单列·模型级`;
+    }
+  }
+
+  // 2) DOM 手术（兜底）
+  let removed = 0;
+  for (const textNode of nodes) {
+    const parent = textNode.parentElement;
+    if (parent && /^(STYLE|SCRIPT)$/i.test(parent.tagName)) continue;
+    const textContent = String(textNode.textContent || "");
+    if (!textContent) continue;
+    const nodeFolded = foldT2S(normalize(textContent));
+    if (nodeFolded.length < 2) continue;
+    const overlap = uniqueFolded.filter((c) => nodeFolded.includes(c)).length;
+    if (overlap < Math.min(3, uniqueFolded.length)) continue;
+    textNode.textContent = Array.from(textContent)
+      .filter((ch) => !foldedSet.has(foldT2S(ch)))
+      .join("");
+    removed += 1;
+  }
+  if (!removed) return null;
 
   const div = document.createElement("div");
-  div.textContent = rawChars.join("");
-  const fontSize = maxFs > 8 ? Math.round(maxFs) : Math.round(rootRect.height * 0.035);
+  div.textContent = display;
   div.setAttribute(
     "style",
     [
@@ -642,14 +800,10 @@ function collapseLongTextToSingleColumn(
       "white-space:nowrap",
       `font-size:${fontSize}px`,
       "line-height:1.15",
-      fontFamily ? `font-family:${fontFamily}` : "",
-      fontColor ? `color:${fontColor}` : "",
-    ]
-      .filter(Boolean)
-      .join(";"),
+    ].join(";"),
   );
   root.appendChild(div);
-  return `长文案「${rawChars.slice(0, 8).join("")}…」已机械合并为竖排单列`;
+  return `长文案「${display.slice(0, 8)}…」已机械合并为竖排单列·DOM级`;
 }
 
 /**
@@ -659,11 +813,21 @@ function collapseLongTextToSingleColumn(
  */
 export function repairCanvasLayout(
   root: HTMLElement,
-  opts?: { allowTallMain?: boolean; mainText?: string; texts?: string[] },
+  opts?: { allowTallMain?: boolean; mainText?: string; texts?: string[]; ensureSeal?: boolean },
 ): string[] {
   const fixes: string[] = [];
   const rootRect = root.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return fixes;
+
+  // -1) 机械补印章（模型级，先于其它修复）
+  if (opts?.ensureSeal) {
+    try {
+      const msg = ensureSealInModel();
+      if (msg) fixes.push(msg);
+    } catch (error) {
+      console.warn("[CanvasAudit] 印章插入失败:", error);
+    }
+  }
 
   // 0) 竖排大字 2+1/横排 → 机械合并为单列（必须在缩放/居中之前）
   if (opts?.allowTallMain && opts?.mainText) {
@@ -738,46 +902,74 @@ export function repairCanvasLayout(
     }
   }
 
-  // 2) 检查所有含文字元素，若超出画布左右边界则自动限宽并换行
-  root.querySelectorAll<HTMLElement>("*").forEach((el) => {
-    const hasText = Array.from(el.childNodes).some(
-      (node) => node.nodeType === Node.TEXT_NODE && String(node.textContent || "").trim(),
-    );
-    if (!hasText) return;
-    const r = el.getBoundingClientRect();
-    if (r.right > rootRect.right + 2 || r.left < rootRect.left - 2) {
-      el.style.maxWidth = "90%";
-      el.style.whiteSpace = "normal";
-      el.style.overflowWrap = "break-word";
-      el.style.wordBreak = "break-word";
-      fixes.push("文字元素已自动限宽收拢以防止超出画布");
-    }
-  });
-
-  // 2) 溢出的文字元素：限宽 + 换行，去掉截断写法
+  // 2) 溢出的文字元素：优先缩字号收进边界（不破坏 nowrap 竖排列），仍溢出才限宽换行
   const tolX = rootRect.width * 0.02;
   const tolY = rootRect.height * 0.02;
   let repaired = 0;
+  let shrunk = 0;
   root.querySelectorAll<HTMLElement>("*").forEach((el) => {
     const hasOwnText = Array.from(el.childNodes).some(
       (node) => node.nodeType === Node.TEXT_NODE && String(node.textContent || "").trim(),
     );
     if (!hasOwnText) return;
-    const r = el.getBoundingClientRect();
-    const out =
-      r.right > rootRect.right + tolX ||
-      r.left < rootRect.left - tolX ||
-      r.bottom > rootRect.bottom + tolY ||
-      r.top < rootRect.top - tolY;
-    if (!out) return;
-    el.style.maxWidth = "86%";
-    el.style.whiteSpace = "normal";
-    el.style.overflowWrap = "anywhere";
-    el.style.wordBreak = "break-word";
-    el.style.textOverflow = "clip";
-    repaired += 1;
+    for (let pass = 0; pass < 3; pass++) {
+      const r = el.getBoundingClientRect();
+      const out =
+        r.right > rootRect.right + tolX ||
+        r.left < rootRect.left - tolX ||
+        r.bottom > rootRect.bottom + tolY ||
+        r.top < rootRect.top - tolY;
+      if (!out) break;
+      const fs = parseFloat(window.getComputedStyle(el).fontSize) || 0;
+      if (fs > 10) {
+        el.style.fontSize = `${Math.max(8, Math.round(fs * 0.82))}px`;
+        shrunk += 1;
+      } else {
+        el.style.maxWidth = "86%";
+        el.style.whiteSpace = "normal";
+        el.style.overflowWrap = "anywhere";
+        el.style.wordBreak = "break-word";
+        el.style.textOverflow = "clip";
+        repaired += 1;
+        break;
+      }
+    }
   });
+  if (shrunk) fixes.push(`${shrunk} 处溢出文字已缩字号收进边界`);
   if (repaired) fixes.push(`${repaired} 处溢出文字已限宽换行`);
+
+  // 3) 文字互相遮挡：双方缩字号分离（最多 3 轮，每轮各缩 18%）
+  for (let round = 0; round < 3; round++) {
+    const blocks = collectTextBlocks(root);
+    let separated = true;
+    for (let i = 0; i < blocks.length; i++) {
+      for (let j = i + 1; j < blocks.length; j++) {
+        if (
+          blocks[i].el.contains(blocks[j].el) ||
+          blocks[j].el.contains(blocks[i].el)
+        ) {
+          continue;
+        }
+        const a = blocks[i].rect;
+        const b = blocks[j].rect;
+        const ix = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+        const iy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        const inter = ix * iy;
+        const smaller = Math.min(a.width * a.height, b.width * b.height);
+        if (inter > 0 && smaller > 0 && inter / smaller > 0.18) {
+          separated = false;
+          [blocks[i].el, blocks[j].el].forEach((el) => {
+            const fs = parseFloat(window.getComputedStyle(el).fontSize) || 0;
+            if (fs > 10) el.style.fontSize = `${Math.max(8, Math.round(fs * 0.82))}px`;
+          });
+          fixes.push(
+            `遮挡「${blocks[i].label}」×「${blocks[j].label}」已缩字号分离（第 ${round + 1} 轮）`,
+          );
+        }
+      }
+    }
+    if (separated) break;
+  }
 
   return fixes;
 }
@@ -945,6 +1137,9 @@ export async function auditCurrentCanvas(
     metrics.overflowCount = overflow;
     if (overflow > 0) criticalIssues.push(`有 ${overflow} 处文字超出画布边界`);
 
+    // 3b) 文字互相遮挡（压盖）——硬伤
+    criticalIssues.push(...textOverlapIssues(root));
+
     // 4) 主文案居中 + 字号上限
     const centered = pickMainTextElement(root);
     if (!centered) {
@@ -1064,6 +1259,20 @@ export async function auditCurrentCanvas(
       if (images < options.requireImageLayers) {
         criticalIssues.push(
           `外部图片素材不足：画面仅有 ${images} 个图片图层（要求 ≥${options.requireImageLayers}；印章须带渐变的 <svg>、肌理须带 feTurbulence 的 <svg> 或真实图片，纯几何描边不算）`,
+        );
+      }
+    }
+
+    // 印章硬查（brief 要求印章时）：画面须有「金渐变+旋转」的印章图层；缺=硬伤（附诊断）
+    if (options.requireSeal) {
+      const html = root.innerHTML || "";
+      const hasSeal =
+        /seal_gold/i.test(html) ||
+        (/rotate\(\s*1[0-9]/i.test(html) && /linearGradient/i.test(html));
+      if (!hasSeal) {
+        const child: any = getHtmlModelChild();
+        criticalIssues.push(
+          `缺金箔印章（需要 rotate(15deg) + linearGradient 的 <svg> 印章）；诊断：htmlChild=${child ? "有" : "无"}, htmlContent 长度=${child?.htmlContent?.length ?? 0}`,
         );
       }
     }

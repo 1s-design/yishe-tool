@@ -1,6 +1,7 @@
 import { registerOperation } from '../registry'
 import { sizePresets, searchPresets, SIZE_PRESET_CATEGORIES } from './size-presets'
 import { ratioCategories } from '../../components/design/layout/canvas/crop/ratioData'
+import { getCanvasSizeLock } from '../canvas-size-lock'
 import {
   applyCanvasBaseFontSize,
   inferCanvasTypographyDensity,
@@ -300,6 +301,15 @@ registerOperation({
     },
   ],
   execute(params, ctx) {
+    const lock = getCanvasSizeLock()
+    if (lock) {
+      return {
+        success: true,
+        message: `当前任务已锁定画布尺寸为 ${lock.width}×${lock.height} ${lock.unit}，禁止修改尺寸。`,
+        data: { width: lock.width, height: lock.height, unit: lock.unit, locked: true },
+      }
+    }
+
     const { description, baseFontSize } = params
 
     if (!description || !description.trim()) {

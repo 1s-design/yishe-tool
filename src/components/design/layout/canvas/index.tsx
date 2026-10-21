@@ -1019,7 +1019,9 @@ function reparentCanvasChildren() {
 function loadImageWithoutRaf(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    if (!url.startsWith("data:")) {
+      img.crossOrigin = "anonymous";
+    }
     img.decoding = "async";
     img.onload = () => {
       if (typeof img.decode === "function") {
@@ -1031,17 +1033,40 @@ function loadImageWithoutRaf(url: string): Promise<HTMLImageElement> {
         resolve(img);
       }
     };
-    img.onerror = () => reject(new Error("画布图像加载失败"));
+    img.onerror = (err) => {
+      let parserMsg = "";
+      try {
+        const raw = decodeURIComponent(url.replace(/^data:image\/svg\+xml;charset=utf-8,/, ""));
+        const doc = new DOMParser().parseFromString(raw, "image/svg+xml");
+        const pe = doc.querySelector("parsererror");
+        if (pe) parserMsg = " | XML: " + pe.textContent.slice(0, 200).replace(/\s+/g, " ");
+      } catch (peErr: any) {
+        parserMsg = " | decodeErr: " + peErr?.message;
+      }
+      console.error("[loadImageWithoutRaf] 加载失败:", err, parserMsg, "url前100字:", url.slice(0, 100));
+      reject(new Error(`画布图像加载失败 (len=${url?.length || 0}${parserMsg})`));
+    };
     img.src = url;
   });
 }
 
-function getNodeRenderSize(node: HTMLElement) {
+function getNodeRenderSize(node: HTMLElement, options: Record<string, any> = {}) {
+  if (options.width && options.height) {
+    return { width: Math.round(options.width), height: Math.round(options.height) };
+  }
   const style = window.getComputedStyle(node);
   const px = (value: string) => parseFloat(value) || 0;
+  let w = options.width || (node.clientWidth + px(style.borderLeftWidth) + px(style.borderRightWidth));
+  let h = options.height || (node.clientHeight + px(style.borderTopWidth) + px(style.borderBottomWidth));
+  if (!w || w <= 0) {
+    w = parseFloat(style.width) || parseFloat(node.style?.width) || 1800;
+  }
+  if (!h || h <= 0) {
+    h = parseFloat(style.height) || parseFloat(node.style?.height) || 800;
+  }
   return {
-    width: node.clientWidth + px(style.borderLeftWidth) + px(style.borderRightWidth),
-    height: node.clientHeight + px(style.borderTopWidth) + px(style.borderBottomWidth),
+    width: Math.round(w),
+    height: Math.round(h),
   };
 }
 
@@ -1049,7 +1074,7 @@ async function renderNodeToCanvas(
   node: HTMLElement,
   options: Record<string, any> = {},
 ): Promise<HTMLCanvasElement> {
-  const { width, height } = getNodeRenderSize(node);
+  const { width, height } = getNodeRenderSize(node, options);
   const svgUrl = await toSvg(node, { ...options, width, height });
   const img = await loadImageWithoutRaf(svgUrl);
 
@@ -1114,7 +1139,8 @@ export class CanvasController {
 
   async getCachedFontEmbedCSS() {
     const now = Date.now();
-    const cacheKey = `${document.fonts?.size || 0}:${document.styleSheets.length}`;
+    const textSnapshot = (this.el?.textContent || "").replace(/\s+/g, "");
+    const cacheKey = `${document.fonts?.size || 0}:${document.styleSheets.length}:${textSnapshot}`;
     if (
       this.fontEmbedCSSCache &&
       this.fontEmbedCSSCache.key === cacheKey &&
@@ -1344,11 +1370,26 @@ export class CanvasController {
         // 获取字体嵌入 CSS
         const fontEmbedCSS = await this.getCachedFontEmbedCSS();
 
+        let width = Number(
+          formatSizeOptionToPixelValue(
+            canvasStickerOptionsOnlyChild.value.width,
+          ),
+        ) || 1800;
+        let height = Number(
+          formatSizeOptionToPixelValue(
+            canvasStickerOptionsOnlyChild.value.height,
+          ),
+        ) || 800;
+
         // 转换为 canvas（最多 45 秒）
         // 字体已做字形子集化（见 @/ai/font-subset），SVG data URL 很小，正常几秒内完成。
         const firstTryStart = Date.now();
         let _canvas = await Promise.race([
           renderNodeToCanvas(this.el, {
+            width,
+            height,
+            canvasWidth: width,
+            canvasHeight: height,
             quality: 1,
             pixelRatio: 1,
             backgroundColor: null,
@@ -1364,22 +1405,6 @@ export class CanvasController {
         renderDiagnostics.firstTryOk = true;
         renderDiagnostics.firstTryErr = "";
         console.log("html-to-image toCanvas");
-
-        let width = Number(
-          formatSizeOptionToPixelValue(
-            canvasStickerOptionsOnlyChild.value.width,
-          ),
-        );
-        let height = Number(
-          formatSizeOptionToPixelValue(
-            canvasStickerOptionsOnlyChild.value.height,
-          ),
-        );
-
-        // OLD: 使用 imageData 方式 (已注释，保留用于回溯)
-        // let _ctx = _canvas.getContext('2d')
-        // const imageData = _ctx.getImageData(0, 0, width, height);
-        // this.ctx.putImageData(imageData, 0, 0);
 
         this.clearCanvas();
 
@@ -1408,8 +1433,14 @@ export class CanvasController {
         // 降级重试：跳过字体嵌入，使用占位图（有超时兜底，避免永久挂起）
         const fallbackStart = Date.now();
         try {
+          let fallbackW = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.width)) || 1800;
+          let fallbackH = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.height)) || 800;
           let _canvas = await Promise.race([
             renderNodeToCanvas(this.el, {
+              width: fallbackW,
+              height: fallbackH,
+              canvasWidth: fallbackW,
+              canvasHeight: fallbackH,
               quality: 0.8,
               pixelRatio: 1,
               backgroundColor: null,
@@ -1421,10 +1452,8 @@ export class CanvasController {
               setTimeout(() => reject(new Error('画布降级截图转换超时 (45s)')), 45_000),
             ),
           ]);
-          let width = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.width));
-          let height = Number(formatSizeOptionToPixelValue(canvasStickerOptionsOnlyChild.value.height));
           this.clearCanvas();
-          this.ctx.drawImage(_canvas, 0, 0, _canvas.width, _canvas.height, 0, 0, width, height);
+          this.ctx.drawImage(_canvas, 0, 0, _canvas.width, _canvas.height, 0, 0, fallbackW, fallbackH);
           this.loading.value = false;
           renderingLoading.value = false;
           this.shouldUpdateCanvasSticker.value = false;

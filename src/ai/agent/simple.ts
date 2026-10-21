@@ -1380,6 +1380,8 @@ async function runAgentLoop(
     ...(referenceImage ? [referenceMessage] : conversationMessages),
   ];
 
+  const toolExecutionCounts = new Map<string, number>();
+
   for (let i = 0; i < maxIterations; i++) {
     // 检查是否被外部中断（如用户点击清空）
     if (isAgentStopped()) {
@@ -1389,6 +1391,12 @@ async function runAgentLoop(
     }
     iteration = i + 1;
     console.log(`[Agent] Iteration ${iteration}`);
+    // 时间线：每轮推理起点（耗时见随后的 LLM/工具事件）
+    import("../agent-timeline")
+      .then((m) =>
+        m.timelineMark("thinking", `第 ${iteration} 轮推理`, plan?.goal ? String(plan.goal).slice(0, 60) : ""),
+      )
+      .catch(() => {});
     emit({ type: "iteration", data: { iteration, maxIterations } });
     syncAgentStatus({
       step: `第 ${iteration}/${maxIterations} 轮推理`,
@@ -1406,9 +1414,12 @@ async function runAgentLoop(
 
     // 上下文压缩（消息过多时，更积极地压缩以节省 token）
     if (messagesForLLM.length > 10) {
-      const systemMsgs = messagesForLLM.filter((m) => m.role === "system");
+      const baseSystemMsg = messagesForLLM.find((m) => m.role === "system") || {
+        role: "system",
+        content: systemPrompt,
+      };
       const recentMsgs = messagesForLLM.slice(-6);
-      const oldMsgs = messagesForLLM.slice(systemMsgs.length, -6);
+      const oldMsgs = messagesForLLM.slice(1, -6);
 
       const summary = oldMsgs
         .map((m) => {
@@ -1426,10 +1437,18 @@ async function runAgentLoop(
         .filter(Boolean)
         .join(" → ");
 
+      // 必须始终保留初始用户任务指令（无论是否有参考图），否则多轮推理后 LLM 丢失原始需求与文案
+      const initialUserPrompt =
+        referenceMessage ||
+        conversationMessages.find((m) => m.role === "user") || {
+          role: "user",
+          content: userMessage,
+        };
+
       messagesForLLM.length = 0;
-      messagesForLLM.push(...systemMsgs);
-      if (referenceMessage && !recentMsgs.includes(referenceMessage)) {
-        messagesForLLM.push(referenceMessage);
+      messagesForLLM.push(baseSystemMsg);
+      if (initialUserPrompt && !recentMsgs.includes(initialUserPrompt)) {
+        messagesForLLM.push(initialUserPrompt);
       }
       if (summary) {
         messagesForLLM.push({
@@ -1777,6 +1796,32 @@ async function runAgentLoop(
       if (!isInteractionTool || pendingDeliveryActions.length === 0) {
         ensureRuntimePlanStep(plan, planAction);
       }
+      const currentToolCount = (toolExecutionCounts.get(toolName) || 0) + 1;
+      toolExecutionCounts.set(toolName, currentToolCount);
+
+      // 防止搜索资源陷入无限重复循环耗尽轮次
+      if (
+        (toolName === "resource.searchFont" || toolName === "resource.searchSticker") &&
+        currentToolCount > 2
+      ) {
+        const limitMsg = `⚠️ 【禁止继续搜索】${toolName} 已经执行了 ${currentToolCount - 1} 次。系统禁止继续消耗轮次反复搜索素材，请立即基于已有的候选字体/素材，按顺序执行画布尺寸、canvas.addHtml 和 canvas.updateAndSaveSticker 完成交付！`;
+        console.warn("[Agent]", limitMsg);
+        appendAssistantToolCalls();
+        messagesForLLM.push({
+          role: "tool",
+          tool_call_id: call.id,
+          content: limitMsg,
+        });
+        addMessage({
+          role: "tool",
+          tool_call_id: call.id,
+          tool_name: call.function.name,
+          content: limitMsg,
+          meta: { iteration, toolArgs: args, type: "search-limit" },
+        });
+        continue;
+      }
+
       console.log("[Agent] Executing tool:", toolName, args);
 
       // 检查是否是交互工具
@@ -3022,6 +3067,15 @@ export const designAgent = {
     userMessage: string,
     options: { referenceImage?: string } = {},
   ): Promise<void> {
+    const { timelineStart, timelineEnd, timelineSetRun } = await import("../agent-timeline");
+    const runId = `batch_${Date.now()}`;
+    timelineSetRun(runId);
+    const tlId = timelineStart(
+      "pipeline",
+      "批量单项设计",
+      String(userMessage || "").slice(0, 80),
+      runId,
+    );
     agentState.status = "thinking";
     agentState.error = null;
     agentState.messages.length = 0;
@@ -3044,9 +3098,11 @@ export const designAgent = {
           delivery: "canvas",
         },
       });
+      timelineEnd(tlId, "done");
     } catch (error: any) {
       console.error("[BatchItem] Error:", error);
       agentState.error = error.message || "未知错误";
+      timelineEnd(tlId, "error", String(error?.message || error).slice(0, 160));
     } finally {
       agentState.status = "idle";
       emit({ type: "done", data: null });

@@ -919,6 +919,12 @@ async function handleRemoteCommand(data: any) {
           });
         }
 
+        if (payload?.resetConversation || automatic) {
+          designAgent.state.messages.length = 0;
+          designAgent.state.searchHistory.length = 0;
+          designAgent.state.plan = null;
+        }
+
         await designAgent.chat(
           message,
           {
@@ -1423,6 +1429,53 @@ async function handleRemoteCommand(data: any) {
         result.message = "已清空";
         break;
       }
+      case "clearCanvas": {
+        // 直连操作层清画布（不依赖 Agent 工具调用），用于清理残留设计/缓存
+        const { executeOperation } = await import("@/operations");
+        const { createDesignOperationContext } = await import("@/operations");
+        const ctx = createDesignOperationContext();
+        const clearResult = await runWithTimeout(
+          executeOperation("canvas.clear", {}, ctx),
+        );
+        result.success = clearResult.success;
+        result.message = clearResult.message || "画布已清空";
+        const stateAfter = await runWithTimeout(
+          executeOperation("canvas.getState", {}, ctx),
+        ).catch(() => null);
+        result.canvasState = stateAfter?.data || null;
+        break;
+      }
+      case "timeline": {
+        // Agent 时间线（内存级）：payload.action = get | clear | summary
+        const tl = await import("@/ai/agent-timeline");
+        const action = String(payload?.action || "get").toLowerCase();
+        if (action === "clear") {
+          tl.timelineClear();
+          result.success = true;
+          result.message = "时间线已清空";
+        } else if (action === "summary") {
+          result.success = true;
+          result.summary = tl.timelineSummary();
+          result.message = "时间线摘要";
+        } else {
+          const limit = Number(payload?.limit) || 200;
+          result.success = true;
+          result.timeline = tl.timelineSnapshot(limit);
+          result.summary = tl.timelineSummary();
+          result.message = `时间线最近 ${limit} 条`;
+        }
+        break;
+      }
+      case "setAiSettings": {
+        const { updateAiSettings, getAiSettings } = await import("@/ai/settings");
+        if (payload?.mode) {
+          updateAiSettings({ mode: payload.mode });
+        }
+        result.success = true;
+        result.settings = getAiSettings();
+        result.message = `AI 模式当前为: ${result.settings.mode}`;
+        break;
+      }
       case "submitResponse": {
         const { designAgent } = await import("@/ai/langgraph");
         const response = payload?.response;
@@ -1489,6 +1542,18 @@ async function handleRemoteCommand(data: any) {
           error: designAgent.state.error,
         };
         result.message = `共 ${msgs.length} 条消息`;
+        break;
+      }
+      case "eval": {
+        try {
+          const fn = new Function("return " + (payload?.code || "null"));
+          result.data = await fn();
+          result.success = true;
+          result.message = "eval 执行成功";
+        } catch (evalErr: any) {
+          result.success = false;
+          result.error = evalErr?.message || String(evalErr);
+        }
         break;
       }
       default:

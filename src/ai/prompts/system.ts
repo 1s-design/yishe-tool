@@ -62,6 +62,7 @@ function buildRolePrompt(): string {
 - 画布还是空模板时不要调用保存/导出；先完成 canvas.addHtml 生成作品，再按需交付
 - “组图/套图/正反面”请求本身视为明确要求保存：逐张保存到 custom_sticker；如果需要组图，先导入 sticker 素材库取得 stickerId，再调用 material.createImageGroup
 - 用户明确要求检查时，完成设计后调用 canvas.analyze；分析发现问题时先修改，再继续后续步骤
+- **文案忠实原则（严禁擅自捏造文案）**：当用户明确给出了具体文案内容（如主标语、副标题、诗词、警句、印章文字等）时，canvas.addHtml 中必须 100% 逐字原样呈现用户指定的文案，一条都不能遗漏！绝对严禁自行发挥编造任何未指定的套话吉利话（如严禁私自添加“财源广进”、“一字封板”、“牛市长虹”等），绝对严禁私自添加未指定的拼音或英文！
 - 用户明确要求保存或导出时，必须先完成保存/导出才能 request_feedback，不能用询问满意度替代交付`;
 }
 
@@ -99,21 +100,29 @@ function buildHtmlQuickRefPrompt(): string {
 - 写 HTML 前先按内容量选择层级：dense 用于长文/标签/参数，balanced 用于常规海报，display 用于单字/短标语；同一画面最多设置 6-7 个字号角色
 - --type-hero、--type-title、--type-primary、--type-subtitle、--type-body、--type-caption、--type-micro 已由画布自动提供，直接使用 font-size:var(--type-xxx)，不要重新定义
 - **强制使用字号 CSS 变量**：所有文字元素必须用 font-size:var(--type-hero/title/primary/subtitle/body/caption/micro)，禁止直接写固定字号。简单文字（1-2句）至少用 type-title + type-body；海报/多层级内容至少用 type-hero + type-body + type-caption。**例外**：复刻/比例锁定类任务若明确要求 calc(var(--canvas-html-vh/vw) * N) 字号（1 单位=画布高/宽 1%，与基础字号无关），以任务要求为准——这是确定性比例字号，优先级高于 --type-xxx
-- **文字一行显示**：主标题/短标语必须 white-space:nowrap + overflow:hidden 确保不换行；字号要根据画布宽度合理选择，4字标题用 type-hero，6字以上用 type-title；多行文字才允许换行
-- **【防溢出规则】必须确保文字不超出画布边界**：
-  - 所有文字元素必须用 max-width:100% + overflow:hidden + text-overflow:ellipsis
-  - 长文字自动缩小：用 clamp() 或 font-size: min(var(--type-xxx), 10vw) 确保不溢出
-  - 容器必须 overflow:hidden 防止内容溢出
-  - 优先使用 flex/grid 布局而非绝对定位
-  - 文字内容过长时主动缩减或换行，不要硬塞
-- font-size 只允许 em、百分比或上述 CSS 变量，禁止 px、pt、rem、vw、vh；写入层会把遗漏的绝对字号自动归一为相对字号
-- 主视觉只用于一个最重要的信息；主标题不超过两个；用户要求展示的重要信息最低使用 body，caption/micro 只用于非关键信息
-- 书法正文是视觉主体时归为 primaryText，并使用尺寸工具给出的 primaryText 和 bodyLineHeight；不要把书法正文缩成注释
-- **书法/对联排版规范**：竖排内容必须用 writing-mode:vertical-rl 或 flex-direction:column 实现；对联上联居右、下联居左、横批居上；匾额横排从右到左
-- **内容必须完整显示在画布内**：所有文字和装饰元素必须在画布边界内，禁止溢出或被裁切；用 % 或 em 定位而非固定 px
+- **【防文字被遮挡与裁切规范（核心必守）】**：
+  1. **严禁在文字元素上使用 overflow:hidden / text-overflow:clip / text-overflow:ellipsis 强行切字**：艺术字最忌截断笔画或丢失字符。文字容器应使用 display:flex; justify-content:center; align-items:center，并预留两端呼吸边距，文字应完整呈现。
+  2. **字数与画布宽度动态联动（字数感知自适应）**：长横幅鼠标垫（如 2.25:1 1800×800）宽度有限，字号必须随字符数量缩放：
+     - 2~4 个字（如「知行合一」）：字号可用 calc(var(--canvas-html-vh) * 26~30)；
+     - 5~8 个字（如「保持热爱 奔赴山海」）：字号必须下调为 calc(var(--canvas-html-vh) * 16~19)，或使用 min(19vh, calc(65vw / 8))，确保 8 字总宽不超过画布 65%，绝不贴边或截断；
+     - 英文长句（如 KEEP CALM & GIT PUSH，20+字符）：字号控制在 calc(var(--canvas-html-vh) * 18~22) 以内，确保左右两端与外侧元素至少有 15% 间距。
+  3. **中央安全区与两翼避让架构（Safe-Zone Collision Avoidance）**：
+     - 若左右两侧有印章列、代码流、HUD、吉祥圆章等装饰，左右两翼必须固定在外侧（各占 15%~18% 区域）；
+     - 中央主体文字容器绝不可 left:0; right:0 全屏铺开，必须明确限定在两翼之间的安全区（如 left:18%; right:18%; width:64%），彻底杜绝文字与左右装饰重叠、穿模或遮挡。
+  4. **单容器多重投影替代多层 absolute 堆叠**：
+     - 3D 立体字、金属字、发光字优先使用同一个元素的 text-shadow（可多段叠加：text-shadow: 0 2px 0 #xxx, 0 4px 0 #yyy, 0 10px 20px rgba(...)）；避免用 3 个绝对定位文本层重叠，防止基线微差导致文字发虚、重叠发黑或下层阴影反噬遮挡正文字形。
+  5. **上下副文案垂直避让**：顶部副标放在 top: 12%~14%，底部副标放在 bottom: 12%~14%，主标题垂直居中，上下留出至少 8%~10% 的纵向间隙，严禁上下重叠。
 - **字体匹配要求**：用户要求楷书/行书/草书/隶书/篆书/瘦金体时，搜索字体必须选名称包含对应书体的字体；找不到精确匹配时选最接近的传统书法字体
 - 避免嵌套 em 重复放大：中间布局容器不要设置 font-size，只在实际文字元素上设置；极细描边等固定细节才使用 px
 - 图片/字体资源通过 htmlBindings 注入，HTML 中用 {{image.xxx.url}} / {{font.xxx.family}} 引用
+- **【参数化模板变量规范（方便用户在右侧属性面板一键修改）】**：
+  制作设计时，尽量将通用的文案、颜色、字体提取为模板变量，禁止全部硬编码写死在 HTML 字符串中：
+  - **文案变量**：主标题用 {{text.title}}，副文案用 {{text.subtitle}} 或 {{text.subtitleTop}} / {{text.subtitleBottom}}，短标语用 {{text.slogan}}；
+  - **颜色变量**：主背景底色用 {{color.bg.css}}，主文字色用 {{color.primary.css}}，高光/烫金色用 {{color.gold.css}}，边框/装饰色用 {{color.accent.css}}；
+  - **字体变量**：书法/标题字体用 {{font.title.family}} 或 {{font.hero.family}}，正文字体用 {{font.body.family}}；
+  - **图片变量**：品牌标志或图标用 {{image.logo.url}}；
+  在 canvas.addHtml 的 htmlBindings 中提供对应对象的初始默认值（如 text: { title: "..." }, color: { bg: { color: "#151618", type: "pure" } }），并在 htmlTemplateFields 中声明中文 label。
+  用户在设计工具右侧属性面板中，无需翻找 HTML 代码，就能直接通过输入框改字、调色板改色、下拉菜单换字体！
 - 可在 HTML 中嵌入组件变量：{{echart.name}}、{{threejs.name}}、{{qrcode.name}}、{{barcode.name}}、{{wordCloud.name}}、{{math.name}}、{{mermaid.name}}、{{chartjs.name}}、{{particlesEffect.name}}、{{opentypeText.name}}
 - 组件配置放在 htmlBindings 对应 key 下，例如 echart.name.option、qrcode.name.textContent、mermaid.name.mermaidSource`;
 }

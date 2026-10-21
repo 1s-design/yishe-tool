@@ -41,6 +41,20 @@
       <div class="flex items-center gap-0.5 shrink-0" @mousedown.stop>
         <Tooltip>
           <TooltipTrigger as-child>
+            <button
+              class="ai-panel-icon-btn h-7 w-7 relative"
+              :class="{ 'text-primary bg-primary/10 font-bold': showTimelineModal }"
+              @click="showTimelineModal = true"
+            >
+              <Activity class="h-3.5 w-3.5" />
+              <span v-if="isProcessing" class="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Agent 步骤与耗时时间线</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger as-child>
             <button class="ai-panel-icon-btn h-7 w-7" @click="showSettingsModal = true">
               <Settings2 class="h-3.5 w-3.5" />
             </button>
@@ -129,6 +143,10 @@
             <div v-if="msg.content" class="ai-panel-msg-ai  px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
               {{ msg.content }}
             </div>
+            <div v-if="msg.meta?.duration" class="flex items-center gap-1 text-[9px] text-muted-foreground/75 px-1 font-mono">
+              <Clock class="h-2.5 w-2.5" />
+              <span>思考响应 {{ (msg.meta.duration / 1000).toFixed(2) }}s</span>
+            </div>
 
             <!-- 工具调用展示 -->
             <div v-if="msg.tool_calls?.length" class="flex flex-wrap gap-1.5 pt-0.5">
@@ -137,8 +155,11 @@
                 :key="call.id"
                 class="ai-panel-tool-pill inline-flex items-center gap-1  border px-2 py-0.5 text-[10px] font-mono"
               >
-                <Zap class="h-2.5 w-2.5" />
+                <Zap class="h-2.5 w-2.5 text-amber-500" />
                 <span>{{ formatToolName(call.function.name) }}</span>
+                <span v-if="getToolDuration(call.function.name)" class="text-[9px] opacity-75 font-sans">
+                  {{ getToolDuration(call.function.name) }}
+                </span>
               </span>
             </div>
           </div>
@@ -146,9 +167,14 @@
 
         <!-- 工具执行反馈 -->
         <div v-if="msg.role === 'tool'" class="pl-0 w-full min-w-0">
-          <div class="ai-panel-tool-result flex items-start gap-1.5  border px-2.5 py-1 text-[10px] font-mono w-full min-w-0 whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
-            <CheckCircle2 class="h-3 w-3 shrink-0 mt-0.5" />
-            <span class="flex-1 min-w-0 leading-normal">{{ parseResult(msg.content).message }}</span>
+          <div class="ai-panel-tool-result flex items-start justify-between gap-1.5  border px-2.5 py-1 text-[10px] font-mono w-full min-w-0 whitespace-pre-wrap break-all [overflow-wrap:anywhere]">
+            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+              <CheckCircle2 class="h-3 w-3 shrink-0 mt-0.5 text-emerald-500" />
+              <span class="flex-1 min-w-0 leading-normal">{{ parseResult(msg.content).message }}</span>
+            </div>
+            <span v-if="msg.tool_name && getToolDuration(msg.tool_name)" class="text-[9px] opacity-75 font-sans shrink-0">
+              {{ getToolDuration(msg.tool_name) }}
+            </span>
           </div>
         </div>
       </template>
@@ -423,6 +449,9 @@
 
     <!-- AI 运行时设置弹窗 -->
     <AiSettingsModal v-model="showSettingsModal" />
+
+    <!-- ⏱️ Agent 步骤与耗时时间线独立弹窗 -->
+    <AiTimelineModal v-model="showTimelineModal" />
   </div>
 </template>
 
@@ -446,10 +475,14 @@ import {
 import DesignPromptPicker from "./DesignPromptPicker.vue";
 import AiSettingsModal from "./AiSettingsModal.vue";
 import TaskConfigModal from "./TaskConfigModal.vue";
+import AiTimelineModal from "./AiTimelineModal.vue";
 import { aiSettings } from "@/ai/settings";
+import { timelineGetLastDuration } from "@/ai/agent-timeline";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
+  Activity,
+  Clock,
   Settings2,
   Copy,
   Trash2,
@@ -474,8 +507,16 @@ import { executeAITool } from "@/ai/shared/execute-tool";
 import { currentCanvasControllerInstance } from "@/components/design/layout/canvas/index.tsx";
 
 const isOpen = useLocalStorage("_1s_ai_panel_open", false);
+const showTimelineModal = ref(false);
 const showSettingsModal = ref(false);
 const showTaskConfigModal = ref(false);
+
+function getToolDuration(toolName: string): string {
+  const dur = timelineGetLastDuration(toolName);
+  if (dur === null || dur === undefined) return "";
+  if (dur >= 1000) return `${(dur / 1000).toFixed(2)}s`;
+  return `${dur}ms`;
+}
 
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();

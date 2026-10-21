@@ -1334,12 +1334,16 @@ function extractBriefTexts(brief: StickerBrief): string[] {
 }
 
 /** 保存前审查（调用共享审查模块：尺寸/文案/居中/溢出/字号/背景丰富度） */
-async function auditCanvasBeforeSave(item: BatchItem) {
+async function auditCanvasBeforeSave(
+  item: BatchItem,
+  opts?: { skipSizeNormalize?: boolean },
+) {
   // 尺寸确定性归一：不依赖模型自觉，审查前强制把画布设回 brief 尺寸
   // （实测出现过画布卡在默认 158×158、模型 setSize 重复旧值的失败）
+  // 注意：setSize 会触发 Vue 重绘并覆盖 DOM 级机械修复——机械修复必须安排在本步骤之后
   const w = Number(item.brief.width) || 0;
   const h = Number(item.brief.height) || 0;
-  if (w > 0 && h > 0 && !item.brief.preserveCanvasSize) {
+  if (w > 0 && h > 0 && !item.brief.preserveCanvasSize && !opts?.skipSizeNormalize) {
     try {
       await executeAITool("canvas.setSize", { width: w, height: h, unit: "px" });
     } catch (error) {
@@ -1354,6 +1358,7 @@ async function auditCanvasBeforeSave(item: BatchItem) {
     expectedBackground: item.brief.expectedBackground,
     expectVerticalMain: item.brief.expectVerticalMain,
     requireImageLayers: item.brief.requireImageLayers,
+    requireSeal: /印章|金箔/.test(item.brief.prompt || ""),
   });
   if (result.measured && result.issues.length) {
     console.log(
@@ -1389,7 +1394,7 @@ function buildAuditFixPrompt(brief: StickerBrief, issues: string[], critical?: s
       ? [
           "【主文案竖排·必须】主文案必须是【一个容器一条竖列】：writing-mode:vertical-rl + text-orientation:upright + white-space:nowrap（防换列），文本直接写在一个 div 里，容器 height 给足（≥65%）；禁止拆成多个块/禁止 2+1 群组/禁止横排。",
           '骨架照抄：<div style="position:absolute;left:50%;top:50%;height:72%;transform:translate(-50%,-50%);writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;font-size:calc(var(--canvas-html-vh) * 23);font-weight:900;line-height:1.05">主文案文本</div>',
-          "字号只允许 calc(var(--canvas-html-vh) * N) / calc(var(--canvas-html-vw) * N)（1 单位=画布高/宽 1%，与基础字号无关，比例确定）；主字单字高约画布高 23%；禁止 px、禁止 var(--type-hero) 倍数（基础字号会漂）。",
+          "字号只允许 calc(var(--canvas-html-vh) * N) / calc(var(--canvas-html-vw) * N)（1 单位=画布高/宽 1%，与基础字号无关，比例确定）；主字【三个字总高约画布高 70%，每个字高约画布高 23%】（font-size:calc(var(--canvas-html-vh) * 23) 即单字高 23%，三字叠起来约 70%）；禁止 px、禁止 var(--type-hero) 倍数（基础字号会漂）。",
         ].join("\n")
       : "",
     "【禁止装饰文字】画面上不得出现清单之外的任何文字——包括拼音（如 RONGYIDE）、英文、年份、口号、落款、编号。发现一律删除。",
@@ -1409,16 +1414,20 @@ async function ensureAuditPassed(
   item: BatchItem,
   signal: typeof controlSignal,
 ): Promise<boolean> {
-  let audit = await auditCanvasBeforeSave(item);
-  if (audit.ok) {
-    if (audit.advisoryIssues.length) {
-      console.log(`[Batch] 第 ${item.index + 1} 张审查建议：${audit.advisoryIssues.join("；")}`);
+  // ① 机械修复：合并主字/副列单列、补印章、缩字号（幂等，**每次保存前都跑**——过审路径也要补缺）
+  const repairAndAudit = async (): Promise<any> => {
+    // 尺寸归一会触发 Vue 重绘——必须在机械修复【之前】完成，否则修复会被重绘冲掉
+    const w = Number(item.brief.width) || 0;
+    const h = Number(item.brief.height) || 0;
+    if (w > 0 && h > 0 && !item.brief.preserveCanvasSize) {
+      try {
+        await executeAITool("canvas.setSize", { width: w, height: h, unit: "px" });
+      } catch (error) {
+        console.warn("[Batch] 修复前强制 setSize 失败:", error);
+      }
     }
-    return true;
-  }
-
-  // ① 机械修复：合并主字/副列单列、缩小过大字号、限宽换行（改动会体现在随后渲染保存的成品里）
-  const repairAndAudit = async (): Promise<typeof audit> => {
+    // 等重绘落定再动 DOM
+    await new Promise((resolve) => setTimeout(resolve, 400));
     try {
       const mod: any = await import("@/components/design/layout/canvas");
       const root: HTMLElement | null =
@@ -1429,6 +1438,7 @@ async function ensureAuditPassed(
           allowTallMain: item.brief.expectVerticalMain,
           mainText: extractBriefTexts(item.brief)[0] || "",
           texts: extractBriefTexts(item.brief),
+          ensureSeal: /印章|金箔/.test(item.brief.prompt || ""),
         });
         if (fixes.length) {
           console.log(`[Batch] 第 ${item.index + 1} 张自动修复：${fixes.join("；")}`);
@@ -1437,11 +1447,17 @@ async function ensureAuditPassed(
     } catch (error) {
       console.warn("[Batch] 自动修复失败:", error);
     }
-    return await auditCanvasBeforeSave(item);
+    // 测量时跳过 setSize，避免再次重绘覆盖修复
+    return await auditCanvasBeforeSave(item, { skipSizeNormalize: true });
   };
 
-  audit = await repairAndAudit();
-  if (audit.ok) return true;
+  let audit = await repairAndAudit();
+  if (audit.ok) {
+    if (audit.advisoryIssues?.length) {
+      console.log(`[Batch] 第 ${item.index + 1} 张审查建议：${audit.advisoryIssues.join("；")}`);
+    }
+    return true;
+  }
 
   // ② 仍不通过则让模型重做（最多 2 次）；每次重做后同样先机械修复再审查
   for (let attempt = 1; attempt <= 2; attempt++) {

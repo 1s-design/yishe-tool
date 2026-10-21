@@ -1,4 +1,5 @@
 import { registerOperation } from "../registry";
+import { lockCanvasSize } from "../canvas-size-lock";
 import {
   applyCanvasBaseFontSize,
   type CanvasTypographyDensity,
@@ -78,6 +79,9 @@ registerOperation({
     ctx.setCanvasSize(width, height, unit);
     // 尺寸锁可能钳制了请求值——以实际生效尺寸为准报告，避免误导 agent
     const actual = ctx.getCanvasSize();
+    if (params.lock || params.locked) {
+      lockCanvasSize(actual.width, actual.height, actual.unit);
+    }
     const lockNote =
       Math.round(actual.width) !== Math.round(width) ||
       Math.round(actual.height) !== Math.round(height)

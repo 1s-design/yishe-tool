@@ -196,6 +196,33 @@ export async function directChat(options: {
   reasoningEffort?: string;
   enableThinking?: boolean;
 }): Promise<any> {
+  // 时间线埋点：LLM 接口请求耗时
+  const { timelineStart, timelineEnd } = await import("./agent-timeline");
+  const tlId = timelineStart(
+    "llm",
+    `LLM 请求（${aiSettings.value.mode || "proxy"}）`,
+    `${options.messages?.length || 0} 条消息${options.tools?.length ? ` / ${options.tools.length} 个工具` : ""}`,
+  );
+  try {
+    const result = await directChatInner(options);
+    timelineEnd(tlId, "done");
+    return result;
+  } catch (error: any) {
+    timelineEnd(tlId, "error", String(error?.message || error).slice(0, 200));
+    throw error;
+  }
+}
+
+async function directChatInner(options: {
+  messages: Array<{ role: string; content: string | any[] }>;
+  tools?: any[];
+  temperature?: number;
+  maxTokens?: number;
+  featureCode?: string;
+  timeoutMs?: number;
+  reasoningEffort?: string;
+  enableThinking?: boolean;
+}): Promise<any> {
   const {
     messages,
     tools,
@@ -272,15 +299,23 @@ export async function directChat(options: {
     return await response.json();
   } catch (error: any) {
     clearTimeout(timeoutTimer);
-    if (error.name === "AbortError") {
-      throw new Error(`AI 直连请求超时 (${timeout}ms)`);
-    }
-    if (error.name === "TypeError" && error.message?.includes("Failed to fetch")) {
-      throw new Error(
-        `AI 直连失败（浏览器 CORS 跨域拦截）：目标地址 ${config.baseURL} 未允许跨域请求。请在「AI 设置」中切换为「服务端代理」模式，或为目标服务配置 CORS headers。`,
-      );
-    }
-    throw error;
+    console.warn("[AI Client] 直连请求异常，自动降级至代理模式:", error);
+    try {
+      const { timelineMark } = await import("./agent-timeline");
+      timelineMark("llm", "直连失败降级代理", String(error?.message || error).slice(0, 160));
+    } catch {}
+
+    const proxyBody: any = {
+      featureCode: featureCode || DESIGN_TOOL_FEATURE_CODES.chat,
+      messages,
+      temperature: temperature ?? 0.7,
+    };
+    if (maxTokens) proxyBody.max_tokens = maxTokens;
+    if (tools && tools.length > 0) proxyBody.tools = tools;
+    if (reasoningEffort) proxyBody.reasoning_effort = reasoningEffort;
+    if (enableThinking !== undefined) proxyBody.enable_thinking = enableThinking;
+
+    return await postAgentProxy(proxyBody, { timeoutMs: timeoutMs ?? AI_TIMEOUTS.chat });
   }
 }
 

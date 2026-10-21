@@ -140,41 +140,73 @@ export function buildReplicateBrief(
 
   // 构图与布局硬规则
   const comp = analysis.composition;
+  const isLandscape = canvas ? canvas.width >= canvas.height * 1.2 : false;
+
   lines.push("## 构图与布局（硬性）");
   if (comp.layout) lines.push(`骨架：${comp.layout}`);
   if (comp.whitespace) lines.push(`留白：${comp.whitespace}`);
   if (comp.hierarchy) lines.push(`层级：${comp.hierarchy}`);
-  lines.push(
-    "- 竖排文字必须用 writing-mode:vertical-rl + text-orientation:upright + **white-space:nowrap**（不加 nowrap 竖排会换列拆成多列，字序视觉颠倒）；主文案一个容器一条竖列（禁止拆成多块/2+1 群组）",
-  );
-  lines.push(
-    "- 主文案单独一列放画布几何中心 (50%,50%)；两侧副文案各占一列，紧贴主列、互不重叠",
-  );
-  lines.push(
-    "- 副文案字号必须明显小于主文案（约 1/4），必要时缩小字号保证一列完整显示，禁止折成多列或截断",
-  );
-  lines.push(
-    "- 所有列/元素禁止互相重叠、禁止溢出画布边缘；圆圈徽章排成一行放在上下短边内侧",
-  );
-  lines.push("- 印花适配：主体集中居中，四周留可裁切边距，远看能识别主体");
-  // 主字竖排 HTML 骨架（实测可显著提升竖排命中率）
-  if (analysis.texts.length) {
-    const main = analysis.texts.find((t) => t.role === "primary") || analysis.texts[0];
-    lines.push("");
-    lines.push("### 主文案竖排 HTML 骨架（必须照抄结构）");
+
+  if (isLandscape) {
     lines.push(
-      '```html',
+      `- **当前构图为横幅宽幅（Landscape，宽高比约 ${canvas ? (canvas.width / canvas.height).toFixed(2) : "宽幅"}）**：`,
     );
     lines.push(
-      `<div style="position:absolute;left:50%;top:50%;height:70%;transform:translate(-50%,-50%);writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;font-size:calc(var(--canvas-html-vh) * 23);font-weight:900;line-height:1.05;letter-spacing:0.06em">${main.content}</div>`,
-    );
-    lines.push("```");
-    lines.push(
-      "（主文案文本直接写在一个容器里；white-space:nowrap 防止竖排换列拆成多列，容器 height 给足 70%；不要拆成多个绝对定位块）",
+      "  - 主文案必须为**水平横排居中**，占据中央核心视觉区（left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; white-space: nowrap）",
     );
     lines.push(
-      "（字号只允许 calc(var(--canvas-html-vh) * N) 或 calc(var(--canvas-html-vw) * N)：1 个单位=画布高/宽 1%，与基础字号无关，比例确定；主字单字高约画布高 23%）",
+      "  - 字号极大霸气，高度占画布高度的 35%~45%（calc(var(--canvas-html-vh) * 38)）",
     );
+    lines.push(
+      "  - 上方副文案：水平横向排在主文案正上方居中（left: 50%; top: 12%; transform: translateX(-50%); white-space: nowrap; font-size: calc(var(--canvas-html-vh) * 7.5)）",
+    );
+    lines.push(
+      "  - 下方副文案：水平横向排在主文案正下方居中（left: 50%; bottom: 12%; transform: translateX(-50%); white-space: nowrap; font-size: calc(var(--canvas-html-vh) * 7.5)）",
+    );
+    lines.push(
+      "  - 左右两侧徽章印章（若有）：排成垂直一列分别贴近左右两边短边内侧（如 left: 4% 和 right: 4%），形成三段居中对称框架",
+    );
+    lines.push(
+      "  - 严禁将内容全部挤在左半边！整体构图必须严格中轴对称、主视觉必须居中、左右平衡！",
+    );
+
+    if (analysis.texts.length) {
+      const main =
+        analysis.texts.find((t) => t.role === "primary") || analysis.texts[0];
+      lines.push("");
+      lines.push("### 横幅主文案 HTML 骨架（照此结构居中）");
+      lines.push("```html");
+      lines.push(
+        `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;font-size:calc(var(--canvas-html-vh) * 38);font-weight:900;line-height:1;letter-spacing:0.04em;text-align:center;">${main.content}</div>`,
+      );
+      lines.push("```");
+    }
+  } else {
+    lines.push(
+      "- 竖排文字必须用 writing-mode:vertical-rl + text-orientation:upright + **white-space:nowrap**（不加 nowrap 竖排会换列拆成多列，字序视觉颠倒）；主文案一个容器一条竖列（禁止拆成多块/2+1 群组）",
+    );
+    lines.push(
+      "- 主文案单独一列放画布几何中心 (50%,50%)；两侧副文案各占一列，紧贴主列、互不重叠",
+    );
+    lines.push(
+      "- 副文案字号必须明显小于主文案（约 1/4），必要时缩小字号保证一列完整显示，禁止折成多列或截断",
+    );
+    lines.push(
+      "- 所有列/元素禁止互相重叠、禁止溢出画布边缘；圆圈徽章排成一行放在上下短边内侧",
+    );
+    lines.push("- 印花适配：主体集中居中，四周留可裁切边距，远看能识别主体");
+
+    if (analysis.texts.length) {
+      const main =
+        analysis.texts.find((t) => t.role === "primary") || analysis.texts[0];
+      lines.push("");
+      lines.push("### 主文案竖排 HTML 骨架（必须照抄结构）");
+      lines.push("```html");
+      lines.push(
+        `<div style="position:absolute;left:50%;top:50%;height:70%;transform:translate(-50%,-50%);writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;font-size:calc(var(--canvas-html-vh) * 23);font-weight:900;line-height:1.05;letter-spacing:0.06em">${main.content}</div>`,
+      );
+      lines.push("```");
+    }
   }
   lines.push("");
 
@@ -189,9 +221,11 @@ export function buildReplicateBrief(
     lines.push(
       `1. **尺寸一致**：画布就是 ${canvas ? `${canvas.width}×${canvas.height} 像素` : "印花本体尺寸"}`,
     );
-    lines.push("2. **文案一致**：逐字保留，主/副文案内容、层级、相对位置不得改动");
-    lines.push("3. **色系一致**：按色值速查还原，禁止色相漂移");
-    lines.push("4. **构图一致**：按骨架/留白/层级还原，竖排列互不重叠");
+    lines.push(
+      "2. **文案逐字绝对一致**：必须且只能使用上述文案清单中的文字！严禁自行发挥编造任何无关词汇（如“财源广进”、“一字封板”等），严禁自行添加未在清单中的拼音或英文字符！清单中的文字一条都不得遗漏！",
+    );
+    lines.push("3. **色系一致**：按色值速查还原，禁止色相漂移；底色保持大面积纯色/微质感，避免大面积发黑暗角");
+    lines.push("4. **构图一致**：按骨架/留白/层级还原，严格居中对称，严禁左重右轻失衡");
     lines.push("5. 完成后逐项自查上述四条，任一不符必须先改到一致");
   } else {
     lines.push("## 制作要求（相似款）");

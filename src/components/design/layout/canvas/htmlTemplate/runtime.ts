@@ -265,7 +265,30 @@ function getComponentFriendlyName(key: string): string {
   return "组件";
 }
 
+const COMMON_KEY_LABEL_MAP: Record<string, string> = {
+  "text.title": "主标题文字",
+  "text.subtitle": "副标题文字",
+  "text.subtitleTop": "顶部副文案",
+  "text.subtitleBottom": "底部副文案",
+  "text.desc": "描述文案",
+  "text.slogan": "宣传标语",
+  "color.bg": "背景底色",
+  "color.primary": "主文案颜色",
+  "color.secondary": "副文案颜色",
+  "color.accent": "装饰强调色",
+  "color.border": "边框线条色",
+  "color.gold": "烫金高光色",
+  "font.title": "主标题字体",
+  "font.hero": "主视觉书法字体",
+  "font.body": "正文字体",
+  "image.logo": "品牌 Logo",
+  "image.bg": "背景图/纹理",
+};
+
 function createInferredHtmlTemplateFieldLabel(key: string, type: HtmlTemplateFieldType) {
+  if (COMMON_KEY_LABEL_MAP[key]) {
+    return COMMON_KEY_LABEL_MAP[key];
+  }
   if (type === "child") {
     const componentName = getComponentFriendlyName(key);
     return `${componentName} ${humanizeHtmlTemplateFieldKey(key)}`;

@@ -84,6 +84,13 @@ export function normalizeHtmlTypography(
     normalizeDeclaration,
   );
 
+  // 确保 {{font.xxx.family}} 后面自带高质量中文回退字体，防止特殊/繁体/装饰字体缺字时某些字符空白脱落
+  // 注意：必须使用单引号，避免在 style="..." 双引号属性中破坏 HTML/XML 语法导致 SVG 渲染崩溃
+  normalizedHtml = normalizedHtml.replace(
+    /\{\{font\.([a-zA-Z0-9_-]+)\.family\}\}(?:\s*,\s*(?:serif|sans-serif))?/g,
+    "{{font.$1.family}}, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+  );
+
   return { htmlContent: normalizedHtml, convertedDeclarations };
 }
 
