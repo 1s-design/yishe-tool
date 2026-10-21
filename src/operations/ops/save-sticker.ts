@@ -466,9 +466,13 @@ registerOperation({
 
       let file: File;
       const uniqueFileName = `sticker_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+      let exportWidth = canvasEl.width;
+      let exportHeight = canvasEl.height;
       if (autoTrim) {
         const trimmedCanvas = Utils.trimCanvas(canvasEl);
         file = await canvasToFile(trimmedCanvas, uniqueFileName);
+        exportWidth = trimmedCanvas.width;
+        exportHeight = trimmedCanvas.height;
       } else {
         file = await canvasToFile(canvasEl, uniqueFileName);
       }
@@ -517,9 +521,9 @@ registerOperation({
         name: name || "未命名贴纸",
         description: description || "",
         keywords: keywords || "",
-        width: canvasEl.width,
-        height: canvasEl.height,
-        aspectRatio: canvasEl.height ? canvasEl.width / canvasEl.height : undefined,
+        width: exportWidth,
+        height: exportHeight,
+        aspectRatio: exportHeight ? Number((exportWidth / exportHeight).toFixed(6)) : undefined,
         folderId: folderId ?? currentEditingCustomStickerFolderId.value ?? null,
         meta: stickerMeta,
       };

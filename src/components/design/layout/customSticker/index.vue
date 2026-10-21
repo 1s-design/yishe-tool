@@ -64,6 +64,7 @@ import { Loader2, Pencil, RefreshCw, Trash2, Upload } from "lucide-vue-next";
 import { Button } from '@/components/ui/button';
 import { message, Modal } from '@/common/message';
 import {
+  getCustomSticker,
   getCustomStickerList,
   importCustomStickerToLibrary,
   deleteCustomSticker,
@@ -99,18 +100,27 @@ async function createNew() {
   message.success("已创建新的自定义贴纸画布");
 }
 
-function edit(item: any) {
-  const data = item?.meta?.data;
+async function edit(item: any) {
+  let detail = item;
+  if (!detail?.meta?.data) {
+    try {
+      detail = await getCustomSticker(item.id);
+    } catch (e: any) {
+      message.error(e?.message || "获取自定义贴纸详情失败");
+      return;
+    }
+  }
+  const data = detail?.meta?.data;
   if (!data) {
     message.warning("该自定义贴纸缺少可编辑设计数据");
     return;
   }
   canvasStickerOptions.value = JSON.parse(JSON.stringify(data));
-  restoreAgentDesignProvenance(canvasStickerOptions.value, item.meta);
-  currentEditingCustomStickerId.value = item.id;
-  currentEditingCustomStickerFolderId.value = item.folderId || null;
+  restoreAgentDesignProvenance(canvasStickerOptions.value, detail.meta);
+  currentEditingCustomStickerId.value = detail.id;
+  currentEditingCustomStickerFolderId.value = detail.folderId || null;
   setActiveMenu(menuItems.canvas);
-  message.success(`已加载「${item.name || "未命名贴纸"}」，保存后将更新原作品`);
+  message.success(`已加载「${detail.name || "未命名贴纸"}」，保存后将更新原作品`);
 }
 
 async function importItem(item: any) {
