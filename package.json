@@ -7,6 +7,9 @@
   "engines": {
     "node": ">=22.12.0"
   },
+  "overrides": {
+    "canvas": "^3.2.3"
+  },
   "scripts": {
     "vite": "vite",
     "web:dev": "vite --host 0.0.0.0",
