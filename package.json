@@ -2,7 +2,7 @@
   "name": "yishe-tool",
   "private": true,
   "type": "module",
-  "version": "0.0.88",
+  "version": "0.0.89",
   "packageManager": "npm@10.9.2",
   "engines": {
     "node": ">=22.12.0"
@@ -13,7 +13,7 @@
   "scripts": {
     "vite": "vite",
     "web:dev": "vite --host 0.0.0.0",
-    "build": "node --max_old_space_size=1024000 ./node_modules/vite/bin/vite.js build",
+    "build": "node --max_old_space_size=6144 ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
     "dev": "vite --host 0.0.0.0",
     "typecheck": "vue-tsc --noEmit",
@@ -139,6 +139,7 @@
     "@vitejs/plugin-vue": "^6.0.5",
     "@vitejs/plugin-vue-jsx": "^5.1.5",
     "autoprefixer": "^10.4.16",
+    "esbuild": "^0.28.2",
     "postcss": "^8.4.31",
     "sass": "^1.69.5",
     "tailwindcss": "^3.3.5",

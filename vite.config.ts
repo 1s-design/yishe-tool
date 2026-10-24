@@ -15,8 +15,7 @@ import path from "path";
 import { resolve } from "path";
 import { fileURLToPath } from "node:url";
 import Components from "unplugin-vue-components/vite";
-// 编译文件支持旧游览器
-import legacy from "@vitejs/plugin-legacy";
+// import legacy from "@vitejs/plugin-legacy";
 // import AntdvResolver from 'antdv-component-resolver'
 import svgLoader from "vite-svg-loader";
 import vueJsx from "@vitejs/plugin-vue-jsx";
@@ -37,8 +36,22 @@ export default defineConfig(({ mode }) => {
   const build = {
     outDir: "www",
     assetsDir: "./",
+    minify: "esbuild",
     rollupOptions: {
       input: resolve(dirname, "index.html"),
+      output: {
+        manualChunks(id: string) {
+          if (id.includes("node_modules")) {
+            if (id.includes("plotly")) return "plotly";
+            if (id.includes("three")) return "three";
+            if (id.includes("echarts")) return "echarts";
+            if (id.includes("@rdkit")) return "rdkit";
+            if (id.includes("mermaid")) return "mermaid";
+            if (id.includes("vega")) return "vega";
+            return "vendor";
+          }
+        },
+      },
     },
   };
 
@@ -50,7 +63,6 @@ export default defineConfig(({ mode }) => {
       Components({
         dts: "components.d.ts",
       }),
-      legacy(),
       vue({
         template: {},
       }),
