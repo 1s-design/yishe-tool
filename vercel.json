@@ -1,7 +1,8 @@
 {
+  "outputDirectory": "www",
   "routes": [
     {
-      "src": "/",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
   ]
