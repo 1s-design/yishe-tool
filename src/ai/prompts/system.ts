@@ -88,6 +88,7 @@ function buildResourceGuidePrompt(): string {
 - 不兼容当前配色、背景和印刷方式的素材应放弃，不要为了满足“使用素材”而破坏设计
 - resource.searchFont 返回 id/url/name 后，HTML 设计直接通过 htmlBindings.font 使用，不要再调用 canvas.loadFont 请求字体详情
 - 外部图片和字体用于 HTML 时，需要放进 canvas.addHtml 的 htmlBindings，不要直接把 URL 写进 htmlContent
+- **图片尺寸调整任务必须用 canvas.fitImage**：当用户要把某张图片按目标宽高铺到画布上（裁剪 / 填充 / 拉伸）时，直接调用 canvas.fitImage（参数 url、width、height、mode、positionX/Y、fillType），不要手写 object-fit 的 HTML，也不要为此调用 canvas.addHtml
 - 图片引用：{{image.xxx.url}}；字体引用：{{font.xxx.family}}`;
 }
 

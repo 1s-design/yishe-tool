@@ -285,7 +285,11 @@ export function prepareHtmlArtworkOptions(
   return prepared;
 }
 
-export function updateExistingHtmlArtwork(ctx: any, options: Record<string, any>) {
+export function updateExistingHtmlArtwork(
+  ctx: any,
+  options: Record<string, any>,
+  settings: { skipFragmentCheck?: boolean } = {},
+) {
   const htmlChildren = ctx
     .getCanvasChildren()
     .filter((child: any) => child.type === "html");
@@ -314,7 +318,9 @@ export function updateExistingHtmlArtwork(ctx: any, options: Record<string, any>
     !nextHtml ||
     nextHtml.length < 200 ||
     (!/<(div|section|main|p|svg)\b/i.test(nextHtml) && !/<[a-z][^>]*>.*?<\/[a-z]+>/i.test(nextHtml));
-  if (looksLikeFragment) {
+  // 程序化 operation（如 canvas.fitImage）生成的就是完整画面，已由调用方保证，
+  // 短小但完整的模板（例如单纯一张拉伸图）不应被片段检查误杀。
+  if (looksLikeFragment && !settings.skipFragmentCheck) {
     return {
       id: target.id,
       rejected: true,

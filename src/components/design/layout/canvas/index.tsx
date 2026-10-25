@@ -269,6 +269,9 @@ let lastKnownCanvasSize = {
   unit: "px",
 };
 
+// 固定 HTML 主元素的默认占位内容（同时用于：缺失时插入、内容为空时补回）
+const DEFAULT_HTML_CONTENT = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #fafafa; color: #666; font-family: sans-serif; font-size: 24px;">\n  主 HTML 模板\n</div>`;
+
 watch(
   canvasStickerOptions,
   (newVal) => {
@@ -302,7 +305,7 @@ watch(
       const defaultHtml = {
         id: "this_is_html_id",
         type: "html",
-        htmlContent: `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #fafafa; color: #666; font-family: sans-serif; font-size: 24px;">\n  主 HTML 模板\n</div>`,
+        htmlContent: DEFAULT_HTML_CONTENT,
         htmlBindings: {},
         htmlTemplateFields: [],
         htmlTemplateDefaultBindings: {},
@@ -340,6 +343,12 @@ watch(
     } else {
       const htmlChild = children.find((c) => c.id === "this_is_html_id");
       if (htmlChild) {
+        // 代码画布内容为空时补回默认占位模板：
+        // 覆盖「编辑器清空后保存」「加载了旧的空内容贴纸」等场景，
+        // 否则打开代码画布会看到空白。
+        if (!String((htmlChild as any).htmlContent || "").trim()) {
+          htmlChild.htmlContent = DEFAULT_HTML_CONTENT;
+        }
         if (!htmlChild.filter) {
           htmlChild.filter = {
             blur: { value: 0, unit: "px" },

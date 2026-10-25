@@ -1701,11 +1701,17 @@ async function runAgentLoop(
     }
 
     // 计划已全部完成但 LLM 仍返回了工具调用，拦截并结束
+    // 仅当本次调用都是"已经成功执行过的工具"时才拦截，避免把计划未覆盖的
+    // 后续步骤（如 canvas.clear / canvas.addHtml）当成重复调用丢弃
     if (plan && plan.steps.length > 0) {
       const allDone = plan.steps.every(
         (s) => s.status === "done" || s.status === "failed",
       );
-      if (allDone && getIncompleteBatchReason() === "") {
+      const allRepeated = toolCalls.every(
+        (c) =>
+          (toolExecutionCounts.get(resolveAIToolName(c.function.name)) || 0) > 0,
+      );
+      if (allDone && allRepeated && getIncompleteBatchReason() === "") {
         console.log(
           "[Agent] Plan already completed but LLM returned tool calls, ignoring and ending",
         );
@@ -2165,6 +2171,7 @@ async function runAgentLoop(
           referenceImage &&
           result?.success &&
           (toolName === "canvas.addHtml" ||
+            toolName === "canvas.fitImage" ||
             (toolName === "canvas.addChild" && args?.type === "html"))
         ) {
           referenceArtworkCreated = true;
@@ -2173,6 +2180,7 @@ async function runAgentLoop(
         if (
           result?.success &&
           (toolName === "canvas.addHtml" ||
+            toolName === "canvas.fitImage" ||
             (toolName === "canvas.addChild" && args?.type === "html")) &&
           !allowPostArtworkContinuation
         ) {
