@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-10-25T01:48:03.980Z",
+  "server": "http://localhost:1520",
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "summary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "totalElapsedMs": 706
+  },
+  "results": [
+    {
+      "category": "URL图-cover裁剪",
+      "prompt": "清空画布，把画布尺寸设置为 800×800 像素，然后把这张图片 https://picsum.photos/1200/800 以 cover 模式填满整个画布（等比缩放并居中裁剪，不要变形）",
+      "success": false,
+      "elapsedMs": 365,
+      "messageCount": 1,
+      "toolCallsUsed": [],
+      "issues": [
+        "Agent 错误: 当前设计实例正在执行其他指令"
+      ],
+      "issueTypes": [
+        "agent"
+      ],
+      "toolErrors": [],
+      "messageStats": {
+        "user": 1,
+        "assistant": 0,
+        "tool": 0
+      },
+      "totalDurationMs": 0,
+      "conversation": [
+        {
+          "id": "1792892867971-qyf6ce6",
+          "role": "user",
+          "content": "请回复一句：设计工具 agent 自测成功。不要修改画布。",
+          "timestamp": 1792892867971
+        }
+      ],
+      "agentStatus": {
+        "status": "thinking",
+        "plan": null,
+        "error": null
+      }
+    },
+    {
+      "category": "搜索图-contain模糊填充",
+      "prompt": "搜索一张猫咪图片，把画布设置为 900×600，用 contain 模式把这张猫咪图片完整放进画布，留白区域用这张图的模糊放大背景填充",
+      "success": false,
+      "elapsedMs": 341,
+      "messageCount": 1,
+      "toolCallsUsed": [],
+      "issues": [
+        "Agent 错误: 当前设计实例正在执行其他指令"
+      ],
+      "issueTypes": [
+        "agent"
+      ],
+      "toolErrors": [],
+      "messageStats": {
+        "user": 1,
+        "assistant": 0,
+        "tool": 0
+      },
+      "totalDurationMs": 0,
+      "conversation": [
+        {
+          "id": "1792892867971-qyf6ce6",
+          "role": "user",
+          "content": "请回复一句：设计工具 agent 自测成功。不要修改画布。",
+          "timestamp": 1792892867971
+        }
+      ],
+      "agentStatus": {
+        "status": "thinking",
+        "plan": null,
+        "error": null
+      }
+    }
+  ]
+}

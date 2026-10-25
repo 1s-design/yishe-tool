@@ -12,6 +12,7 @@ import {
   resolveAIToolName,
 } from "@/ai/shared/tools";
 import { canvasStickerOptions } from "@/components/design/layout/canvas";
+import { whitelistUserProvidedUrls } from "@/ai/services/resource";
 import type {
   AgentMessage,
   AgentState,
@@ -399,6 +400,9 @@ export const designAgent = {
       console.warn("Agent is busy");
       return;
     }
+
+    // 用户直给的图片 URL 加入白名单，避免 add-html 虚假 URL 护栏误判
+    whitelistUserProvidedUrls(userMessage);
 
     addMessage({ role: "user", content: userMessage });
     agentState.status = "thinking";

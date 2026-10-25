@@ -6,7 +6,7 @@ import { isAiPanelOpen } from "../store";
 import { buildSystemPrompt, buildImageAnalysisPrompt } from "../prompts/system";
 import { buildKnowledgePrompt } from "../knowledge";
 import { buildMatchedSkillPrompt } from "../skills";
-import { resourceService } from "../services/resource";
+import { resourceService, whitelistUserProvidedUrls } from "../services/resource";
 import { captureCanvasForAI, getCanvasStateSummary } from "../capture";
 import {
   buildAITools,
@@ -1115,6 +1115,9 @@ async function runAgentLoop(
   options: RunAgentLoopOptions = {},
 ) {
   const ctx = createDesignOperationContext();
+
+  // 用户直给的图片 URL 加入白名单，避免 add-html 虚假 URL 护栏误判
+  whitelistUserProvidedUrls(userMessage);
   const allowInteraction = options.allowInteraction !== false;
   const deliveryHandledExternally =
     options.deliveryHandledExternally === true;

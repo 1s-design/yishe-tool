@@ -26,6 +26,15 @@ export function isRecentImageUrl(url: string): boolean {
   return recentImageUrls.has(url);
 }
 
+// 用户消息中显式给出的 URL 视为可信来源（非 AI 编造），加入图片白名单，
+// 否则 add-html 的虚假 URL 护栏会把用户直给的图片地址误判为幻觉
+export function whitelistUserProvidedUrls(text: string): void {
+  const urls = String(text || "").match(/https?:\/\/[^\s"'<>，。；）)】\]]+/gi);
+  if (urls?.length) {
+    addRecentImageUrls(urls);
+  }
+}
+
 export function getRecentImageUrls(): string[] {
   return Array.from(recentImageUrls);
 }
