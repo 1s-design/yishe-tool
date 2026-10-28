@@ -168,6 +168,25 @@ function isSystemMagicVariablePath(path = "") {
   return path.startsWith("canvas.") || path.startsWith("element.");
 }
 
+/**
+ * 可嵌入的「子组件」魔法变量前缀表。
+ * 唯一数据源：字段类型推断（inferHtmlTemplateFieldType）与渲染替换（resolveHtmlMagicVariables）
+ * 必须共用同一份，否则会出现「变量被识别、组件也建了，但渲染时当普通值输出成空字符串」——
+ * 表现就是某个组件（例如 codeBlock 代码块）在画布上凭空消失。
+ */
+const HTML_CHILD_PREFIXES = [
+  "child", "threejs", "threeScene", "echart", "wordCloud", "barcode", "qrcode",
+  "figlet", "math", "mermaid", "graphviz", "dagreGraph", "roughShape", "chartjs",
+  "frappeChart", "chartXkcd", "plotlyChart", "vegaLite", "waveform", "markmapChart",
+  "particlesEffect", "confetti", "trianglify", "starChart", "vexFlow", "cytoscape",
+  "cytoscapeGraph", "vueDataUi", "d3", "d3Cloud", "opentypeText", "simplexNoise",
+  "molecule", "threeMol", "abcNotation", "rawCanvas", "codeBlock",
+];
+
+function isChildMagicVariablePath(path = "") {
+  return HTML_CHILD_PREFIXES.some((prefix) => path.startsWith(prefix + "."));
+}
+
 function inferHtmlTemplateFieldType(path = ""): HtmlTemplateFieldType | null {
   if (path.startsWith("text.")) {
     return "text";
@@ -185,19 +204,8 @@ function inferHtmlTemplateFieldType(path = ""): HtmlTemplateFieldType | null {
     return "font";
   }
 
-  // Check child type prefixes
-  const childPrefixes = [
-    "child", "threejs", "threeScene", "echart", "wordCloud", "barcode", "qrcode", 
-    "figlet", "math", "mermaid", "graphviz", "dagreGraph", "roughShape", "chartjs", 
-    "frappeChart", "chartXkcd", "plotlyChart", "vegaLite", "waveform", "markmapChart", 
-    "particlesEffect", "confetti", "trianglify", "starChart", "vexFlow", "cytoscape", 
-    "cytoscapeGraph", "vueDataUi", "d3", "d3Cloud", "opentypeText", "simplexNoise", 
-    "molecule", "threeMol", "abcNotation", "rawCanvas", "codeBlock"
-  ];
-  for (const prefix of childPrefixes) {
-    if (path.startsWith(prefix + ".")) {
-      return "child";
-    }
+  if (isChildMagicVariablePath(path)) {
+    return "child";
   }
 
   if (path.startsWith("html.")) {
@@ -530,19 +538,7 @@ export function resolveHtmlMagicVariables(templateText = "", context: Record<str
     const value = getValueByPath(context, trimmedPath);
 
     // Support child magic variables shorthand (e.g. {{child.sales}} or {{echart.sales}} -> placeholder div)
-    const isChildVar = (() => {
-      const childPrefixes = [
-        "child", "threejs", "threeScene", "echart", "wordCloud", "barcode", "qrcode", 
-        "figlet", "math", "mermaid", "graphviz", "dagreGraph", "roughShape", "chartjs", 
-        "frappeChart", "chartXkcd", "plotlyChart", "vegaLite", "waveform", "markmapChart", 
-        "particlesEffect", "confetti", "trianglify", "starChart", "vexFlow", "cytoscape", 
-        "cytoscapeGraph", "vueDataUi", "d3", "d3Cloud", "opentypeText", "simplexNoise", 
-        "molecule", "threeMol", "abcNotation", "rawCanvas"
-      ];
-      return childPrefixes.some((prefix) => trimmedPath.startsWith(prefix + "."));
-    })();
-
-    if (isChildVar && value && typeof value === "object" && value.id) {
+    if (isChildMagicVariablePath(trimmedPath) && value && typeof value === "object" && value.id) {
       return `<div data-s1-child-id="${value.id}" class="s1-child-placeholder" style="width:100%;height:100%;display:block;position:relative;"></div>`;
     }
 

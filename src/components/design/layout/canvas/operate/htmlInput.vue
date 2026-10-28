@@ -239,6 +239,12 @@ const editorError = ref("");
 const draftValue = ref("");
 const editorContainerRef = ref<HTMLElement | null>(null);
 const editorInstance = shallowRef<EditorView | null>(null);
+/**
+ * 编辑器初始化「代次」。
+ * 打开弹窗是异步的（nextTick + rAF 后才 mount），期间用户可能已经关掉弹窗；
+ * 用代次号丢弃过期的初始化回调，避免往一个已被销毁的容器里挂载编辑器。
+ */
+let editorGeneration = 0;
 
 // Removed tab-related state and computed properties since we use a simplified sidebar now
 
@@ -544,12 +550,32 @@ function syncEditorValue(value: string) {
   refreshEditor();
 }
 
+/**
+ * 销毁 CodeMirror 实例并清空容器。
+ * 关闭弹窗必须调用：radix-vue 的 DialogContent 关闭时会整体卸载，
+ * 容器 DOM 连同 EditorView 一起被移除，但 editorInstance 还持有引用，
+ * 下次打开时新容器是空的，旧实例挂在孤儿 DOM 上 —— 表现就是「代码不见了」。
+ */
+function destroyEditor() {
+  if (editorInstance.value) {
+    editorInstance.value.destroy();
+    editorInstance.value = null;
+  }
+  if (editorContainerRef.value) {
+    editorContainerRef.value.innerHTML = "";
+  }
+}
+
 function mountEditor() {
   if (!editorContainerRef.value) return;
 
   if (editorInstance.value) {
-    syncEditorValue(draftValue.value);
-    return;
+    // 只有当实例仍然挂在当前容器上时才复用；否则它是上一轮被卸载留下的孤儿实例，需要重建
+    if (editorInstance.value.dom?.parentElement === editorContainerRef.value) {
+      syncEditorValue(draftValue.value);
+      return;
+    }
+    destroyEditor();
   }
 
   const extensions: Extension[] = [
@@ -604,6 +630,8 @@ function openEditor() {
 }
 
 async function initializeEditor() {
+  const generation = ++editorGeneration;
+
   loadingEditor.value = true;
   editorError.value = "";
 
@@ -613,6 +641,9 @@ async function initializeEditor() {
     // 再等一帧确保 dialog 容器有实际尺寸
     await new Promise((r) => requestAnimationFrame(r));
 
+    // 期间弹窗被关闭或重新打开过，这次初始化已过期
+    if (generation !== editorGeneration) return;
+
     if (!editorContainerRef.value) {
       throw new Error("Editor container not available");
     }
@@ -620,9 +651,13 @@ async function initializeEditor() {
     mountEditor();
   } catch (error) {
     console.error("[htmlInput] failed to initialize CodeMirror 6", error);
-    editorError.value = `编辑器加载失败：${error instanceof Error ? error.message : "请稍后重试。"}`;
+    if (generation === editorGeneration) {
+      editorError.value = `编辑器加载失败：${error instanceof Error ? error.message : "请稍后重试。"}`;
+    }
   } finally {
-    loadingEditor.value = false;
+    if (generation === editorGeneration) {
+      loadingEditor.value = false;
+    }
   }
 }
 
@@ -632,10 +667,7 @@ function handleDialogOpen() {
 
 function retryLoadEditor() {
   // Destroy existing instance and reinitialize
-  if (editorInstance.value) {
-    editorInstance.value.destroy();
-    editorInstance.value = null;
-  }
+  destroyEditor();
   initializeEditor();
 }
 
@@ -689,7 +721,13 @@ watch(dialogVisible, (visible) => {
   if (visible) {
     // 程序化打开时 Dialog 不会 emit update:open，必须在这里挂载编辑器
     handleDialogOpen();
+    return;
   }
+
+  // 关闭：作废旧代次并销毁实例。
+  // DialogContent 已被卸载，容器 DOM 没了，留着实例会导致下次打开时编辑器空白。
+  editorGeneration += 1;
+  destroyEditor();
 });
 
 watch(
@@ -702,13 +740,7 @@ watch(
 );
 
 onBeforeUnmount(() => {
-  if (editorInstance.value) {
-    editorInstance.value.destroy();
-    editorInstance.value = null;
-  }
-  if (editorContainerRef.value) {
-    editorContainerRef.value.innerHTML = "";
-  }
+  destroyEditor();
 });
 </script>
 

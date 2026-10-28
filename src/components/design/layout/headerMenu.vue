@@ -87,8 +87,11 @@
             <span>{{ autoCreateButtonLabel }}</span>
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">自动制作</TooltipContent>
+        <TooltipContent side="bottom">自动制作配置与历史</TooltipContent>
       </Tooltip>
+
+      <!-- 挂机工位状态胶囊 -->
+      <AutoStationCapsule />
 
       <!-- 共享屏幕 -->
       <Tooltip>
@@ -183,6 +186,7 @@ import { canvasStreamService } from "@/services/canvasStream";
 import { showAutocreateModal } from "./autocreate/index";
 import { batchProgress } from "@/ai/agent/batch";
 import { getAgentPhaseLabel } from "@/ai/agent/presentation";
+import AutoStationCapsule from "./AutoStationCapsule.vue";
 
 const showDownloadModal = ref(false);
 

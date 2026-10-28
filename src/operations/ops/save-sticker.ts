@@ -376,6 +376,11 @@ registerOperation({
       customStickerId: requestedCustomStickerId,
       autoImportToLibrary = false,
       materialFolderId,
+      jobId,
+      inspirationId,
+      parentId,
+      revision,
+      reviewStatus,
     } = params;
     // 批量创作的每一张图都必须创建独立的 custom_sticker，不能沿用上一张的编辑 ID。
     const editingCustomStickerId = batchTaskState
@@ -515,7 +520,7 @@ registerOperation({
       const canvasData = JSON.parse(JSON.stringify(canvasStickerOptions.value));
       const stickerMeta = buildStickerRecordMeta(canvasData, provenance);
 
-      const payload = {
+      const payload: any = {
         url: cos.url,
         suffix: "png",
         name: name || "未命名贴纸",
@@ -526,6 +531,11 @@ registerOperation({
         aspectRatio: exportHeight ? Number((exportWidth / exportHeight).toFixed(6)) : undefined,
         folderId: folderId ?? currentEditingCustomStickerFolderId.value ?? null,
         meta: stickerMeta,
+        jobId: jobId || undefined,
+        inspirationId: inspirationId || undefined,
+        parentId: parentId || undefined,
+        revision: typeof revision === "number" ? revision : undefined,
+        reviewStatus: reviewStatus || (jobId || inspirationId ? "pending" : undefined),
       };
       const savedRecord: any = await Promise.race([
         editingCustomStickerId

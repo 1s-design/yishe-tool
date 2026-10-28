@@ -1445,6 +1445,26 @@ async function handleRemoteCommand(data: any) {
         result.canvasState = stateAfter?.data || null;
         break;
       }
+      case "executeOperation":
+      case "execute-operation": {
+        const { executeOperation } = await import("@/operations");
+        const { createDesignOperationContext } = await import("@/operations");
+        const ctx = createDesignOperationContext();
+        const opName = String(
+          payload?.operation || payload?.toolName || payload?.name || "",
+        ).trim();
+        const opParams = payload?.parameters || payload?.params || payload?.args || {};
+        const timeoutMs = Number(payload?.timeoutMs) || 45_000;
+        const opResult = await runWithTimeout(
+          executeOperation(opName, opParams, ctx),
+          timeoutMs,
+        );
+        result.success = opResult.success;
+        result.data = opResult.data;
+        result.message = opResult.message;
+        result.error = opResult.error;
+        break;
+      }
       case "timeline": {
         // Agent 时间线（内存级）：payload.action = get | clear | summary
         const tl = await import("@/ai/agent-timeline");
