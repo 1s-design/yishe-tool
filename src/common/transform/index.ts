@@ -135,12 +135,37 @@ export async function htmlToPngFile(html, name = '') {
 
 
 
-export const canvasToFile = (canvas: HTMLCanvasElement, name = 'canvas.png'): Promise<File> => {
-    return new Promise((resolve, reject) => {
-        if (!canvas || canvas.width === 0 || canvas.height === 0) {
-            reject(new Error('画布为空或尺寸为 0，无法导出图片'))
-            return
+export const canvasToFile = async (
+    canvas: HTMLCanvasElement,
+    name = 'canvas.png',
+    options: { pngColors?: number; fallbackNative?: boolean } = {}
+): Promise<File> => {
+    if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        throw new Error('画布为空或尺寸为 0，无法导出图片')
+    }
+
+    const { pngColors = 256, fallbackNative = true } = options
+
+    try {
+        const UPNGModule = await import('upng-js')
+        const UPNG = (UPNGModule as any).default || UPNGModule
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            // cnum: 256 为高质量 8-bit 色盘量化（保留完整 Alpha 透明通道，体积暴降 70%~85%）
+            const pngBuffer = UPNG.encode([imgData.data.buffer], canvas.width, canvas.height, pngColors)
+            const blob = new Blob([pngBuffer], { type: 'image/png' })
+            console.log(
+                `[贴纸PNG压缩] 导出贴纸: ${name}, 尺寸: ${canvas.width}x${canvas.height}, 压缩后体积: ${(blob.size / 1024).toFixed(1)} KB`
+            )
+            return new File([blob], name, { type: 'image/png' })
         }
+    } catch (err) {
+        console.warn('[贴纸PNG压缩] UPNG 压缩失败，回退原生 toBlob:', err)
+        if (!fallbackNative) throw err
+    }
+
+    return new Promise((resolve, reject) => {
         canvas.toBlob((blob) => {
             if (!blob || blob.size === 0) {
                 reject(new Error('画布导出失败：toBlob 返回空数据'))
@@ -148,7 +173,7 @@ export const canvasToFile = (canvas: HTMLCanvasElement, name = 'canvas.png'): Pr
             }
             resolve(new File([blob], name, { type: 'image/png' }))
         }, 'image/png')
-    });
+    })
 }
 
 export const imageDataToFile = (imageData) => {
