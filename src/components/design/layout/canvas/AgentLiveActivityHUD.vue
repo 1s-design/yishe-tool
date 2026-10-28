@@ -1,6 +1,6 @@
 <template>
   <div class="agent-live-hud-root">
-    <!-- ================= 全局视口科技边框 (全屏高亮覆盖层) ================= -->
+    <!-- ================= 全局视口极简扁平高质感边框 ================= -->
     <transition name="fade-border">
       <div
         v-if="isVisible"
@@ -8,72 +8,46 @@
         :class="{
           'global-screen-border--remote': remoteAgentState.active,
           'global-screen-border--station': !remoteAgentState.active && isStationBusy,
-          'is-executing': remoteAgentState.isExecuting,
         }"
       >
-        <!-- 边缘扫描激光线 (正在执行指令时循环跑动) -->
-        <div v-if="remoteAgentState.isExecuting" class="laser-scanner laser-scanner--top" />
-        <div v-if="remoteAgentState.isExecuting" class="laser-scanner laser-scanner--bottom" />
+        <!-- 四角极简精细发丝角标 (无多余文字换行) -->
+        <div class="hud-corner-mark hud-corner-mark--tl"></div>
+        <div class="hud-corner-mark hud-corner-mark--tr"></div>
+        <div class="hud-corner-mark hud-corner-mark--bl"></div>
+        <div class="hud-corner-mark hud-corner-mark--br"></div>
 
-        <!-- 四角 HUD 科技括号与状态标记 -->
-        <div class="hud-corner hud-corner--tl">
-          <div class="hud-corner-bracket"></div>
-          <div class="hud-corner-tag">
-            <span class="hud-dot hud-dot--pulse"></span>
-            <span class="hud-tag-title">外部 AGENT 远程接管</span>
-            <span class="hud-tag-sub">{{ remoteAgentState.caller }}</span>
-          </div>
+        <!-- 极简扁平视口微标记 (单行无折行) -->
+        <div class="viewport-micro-badge viewport-micro-badge--tl">
+          <span class="micro-dot" :class="{ 'is-active': remoteAgentState.isExecuting }"></span>
+          <span class="micro-text font-mono">AGENT SESSION ACTIVE</span>
         </div>
 
-        <div class="hud-corner hud-corner--tr">
-          <div class="hud-corner-bracket"></div>
-          <div class="hud-corner-tag text-right">
-            <span class="hud-tag-title">WS 实时协议受控</span>
-            <span class="hud-tag-sub font-mono">累计 #{{ remoteAgentState.totalOps }} 步</span>
-          </div>
-        </div>
-
-        <div class="hud-corner hud-corner--bl">
-          <div class="hud-corner-bracket"></div>
-          <div class="hud-corner-tag">
-            <span class="hud-tag-title font-mono">1S DESIGN ENGINE</span>
-            <span class="hud-tag-sub">原生 Canvas 渲染链路</span>
-          </div>
-        </div>
-
-        <div class="hud-corner hud-corner--br">
-          <div class="hud-corner-bracket"></div>
-          <div class="hud-corner-tag text-right">
-            <span class="hud-tag-title font-mono">{{ remoteAgentState.lastOp || "READY" }}</span>
-            <span class="hud-tag-sub font-mono">{{ remoteAgentState.lastOpDurationMs ? remoteAgentState.lastOpDurationMs + 'ms' : 'ONLINE' }}</span>
-          </div>
+        <div class="viewport-micro-badge viewport-micro-badge--tr">
+          <span class="micro-text font-mono">1S ENGINE · LIVE SYNC</span>
         </div>
       </div>
     </transition>
 
-    <!-- ================= 顶部居中浮动灵动岛 HUD 胶囊 ================= -->
+    <!-- ================= 顶部居中扁平质感灵动胶囊 HUD ================= -->
     <transition name="hud-slide">
       <div v-if="isVisible" class="agent-floating-island">
-        <!-- 分支 1: 外部 Agent (MCP / Claude / Antigravity) 操控中 -->
-        <div v-if="remoteAgentState.active" class="island-capsule island-capsule--remote">
-          <!-- 左侧状态图标与身份 -->
-          <div class="capsule-identity">
+        <!-- 分支 1: 外部 Agent (MCP / Antigravity) 操控 -->
+        <div v-if="remoteAgentState.active" class="flat-capsule flat-capsule--remote">
+          <!-- 身份指示 -->
+          <div class="flat-capsule__cell flat-capsule__identity">
             <span
-              class="pulse-indicator"
-              :class="{ 'is-executing': remoteAgentState.isExecuting }"
+              class="state-dot state-dot--purple"
+              :class="{ 'is-pulsing': remoteAgentState.isExecuting }"
             ></span>
-            <span class="capsule-icon">🤖</span>
-            <span class="capsule-caller">{{ remoteAgentState.caller }}</span>
-            <span class="capsule-badge capsule-badge--purple">MCP</span>
+            <span class="identity-name">{{ remoteAgentState.caller || '外部 Agent' }}</span>
           </div>
 
-          <div class="capsule-divider"></div>
+          <div class="flat-capsule__divider"></div>
 
-          <!-- 核心操作信息：中文标签 + 代码指令 + 详细参数摘要 -->
-          <div class="capsule-action">
-            <span class="action-icon">{{ currentOpIcon }}</span>
-            <span class="action-label">{{ remoteAgentState.lastOpLabel || "设计操作" }}</span>
-            <code class="action-code">{{ remoteAgentState.lastOp || "canvas.eval" }}</code>
+          <!-- 动作与指令 -->
+          <div class="flat-capsule__cell flat-capsule__action">
+            <span class="action-title">{{ remoteAgentState.lastOpLabel || '设计操作' }}</span>
+            <code class="action-code font-mono">{{ remoteAgentState.lastOp || 'canvas.eval' }}</code>
             <span
               v-if="remoteAgentState.lastOpParamsSummary"
               class="action-param-pill"
@@ -83,49 +57,52 @@
             </span>
           </div>
 
-          <div class="capsule-divider"></div>
+          <div class="flat-capsule__divider"></div>
 
-          <!-- 右侧执行状态、耗时与步数 -->
-          <div class="capsule-status-group">
-            <!-- 执行中 vs 完成状态徽章 -->
+          <!-- 状态徽章与步数 -->
+          <div class="flat-capsule__cell flat-capsule__status-group">
             <span
               v-if="remoteAgentState.isExecuting"
-              class="status-pill status-pill--executing"
+              class="flat-badge flat-badge--executing"
             >
-              <span class="mini-spinner">⚡</span> 执行中
+              <span class="mini-spinner"></span>
+              执行中
             </span>
             <span
               v-else-if="remoteAgentState.recentOps[0]?.success"
-              class="status-pill status-pill--success"
+              class="flat-badge flat-badge--success"
             >
-              ✓ 成功 <template v-if="remoteAgentState.lastOpDurationMs">{{ remoteAgentState.lastOpDurationMs }}ms</template>
+              ✓ 成功
+              <template v-if="remoteAgentState.lastOpDurationMs">
+                {{ remoteAgentState.lastOpDurationMs }}ms
+              </template>
             </span>
             <span
               v-else-if="remoteAgentState.recentOps[0]?.success === false"
-              class="status-pill status-pill--error"
+              class="flat-badge flat-badge--error"
             >
               ✕ 异常
             </span>
 
-            <span class="step-tag font-mono">#{{ remoteAgentState.totalOps }}步</span>
+            <span class="step-counter font-mono">#{{ remoteAgentState.totalOps }}步</span>
 
-            <!-- 展开操作详细链路抽屉 -->
+            <!-- 展开链路抽屉按钮 -->
             <button
               type="button"
-              class="action-btn action-btn--toggle"
+              class="flat-btn flat-btn--drawer"
               :class="{ 'is-active': isDrawerOpen }"
               @click="isDrawerOpen = !isDrawerOpen"
-              title="查看 Agent 完整操作记录与耗时"
+              title="查看执行链路详情"
             >
-              <span>审计链路</span>
-              <span class="badge-count">{{ remoteAgentState.recentOps.length }}</span>
-              <span class="chevron">{{ isDrawerOpen ? '▲' : '▼' }}</span>
+              <span>链路</span>
+              <span class="flat-btn__count font-mono">{{ remoteAgentState.recentOps.length }}</span>
+              <span class="flat-btn__arrow">{{ isDrawerOpen ? '▲' : '▼' }}</span>
             </button>
 
-            <!-- 主动收起 HUD 按钮 -->
+            <!-- 关闭 HUD -->
             <button
               type="button"
-              class="action-btn action-btn--close"
+              class="flat-btn flat-btn--close"
               @click="handleDismiss"
               title="收起 HUD"
             >
@@ -134,41 +111,36 @@
           </div>
         </div>
 
-        <!-- 分支 2: 自动制作挂机工位正在创作 -->
-        <div v-else-if="isStationBusy" class="island-capsule island-capsule--station">
-          <div class="capsule-identity">
-            <span class="pulse-indicator pulse-indicator--emerald"></span>
-            <span class="capsule-spinner">⚙</span>
-            <span class="capsule-caller">自动挂机工位</span>
-            <span
-              class="capsule-badge"
-              :class="stationState.currentJob?.type === 'rework' ? 'capsule-badge--amber' : 'capsule-badge--emerald'"
-            >
-              {{ stationState.currentJob?.type === 'rework' ? '返工微调' : stationState.currentJob?.type === 'variant' ? '持续变体' : '新稿生产' }}
+        <!-- 分支 2: 自动挂机工位 -->
+        <div v-else-if="isStationBusy" class="flat-capsule flat-capsule--station">
+          <div class="flat-capsule__cell flat-capsule__identity">
+            <span class="state-dot state-dot--emerald is-pulsing"></span>
+            <span class="identity-name">自动工位</span>
+            <span class="station-mode-tag">
+              {{ stationState.currentJob?.type === 'rework' ? '返工微调' : '批量生产' }}
             </span>
           </div>
 
-          <div class="capsule-divider"></div>
+          <div class="flat-capsule__divider"></div>
 
-          <div class="capsule-action">
+          <div class="flat-capsule__cell flat-capsule__action">
             <span class="station-job-title" :title="stationState.currentJob?.inspiration?.title">
               {{ stationState.currentJob?.inspiration?.title || "新灵感" }}
             </span>
-            <span class="station-stage-text">
-              {{ stationState.currentStage || "AI 排版制作中..." }}
+            <span class="station-stage-desc">
+              {{ stationState.currentStage || "制作中..." }}
             </span>
           </div>
 
-          <div class="capsule-divider"></div>
+          <div class="flat-capsule__divider"></div>
 
-          <div class="capsule-status-group">
-            <span class="station-heartbeat font-mono" title="租约心跳倒计时">
+          <div class="flat-capsule__cell flat-capsule__status-group">
+            <span class="station-hb-text font-mono">
               保活 {{ stationState.heartbeatRemaining }}s
             </span>
             <button
               type="button"
-              class="station-pause-btn"
-              title="暂停自动挂机"
+              class="flat-btn flat-btn--pause"
               @click="stopStation"
             >
               暂停
@@ -176,70 +148,74 @@
           </div>
         </div>
 
-        <!-- ================= 下拉展开的操作审计链路面板 ================= -->
+        <!-- ================= 展开的高质感极简操作审计面板 ================= -->
         <transition name="drawer-drop">
-          <div v-if="isDrawerOpen && remoteAgentState.recentOps.length > 0" class="audit-drawer">
-            <div class="audit-drawer__header">
-              <div class="audit-drawer__title">
-                <span class="audit-icon">📋</span>
-                <strong>Agent 操作审计追踪链路</strong>
-                <span class="audit-count">共 {{ remoteAgentState.totalOps }} 次调用</span>
+          <div v-if="isDrawerOpen && remoteAgentState.recentOps.length > 0" class="flat-drawer">
+            <div class="flat-drawer__header">
+              <div class="flat-drawer__title">
+                <span class="title-label">操作审计追踪</span>
+                <span class="title-count font-mono">共 {{ remoteAgentState.totalOps }} 步</span>
               </div>
-              <div class="audit-drawer__actions">
+              <div class="flat-drawer__actions">
                 <button
                   type="button"
-                  class="audit-btn audit-btn--clear"
+                  class="flat-drawer__btn"
                   @click="clearHistory"
-                  title="清空当前链路记录"
                 >
-                  清空记录
+                  清空
                 </button>
                 <button
                   type="button"
-                  class="audit-btn audit-btn--close"
+                  class="flat-drawer__btn flat-drawer__btn--primary"
                   @click="isDrawerOpen = false"
                 >
-                  收起面板
+                  收起
                 </button>
               </div>
             </div>
 
-            <div class="audit-drawer__list">
-              <div
-                v-for="(item, idx) in remoteAgentState.recentOps"
-                :key="item.id"
-                class="audit-item"
-                :class="{ 'audit-item--error': !item.success }"
-              >
-                <div class="audit-item__step">
-                  #{{ remoteAgentState.totalOps - idx }}
-                </div>
-                <div class="audit-item__time font-mono">
-                  {{ item.time }}
-                </div>
-                <div class="audit-item__op">
-                  <span class="audit-op-label">{{ item.opLabel || item.op }}</span>
-                  <code class="audit-op-code">{{ item.op }}</code>
-                </div>
-                <div class="audit-item__param" :title="item.paramsSummary || item.message">
-                  {{ item.paramsSummary || item.message || "无额外参数" }}
-                </div>
-                <div class="audit-item__duration font-mono">
-                  {{ item.durationMs ? item.durationMs + 'ms' : '<1ms' }}
-                </div>
-                <div class="audit-item__status">
-                  <span
-                    class="status-tag"
-                    :class="item.success ? 'status-tag--success' : 'status-tag--error'"
-                  >
-                    {{ item.success ? "成功" : "失败" }}
+            <div class="flat-drawer__table">
+              <div class="flat-table__header font-mono">
+                <span class="col-step">步数</span>
+                <span class="col-time">时间</span>
+                <span class="col-label">操作动作</span>
+                <span class="col-code">API 指令</span>
+                <span class="col-param">参数摘要</span>
+                <span class="col-dur">耗时</span>
+                <span class="col-status">状态</span>
+              </div>
+
+              <div class="flat-table__body">
+                <div
+                  v-for="(item, idx) in remoteAgentState.recentOps"
+                  :key="item.id"
+                  class="flat-table__row"
+                  :class="{ 'is-error': !item.success }"
+                >
+                  <span class="col-step font-mono">#{{ remoteAgentState.totalOps - idx }}</span>
+                  <span class="col-time font-mono">{{ item.time }}</span>
+                  <span class="col-label">{{ item.opLabel || item.op }}</span>
+                  <code class="col-code font-mono">{{ item.op }}</code>
+                  <span class="col-param" :title="item.paramsSummary || item.message">
+                    {{ item.paramsSummary || item.message || "无" }}
+                  </span>
+                  <span class="col-dur font-mono">
+                    {{ item.durationMs ? item.durationMs + 'ms' : '<1ms' }}
+                  </span>
+                  <span class="col-status">
+                    <span
+                      class="row-status-pill"
+                      :class="item.success ? 'is-success' : 'is-error'"
+                    >
+                      {{ item.success ? "成功" : "失败" }}
+                    </span>
                   </span>
                 </div>
               </div>
             </div>
 
-            <div class="audit-drawer__footer">
-              <span>● 1s 设计工具 WebSocket 直连通道正常 · 外部 Agent 原生接管已生效</span>
+            <div class="flat-drawer__footer font-mono">
+              <span>● WEBSOCKET REALTIME CHANNEL CONNECTED · 1S NATIVE CANVAS</span>
             </div>
           </div>
         </transition>
@@ -255,7 +231,6 @@ import {
   remoteAgentState,
   stopStation,
   dismissRemoteAgentHUD,
-  getOpFriendlyInfo,
 } from "@/ai/agent/auto-station";
 
 const isDrawerOpen = ref(false);
@@ -269,11 +244,6 @@ const isStationBusy = computed(() => {
 
 const isVisible = computed(() => {
   return remoteAgentState.active || isStationBusy.value;
-});
-
-const currentOpIcon = computed(() => {
-  const info = getOpFriendlyInfo(remoteAgentState.lastOp);
-  return info.icon || "⚡";
 });
 
 function handleDismiss() {
@@ -294,176 +264,108 @@ function clearHistory() {
   user-select: none;
 }
 
-/* ================= 全局视口科技边框 ================= */
+/* ================= 全局视口极简扁平高质感边框 ================= */
 .global-screen-border {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 99998;
   border-style: solid;
-  border-width: 3px;
+  border-width: 1.5px;
   box-sizing: border-box;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* 外部 Agent 操控边框: 梦幻紫霓虹 + 环境光晕 */
+/* 外部 Agent 操控边框: 哑光浅紫细线 + 微弱环境光 */
 .global-screen-border--remote {
-  border-color: rgba(168, 85, 247, 0.85);
-  box-shadow:
-    inset 0 0 0 1px rgba(236, 72, 153, 0.4),
-    inset 0 0 40px rgba(168, 85, 247, 0.3),
-    0 0 20px rgba(168, 85, 247, 0.4);
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: inset 0 0 24px rgba(168, 85, 247, 0.08);
 }
 
-.global-screen-border--remote.is-executing {
-  border-color: #c084fc;
-  box-shadow:
-    inset 0 0 0 2px rgba(236, 72, 153, 0.7),
-    inset 0 0 50px rgba(168, 85, 247, 0.45),
-    0 0 30px rgba(168, 85, 247, 0.6);
-  animation: border-breathe-purple 2.4s ease-in-out infinite;
-}
-
-/* 自动工位边框: 翡翠绿霓虹 */
+/* 自动工位边框: 哑光翡翠绿细线 */
 .global-screen-border--station {
-  border-color: rgba(16, 185, 129, 0.8);
-  box-shadow:
-    inset 0 0 0 1px rgba(52, 211, 153, 0.4),
-    inset 0 0 35px rgba(16, 185, 129, 0.25),
-    0 0 20px rgba(16, 185, 129, 0.35);
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: inset 0 0 24px rgba(16, 185, 129, 0.08);
 }
 
-@keyframes border-breathe-purple {
-  0%, 100% {
-    opacity: 0.88;
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 1;
-    filter: brightness(1.2);
-  }
-}
-
-/* 激光扫描线动画 */
-.laser-scanner {
+/* 四角极简精细发丝角标 */
+.hud-corner-mark {
   position: absolute;
-  height: 3px;
-  width: 25vw;
-  background: linear-gradient(90deg, transparent, #ec4899, #c084fc, #a855f7, transparent);
-  filter: drop-shadow(0 0 8px #a855f7);
-  animation: laser-sweep 2.8s linear infinite;
-}
-
-.laser-scanner--top {
-  top: -3px;
-  left: 0;
-}
-
-.laser-scanner--bottom {
-  bottom: -3px;
-  right: 0;
-  animation-direction: reverse;
-}
-
-@keyframes laser-sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(500%); }
-}
-
-/* 四角 HUD 科技括号 */
-.hud-corner {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  pointer-events: none;
-}
-
-.hud-corner-bracket {
-  width: 28px;
-  height: 28px;
-  border-color: rgba(216, 180, 254, 0.9);
+  width: 12px;
+  height: 12px;
+  border-color: rgba(255, 255, 255, 0.4);
   border-style: solid;
   border-width: 0;
 }
 
-.hud-corner--tl {
-  top: 10px;
-  left: 12px;
-}
-.hud-corner--tl .hud-corner-bracket {
-  border-top-width: 3px;
-  border-left-width: 3px;
+.hud-corner-mark--tl {
+  top: 6px;
+  left: 6px;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
 }
 
-.hud-corner--tr {
-  top: 10px;
-  right: 12px;
-  align-items: flex-end;
-}
-.hud-corner--tr .hud-corner-bracket {
-  border-top-width: 3px;
-  border-right-width: 3px;
+.hud-corner-mark--tr {
+  top: 6px;
+  right: 6px;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
 }
 
-.hud-corner--bl {
-  bottom: 10px;
-  left: 12px;
-}
-.hud-corner--bl .hud-corner-bracket {
-  border-bottom-width: 3px;
-  border-left-width: 3px;
+.hud-corner-mark--bl {
+  bottom: 6px;
+  left: 6px;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
 }
 
-.hud-corner--br {
-  bottom: 10px;
-  right: 12px;
-  align-items: flex-end;
-}
-.hud-corner--br .hud-corner-bracket {
-  border-bottom-width: 3px;
-  border-right-width: 3px;
+.hud-corner-mark--br {
+  bottom: 6px;
+  right: 6px;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
 }
 
-.hud-corner-tag {
-  margin-top: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.hud-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #a855f7;
-  display: inline-block;
-}
-
-.hud-dot--pulse {
-  animation: pulse-ring-purple 1.6s infinite;
-}
-
-.hud-tag-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #f3e8ff;
-  text-shadow: 0 0 6px rgba(168, 85, 247, 0.8);
+/* 视口角部微标记：单行无折行 */
+.viewport-micro-badge {
+  position: absolute;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
-.hud-tag-sub {
-  font-size: 9px;
-  color: rgba(233, 213, 255, 0.7);
-  letter-spacing: 0.04em;
+.viewport-micro-badge--tl {
+  top: 10px;
+  left: 24px;
 }
 
-/* ================= 顶部居中浮动灵动岛 HUD 胶囊 ================= */
+.viewport-micro-badge--tr {
+  top: 10px;
+  right: 24px;
+}
+
+.micro-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a855f7;
+  opacity: 0.6;
+}
+
+.micro-dot.is-active {
+  background: #c084fc;
+  opacity: 1;
+  box-shadow: 0 0 8px #c084fc;
+}
+
+/* ================= 顶部居中扁平质感灵动胶囊 HUD ================= */
 .agent-floating-island {
   position: fixed;
-  top: 16px;
+  top: 14px;
   left: 50%;
   transform: translateX(-50%);
   pointer-events: auto;
@@ -473,471 +375,454 @@ function clearHistory() {
   align-items: center;
 }
 
-.island-capsule {
+/* 扁平高质感胶囊体: 单行绝不折行 */
+.flat-capsule {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 14px;
+  height: 38px;
+  padding: 0 12px;
   border-radius: 9999px;
+  background: rgba(18, 20, 26, 0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
   font-size: 12px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow:
-    0 16px 36px -4px rgba(0, 0, 0, 0.4),
-    0 8px 16px -4px rgba(147, 51, 234, 0.25);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.island-capsule--remote {
-  background: rgba(18, 14, 28, 0.92);
-  border: 1px solid rgba(168, 85, 247, 0.55);
-  color: #f3e8ff;
-}
-
-.island-capsule--station {
-  background: rgba(12, 22, 24, 0.92);
-  border: 1px solid rgba(16, 185, 129, 0.5);
-  color: #f8fafc;
-}
-
-.capsule-identity {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-}
-
-.pulse-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #a855f7;
-  box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.8);
-  animation: pulse-ring-purple 1.6s infinite;
-}
-
-.pulse-indicator.is-executing {
-  background: #ec4899;
-  animation: pulse-ring-pink 1s infinite;
-}
-
-.pulse-indicator--emerald {
-  background: #10b981;
-  animation: pulse-ring-emerald 1.6s infinite;
-}
-
-@keyframes pulse-ring-purple {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.8); }
-  70% { transform: scale(1.05); box-shadow: 0 0 0 7px rgba(168, 85, 247, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
-}
-
-@keyframes pulse-ring-pink {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.8); }
-  70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(236, 72, 153, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
-}
-
-@keyframes pulse-ring-emerald {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
-  70% { transform: scale(1.05); box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.capsule-icon {
-  font-size: 13px;
-}
-
-.capsule-caller {
-  font-size: 12px;
-  font-weight: 600;
   white-space: nowrap;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
 }
 
-.capsule-badge {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 9999px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+.flat-capsule--remote {
+  border-color: rgba(168, 85, 247, 0.35);
 }
 
-.capsule-badge--purple {
-  background: rgba(168, 85, 247, 0.25);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.4);
+.flat-capsule--station {
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
-.capsule-badge--emerald {
-  background: rgba(16, 185, 129, 0.25);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
-}
-
-.capsule-badge--amber {
-  background: rgba(245, 158, 11, 0.25);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.4);
-}
-
-.capsule-divider {
-  width: 1px;
-  height: 14px;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.capsule-action {
+.flat-capsule__cell {
   display: flex;
   align-items: center;
   gap: 7px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.action-icon {
-  font-size: 12px;
+.flat-capsule__divider {
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
 }
 
-.action-label {
+/* 状态圆点 */
+.state-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.state-dot--purple {
+  background: #a855f7;
+}
+
+.state-dot--emerald {
+  background: #10b981;
+}
+
+.state-dot.is-pulsing {
+  box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.8);
+  animation: dot-breathe 1.5s infinite;
+}
+
+@keyframes dot-breathe {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.identity-name {
   font-weight: 600;
-  color: #e9d5ff;
+  color: #f8fafc;
+  font-size: 12px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* 动作指令描述 */
+.action-title {
+  font-weight: 500;
+  color: #e2e8f0;
   font-size: 12px;
   white-space: nowrap;
 }
 
 .action-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #c084fc;
   font-size: 11px;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
 }
 
 .action-param-pill {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.65);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2px 7px;
-  border-radius: 4px;
-  max-width: 170px;
+  color: #94a3b8;
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.capsule-status-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.status-pill {
+/* 扁平状态徽章 */
+.flat-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-weight: 600;
-  padding: 2px 7px;
+  font-weight: 500;
+  padding: 1px 7px;
   border-radius: 9999px;
   white-space: nowrap;
 }
 
-.status-pill--executing {
-  background: rgba(236, 72, 153, 0.2);
+.flat-badge--executing {
+  background: rgba(236, 72, 153, 0.15);
   color: #f472b6;
-  border: 1px solid rgba(236, 72, 153, 0.35);
+  border: 1px solid rgba(236, 72, 153, 0.25);
+}
+
+.flat-badge--success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+.flat-badge--error {
+  background: rgba(244, 63, 94, 0.12);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.22);
 }
 
 .mini-spinner {
-  display: inline-block;
-  animation: pulse-ring-pink 0.8s infinite;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid rgba(244, 114, 182, 0.3);
+  border-top-color: #f472b6;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 
-.status-pill--success {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.status-pill--error {
-  background: rgba(244, 63, 94, 0.2);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.35);
-}
-
-.step-tag {
-  color: #a855f7;
-  font-weight: 700;
+.step-counter {
   font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
-.action-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+/* 扁平微按钮 */
+.flat-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
-  color: rgba(255, 255, 255, 0.8);
-  padding: 2px 8px;
+  color: #cbd5e1;
+  padding: 2px 7px;
   font-size: 11px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.action-btn:hover {
-  background: rgba(168, 85, 247, 0.3);
-  color: #f3e8ff;
-  border-color: rgba(168, 85, 247, 0.5);
-}
-
-.action-btn--toggle.is-active {
-  background: rgba(168, 85, 247, 0.35);
+.flat-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  border-color: #a855f7;
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
-.badge-count {
-  background: rgba(168, 85, 247, 0.45);
-  color: #ffffff;
-  font-size: 9px;
-  padding: 0 4px;
-  border-radius: 9999px;
-  font-weight: 700;
+.flat-btn--drawer.is-active {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.4);
+  color: #e9d5ff;
 }
 
-.chevron {
+.flat-btn__count {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.flat-btn__arrow {
   font-size: 8px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #64748b;
 }
 
-.action-btn--close {
-  padding: 2px 6px;
-  color: rgba(255, 255, 255, 0.4);
+.flat-btn--close {
+  padding: 2px 5px;
+  color: #64748b;
+  border: none;
 }
-.action-btn--close:hover {
-  color: #fb7185;
-  background: rgba(244, 63, 94, 0.2);
-  border-color: rgba(244, 63, 94, 0.4);
+
+.flat-btn--close:hover {
+  color: #f87171;
+  background: rgba(244, 63, 94, 0.1);
 }
 
 /* 挂机工位专用元素 */
-.capsule-spinner {
-  display: inline-block;
-  animation: spin-slow 2s linear infinite;
+.station-mode-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.15);
   color: #34d399;
 }
 
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 .station-job-title {
-  font-weight: 600;
+  font-weight: 500;
   max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #e2e8f0;
+  color: #f1f5f9;
 }
 
-.station-stage-text {
+.station-stage-desc {
+  font-size: 11px;
   color: #94a3b8;
-  font-size: 11px;
+  white-space: nowrap;
 }
 
-.station-heartbeat {
+.station-hb-text {
+  font-size: 10px;
   color: #64748b;
-  font-size: 10px;
+  white-space: nowrap;
 }
 
-.station-pause-btn {
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 10px;
-  background: rgba(244, 63, 94, 0.2);
+.flat-btn--pause {
   color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.station-pause-btn:hover {
-  background: rgba(244, 63, 94, 0.35);
-}
-
-/* ================= 展开的操作审计链路面板 ================= */
-.audit-drawer {
-  margin-top: 10px;
-  width: 620px;
-  max-height: 400px;
-  background: rgba(18, 14, 28, 0.95);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(168, 85, 247, 0.45);
-  border-radius: 14px;
-  box-shadow:
-    0 20px 45px -10px rgba(0, 0, 0, 0.6),
-    0 0 25px rgba(168, 85, 247, 0.25);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  color: #f3e8ff;
-}
-
-.audit-drawer__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.audit-drawer__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.audit-count {
-  font-size: 11px;
-  color: #c084fc;
-  background: rgba(168, 85, 247, 0.2);
-  padding: 1px 7px;
-  border-radius: 9999px;
-}
-
-.audit-drawer__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.audit-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.7);
-  padding: 2px 8px;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.audit-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
-.audit-btn--clear:hover {
-  border-color: #fb7185;
-  color: #fb7185;
-}
-
-.audit-drawer__list {
-  padding: 8px 12px;
-  overflow-y: auto;
-  max-height: 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.audit-item {
-  display: grid;
-  grid-template-columns: 42px 64px 180px 1fr 55px 44px;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 11px;
-  transition: background 0.15s ease;
-}
-
-.audit-item:hover {
-  background: rgba(168, 85, 247, 0.12);
-  border-color: rgba(168, 85, 247, 0.25);
-}
-
-.audit-item--error {
-  background: rgba(244, 63, 94, 0.08);
   border-color: rgba(244, 63, 94, 0.25);
 }
 
-.audit-item__step {
-  color: #a855f7;
-  font-weight: 700;
-  font-size: 10px;
+/* ================= 展开的高质感极简操作审计面板 ================= */
+.flat-drawer {
+  margin-top: 8px;
+  width: 640px;
+  max-height: 420px;
+  background: rgba(18, 20, 26, 0.94);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #f8fafc;
 }
 
-.audit-item__time {
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 10px;
+.flat-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.audit-item__op {
+.flat-drawer__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.title-count {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.flat-drawer__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flat-drawer__btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #94a3b8;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flat-drawer__btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.flat-drawer__btn--primary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+/* 扁平单行表格：严禁换行 */
+.flat-drawer__table {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flat-table__header {
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  font-size: 10px;
+  color: #64748b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+}
+
+.flat-table__body {
+  overflow-y: auto;
+  max-height: 280px;
+  padding: 4px 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.audit-op-label {
-  font-weight: 600;
-  color: #e9d5ff;
-}
-
-.audit-op-code {
-  font-size: 10px;
-  color: rgba(192, 132, 252, 0.8);
-}
-
-.audit-item__param {
-  color: rgba(255, 255, 255, 0.6);
-  overflow: hidden;
-  text-overflow: ellipsis;
+.flat-table__row {
+  display: flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  transition: background 0.12s ease;
   white-space: nowrap;
 }
 
-.audit-item__duration {
-  color: rgba(255, 255, 255, 0.5);
+.flat-table__row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.flat-table__row.is-error {
+  background: rgba(244, 63, 94, 0.06);
+}
+
+/* 表格列宽与对齐 */
+.col-step {
+  width: 38px;
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.col-time {
+  width: 60px;
+  flex-shrink: 0;
+  color: #64748b;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.col-label {
+  width: 95px;
+  flex-shrink: 0;
+  font-weight: 500;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-code {
+  width: 125px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: #a855f7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-param {
+  flex: 1;
+  min-width: 0;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 8px;
+}
+
+.col-dur {
+  width: 48px;
+  flex-shrink: 0;
+  color: #64748b;
   font-size: 10px;
   text-align: right;
+  white-space: nowrap;
 }
 
-.status-tag {
-  font-size: 10px;
+.col-status {
+  width: 48px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.row-status-pill {
+  font-size: 9px;
   padding: 1px 5px;
   border-radius: 4px;
-  font-weight: 600;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.status-tag--success {
-  background: rgba(16, 185, 129, 0.2);
+.row-status-pill.is-success {
+  background: rgba(16, 185, 129, 0.15);
   color: #34d399;
 }
 
-.status-tag--error {
-  background: rgba(244, 63, 94, 0.2);
+.row-status-pill.is-error {
+  background: rgba(244, 63, 94, 0.15);
   color: #fb7185;
 }
 
-.audit-drawer__footer {
-  padding: 8px 16px;
+.flat-drawer__footer {
+  padding: 6px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 9px;
+  color: #475569;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
-/* ================= 动画过渡 ================= */
+/* ================= 极简平滑过渡 ================= */
 .fade-border-enter-active,
 .fade-border-leave-active {
-  transition: opacity 0.4s ease;
+  transition: opacity 0.25s ease;
 }
 .fade-border-enter-from,
 .fade-border-leave-to {
@@ -946,21 +831,21 @@ function clearHistory() {
 
 .hud-slide-enter-active,
 .hud-slide-leave-active {
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .hud-slide-enter-from,
 .hud-slide-leave-to {
   opacity: 0;
-  transform: translate(-50%, -16px) scale(0.95);
+  transform: translate(-50%, -10px) scale(0.98);
 }
 
 .drawer-drop-enter-active,
 .drawer-drop-leave-active {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .drawer-drop-enter-from,
 .drawer-drop-leave-to {
   opacity: 0;
-  transform: translateY(-8px) scale(0.98);
+  transform: translateY(-6px);
 }
 </style>
