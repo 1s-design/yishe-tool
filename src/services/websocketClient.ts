@@ -1433,12 +1433,27 @@ async function handleRemoteCommand(data: any) {
         // 直连操作层清画布（不依赖 Agent 工具调用），用于清理残留设计/缓存
         const { executeOperation } = await import("@/operations");
         const { createDesignOperationContext } = await import("@/operations");
+        const { notifyRemoteAgentOperation, addStationLog } = await import(
+          "@/ai/agent/auto-station"
+        );
+        const caller = String(payload?.caller || "外部 Agent (MCP)");
+        const startTime = performance.now();
+        notifyRemoteAgentOperation("canvas.clear", undefined, caller, {});
+        addStationLog("[外部 Agent] 开始执行: canvas.clear", "info");
+
         const ctx = createDesignOperationContext();
         const clearResult = await runWithTimeout(
           executeOperation("canvas.clear", {}, ctx),
         );
+        const durationMs = Math.round(performance.now() - startTime);
         result.success = clearResult.success;
         result.message = clearResult.message || "画布已清空";
+        notifyRemoteAgentOperation(
+          "canvas.clear",
+          { success: Boolean(clearResult.success), message: result.message, durationMs },
+          caller,
+          {},
+        );
         const stateAfter = await runWithTimeout(
           executeOperation("canvas.getState", {}, ctx),
         ).catch(() => null);
@@ -1460,13 +1475,15 @@ async function handleRemoteCommand(data: any) {
         const timeoutMs = Number(payload?.timeoutMs) || 45_000;
         const caller = String(payload?.caller || "外部 Agent (MCP)");
 
-        notifyRemoteAgentOperation(opName, undefined, caller);
+        const startTime = performance.now();
+        notifyRemoteAgentOperation(opName, undefined, caller, opParams);
         addStationLog(`[外部 Agent] 开始执行: ${opName}`, "info");
 
         const opResult = await runWithTimeout(
           executeOperation(opName, opParams, ctx),
           timeoutMs,
         );
+        const durationMs = Math.round(performance.now() - startTime);
         result.success = opResult.success;
         result.data = opResult.data;
         result.message = opResult.message;
@@ -1474,11 +1491,17 @@ async function handleRemoteCommand(data: any) {
 
         notifyRemoteAgentOperation(
           opName,
-          { success: Boolean(opResult.success), message: opResult.message || opResult.error },
+          {
+            success: Boolean(opResult.success),
+            message: opResult.message || opResult.error,
+            durationMs,
+            data: opResult.data,
+          },
           caller,
+          opParams,
         );
         if (opResult.success) {
-          addStationLog(`[外部 Agent] 操作成功: ${opName}`, "success");
+          addStationLog(`[外部 Agent] 操作成功: ${opName} (${durationMs}ms)`, "success");
         } else {
           addStationLog(
             `[外部 Agent] 操作失败: ${opName} (${opResult.message || opResult.error || "执行错误"})`,

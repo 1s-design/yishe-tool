@@ -21,11 +21,15 @@
   <ToastHost />
 
   <AutomationOverlay />
+
+  <!-- 全局视口科技边框与 Agent 实时活动 HUD -->
+  <AgentLiveActivityHUD />
 </template>
 <script setup>
 import { computed, ref, watchEffect } from "vue";
 
 import loginForm from '@/modules/main/view/user/login/index.vue'
+import AgentLiveActivityHUD from '@/components/design/layout/canvas/AgentLiveActivityHUD.vue'
 import { isDarkMode } from '@/components/design/store'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ToastHost } from '@/components/ui/toast'

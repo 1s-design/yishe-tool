@@ -64,14 +64,21 @@ export interface RemoteAgentOpRecord {
   id: string;
   time: string;
   op: string;
+  opLabel?: string;
+  paramsSummary?: string;
+  durationMs?: number;
   success: boolean;
   message?: string;
 }
 
 export interface RemoteAgentState {
   active: boolean;
+  isExecuting: boolean;
   caller: string;
   lastOp: string;
+  lastOpLabel: string;
+  lastOpParamsSummary: string;
+  lastOpDurationMs: number;
   totalOps: number;
   lastActiveTime: number;
   currentMessage: string;
@@ -80,8 +87,12 @@ export interface RemoteAgentState {
 
 export const remoteAgentState = reactive<RemoteAgentState>({
   active: false,
+  isExecuting: false,
   caller: "外部 Agent (MCP)",
   lastOp: "",
+  lastOpLabel: "",
+  lastOpParamsSummary: "",
+  lastOpDurationMs: 0,
   totalOps: 0,
   lastActiveTime: 0,
   currentMessage: "",
@@ -90,34 +101,94 @@ export const remoteAgentState = reactive<RemoteAgentState>({
 
 let remoteActiveResetTimer: any = null;
 
+export function getOpFriendlyInfo(opName: string, params?: any): { label: string; summary: string; icon: string } {
+  const op = String(opName || "").trim();
+  switch (op) {
+    case "canvas.setSize": {
+      const w = params?.width ?? 800;
+      const h = params?.height ?? 800;
+      return { label: "调整画布尺寸", summary: `${w} × ${h} px`, icon: "📐" };
+    }
+    case "canvas.clear":
+      return { label: "清空重置画布", summary: "重置所有图层与样式", icon: "🧹" };
+    case "canvas.addHtml": {
+      const html = String(params?.htmlContent || params?.html || "");
+      const lengthInfo = html ? `${html.length} 字符` : "HTML图层";
+      return { label: "注入排版图层", summary: `国潮排版 · ${lengthInfo}`, icon: "🎨" };
+    }
+    case "system.design_tool.audit_canvas":
+      return { label: "设计规范质检", summary: "图层结构与设计硬伤审计", icon: "🛡️" };
+    case "canvas.updateAndSaveSticker": {
+      const name = params?.name || params?.title || "自定义贴纸";
+      return { label: "导出并保存贴纸", summary: `${name} · UPNG 256色压缩`, icon: "💾" };
+    }
+    case "canvas.captureThumbnail":
+      return { label: "截取缩略预览", summary: "生成高清画布快照", icon: "🖼️" };
+    case "canvas.getState":
+      return { label: "读取画布状态", summary: "解析图层树与背景元数据", icon: "🔍" };
+    case "canvas.deleteElement":
+      return { label: "删除图层", summary: `图层: ${params?.id || "目标"}`, icon: "🗑️" };
+    case "canvas.updateElement":
+      return { label: "更新图层属性", summary: `图层: ${params?.id || "目标"}`, icon: "✏️" };
+    case "canvas.addText":
+      return { label: "置入文本元素", summary: `"${params?.text || ""}"`, icon: "🔤" };
+    case "canvas.addImage":
+      return { label: "置入图像素材", summary: "图片素材图层", icon: "🖼️" };
+    case "canvas.eval":
+      return { label: "执行动态脚本", summary: "实时交互逻辑", icon: "⚡" };
+    default: {
+      let paramSnippet = "";
+      if (params && typeof params === "object") {
+        try {
+          paramSnippet = JSON.stringify(params);
+          if (paramSnippet.length > 28) paramSnippet = paramSnippet.slice(0, 25) + "...";
+        } catch {}
+      }
+      return { label: op || "设计指令", summary: paramSnippet, icon: "⚡" };
+    }
+  }
+}
+
 export function notifyRemoteAgentOperation(
   opName: string,
-  result?: { success: boolean; message?: string },
+  result?: { success: boolean; message?: string; durationMs?: number; data?: any },
   caller = "外部 Agent (MCP)",
+  params?: any,
 ) {
+  const info = getOpFriendlyInfo(opName, params);
+
   remoteAgentState.active = true;
   remoteAgentState.caller = caller;
   remoteAgentState.lastOp = opName;
+  remoteAgentState.lastOpLabel = info.label;
+  remoteAgentState.lastOpParamsSummary = info.summary;
   remoteAgentState.lastActiveTime = Date.now();
 
   const now = new Date();
   const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
 
   if (result === undefined) {
+    remoteAgentState.isExecuting = true;
     remoteAgentState.totalOps++;
-    remoteAgentState.currentMessage = `正在执行: ${opName}`;
+    remoteAgentState.currentMessage = `正在执行: ${info.label} (${opName})`;
   } else {
+    remoteAgentState.isExecuting = false;
+    remoteAgentState.lastOpDurationMs = result.durationMs || 0;
     remoteAgentState.currentMessage = result.success
-      ? `执行成功: ${opName}`
-      : `执行失败: ${opName}`;
+      ? `执行成功: ${info.label}${result.durationMs ? ` (${result.durationMs}ms)` : ""}`
+      : `执行失败: ${info.label} (${result.message || "执行异常"})`;
+
     remoteAgentState.recentOps.unshift({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       time: timeStr,
       op: opName,
+      opLabel: info.label,
+      paramsSummary: info.summary,
+      durationMs: result.durationMs,
       success: result.success,
       message: result.message,
     });
-    if (remoteAgentState.recentOps.length > 20) {
+    if (remoteAgentState.recentOps.length > 30) {
       remoteAgentState.recentOps.pop();
     }
   }
@@ -125,10 +196,17 @@ export function notifyRemoteAgentOperation(
   if (remoteActiveResetTimer) {
     clearTimeout(remoteActiveResetTimer);
   }
+  // 保持高亮展示 6.5 秒，让用户有充足的时间看清全局边框与执行结果，避免一闪而过
   remoteActiveResetTimer = setTimeout(() => {
     remoteAgentState.active = false;
-    remoteAgentState.currentMessage = `已完成 ${remoteAgentState.totalOps} 步操作`;
-  }, 4500);
+    remoteAgentState.isExecuting = false;
+    remoteAgentState.currentMessage = `外部 Agent 创作完成 (累计 ${remoteAgentState.totalOps} 步操作)`;
+  }, 6500);
+}
+
+export function dismissRemoteAgentHUD() {
+  remoteAgentState.active = false;
+  remoteAgentState.isExecuting = false;
 }
 
 let loopAbortController: AbortController | null = null;

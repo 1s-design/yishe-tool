@@ -31,9 +31,6 @@
         <!-- 截屏组件 -->
         <screenshot ref="screenshotInstance"></screenshot>
 
-        <!-- Agent 实时活动浮动 HUD (自动工位 / 外部 Agent 操控) -->
-        <AgentLiveActivityHUD />
-
         <!-- 画布区域 -->
         <div
           ref="canvasViewportRef"
@@ -281,7 +278,6 @@ import imageSticker from "./imageSticker/index.vue";
 import textSticker from "./textSticker/index.vue";
 import workspace from "./workspace/index.vue";
 import bottomMenu from "./bottomMenu.vue";
-import AgentLiveActivityHUD from "./canvas/AgentLiveActivityHUD.vue";
 import decalControl from "./decalControl/index.vue";
 import imageUpload from "./imageUpload/index.vue";
 import customTextSticker from "./customTextSticker/index.vue";
