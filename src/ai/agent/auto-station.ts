@@ -360,6 +360,50 @@ async function runStationLoop() {
   }
 }
 
+function resolveJobDimensions(sizeSpec: any): { width: number; height: number } {
+  // 默认超清规格（用户未指定尺寸时采用 2400x2400 300DPI）
+  const DEFAULT_SIZE = 2400;
+  if (!sizeSpec) {
+    return { width: DEFAULT_SIZE, height: DEFAULT_SIZE };
+  }
+
+  if (typeof sizeSpec === "object" && sizeSpec.width && sizeSpec.height) {
+    return {
+      width: Math.max(100, Math.round(Number(sizeSpec.width)) || DEFAULT_SIZE),
+      height: Math.max(100, Math.round(Number(sizeSpec.height)) || DEFAULT_SIZE),
+    };
+  }
+
+  if (typeof sizeSpec === "string" && sizeSpec.trim()) {
+    const s = sizeSpec.trim();
+    // 匹配如 3000x1376, 900x400, 2400*2400
+    const m = s.match(/(\d+(?:\.\d+)?)\s*[x×X＊*]\s*(\d+(?:\.\d+)?)/);
+    if (m) {
+      return {
+        width: Math.round(parseFloat(m[1])),
+        height: Math.round(parseFloat(m[2])),
+      };
+    }
+    // 匹配比例如 16:9, 3:1, 3:4, 2:1 等
+    const r = s.match(/(\d+(?:\.\d+)?)\s*[:：\/]\s*(\d+(?:\.\d+)?)/);
+    if (r) {
+      const rw = parseFloat(r[1]);
+      const rh = parseFloat(r[2]);
+      if (rw > 0 && rh > 0) {
+        // 短边至少 2400px，确保超清印刷质量
+        const minSide = 2400;
+        if (rw >= rh) {
+          return { width: Math.round((rw / rh) * minSide), height: minSide };
+        } else {
+          return { width: minSide, height: Math.round((rh / rw) * minSide) };
+        }
+      }
+    }
+  }
+
+  return { width: DEFAULT_SIZE, height: DEFAULT_SIZE };
+}
+
 async function executeProduceJob(job: DesignJobRecord) {
   stationState.status = "producing";
   const insp = job.inspiration;
@@ -371,9 +415,8 @@ async function executeProduceJob(job: DesignJobRecord) {
 
   stationState.currentStage = "设置画布";
 
-  // 1. 设置尺寸
-  const targetWidth = job.sizeSpec?.width || 800;
-  const targetHeight = job.sizeSpec?.height || 800;
+  // 1. 设置尺寸（用户未指定时默认采用 2400x2400 超清规格）
+  const { width: targetWidth, height: targetHeight } = resolveJobDimensions(job.sizeSpec);
   await executeAITool("canvas.setSize", { width: targetWidth, height: targetHeight });
   await executeAITool("canvas.clear", {});
   currentEditingCustomStickerId.value = null;
@@ -394,7 +437,7 @@ async function executeProduceJob(job: DesignJobRecord) {
     promptHints,
     avoidNotes,
     digestHint,
-    `画布尺寸已设为 ${targetWidth}x${targetHeight}。`,
+    `画布尺寸已设为 ${targetWidth}x${targetHeight}（超清高分辨率印刷级标准）。`,
     `要求：使用 canvas.addHtml 注入现代视觉排版，主标题突出，层级分明，色彩协调且自成一体，构图饱满且居中。完成后请严格调用 canvas.updateAndSaveSticker 保存入库。`,
   ].filter(Boolean).join("\n");
 

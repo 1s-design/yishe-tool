@@ -1188,6 +1188,55 @@ async function handleRemoteCommand(data: any) {
         result.message = "已获取自动制作状态";
         break;
       }
+      case "station-start": {
+        const { startStation, stationState } = await import("@/ai/agent/auto-station");
+        await startStation();
+        result.success = stationState.enabled;
+        result.station = {
+          enabled: stationState.enabled,
+          workerId: stationState.workerId,
+          status: stationState.status,
+          currentStage: stationState.currentStage,
+          todayProduced: stationState.todayProduced,
+        };
+        result.message = stationState.enabled
+          ? `工位 [${stationState.workerId}] 已启动自动制作`
+          : "工位启动未成功，请检查是否已登录";
+        break;
+      }
+      case "station-stop": {
+        const { stopStation, stationState } = await import("@/ai/agent/auto-station");
+        stopStation(String(payload?.reason || "远程指令停止"));
+        result.success = true;
+        result.station = {
+          enabled: stationState.enabled,
+          workerId: stationState.workerId,
+          status: stationState.status,
+        };
+        result.message = `工位 [${stationState.workerId}] 已停止`;
+        break;
+      }
+      case "station-status": {
+        const { stationState } = await import("@/ai/agent/auto-station");
+        result.success = true;
+        result.station = {
+          enabled: stationState.enabled,
+          workerId: stationState.workerId,
+          status: stationState.status,
+          currentStage: stationState.currentStage,
+          todayProduced: stationState.todayProduced,
+          todayReworked: stationState.todayReworked,
+          currentJob: stationState.currentJob
+            ? {
+                id: stationState.currentJob.id,
+                type: stationState.currentJob.type,
+                title: stationState.currentJob.inspiration?.title,
+              }
+            : null,
+        };
+        result.message = `工位状态: ${stationState.status} (累计已制作 ${stationState.todayProduced})`;
+        break;
+      }
       case "audit": {
         const { auditCurrentCanvas } = await import("@/ai/canvas-audit");
         const auditResult = await auditCurrentCanvas({
@@ -1368,6 +1417,10 @@ async function handleRemoteCommand(data: any) {
         // （反过来会被 resetBatch() 把 controlSignal 重新置为 running，等于撤销停止）
         resetBatch();
         stopBatch();
+        try {
+          const { stopStation } = await import("@/ai/agent/auto-station");
+          stopStation("复位停止");
+        } catch {}
         try {
           const { currentEditingCustomStickerId } = await import(
             "@/components/design/layout/canvas"

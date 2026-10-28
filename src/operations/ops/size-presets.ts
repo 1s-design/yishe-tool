@@ -260,6 +260,19 @@ export const sizePresets: SizePreset[] = [
 
   // ── 贴纸 ──
   {
+    id: "sticker-hd-default",
+    name: "超清贴纸 (默认标准)",
+    nameEn: 'HD Sticker (Default Standard)',
+    category: "贴纸",
+    width: 2400,
+    height: 2400,
+    unit: "px",
+    description: "默认超清高分辨率贴纸 (2400×2400 300DPI)，适合精致印刷与清晰展示",
+    tags: ["sticker", "贴纸", "默认", "超清", "hd", "高分辨率"],
+    dpi: 300,
+    printArea: { width: 20.32, height: 20.32, unit: "cm" },
+  },
+  {
     id: "sticker-3x3",
     name: "3×3 英寸圆形贴纸",
     nameEn: '3×3" Round Sticker',

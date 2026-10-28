@@ -35,15 +35,15 @@ export function createDefaultCanvasChildcanvasStickerOptions(
         type: 'canvas',
         width:{
             unit: currentUnit,
-            value: currentWidth || 2000
+            value: currentWidth || 2400
         },
         height:{
             unit: currentUnit,
-            value: currentHeight || 2000
+            value: currentHeight || 2400
         },
         fontSize: {
             unit: 'px',
-            value: 32
+            value: 48
         },
         typographyDensity: 'balanced',
         undeletable: true, // 不可删除

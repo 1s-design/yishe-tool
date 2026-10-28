@@ -1383,12 +1383,12 @@ export class CanvasController {
           formatSizeOptionToPixelValue(
             canvasStickerOptionsOnlyChild.value.width,
           ),
-        ) || 1800;
+        ) || 2400;
         let height = Number(
           formatSizeOptionToPixelValue(
             canvasStickerOptionsOnlyChild.value.height,
           ),
-        ) || 800;
+        ) || 2400;
 
         // 转换为 canvas（最多 45 秒）
         // 字体已做字形子集化（见 @/ai/font-subset），SVG data URL 很小，正常几秒内完成。

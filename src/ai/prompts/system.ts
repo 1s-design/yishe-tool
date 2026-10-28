@@ -16,9 +16,9 @@ function getCanvasSummary(): CanvasSummary {
   const extractNum = (v: any) =>
     typeof v === "number" ? v : (v?.value ?? 500);
   return {
-    width: extractNum(mainCanvas?.width) || 500,
-    height: extractNum(mainCanvas?.height) || 500,
-    baseFontSize: extractNum(mainCanvas?.fontSize) || 32,
+    width: extractNum(mainCanvas?.width) || 2400,
+    height: extractNum(mainCanvas?.height) || 2400,
+    baseFontSize: extractNum(mainCanvas?.fontSize) || 48,
     elementCount: children.length - 1,
     elements: children.slice(1).map((c: any) => ({
       id: c.id,
@@ -48,6 +48,7 @@ function buildRolePrompt(): string {
 - 用户要求创建新设计时，先调用 canvas.clear 清空画布
 - 用户明确给出具体画布尺寸（如 1080x1080、800×1200、10x10cm）时，先调用 canvas.setSize 设置该尺寸，后续不要覆盖它
 - 用户未指定数值尺寸时，可以使用 canvas.smartSize 或 canvas.setSizeByPreset
+- **贴纸默认超清规格**：当制作贴纸且用户**未明确指定尺寸**时，必须默认采用**高分辨率/超高清标准**（默认 **2400×2400px**，300 DPI 印刷级高清晰度；特殊长宽比时长边不低于 2400px，短边不低于 1800px），**严禁使用 1000px 以下或 800x800/900x900 的低清低像素尺寸**！确保成品具备极致细节与清晰度
 - 尺寸工具会同步设置画布基础字号：兰亭序、碑帖、长文用 dense，常规海报用 balanced，单字、标语、艺术字用 display
 - HTML 已自动注入通用字号变量；先区分主视觉、主标题、核心文字、副标题、正文、说明，再直接使用对应的 --type-hero/title/primary/subtitle/body/caption/micro
 - 只调整现有设计字号时使用 canvas.setBaseFontSize，不要为了改字号重设画布尺寸

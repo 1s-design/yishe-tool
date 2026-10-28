@@ -227,7 +227,7 @@ const PRODUCT_SIZE_RULES: Array<{
   { keywords: ['马克杯', 'mug', '杯子', '咖啡杯'], presetId: 'mug-11oz', reason: '标准马克杯印花区域' },
   { keywords: ['手机壳', 'phone case', 'iphone', '手机套'], presetId: 'phone-iphone-15', reason: 'iPhone 手机壳' },
   { keywords: ['海报', 'poster', '招贴'], presetId: 'poster-a3', reason: 'A3 海报' },
-  { keywords: ['贴纸', 'sticker', '粘贴'], presetId: 'sticker-3x3', reason: '3英寸圆形贴纸' },
+  { keywords: ['贴纸', 'sticker', '粘贴'], presetId: 'sticker-hd-default', reason: '超清高分辨率贴纸 (2400×2400 300DPI)' },
   { keywords: ['鼠标垫', 'mousepad', '鼠标垫'], presetId: 'mousepad-standard', reason: '标准鼠标垫' },
   { keywords: ['桌垫', 'deskmat', '桌面垫'], presetId: 'deskmat-xl', reason: '超大桌垫' },
   { keywords: ['帆布袋', 'tote', '托特袋', '环保袋'], presetId: 'tote-standard', reason: '标准帆布袋' },

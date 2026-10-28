@@ -144,7 +144,7 @@ export const canvasToFile = async (
         throw new Error('画布为空或尺寸为 0，无法导出图片')
     }
 
-    const { pngColors = 256, fallbackNative = true } = options
+    const { pngColors = 0, fallbackNative = true } = options
 
     try {
         const UPNGModule = await import('upng-js')
@@ -152,11 +152,11 @@ export const canvasToFile = async (
         const ctx = canvas.getContext('2d')
         if (ctx) {
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-            // cnum: 256 为高质量 8-bit 色盘量化（保留完整 Alpha 透明通道，体积暴降 70%~85%）
+            // cnum: 0 为 100% 无损 32-bit RGBA（保留细腻渐变、阴影与超高清晰度）
             const pngBuffer = UPNG.encode([imgData.data.buffer], canvas.width, canvas.height, pngColors)
             const blob = new Blob([pngBuffer], { type: 'image/png' })
             console.log(
-                `[贴纸PNG压缩] 导出贴纸: ${name}, 尺寸: ${canvas.width}x${canvas.height}, 压缩后体积: ${(blob.size / 1024).toFixed(1)} KB`
+                `[贴纸PNG导出] 导出贴纸: ${name}, 尺寸: ${canvas.width}x${canvas.height}, 模式: ${pngColors === 0 ? '无损32位真彩' : `${pngColors}色量化`}, 体积: ${(blob.size / 1024).toFixed(1)} KB`
             )
             return new File([blob], name, { type: 'image/png' })
         }
