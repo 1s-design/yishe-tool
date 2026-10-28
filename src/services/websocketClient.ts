@@ -1449,12 +1449,20 @@ async function handleRemoteCommand(data: any) {
       case "execute-operation": {
         const { executeOperation } = await import("@/operations");
         const { createDesignOperationContext } = await import("@/operations");
+        const { notifyRemoteAgentOperation, addStationLog } = await import(
+          "@/ai/agent/auto-station"
+        );
         const ctx = createDesignOperationContext();
         const opName = String(
           payload?.operation || payload?.toolName || payload?.name || "",
         ).trim();
         const opParams = payload?.parameters || payload?.params || payload?.args || {};
         const timeoutMs = Number(payload?.timeoutMs) || 45_000;
+        const caller = String(payload?.caller || "外部 Agent (MCP)");
+
+        notifyRemoteAgentOperation(opName, undefined, caller);
+        addStationLog(`[外部 Agent] 开始执行: ${opName}`, "info");
+
         const opResult = await runWithTimeout(
           executeOperation(opName, opParams, ctx),
           timeoutMs,
@@ -1463,6 +1471,20 @@ async function handleRemoteCommand(data: any) {
         result.data = opResult.data;
         result.message = opResult.message;
         result.error = opResult.error;
+
+        notifyRemoteAgentOperation(
+          opName,
+          { success: Boolean(opResult.success), message: opResult.message || opResult.error },
+          caller,
+        );
+        if (opResult.success) {
+          addStationLog(`[外部 Agent] 操作成功: ${opName}`, "success");
+        } else {
+          addStationLog(
+            `[外部 Agent] 操作失败: ${opName} (${opResult.message || opResult.error || "执行错误"})`,
+            "warn",
+          );
+        }
         break;
       }
       case "timeline": {

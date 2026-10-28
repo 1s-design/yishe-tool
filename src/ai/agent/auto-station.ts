@@ -60,6 +60,77 @@ export const stationState = reactive({
   logs: [] as StationLogItem[],
 });
 
+export interface RemoteAgentOpRecord {
+  id: string;
+  time: string;
+  op: string;
+  success: boolean;
+  message?: string;
+}
+
+export interface RemoteAgentState {
+  active: boolean;
+  caller: string;
+  lastOp: string;
+  totalOps: number;
+  lastActiveTime: number;
+  currentMessage: string;
+  recentOps: RemoteAgentOpRecord[];
+}
+
+export const remoteAgentState = reactive<RemoteAgentState>({
+  active: false,
+  caller: "外部 Agent (MCP)",
+  lastOp: "",
+  totalOps: 0,
+  lastActiveTime: 0,
+  currentMessage: "",
+  recentOps: [],
+});
+
+let remoteActiveResetTimer: any = null;
+
+export function notifyRemoteAgentOperation(
+  opName: string,
+  result?: { success: boolean; message?: string },
+  caller = "外部 Agent (MCP)",
+) {
+  remoteAgentState.active = true;
+  remoteAgentState.caller = caller;
+  remoteAgentState.lastOp = opName;
+  remoteAgentState.lastActiveTime = Date.now();
+
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+
+  if (result === undefined) {
+    remoteAgentState.totalOps++;
+    remoteAgentState.currentMessage = `正在执行: ${opName}`;
+  } else {
+    remoteAgentState.currentMessage = result.success
+      ? `执行成功: ${opName}`
+      : `执行失败: ${opName}`;
+    remoteAgentState.recentOps.unshift({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      time: timeStr,
+      op: opName,
+      success: result.success,
+      message: result.message,
+    });
+    if (remoteAgentState.recentOps.length > 20) {
+      remoteAgentState.recentOps.pop();
+    }
+  }
+
+  if (remoteActiveResetTimer) {
+    clearTimeout(remoteActiveResetTimer);
+  }
+  remoteActiveResetTimer = setTimeout(() => {
+    remoteAgentState.active = false;
+    remoteAgentState.currentMessage = `已完成 ${remoteAgentState.totalOps} 步操作`;
+  }, 4500);
+}
+
 let loopAbortController: AbortController | null = null;
 let heartbeatTimer: any = null;
 

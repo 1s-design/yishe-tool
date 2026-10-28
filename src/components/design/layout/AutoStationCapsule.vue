@@ -7,6 +7,7 @@
           class="station-capsule"
           :class="{
             'station-capsule--active': stationState.enabled,
+            'station-capsule--remote': remoteAgentState.active,
             'station-capsule--error': stationState.status === 'paused_error',
             'station-capsule--busy': ['producing', 'reworking', 'saving'].includes(stationState.status),
           }"
@@ -14,11 +15,11 @@
           <!-- 呼吸灯状态点 -->
           <span class="station-capsule__indicator">
             <span class="station-capsule__dot"></span>
-            <span v-if="stationState.enabled" class="station-capsule__ping"></span>
+            <span v-if="stationState.enabled || remoteAgentState.active" class="station-capsule__ping"></span>
           </span>
 
           <!-- 模式标签 -->
-          <span class="station-capsule__title">自动工位</span>
+          <span class="station-capsule__title">{{ capsuleTitle }}</span>
 
           <!-- 状态文字 -->
           <span class="station-capsule__status">
@@ -49,6 +50,22 @@
             >
               {{ stationState.enabled ? '停止挂机' : '开启挂机' }}
             </button>
+          </div>
+        </div>
+
+        <!-- 外部 Agent 实时动态 (若有远程操作) -->
+        <div v-if="remoteAgentState.totalOps > 0" class="p-3 border-b border-border/40 bg-purple-500/5 space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[11px] text-purple-400 flex items-center gap-1.5">
+              <span class="h-2 w-2 rounded-full bg-purple-500" :class="{ 'animate-ping': remoteAgentState.active }"></span>
+              {{ remoteAgentState.caller }}
+            </span>
+            <span class="text-[10px] text-muted-foreground font-mono">
+              累计 {{ remoteAgentState.totalOps }} 步
+            </span>
+          </div>
+          <div class="text-[10px] text-muted-foreground truncate font-mono">
+            {{ remoteAgentState.currentMessage || '就绪' }}
           </div>
         </div>
 
@@ -126,11 +143,25 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { stationState, startStation, stopStation, clearStationLogs } from "@/ai/agent/auto-station";
+import {
+  stationState,
+  remoteAgentState,
+  startStation,
+  stopStation,
+  clearStationLogs,
+} from "@/ai/agent/auto-station";
 
 const isOpen = ref(false);
 
+const capsuleTitle = computed(() => {
+  if (remoteAgentState.active) return "外部 Agent";
+  return "自动工位";
+});
+
 const statusLabel = computed(() => {
+  if (remoteAgentState.active) {
+    return `操控: ${remoteAgentState.lastOp || "执行中"}`;
+  }
   if (!stationState.enabled) return "待机中";
   switch (stationState.status) {
     case "claiming":
@@ -212,6 +243,12 @@ function toggleStation() {
   background: rgba(16, 185, 129, 0.08);
 }
 
+.station-capsule--remote {
+  border-color: rgba(168, 85, 247, 0.55);
+  background: rgba(168, 85, 247, 0.12);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+}
+
 .station-capsule--busy {
   border-color: rgba(99, 102, 241, 0.5);
   background: rgba(99, 102, 241, 0.1);
@@ -239,6 +276,22 @@ function toggleStation() {
 
 .station-capsule--active .station-capsule__dot {
   background: #10b981;
+}
+
+.station-capsule--remote .station-capsule__dot {
+  background: #a855f7;
+}
+
+.station-capsule--remote .station-capsule__ping {
+  background: #a855f7;
+}
+
+.station-capsule--remote .station-capsule__title {
+  color: #c084fc;
+}
+
+.station-capsule--remote .station-capsule__status {
+  color: #e9d5ff;
 }
 
 .station-capsule--busy .station-capsule__dot {
