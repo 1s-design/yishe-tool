@@ -890,13 +890,30 @@ async function handleRemoteCommand(data: any) {
         result.message = "页面监控已停止";
         break;
       }
+      case "resetAgent": {
+        const { designAgent } = await import("@/ai/langgraph");
+        activeRemoteRequestId = null;
+        designAgent.state.status = "idle";
+        designAgent.state.error = null;
+        designAgent.state.messages.length = 0;
+        designAgent.state.searchHistory.length = 0;
+        designAgent.state.plan = null;
+        setRemoteWorkerState("idle", null);
+        result.success = true;
+        result.message = "Agent 状态已强制重置为 idle";
+        break;
+      }
       case "chat": {
         const { designAgent } = await import("@/ai/langgraph");
         const message = payload?.message;
         const automatic = payload?.executionMode === "automatic";
         const taskOptions = payload?.taskOptions || payload?.task || undefined;
         if (!message) throw new Error("缺少 message 参数");
-        if (activeRemoteRequestId || designAgent.state.status !== "idle") {
+        if (payload?.force) {
+          activeRemoteRequestId = null;
+          designAgent.state.status = "idle";
+          designAgent.state.error = null;
+        } else if (activeRemoteRequestId || designAgent.state.status !== "idle") {
           result.phase = "rejected";
           result.error = "当前设计实例正在执行其他指令";
           result.message = result.error;

@@ -26,19 +26,12 @@ export interface OverflowFixOptions {
 const MAX_FONT_HEIGHT_RATIO = 0.26
 const MAX_FONT_WIDTH_RATIO = 0.5
 
-/** 会被注入到 HTML 顶部的全局防溢出样式（只做「适配」，不裁切文字；尊重显式 nowrap 与竖排） */
+/** 会被注入到 HTML 顶部的全局防溢出样式（保护短句不乱折行，防止内容被意外切字） */
 const OVERFLOW_GUARD_STYLE = `<style data-ai-overflow-guard="1">
-  div:not([style*="nowrap"]):not([style*="vertical"]),
-  p:not([style*="nowrap"]),
-  h1:not([style*="nowrap"]), h2:not([style*="nowrap"]), h3:not([style*="nowrap"]),
-  span:not([style*="nowrap"]) {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-  [style*="translate(-50%"]:not([style*="nowrap"]) {
-    max-width: 96%;
+  /* 保护艺术字标题、成语短句与副标完整连贯，防止被误切断字 */
+  [style*="translate(-50%"] {
+    max-width: 90%;
     max-height: 90%;
-    text-wrap: balance;
   }
 </style>`
 
@@ -168,7 +161,10 @@ export function autoFixOverflow(
   fixed = fixed.replace(/(white-space\s*:\s*nowrap\s*;[^;"]*?)overflow\s*:\s*hidden\s*;?/gi, '$1')
 
   // 2) 字号按画布尺寸封顶（vw/vh/clamp/em/px 统一换算成 px 后截断）
-  const maxFontPx = Math.round(Math.min(c.h * MAX_FONT_HEIGHT_RATIO, c.w * MAX_FONT_WIDTH_RATIO))
+  // 对于 1:1 正方形贴纸画布，4字横排标题单字高度限制在 17% 以内（留足两端呼吸区，绝不切断边缘字）
+  const isSquare = Math.abs(c.w - c.h) / Math.max(c.w, c.h) < 0.15
+  const heightRatio = isSquare ? 0.17 : MAX_FONT_HEIGHT_RATIO
+  const maxFontPx = Math.round(Math.min(c.h * heightRatio, c.w * MAX_FONT_WIDTH_RATIO))
   fixed = fixed.replace(/font-size:\s*([^;\"}\s][^;\"}]*)/gi, (full, raw) => {
     const px = resolvePx(raw, c)
     if (px == null || !Number.isFinite(px) || px <= 0) return full
@@ -176,10 +172,10 @@ export function autoFixOverflow(
     return `font-size:${Math.round(capped)}px`
   })
 
-  // 3) 文字元素：允许换行并约束在容器内
+  // 3) 文字元素：约束在容器安全宽度内，但不粗暴切断中文词汇
   fixed = fixed.replace(
     /font-size:\s*var\(--type-([a-z]+)\)/gi,
-    'font-size:var(--type-$1);max-width:100%;overflow-wrap:anywhere;word-break:break-word',
+    'font-size:var(--type-$1);max-width:92%;box-sizing:border-box',
   )
 
   // 4) 注入全局防溢出样式（幂等）
