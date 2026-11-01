@@ -32,6 +32,41 @@ let batchTaskState: {
 
 const DEFAULT_HTML_TEMPLATE_MARKER = "主 HTML 模板";
 
+/**
+ * 判断导出图是否为抠图（含透明像素）。
+ * 与素材库 sticker.isCutout 同一语义：有透明背景即可直接叠用。
+ * 只取 256px 缩略版采样，避免逐像素扫大图卡住主线程。
+ */
+async function detectCutout(source: Blob): Promise<boolean> {
+  try {
+    const bitmap = await createImageBitmap(source);
+    const maxSide = 256;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      bitmap.close?.();
+      return false;
+    }
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close?.();
+    const { data } = ctx.getImageData(0, 0, width, height);
+    let transparent = 0;
+    const total = width * height;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 250) transparent += 1;
+    }
+    // 极个别边缘抗锯齿像素不算抠图，超过 1% 才判定为透明背景
+    return transparent / total > 0.01;
+  } catch {
+    return false;
+  }
+}
+
 function getCanvasDesignChildren() {
   return (canvasStickerOptions.value.children || []).filter(
     (child: any) => child?.type !== "canvas",
@@ -520,6 +555,9 @@ registerOperation({
       const canvasData = JSON.parse(JSON.stringify(canvasStickerOptions.value));
       const stickerMeta = buildStickerRecordMeta(canvasData, provenance);
 
+      // 与素材库字段对齐：fileSize / isCutout
+      const isCutout = await detectCutout(file);
+
       const payload: any = {
         url: cos.url,
         suffix: "png",
@@ -529,6 +567,8 @@ registerOperation({
         width: exportWidth,
         height: exportHeight,
         aspectRatio: exportHeight ? Number((exportWidth / exportHeight).toFixed(6)) : undefined,
+        fileSize: file.size,
+        isCutout,
         folderId: folderId ?? currentEditingCustomStickerFolderId.value ?? null,
         meta: stickerMeta,
         jobId: jobId || undefined,
