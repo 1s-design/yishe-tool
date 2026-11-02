@@ -6,7 +6,8 @@ import {
   getDirectExternalResourceError,
   getCanvasTypographyContext,
 } from "./add-child";
-import { isRecentImageUrl, getRecentImageUrls } from "@/ai/services/resource";
+import { isRecentImageUrl, getRecentImageUrls, addRecentImageUrls } from "@/ai/services/resource";
+import { checkHtmlGlyphCoverage } from "@/ai/font-coverage";
 
 registerOperation({
   id: "canvas.addHtml",
@@ -77,7 +78,7 @@ registerOperation({
       description: "默认 false：再次调用会替换已有 HTML 作品。设为 true 可叠加多个 HTML 层。",
     },
   ],
-  execute(params, ctx) {
+  async execute(params, ctx) {
     let {
       htmlContent,
       htmlBindings,
@@ -167,24 +168,80 @@ registerOperation({
       }
       const imageBindings = bindings?.image;
       if (imageBindings && typeof imageBindings === 'object') {
-        const fakeUrls: string[] = [];
+        // 不只看「是否来自本次搜索结果」：用户自备素材、素材库里的历史资源都不在搜索结果里，
+        // 会被误判成 AI 编造。这里改为「来源校验 + 存在性校验」：
+        // 白名单命中直接放行，否则发一个 1 字节的 Range 请求确认真实可访问（CDN 已放开 CORS）。
+        const unknown: Array<{ key: string; url: string }> = [];
         for (const [key, val] of Object.entries(imageBindings)) {
           const url = (val as any)?.url;
-          if (url && !isRecentImageUrl(url)) {
-            fakeUrls.push(`  ${key} → ${url.slice(0, 60)}...`);
+          if (url && !isRecentImageUrl(url)) unknown.push({ key, url });
+        }
+        if (unknown.length > 0) {
+          const reachable: string[] = [];
+          await Promise.all(
+            unknown.map(async ({ url }) => {
+              try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 6000);
+                const resp = await fetch(url, {
+                  method: 'GET',
+                  headers: { Range: 'bytes=0-0' },
+                  signal: controller.signal,
+                });
+                clearTimeout(timer);
+                if (resp.ok || resp.status === 206) reachable.push(url);
+              } catch {}
+            }),
+          );
+          if (reachable.length > 0) addRecentImageUrls(reachable);
+          const fakeUrls = unknown
+            .filter(({ url }) => !reachable.includes(url))
+            .map(({ key, url }) => `  ${key} → ${url.slice(0, 60)}...`);
+          if (fakeUrls.length > 0) {
+            const recentUrls = getRecentImageUrls();
+            const hint = recentUrls.length > 0
+              ? `\n以下是最近确认可用的真实图片 URL（请直接使用）：\n${recentUrls.slice(0, 6).map((u, i) => `  ${i + 1}. ${u.slice(0, 80)}...`).join('\n')}`
+              : '\n请先用 resource.searchImage 搜索图片，然后使用返回的真实 url。';
+            return {
+              success: false,
+              message: `【无效图片 URL】以下绑定的图片地址无法访问（既不在搜索结果中，也拉取不到内容）：\n${fakeUrls.join('\n')}${hint}\n\n请使用 resource.searchImage 返回的真实 url，或素材库里可访问的图片地址，禁止编造 URL！`,
+              data: { rejected: true, reason: 'fake_image_urls' },
+            };
           }
         }
-        if (fakeUrls.length > 0) {
-          const recentUrls = getRecentImageUrls();
-          const hint = recentUrls.length > 0
-            ? `\n以下是最近搜索到的真实图片 URL（请直接使用）：\n${recentUrls.slice(0, 6).map((u, i) => `  ${i + 1}. ${u.slice(0, 80)}...`).join('\n')}`
-            : '\n请先用 resource.searchImage 搜索图片，然后使用返回的真实 url。';
-          return {
-            success: false,
-            message:`【虚假 URL】以下绑定的图片 URL 不在搜索结果中（AI 编造的）：\n${fakeUrls.join('\n')}${hint}\n\n你必须使用 resource.searchImage 返回的真实 url，禁止编造 URL！`,
-            data: { rejected: true, reason: 'fake_image_urls' },
-          };
+      }
+    }
+
+    // 校验：主文案引用的字体是否真的包含这些汉字。
+    // 子集字体缺字时会静默回退成系统宋体，成品出现「一半书法字、一半宋体」，
+    // 而尺寸/居中/文字存在性等常规质检全部通过，属于最难发现的隐性缺陷。
+    if (htmlContent) {
+      let bindingsForFont: any = htmlBindings;
+      if (typeof bindingsForFont === 'string') {
+        try { bindingsForFont = JSON.parse(bindingsForFont); } catch {}
+      }
+      const fontBindings = bindingsForFont?.font;
+      const fontUrlMap: Record<string, { url: string; name?: string }> = {};
+      const bindingFontMap: Record<string, { id: string; url: string; name?: string }> = {};
+      if (fontBindings && typeof fontBindings === 'object') {
+        for (const [key, val] of Object.entries(fontBindings)) {
+          const v: any = val;
+          if (v?.id && v?.url) {
+            fontUrlMap[v.id] = { url: v.url, name: v.name };
+            bindingFontMap[key] = { id: v.id, url: v.url, name: v.name };
+          }
         }
+      }
+      const glyphIssues = await checkHtmlGlyphCoverage(htmlContent, fontUrlMap, bindingFontMap);
+      if (glyphIssues.length > 0) {
+        const detail = glyphIssues
+          .map((i: any) => `  「${i.fontName || i.fontFamily}」缺少字形：${i.missing}（用于「${i.text.slice(0, 12)}」）`)
+          .join('\n');
+        return {
+          success: false,
+          message: `【字体缺字】以下字体不包含文案里的部分汉字，继续渲染会静默回退成系统宋体，导致书法字与宋体混排：\n${detail}\n\n请换一款字库覆盖完整的字体（用 resource.searchFont 重新检索），或改掉缺字的文案。`,
+          data: { rejected: true, reason: 'font_glyph_missing', issues: glyphIssues },
+        };
       }
     }
 

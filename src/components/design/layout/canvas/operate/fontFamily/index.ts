@@ -16,6 +16,12 @@ export async function fetchFontFace(info: FontInfo) {
 
     const { url, id, name } = info;
 
+    // 记录 id -> url，供「缺字守卫」复用，避免重复下载字体文件
+    try {
+        const { registerLoadedFontUrl } = await import("@/ai/font-coverage");
+        registerLoadedFontUrl(id, url);
+    } catch {}
+
 
     let file
 

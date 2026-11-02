@@ -28,6 +28,7 @@ import "./load-sticker";
 import "./load-custom-sticker";
 import "./import-custom-sticker";
 import "./load-font";
+import "./check-font-coverage";
 import "./search-design-knowledge";
 import "./export-png";
 import "./analyze-canvas";
