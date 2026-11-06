@@ -48,3 +48,4 @@ import "./self-test";
 import "./evaluate-design";
 import "./system-get-current-time";
 import "./image-fit";
+import "./replace-color";

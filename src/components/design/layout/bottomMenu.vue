@@ -11,6 +11,20 @@
 
     <Tooltip>
       <TooltipTrigger as-child>
+        <button
+          class="u-icon-btn u-icon-btn--sm"
+          type="button"
+          aria-label="画布换色"
+          @click="showReplaceColorModal = true"
+        >
+          <PaintBucket />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top">画布换色</TooltipContent>
+    </Tooltip>
+
+    <Tooltip>
+      <TooltipTrigger as-child>
         <button class="u-icon-btn u-icon-btn--sm" type="button" aria-label="截图" @click="takeshot">
           <Camera />
         </button>
@@ -135,6 +149,7 @@
 
   <screenshotDrawer></screenshotDrawer>
   <CropGuideModal />
+  <ReplaceColorModal />
 </template>
 
 <script setup>
@@ -149,6 +164,7 @@ import {
   Crosshair,
   Image,
   Maximize2,
+  PaintBucket,
   Palette,
   Scissors,
   Sparkles,
@@ -166,6 +182,8 @@ import CropGuideModal from "@/components/design/layout/canvas/crop/components/Cr
 import { showCropGuideModal } from "@/components/design/layout/canvas/crop/store";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { showMainCanvas } from "@/components/design/layout/canvas/index.tsx";
+import ReplaceColorModal from "@/components/design/layout/replaceColor/index.vue";
+import { showReplaceColorModal } from "@/components/design/layout/replaceColor/store";
 import {
   resetCanvasView,
   zoomCanvas,
