@@ -314,7 +314,9 @@ function startHeartbeatLoop() {
     if (!socket?.connected) return;
     lastPingTimestamp = Date.now();
     updateState({ lastPingAt: new Date(lastPingTimestamp).toISOString() });
-    socket.emit("ping");
+    // Worker 正常运行时由它负责发 ping，主线程只做超时检测，
+    // 否则两条链路会各发一次（15s 内 2 个 ping）。
+    if (!keepAliveWorker) socket.emit("ping");
 
     heartbeatTimeoutTimer = setTimeout(() => {
       if (wsState.status === "connected") {
@@ -364,6 +366,9 @@ function setupVisibilityHandler() {
 let keepAliveWorker: Worker | null = null;
 
 function startKeepAliveWorker() {
+  // 防重入：每次 connect 都会走到这里，不判空会导致重连后累积多个 Worker，
+  // 旧 Worker 从不 terminate，心跳次数随重连线性增长。
+  if (keepAliveWorker) return;
   try {
     keepAliveWorker = new Worker(
       new URL('../workers/keepAlive.worker.ts', import.meta.url),
@@ -371,6 +376,8 @@ function startKeepAliveWorker() {
     );
     keepAliveWorker.onmessage = (e) => {
       if (e.data.type === 'heartbeat' && socket?.connected) {
+        lastPingTimestamp = Date.now();
+        updateState({ lastPingAt: new Date(lastPingTimestamp).toISOString() });
         socket.emit('ping');
       }
     };
@@ -423,6 +430,7 @@ function cleanupSocket() {
     socket = null;
   }
   stopHeartbeat();
+  stopKeepAliveWorker();
 }
 
 function emitClientInfo() {
@@ -622,6 +630,7 @@ function bindSocketEvents(currentSocket: Socket) {
       message: `[ws] disconnected: ${reason}`,
     });
     stopHeartbeat();
+    stopKeepAliveWorker();
     const willAutoReconnect = !intentionalDisconnect && reason !== "io client disconnect";
     updateState({
       status: willAutoReconnect ? "reconnecting" : intentionalDisconnect ? "disconnected" : "error",
