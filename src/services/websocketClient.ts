@@ -1066,6 +1066,11 @@ async function handleRemoteCommand(data: any) {
         const requestedTimeout = Number(payload?.timeoutMs) || 0;
         const snapshot = await captureCanvasForAI({
           timeoutMs: Math.max(requestedTimeout, 120_000),
+          // 外部调用可传 maxDimension 指定导出最长边；0 = 原始分辨率
+          maxDimension:
+            payload?.maxDimension === undefined
+              ? undefined
+              : Number(payload.maxDimension) || 0,
         });
         result.success = true;
         result.snapshot = snapshot;

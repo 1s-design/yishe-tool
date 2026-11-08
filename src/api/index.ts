@@ -84,7 +84,10 @@ export const login = (data) =>
 
 const updateUserInfo = (data) => apiInstance.post(Url.UPDATE_USER_INFO, data);
 
-const getUserInfo = async (data = {}) => {
+// lean 为服务端可选精简档：只剔除零消费的大块配置，
+// 本端依赖的 id / account / name / avatar / phone / isAdmin / company.name 全部保留。
+// 显式传 data 的调用方仍可自行覆盖。
+const getUserInfo = async (data = { lean: true }) => {
   const res = await apiInstance.post("/api/user/getUserInfo", data);
 
   return res.data.data;
