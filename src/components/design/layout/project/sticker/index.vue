@@ -27,6 +27,7 @@
           :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
           :media="item.src || item.url || item.image || item.previewUrl"
           resource-type="sticker"
+          :resource-id="(item as any).id"
           aspect-ratio="1/1"
           :badges="[]"
           :tags="(item as any).tags || (item as any).keywords || []"

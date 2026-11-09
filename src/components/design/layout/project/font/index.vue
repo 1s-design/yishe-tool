@@ -37,6 +37,7 @@
           :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
           :media="itemThumbs(item)[0]"
           resource-type="font"
+          :resource-id="(item as any).id"
           :badges="[
             ...(item.family ? [{ label: item.family, variant: 'tonal' as const }] : []),
           ]"

@@ -145,6 +145,19 @@
         @click.stop
       >
         <button
+          v-if="hasResourceId"
+          type="button"
+          class="resource-card__more-item"
+          @click="copyResourceId"
+        >
+          <Hash class="h-3.5 w-3.5 mr-2 shrink-0 opacity-70" />
+          <span class="truncate">复制ID</span>
+        </button>
+        <div
+          v-if="hasResourceId && actions.length"
+          class="resource-card__more-divider"
+        />
+        <button
           v-for="action in actions"
           :key="action.key"
           type="button"
@@ -179,8 +192,9 @@ import {
   Eye,
   Layers,
   Sparkles,
+  Hash,
 } from 'lucide-vue-next'
-import { s1Confirm } from '@/common/message'
+import { s1Confirm, message } from '@/common/message'
 
 export interface ResourceCardBadge {
   label: string
@@ -203,6 +217,8 @@ const props = withDefaults(
     badges?: ResourceCardBadge[]
     tags?: string[] | string
     footerNote?: string
+    /** 资源 ID：传入后「更多操作」菜单顶部自动出现「复制ID」项 */
+    resourceId?: string | number | null
     actions?: ResourceCardAction[]
     onSelect?: () => void
     resourceType?:
@@ -223,6 +239,7 @@ const props = withDefaults(
     badges: () => [],
     tags: () => [],
     footerNote: '',
+    resourceId: null,
     actions: () => [],
     onSelect: undefined,
     resourceType: 'default',
@@ -317,6 +334,36 @@ function toggleMoreMenu() {
 
 function closeMoreMenu() {
   moreMenuOpen.value = false
+}
+
+/** 复制资源 ID */
+const hasResourceId = computed(
+  () => props.resourceId !== null && props.resourceId !== undefined && String(props.resourceId) !== '',
+)
+
+async function copyResourceId() {
+  closeMoreMenu()
+  const idText = String(props.resourceId)
+  try {
+    await navigator.clipboard.writeText(idText)
+  } catch {
+    // 非安全上下文（如 http 内网环境）下降级为 execCommand
+    const ta = document.createElement('textarea')
+    ta.value = idText
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    try {
+      document.execCommand('copy')
+    } catch {
+      message.error('复制失败，请手动复制')
+      document.body.removeChild(ta)
+      return
+    }
+    document.body.removeChild(ta)
+  }
+  message.success(`已复制 ID：${idText}`)
 }
 
 function handleActionClick(action: ResourceCardAction) {
@@ -574,6 +621,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onDocKeydown))
 .resource-card__more-item--active {
   color: var(--1s-accent-color);
   font-weight: 500;
+}
+
+.resource-card__more-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--1s-menu-border);
 }
 
 .resource-card__footer-left {

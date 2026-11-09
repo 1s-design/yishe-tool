@@ -13,7 +13,7 @@
     <div class="panel-actions">
       <Button size="sm" class="u-btn--block" @click="createNew">新建贴纸</Button>
     </div>
-    <div class="u-panel__hint">保存后仍可再次编辑，导入素材库不会删除原作品。</div>
+    <div class="u-panel__hint">保存后仍可再次编辑；移入素材库后原作品自动清理。</div>
 
     <div class="sticker-list u-panel__body" :aria-busy="loading">
       <div v-if="loading" class="panel-loading">
@@ -127,7 +127,7 @@ async function importItem(item: any) {
   importingId.value = item.id;
   try {
     await importCustomStickerToLibrary({ customStickerId: item.id });
-    message.success("已复制到素材库，原自定义贴纸仍保留");
+    message.success("已移入素材库，原自定义贴纸已移除");
     await loadList();
   } catch (error: any) {
     message.error(error?.message || "导入素材库失败");
@@ -139,7 +139,7 @@ async function importItem(item: any) {
 function removeItem(item: any) {
   Modal.confirm({
     title: "删除自定义贴纸？",
-    content: "删除后将无法继续编辑该设计，已导入素材库的副本不受影响。",
+    content: "删除后将无法继续编辑该设计。",
     onOk: async () => {
       await deleteCustomSticker(item.id);
       if (currentEditingCustomStickerId.value === item.id) {

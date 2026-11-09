@@ -41,6 +41,7 @@
           :title="item.title"
           :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
           resource-type="document"
+          :resource-id="(item as any).id"
           :badges="[
             ...((item as any).category ? [{ label: (item as any).category, variant: 'tonal' as const }] : []),
           ]"

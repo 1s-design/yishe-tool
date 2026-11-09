@@ -33,6 +33,7 @@
           :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
           :media="item.images?.[0] || (item as any).image || (item as any).thumbnail || ''"
           resource-type="designInspiration"
+          :resource-id="(item as any).id"
           :badges="[
             { label: item.category || '未分类', variant: 'tonal' },
             ...(item.status ? [{ label: item.status, variant: statusVariant(item.status) }] : []),

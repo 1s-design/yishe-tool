@@ -31,6 +31,7 @@
         :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
         :media="item.url || item.previewUrl"
         resource-type="customSticker"
+        :resource-id="item.id"
         aspect-ratio="1/1"
         :badges="[]"
         :tags="(item as any).tags || (item as any).keywords || []"
@@ -166,7 +167,7 @@ async function importItem(item: any) {
   importingId.value = item.id;
   try {
     await importCustomStickerToLibrary({ customStickerId: item.id });
-    message.success("已复制到素材库，原自定义贴纸仍保留");
+    message.success("已移入素材库，原自定义贴纸已移除");
     await loadList();
   } catch (error: any) {
     message.error(error?.message || "导入素材库失败");
@@ -178,7 +179,7 @@ async function importItem(item: any) {
 function removeItem(item: any) {
   Modal.confirm({
     title: "删除自定义贴纸？",
-    content: "删除后将无法继续编辑该设计，已导入素材库的副本不受影响。",
+    content: "删除后将无法继续编辑该设计。",
     onOk: async () => {
       await deleteCustomSticker(item.id);
       if (currentEditingCustomStickerId.value === item.id) {

@@ -12,7 +12,7 @@ registerOperation({
       const sticker: any = await importCustomStickerToLibrary({ customStickerId: String(params.customStickerId) });
       return {
         success: true,
-        message: "自定义贴纸已复制到素材库",
+        message: "自定义贴纸已移入素材库",
         data: { customStickerId: String(params.customStickerId), stickerId: sticker?.id || null, url: sticker?.url || "" },
       };
     } catch (error: any) {

@@ -41,6 +41,7 @@
           :title="item.title"
           :summary="String((item as any).content || (item as any).description || (item as any).summary || '')"
           resource-type="tips"
+          :resource-id="(item as any).id"
           :badges="[
             ...(item.category ? [{ label: item.category, variant: 'tonal' as const }] : []),
             ...(item.isPublic ? [{ label: '公开', variant: 'tonal' as const }] : []),

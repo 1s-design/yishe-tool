@@ -194,7 +194,15 @@
     </div>
       <DialogFooter>
         <Button variant="outline" @click="showUploadModal = false">取消</Button>
-        <Button :disabled="submitLoading" @click="doUpload">
+        <Button
+          v-if="currentEditingCustomStickerId"
+          variant="outline"
+          :disabled="submitLoading"
+          @click="doUpload(true)"
+        >
+          另存为新贴纸
+        </Button>
+        <Button :disabled="submitLoading" @click="doUpload(false)">
           {{ currentEditingCustomStickerId ? '确认更新' : '确认保存' }}
         </Button>
       </DialogFooter>
@@ -453,12 +461,22 @@ function handleUploadClick() {
   showUploadModal.value = true;
 }
 
-async function doUpload() {
+async function doUpload(saveAsNew = false) {
   if (shouldUpdateCanvasSticker.value) {
     message.warning("请先点击「渲染」按钮更新画布内容");
     return;
   }
   submitLoading.value = true;
+
+  // 另存为：临时解除与原作的绑定，让保存操作创建全新作品；
+  // 成功后操作内部会把编辑 ID 指向新作品，失败则恢复原绑定。
+  const stashedEditingId = saveAsNew ? currentEditingCustomStickerId.value : null;
+  if (saveAsNew) currentEditingCustomStickerId.value = null;
+  const restoreEditingId = () => {
+    if (stashedEditingId && !currentEditingCustomStickerId.value) {
+      currentEditingCustomStickerId.value = stashedEditingId;
+    }
+  };
 
   try {
     // 先更新画布确保内容是最新的
@@ -492,6 +510,7 @@ async function doUpload() {
 
     if (!result?.success) {
       // 失败原因已由操作内部 toast 展示，这里仅收尾不重复提示
+      restoreEditingId();
       submitLoading.value = false;
       return;
     }
@@ -502,6 +521,7 @@ async function doUpload() {
     showUploadModal.value = false;
   } catch (e) {
     console.error("保存失败:", e);
+    restoreEditingId();
     submitLoading.value = false;
     message.error("保存失败: " + (e.message || e));
   }
