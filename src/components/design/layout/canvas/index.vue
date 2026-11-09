@@ -491,10 +491,12 @@ async function doUpload() {
     });
 
     if (!result?.success) {
-      throw new Error(result?.message || "保存失败");
+      // 失败原因已由操作内部 toast 展示，这里仅收尾不重复提示
+      submitLoading.value = false;
+      return;
     }
 
-    message.success(result.message || "保存成功");
+    // 成功/失败提示已由操作内部统一弹出，这里不再重复提示
 
     submitLoading.value = false;
     showUploadModal.value = false;

@@ -88,8 +88,35 @@
       </div>
 
       <aside id="layout-ai" class="design-layout__ai">
-        <AiPanel :open="true" embedded />
+        <div class="design-layout__dock-tabs">
+          <button
+            type="button"
+            class="design-layout__dock-tab"
+            :class="{ 'is-active': rightDockTab === 'ai' }"
+            @click="rightDockTab = 'ai'"
+          >
+            AI 对话
+          </button>
+          <button
+            type="button"
+            class="design-layout__dock-tab"
+            :class="{ 'is-active': rightDockTab === 'code' }"
+            @click="rightDockTab = 'code'"
+          >
+            代码画布
+          </button>
+        </div>
+        <div class="design-layout__dock-content">
+          <AiPanel v-show="rightDockTab === 'ai'" :open="true" embedded />
+          <htmlCodePanel
+            v-show="rightDockTab === 'code'"
+            class="design-layout__dock-panel"
+            :active="rightDockTab === 'code'"
+          />
+        </div>
       </aside>
+
+      <htmlCodeEditorDialog />
     </div>
   </div>
 
@@ -321,6 +348,9 @@ import videoClip from "./videoClip/index.vue";
 import operationsPanel from "./operations/index.vue";
 import canvasStructure from "./canvasStructure/index.vue";
 import AiPanel from "./ai/AiPanel.vue";
+import htmlCodePanel from "./canvas/operate/htmlCodePanel.vue";
+import htmlCodeEditorDialog from "./canvas/operate/htmlCodeEditorDialog.vue";
+import { rightDockTab } from "./rightDock.ts";
 import { isAiPanelOpen } from "@/ai/store";
 import { useEventBus } from "@vueuse/core";
 import { DESIGN_3D_ENABLED } from "../featureFlags";
@@ -689,9 +719,68 @@ async function initAction() {
   min-width: 288px;
   flex: 0 0 var(--1s-ai-panel-width);
   min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border-left: 1px solid var(--1s-border-color);
   background: var(--1s-surface-background);
+}
+
+/* 右侧 Dock 分页栏 */
+.design-layout__dock-tabs {
+  display: flex;
+  align-items: stretch;
+  height: 34px;
+  min-height: 34px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--1s-border-color);
+  background: var(--1s-surface-background);
+}
+
+.design-layout__dock-tab {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--1s-text-color-secondary);
+  font-size: var(--1s-control-font-md, 12px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--1s-transition-fast, 0.15s ease);
+
+  &:hover {
+    color: var(--1s-text-color);
+  }
+
+  &.is-active {
+    color: var(--1s-text-color);
+    font-weight: 600;
+  }
+
+  &.is-active::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: -1px;
+    height: 2px;
+    background: var(--1s-accent-color);
+  }
+}
+
+.design-layout__dock-content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.design-layout__dock-panel {
+  width: 100%;
+  min-width: 0;
 }
 
 /*
@@ -699,7 +788,7 @@ async function initAction() {
  * 这里把它从悬浮拖拽形态无侵入地约束为右侧常驻 Dock，
  * 不改业务逻辑，也不影响弹窗内部的 AI 会话能力。
  */
-.design-layout__ai > .ai-panel {
+.design-layout__ai .ai-panel {
   position: static !important;
   inset: auto !important;
   width: 100% !important;

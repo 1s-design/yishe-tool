@@ -50,6 +50,7 @@ import { message, Modal } from '@/common/message'
 import { usePromptAttachments } from '@/composables/usePromptAttachments'
 const { toggle: toggleResource, has: hasResource } = usePromptAttachments();
 import {
+  getCustomSticker,
   getCustomStickerList,
   importCustomStickerToLibrary,
   deleteCustomSticker,
@@ -66,24 +67,7 @@ import { executeAITool } from "@/ai/shared/execute-tool";
 import { clearAgentDesignProvenance, restoreAgentDesignProvenance } from "@/ai/design-provenance";
 import Utils from "@/common/utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Plus,
-  RotateCw,
-  MoreVertical,
-  Pencil,
-  Copy,
-  FolderInput,
-  Trash2,
-  Sparkles,
-} from "lucide-vue-next";
+import { Plus, RotateCw } from "lucide-vue-next";
 
 const list = ref<any[]>([]);
 const loading = ref(false);
@@ -92,6 +76,7 @@ const importingId = ref<string | null>(null);
 function cardActions(item: any) {
   const added = hasResource('sticker', String(item.id))
   return [
+    { key: 'copy', label: '复制到当前画布', onSelect: () => forkAsNew(item) },
     {
       key: 'add',
       label: added ? '移出提示词' : '加入提示词',
@@ -123,40 +108,58 @@ async function createNew() {
   message.success("已创建新的空白贴纸画布");
 }
 
+/**
+ * 解析出可编辑的贴纸详情。
+ * 列表接口为瘦身后的分页结果，可能不返回 meta.data；
+ * 缺少时按需调用详情接口补拉（与左侧窄栏自定义贴纸面板行为保持一致）。
+ */
+async function resolveEditableDetail(item: any) {
+  if (item?.meta?.data) return item;
+  try {
+    const detail = await getCustomSticker(item.id);
+    return detail?.meta?.data ? detail : null;
+  } catch (e: any) {
+    message.error(e?.message || "获取自定义贴纸详情失败");
+    return null;
+  }
+}
+
 /** 模式 1: 编辑原作品 (保存将直接覆盖原作品) */
-function editOriginal(item: any) {
-  const data = item?.meta?.data;
-  if (!data) {
+async function editOriginal(item: any) {
+  const detail = await resolveEditableDetail(item);
+  if (!detail) {
     message.warning("该自定义贴纸缺少可编辑设计数据");
     return;
   }
+  const data = detail.meta.data;
   canvasStickerOptions.value = JSON.parse(JSON.stringify(data));
-  restoreAgentDesignProvenance(canvasStickerOptions.value, item.meta);
-  
+  restoreAgentDesignProvenance(canvasStickerOptions.value, detail.meta);
+
   // 绑定编辑状态
-  currentEditingCustomStickerId.value = item.id;
-  currentEditingCustomStickerFolderId.value = item.folderId || null;
-  currentEditingCustomStickerName.value = item.name || "未命名贴纸";
-  
+  currentEditingCustomStickerId.value = detail.id;
+  currentEditingCustomStickerFolderId.value = detail.folderId || null;
+  currentEditingCustomStickerName.value = detail.name || "未命名贴纸";
+
   setActiveMenu(menuItems.canvas);
   message.success(`已进入编辑模式：「${currentEditingCustomStickerName.value}」（保存将覆盖原作品）`);
 }
 
-/** 模式 2: 基于此贴纸新建 (副本模式，保存将作为全新贴纸) */
-function forkAsNew(item: any) {
-  const data = item?.meta?.data;
-  if (!data) {
+/** 模式 2: 复制到当前画布 (副本模式，保存将作为全新贴纸) */
+async function forkAsNew(item: any) {
+  const detail = await resolveEditableDetail(item);
+  if (!detail) {
     message.warning("该自定义贴纸缺少可编辑设计数据");
     return;
   }
+  const data = detail.meta.data;
   canvasStickerOptions.value = JSON.parse(JSON.stringify(data));
-  restoreAgentDesignProvenance(canvasStickerOptions.value, item.meta);
-  
+  restoreAgentDesignProvenance(canvasStickerOptions.value, detail.meta);
+
   // 清空原作品绑定，转为全新贴纸模式
   exitCustomStickerEditMode();
-  
+
   setActiveMenu(menuItems.canvas);
-  message.success(`已载入「${item.name || "贴纸"}」设计副本（保存将作为全新贴纸作品）`);
+  message.success(`已载入「${detail.name || "贴纸"}」设计副本（保存将作为全新贴纸作品）`);
 }
 
 async function importItem(item: any) {

@@ -23,6 +23,14 @@ function push(message: string, type: ToastType = 'default', duration = 3000) {
   return id
 }
 
+export function update(id: number, patch: Partial<Pick<ToastItem, 'message' | 'title' | 'type'>>) {
+  const item = toasts.find(t => t.id === id)
+  if (!item) return
+  if (patch.message !== undefined) item.message = patch.message
+  if (patch.title !== undefined) item.title = patch.title
+  if (patch.type !== undefined) item.type = patch.type
+}
+
 export function remove(id: number) {
   const idx = toasts.findIndex(t => t.id === id)
   if (idx !== -1) toasts.splice(idx, 1)
@@ -34,6 +42,9 @@ export const toast = {
   warning: (msg: string, duration?: number) => push(msg, 'warning', duration ?? 4000),
   info: (msg: string, duration?: number) => push(msg, 'info', duration),
   default: (msg: string, duration?: number) => push(msg, 'default', duration),
+  /** 常驻进度提示，返回 id，配合 update 更新文案、dismiss 关闭 */
+  loading: (msg: string) => push(msg, 'info', 0),
+  update,
   dismiss: remove,
 }
 

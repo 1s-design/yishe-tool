@@ -22,6 +22,7 @@ import {
 } from "@/ai/design-provenance";
 import { beginLibraryUpload } from "@/services/designTabStatus";
 import { currentEditingCustomStickerId, currentEditingCustomStickerFolderId } from "@/components/design/layout/canvas";
+import { toast } from "@/components/ui/toast";
 
 // 批量任务状态
 let batchTaskState: {
@@ -431,6 +432,7 @@ registerOperation({
       }
     }
     if (!controller) {
+      toast.error("画布控制器未初始化，请确保画布已加载");
       return {
         success: false,
         message: "画布控制器未初始化，请确保画布已加载",
@@ -439,15 +441,29 @@ registerOperation({
 
     const loginStore = useLoginStatusStore();
     if (!loginStore.isLogin) {
+      toast.error("请先登录后再保存自定义贴纸");
       return { success: false, message: "请先登录后再保存自定义贴纸" };
     }
 
     let finishLibraryUpload: ((success?: boolean) => void) | null = null;
 
+    // 保存过程较长（渲染 → 导出 → 上传 → 写库），用常驻 toast 展示当前步骤，
+    // 结束后替换为成功/失败提示，避免用户误以为点击无效。
+    const progressId = toast.loading("正在保存贴纸：校验画布…");
+    const setStep = (step: string) =>
+      toast.update(progressId, { message: `正在保存贴纸：${step}` });
+    const fail = (message: string) => {
+      finishLibraryUpload?.(false);
+      finishLibraryUpload = null;
+      toast.dismiss(progressId);
+      toast.error(message);
+      return { success: false, message };
+    };
+
     try {
       const validationError = validateCanvasBeforeSave();
       if (validationError) {
-        return { success: false, message: validationError };
+        return fail(validationError);
       }
 
       const provenance = getAgentDesignProvenance(canvasStickerOptions.value);
@@ -464,12 +480,15 @@ registerOperation({
           : null;
 
       // 渲染预算需覆盖「带字体嵌入的首次尝试 + 降级重试」的最坏情况
+      setStep("渲染画布…");
       await renderCurrentCanvasNow({ timeoutMs: 150_000 });
 
       const postRenderValidationError = validateCanvasBeforeSave();
       if (postRenderValidationError) {
-        return { success: false, message: postRenderValidationError };
+        return fail(postRenderValidationError);
       }
+
+      if (needGenerate) setStep("生成贴纸信息…");
 
       let metadataGenerationSource = "provided";
       if (needGenerate) {
@@ -501,9 +520,10 @@ registerOperation({
 
       const canvasEl = controller.canvasEl;
       if (!canvasEl) {
-        return { success: false, message: "画布元素未找到" };
+        return fail("画布元素未找到");
       }
 
+      setStep("导出贴纸图片…");
       let file: File;
       const uniqueFileName = `sticker_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
       let exportWidth = canvasEl.width;
@@ -519,9 +539,10 @@ registerOperation({
 
       // 验证文件有效性
       if (!file || file.size < 100) {
-        return { success: false, message: `画布导出文件异常（大小: ${file?.size ?? 0} bytes），已阻止保存` };
+        return fail(`画布导出文件异常（大小: ${file?.size ?? 0} bytes），已阻止保存`);
       }
 
+      setStep("上传图片到图库…");
       finishLibraryUpload = beginLibraryUpload();
       const cos = await Promise.race([
         uploadToCOS({
@@ -540,12 +561,12 @@ registerOperation({
 
       // 验证上传结果：检查 URL 是否可达
       if (!cos?.url) {
-        return { success: false, message: "COS 上传未返回有效 URL" };
+        return fail("COS 上传未返回有效 URL");
       }
       try {
         const headResp = await fetch(cos.url, { method: "HEAD" });
         if (!headResp.ok) {
-          return { success: false, message: `上传验证失败：文件不可访问 (${headResp.status})` };
+          return fail(`上传验证失败：文件不可访问 (${headResp.status})`);
         }
       } catch (verifyErr: any) {
         // HEAD 请求可能因 CORS 失败，不阻断保存但记录警告
@@ -577,6 +598,7 @@ registerOperation({
         revision: typeof revision === "number" ? revision : undefined,
         reviewStatus: reviewStatus || (jobId || inspirationId ? "pending" : undefined),
       };
+      setStep(editingCustomStickerId ? "更新贴纸记录…" : "写入贴纸库…");
       const savedRecord: any = await Promise.race([
         editingCustomStickerId
           ? updateCustomSticker(String(editingCustomStickerId), payload)
@@ -594,6 +616,7 @@ registerOperation({
       let importedSticker: any = null;
       if (autoImportToLibrary) {
         try {
+          setStep("同步导入素材库…");
           importedSticker = await importCustomStickerToLibrary({
             customStickerId,
             folderId: materialFolderId || null,
@@ -628,6 +651,14 @@ registerOperation({
         ? `贴纸「${name}」已保存到自定义贴纸，并已同步导入到素材库 (stickerId: ${importedSticker.id})`
         : `贴纸「${name}」已保存到自定义贴纸`;
 
+      toast.dismiss(progressId);
+      toast.success(
+        nextBatchProgress
+          ? `${successMessage}（批量进度 ${nextBatchProgress.completed}/${nextBatchProgress.total}）`
+          : successMessage,
+        5000,
+      );
+
       return {
         success: true,
         message: successMessage,
@@ -651,11 +682,7 @@ registerOperation({
         },
       };
     } catch (err: any) {
-      finishLibraryUpload?.(false);
-      return {
-        success: false,
-        message: `保存失败: ${err?.message || "未知错误"}`,
-      };
+      return fail(`保存失败: ${err?.message || "未知错误"}`);
     }
   },
 });
