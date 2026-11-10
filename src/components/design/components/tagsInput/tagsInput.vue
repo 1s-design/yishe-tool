@@ -48,7 +48,7 @@
 <script setup>
 import { defineComponent, ref } from "vue";
 import Vue3TagsInput from "./src/vue3-tags-input.vue";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 

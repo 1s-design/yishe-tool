@@ -3,6 +3,7 @@ import COS from 'cos-js-sdk-v5';
 import { useConfigStore } from '@/store/stores/config';
 import { saveAs } from 'file-saver';
 import { buildCOSKey, extractCOSFilename, extractCOSObjectKey } from '@/utils/cosPath';
+import { normalizeFileByContent } from '@/utils/fileType';
 
 var _cos: any = undefined
 var _cosInitTime = 0
@@ -151,10 +152,14 @@ export async function uploadToCOS({
     entityId?: string | number
     isThumbnail?: boolean
 }) {
+    // 按真实内容纠正扩展名，避免 COS 对象以错误后缀分发（如 .jpg 内实际是 PNG），
+    // 下游按扩展名解码时会报「暂不支持该文件格式」。
+    const normalizedFile = await normalizeFileByContent(file)
+
     let finalKey = key
     if (!finalKey) {
         finalKey = buildCOSKey({
-            filename: file.name || 'file',
+            filename: normalizedFile.name || 'file',
             category: category || 'uncategorized',
             account,
             userId,
@@ -164,7 +169,7 @@ export async function uploadToCOS({
     }
 
     try {
-        return await doUpload(finalKey, file)
+        return await doUpload(finalKey, normalizedFile)
     } catch (e: any) {
         if (
             e?.statusCode === 403 ||
@@ -175,7 +180,7 @@ export async function uploadToCOS({
             console.warn('[COS] 凭据已失效或过期，强制刷新 STS 后重试一次')
             resetCOS()
             try {
-                return await doUpload(finalKey, file)
+                return await doUpload(finalKey, normalizedFile)
             } catch (e2: any) {
                 console.error('文件上传失败(重试后仍失败):', e2)
                 throw new Error(`COS上传失败: ${e2?.message || e2}`)

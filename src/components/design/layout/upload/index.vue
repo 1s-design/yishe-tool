@@ -266,6 +266,7 @@ import { uploadRef } from "./index";
 import baseGltfViewer from "@/components/model/baseGltfViewer/index.vue";
 import { fetchFile } from "@/api";
 import { apiInstance } from "@/api/apiInstance";
+import { normalizeFileByContent } from "@/utils/fileType";
 
 import { saveAs } from "file-saver";
 import { uploadFont } from "@/api";
@@ -452,10 +453,16 @@ async function uploadSingleFile(file) {
   const userAccount = loginStore.userInfo?.account || loginStore.userInfo?.name || 'anonymous'
   const userId = loginStore.userInfo?.id
 
-  // 自动识别文件后缀
+  // 以文件真实内容纠正扩展名：素材常出现「.jpg 实为 PNG」这类扩展名与编码不一致，
+  // 直接按扩展名入库会让下游软件用错解码器，报「暂不支持该文件格式」。
+  const rawFile = await normalizeFileByContent(file.raw as File)
+  file.raw = rawFile
+  file.name = rawFile.name
+
+  // 自动识别文件后缀（已按真实内容纠正）
   let suffix = '';
-  if (file.name) {
-    const match = file.name.match(/\.([a-zA-Z0-9]+)$/);
+  if (rawFile.name) {
+    const match = rawFile.name.match(/\.([a-zA-Z0-9]+)$/);
     if (match) {
       suffix = match[1].toLowerCase();
     }
@@ -463,7 +470,7 @@ async function uploadSingleFile(file) {
 
   if (Utils.type.isImageName(file.name)) {
     const fileCos = await uploadToCOS({ 
-      file: file.raw,
+      file: rawFile,
       category: 'sticker',
       account: userAccount,
       userId

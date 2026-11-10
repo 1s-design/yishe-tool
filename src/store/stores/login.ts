@@ -9,7 +9,7 @@
  * Copyright (c) 2024 by 1s, All Rights Reserved. 
  */
 import { getLocalUserInfo, updateLocalUserInfo } from "@/store/stores/loginAction";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { defineStore } from "pinia";
 import { reactive, ref, watch, toRaw, isReactive, isRef, unref } from "vue";
 import Api from '@/api'

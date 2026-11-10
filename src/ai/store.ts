@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
+import { useLocalStorage } from '@/utils/localStorage'
 import type { AiMessage, AiConversation } from './types'
 
 function generateId(): string {

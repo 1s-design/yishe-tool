@@ -68,7 +68,7 @@ import { Dragger } from './dragger.tsx'
 import Utils from '@/common/utils'
 import { builtInClipPathList } from '@/components/design/layout/canvas/children/svg/clipPath/index.tsx'
 // 通用的颜色操作
-import { useLocalStorage } from '@vueuse/core'
+import { useLocalStorage } from "@/utils/localStorage";
 import { computed, ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

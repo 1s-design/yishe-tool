@@ -135,30 +135,61 @@ export async function htmlToPngFile(html, name = '') {
 
 
 
+export type CanvasExportFormat = 'png' | 'jpg'
+
 export const canvasToFile = async (
     canvas: HTMLCanvasElement,
     name = 'canvas.png',
-    options: { pngColors?: number; fallbackNative?: boolean } = {}
+    options: { format?: CanvasExportFormat; quality?: number; pngColors?: number; fallbackNative?: boolean } = {}
 ): Promise<File> => {
     if (!canvas || canvas.width === 0 || canvas.height === 0) {
         throw new Error('画布为空或尺寸为 0，无法导出图片')
     }
 
-    const { pngColors = 0, fallbackNative = true } = options
+    const { format = 'png', quality = 0.92, pngColors = 0, fallbackNative = true } = options
+    const ext = format === 'jpg' ? 'jpg' : 'png'
+    const fileName = name.replace(/\.(png|jpg|jpeg|webp|gif|bmp|tif|tiff)$/i, `.${ext}`)
+
+    // JPG 不支持透明通道：先合成白底，避免透明区域变黑或变脏
+    let sourceCanvas: HTMLCanvasElement = canvas
+    if (format === 'jpg') {
+        const bg = document.createElement('canvas')
+        bg.width = canvas.width
+        bg.height = canvas.height
+        const bgCtx = bg.getContext('2d')
+        if (bgCtx) {
+            bgCtx.fillStyle = '#ffffff'
+            bgCtx.fillRect(0, 0, bg.width, bg.height)
+            bgCtx.drawImage(canvas, 0, 0)
+            sourceCanvas = bg
+        }
+    }
+
+    if (format === 'jpg') {
+        return new Promise((resolve, reject) => {
+            sourceCanvas.toBlob((blob) => {
+                if (!blob || blob.size === 0) {
+                    reject(new Error('画布导出失败：JPG toBlob 返回空数据'))
+                    return
+                }
+                resolve(new File([blob], fileName, { type: 'image/jpeg' }))
+            }, 'image/jpeg', quality)
+        })
+    }
 
     try {
         const UPNGModule = await import('upng-js')
         const UPNG = (UPNGModule as any).default || UPNGModule
-        const ctx = canvas.getContext('2d')
+        const ctx = sourceCanvas.getContext('2d')
         if (ctx) {
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            const imgData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height)
             // cnum: 0 为 100% 无损 32-bit RGBA（保留细腻渐变、阴影与超高清晰度）
-            const pngBuffer = UPNG.encode([imgData.data.buffer], canvas.width, canvas.height, pngColors)
+            const pngBuffer = UPNG.encode([imgData.data.buffer], sourceCanvas.width, sourceCanvas.height, pngColors)
             const blob = new Blob([pngBuffer], { type: 'image/png' })
             console.log(
-                `[贴纸PNG导出] 导出贴纸: ${name}, 尺寸: ${canvas.width}x${canvas.height}, 模式: ${pngColors === 0 ? '无损32位真彩' : `${pngColors}色量化`}, 体积: ${(blob.size / 1024).toFixed(1)} KB`
+                `[贴纸PNG导出] 导出贴纸: ${fileName}, 尺寸: ${sourceCanvas.width}x${sourceCanvas.height}, 模式: ${pngColors === 0 ? '无损32位真彩' : `${pngColors}色量化`}, 体积: ${(blob.size / 1024).toFixed(1)} KB`
             )
-            return new File([blob], name, { type: 'image/png' })
+            return new File([blob], fileName, { type: 'image/png' })
         }
     } catch (err) {
         console.warn('[贴纸PNG压缩] UPNG 压缩失败，回退原生 toBlob:', err)
@@ -166,12 +197,12 @@ export const canvasToFile = async (
     }
 
     return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
+        sourceCanvas.toBlob((blob) => {
             if (!blob || blob.size === 0) {
                 reject(new Error('画布导出失败：toBlob 返回空数据'))
                 return
             }
-            resolve(new File([blob], name, { type: 'image/png' }))
+            resolve(new File([blob], fileName, { type: 'image/png' }))
         }, 'image/png')
     })
 }

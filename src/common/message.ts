@@ -10,11 +10,25 @@ import { confirm } from '@/components/ui/confirm'
  */
 type MessageArgs = string | { content: string; key?: string; duration?: number; type?: string }
 
+// 按 key 复用同一条 toast：loading 常驻，成功/失败时就地替换并自动消失，
+// 否则 message.loading(duration:0) 会永久留在页面上。
+const keyToToastId = new Map<string, number>()
+
 function handle(msg: MessageArgs, type: 'success' | 'error' | 'warning' | 'info' | 'default') {
   if (typeof msg === 'string') {
     return toast[type === 'default' ? 'default' : type](msg)
   }
   const duration = msg.duration != null ? msg.duration * 1000 : undefined
+  if (msg.key) {
+    const existingId = keyToToastId.get(msg.key)
+    if (existingId != null) {
+      toast.dismiss(existingId)
+      keyToToastId.delete(msg.key)
+    }
+    const id = toast[type](msg.content, duration)
+    if (duration === 0) keyToToastId.set(msg.key, id)
+    return id
+  }
   return toast[type](msg.content, duration)
 }
 
@@ -30,7 +44,13 @@ export const message = {
     const duration = opts.duration != null ? opts.duration * 1000 : undefined
     return toast[type](opts.content, duration)
   },
-  destroy: (_key?: string) => {},
+  destroy: (key?: string) => {
+    if (!key) return
+    const id = keyToToastId.get(key)
+    if (id == null) return
+    toast.dismiss(id)
+    keyToToastId.delete(key)
+  },
   // 兼容 ant-design-vue message.config（本实现为无操作）
   config: (_opts: unknown) => {},
 }

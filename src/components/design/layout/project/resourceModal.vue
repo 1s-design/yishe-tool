@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { computed, markRaw, ref } from "vue";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { usePromptAttachments } from "@/composables/usePromptAttachments";
 import tabSticker from "./sticker/index.vue";
 import tabCustomSticker from "./customSticker/index.vue";

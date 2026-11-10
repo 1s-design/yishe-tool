@@ -114,7 +114,7 @@ import { ref, computed, h } from "vue";
 import { Square } from 'lucide-vue-next';
 import desimage from "@/components/image.vue";
 import { CustomBackgroundCategoryOptions } from "@/components/design/layout/canvas/children/background/builtIn/index";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { SvgFilterCategory } from "@/types/filter.ts";
 import Utils from "@/common/utils";
 import { GlobalConst } from "@/types/index.ts";

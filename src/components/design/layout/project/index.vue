@@ -34,7 +34,7 @@ import tabDocument from "./document/index.vue";
 import tabTips from "./tips/index.vue";
 import tabDesignPrompt from "./designPrompt/index.vue";
 import tabDesignInspiration from "./designInspiration/index.vue";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 
 enum UserOwnSourceType {
   STICKER = "sticker",

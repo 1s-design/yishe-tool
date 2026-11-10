@@ -457,7 +457,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, nextTick, watch, onMounted, onUnmounted, markRaw } from "vue";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { designAgent } from "@/ai/langgraph";
 import { resolveAIToolName } from "@/ai/shared/tools";
 import { pendingPromptInput } from "@/ai/store";

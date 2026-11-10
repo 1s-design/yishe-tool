@@ -5,7 +5,7 @@
  */
 
 import { ref, computed, watch } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
+import { useLocalStorage } from "@/utils/localStorage";
 import type { CropPreset, CropGuide, CropRegion, SafeZone } from './types'
 import { calculateCropRegion, calculateSafeZone, findOptimalCanvasRatio, calculateSafeAreaRatio, calculatePresetCropRegion, calculateMixedSafeZone, findOptimalCanvasSizeMixed, formatRatioAsText, calculateLayout } from './engine'
 import { canvasStickerOptionsOnlyChild } from '../index'

@@ -1,4 +1,4 @@
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { postAgentProxy } from "./proxy-client";
 import { DESIGN_TOOL_FEATURE_CODES } from "./feature-codes";
 

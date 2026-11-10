@@ -127,7 +127,7 @@
 
 <script setup lang="tsx">
 import { ref, onBeforeMount } from "vue";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { Loader2, MoreHorizontal } from "lucide-vue-next";
 import { getStickerList } from "@/api";
 import desimage from "@/components/image.vue";

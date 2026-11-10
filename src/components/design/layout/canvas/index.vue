@@ -86,23 +86,39 @@
           {{ isUpdatingSticker ? '渲染中…' : '渲染' }}
         </button>
 
-        <button
-          type="button"
-          class="u-btn u-btn--outline canvas-action-secondary"
-          :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
-          @click="exportPng"
-        >
-          导出
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button
+              type="button"
+              class="u-btn u-btn--outline canvas-action-secondary"
+              :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
+            >
+              导出
+              <ChevronDown class="w-3 h-3 ml-1" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" class="w-[160px]">
+            <DropdownMenuItem @click="exportPng('png')">PNG（透明背景）</DropdownMenuItem>
+            <DropdownMenuItem @click="exportPng('jpg')">JPG（白底）</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <button
-          type="button"
-          class="u-btn u-btn--outline canvas-action-secondary"
-          :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
-          @click="exportTrimmedPng"
-        >
-          裁边导出
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button
+              type="button"
+              class="u-btn u-btn--outline canvas-action-secondary"
+              :disabled="shouldUpdateCanvasSticker && !isUpdatingSticker"
+            >
+              裁边导出
+              <ChevronDown class="w-3 h-3 ml-1" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" class="w-[160px]">
+            <DropdownMenuItem @click="exportTrimmedPng('png')">PNG（透明背景）</DropdownMenuItem>
+            <DropdownMenuItem @click="exportTrimmedPng('jpg')">JPG（白底）</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <button
           type="button"
@@ -187,6 +203,28 @@
       </div>
 
       <div class="flex items-center gap-3">
+        <Label class="w-[100px] shrink-0 text-xs">保存格式:</Label>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="u-btn u-btn--outline text-xs px-3 py-1.5"
+            :class="editForm.format === 'png' ? 'u-btn--solid' : ''"
+            @click="editForm.format = 'png'"
+          >
+            PNG（透明背景）
+          </button>
+          <button
+            type="button"
+            class="u-btn u-btn--outline text-xs px-3 py-1.5"
+            :class="editForm.format === 'jpg' ? 'u-btn--solid' : ''"
+            @click="editForm.format = 'jpg'"
+          >
+            JPG（白底）
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
         <Label class="w-[100px] shrink-0 text-xs">自动去除白色边框:</Label>
         <Switch v-model:checked="editForm.autoTrim" />
         <span class="ml-2 text-xs text-muted-foreground">{{ editForm.autoTrim ? '是' : '否' }}</span>
@@ -230,7 +268,7 @@ import {
   computed,
 } from "vue";
 
-import { Check, Maximize2, Plus, X, Frame, Code, Type, Image, Layers, Cloud, BarChart3, Music, PenTool, Shapes, Activity } from 'lucide-vue-next'
+import { Check, Maximize2, Plus, X, Frame, Code, Type, Image, Layers, Cloud, BarChart3, Music, PenTool, Shapes, Activity, ChevronDown } from 'lucide-vue-next'
 import { useLoadingOptions } from "@/components/loading/index.tsx";
 import addPopover from "./addPopover.vue";
 import Api from "@/api";
@@ -241,6 +279,7 @@ import { executeAITool } from "@/ai/shared/execute-tool";
 import { clearAgentDesignProvenance } from "@/ai/design-provenance";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -329,15 +368,15 @@ function checkAndUpdate() {
   return true;
 }
 
-function exportPng() {
+function exportPng(format: 'png' | 'jpg' = 'png') {
   if (!checkAndUpdate()) return;
-  canvasController.downloadPng();
+  canvasController.downloadPng(format);
 }
 
 /* 导出去除多余空白的图片 */
-function exportTrimmedPng() {
+function exportTrimmedPng(format: 'png' | 'jpg' = 'png') {
   if (!checkAndUpdate()) return;
-  canvasController.downloadTrimmedPng();
+  canvasController.downloadTrimmedPng(format);
 }
 
 function clearCanvasChildren() {
@@ -413,6 +452,7 @@ const editForm = ref({
   keywords: [],
   autoTrim: true, // 默认开启自动去除白色边框
   folderId: null as string | null, // 文件夹 ID
+  format: 'png' as 'png' | 'jpg',
 });
 
 const folderTree = ref<any[]>([]);
@@ -506,6 +546,7 @@ async function doUpload(saveAsNew = false) {
       keywords: editForm.value.keywords.join(","),
       autoTrim: editForm.value.autoTrim,
       folderId: editForm.value.folderId || null,
+      format: editForm.value.format,
     });
 
     if (!result?.success) {

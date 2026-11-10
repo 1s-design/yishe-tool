@@ -259,7 +259,8 @@
 </template>
 <script setup lang="tsx">
 import { computed, onMounted, ref, watchEffect, watch, nextTick } from "vue";
-import { useElementSize, useLocalStorage } from "@vueuse/core";
+import { useElementSize} from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { migrateLegacyWorkspaceStorage } from "@/services/designRuntime";
 import { ModelController } from "../core/controller";
 import loading from "./loading.vue";

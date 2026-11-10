@@ -2,6 +2,7 @@ import { apiInstance, source } from "./apiInstance";
 import { deleteCOSFile, downloadCOSFile, uploadToCOS } from "./cos";
 import { Url } from "./url";
 import * as CryptoJS from "crypto-js";
+import { normalizeFileByContent } from "@/utils/fileType";
 export { uploadToCOS, deleteCOSFile, downloadCOSFile } from "./cos";
 
 interface FetchFileOptions {
@@ -63,7 +64,9 @@ export async function fetchFile(url, options) {
     lastModified: Date.now(),
   });
 
-  return file;
+  // 服务端 Content-Type 可能与真实内容不一致（如 CDN 给 PNG 标成 image/jpeg），
+  // 这里按文件头纠正扩展名，避免生成「PNG 内容 + .jpg 名字」这类错配文件。
+  return normalizeFileByContent(file);
 }
 
 // 注册 ，账号密码手机号

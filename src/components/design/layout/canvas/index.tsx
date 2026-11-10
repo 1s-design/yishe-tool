@@ -1235,14 +1235,14 @@ export class CanvasController {
     }
   }
 
-  async downloadTrimmedPng() {
+  async downloadTrimmedPng(format: 'png' | 'jpg' = 'png') {
     const trimmedCanvas = Utils.trimCanvas(this.canvasEl);
-    downloadByFile(await canvasToFile(trimmedCanvas));
+    downloadByFile(await canvasToFile(trimmedCanvas, undefined, { format }));
   }
 
-  async downloadPng() {
+  async downloadPng(format: 'png' | 'jpg' = 'png') {
     await this.activeUpdateRenderingCanvas();
-    downloadByFile(await canvasToFile(this.canvasEl));
+    downloadByFile(await canvasToFile(this.canvasEl, undefined, { format }));
   }
 
   // async downloadIco() {

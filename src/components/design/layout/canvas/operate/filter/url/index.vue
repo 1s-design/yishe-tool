@@ -349,7 +349,7 @@ import {
   SvgFilterCategoryOptions,
   SvgFilterCustomEffectType,
 } from "@/components/design/layout/canvas/children/svgFilter/builtIn/index";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { SvgFilterCategory } from "@/types/filter.ts";
 import Utils from "@/common/utils";
 import { GlobalConst } from "@/types/index.ts";

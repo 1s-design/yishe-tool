@@ -400,6 +400,13 @@ registerOperation({
       placeholder: "留空则保存到素材库根目录",
       description: "如果开启了同时导入素材库，可指定导入到素材库的目标文件夹ID",
     },
+    {
+      name: "format",
+      label: "保存格式",
+      type: "string",
+      default: "png",
+      description: "png 或 jpg。png 保留透明背景（推荐）；jpg 自动合成白底，适合非抠图素材",
+    },
   ],
   async execute(params, ctx) {
     let {
@@ -412,6 +419,7 @@ registerOperation({
       customStickerId: requestedCustomStickerId,
       autoImportToLibrary = false,
       materialFolderId,
+      format = "png",
       jobId,
       inspirationId,
       parentId,
@@ -530,11 +538,11 @@ registerOperation({
       let exportHeight = canvasEl.height;
       if (autoTrim) {
         const trimmedCanvas = Utils.trimCanvas(canvasEl);
-        file = await canvasToFile(trimmedCanvas, uniqueFileName);
+        file = await canvasToFile(trimmedCanvas, uniqueFileName, { format: format as 'png' | 'jpg' });
         exportWidth = trimmedCanvas.width;
         exportHeight = trimmedCanvas.height;
       } else {
-        file = await canvasToFile(canvasEl, uniqueFileName);
+        file = await canvasToFile(canvasEl, uniqueFileName, { format: format as 'png' | 'jpg' });
       }
 
       // 验证文件有效性
@@ -581,7 +589,7 @@ registerOperation({
 
       const payload: any = {
         url: cos.url,
-        suffix: "png",
+        suffix: format === "jpg" ? "jpg" : "png",
         name: name || "未命名贴纸",
         description: description || "",
         keywords: keywords || "",

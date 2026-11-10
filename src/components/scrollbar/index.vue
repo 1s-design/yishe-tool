@@ -11,8 +11,7 @@
 </template>
     
 <script setup lang='ts'>
-
-import { useLocalStorage } from '@vueuse/core';
+import { useLocalStorage } from "@/utils/localStorage";
 import { onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 
 const props = defineProps({

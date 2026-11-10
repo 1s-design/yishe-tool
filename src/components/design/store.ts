@@ -1,5 +1,6 @@
 import { setFullscreen } from "@/common/browser";
-import { useDebounceFn, useLocalStorage } from "@vueuse/core";
+import { useDebounceFn } from "@vueuse/core";
+import { useLocalStorage } from "@/utils/localStorage";
 import { computed, ref, shallowRef, watchEffect, watch, nextTick, reactive, toRaw, Ref } from "vue"
 import { defineStore } from "pinia";
 import Utils from '@/common/utils'
