@@ -29,6 +29,10 @@ export interface CanvasAuditOptions {
   requireImageLayers?: number
   /** 要求金箔印章图层（rotate+linearGradient 的 <svg>），缺了算硬伤 */
   requireSeal?: boolean
+  /** 要求必须实际使用到的字体 ID 列表（校验 htmlBindings.font 及 HTML/CSS 引用） */
+  requiredFontIds?: string[]
+  /** 要求必须实际使用到的图片 URL 列表（校验 htmlBindings.image 及 HTML/DOM 引用） */
+  requiredImageUrls?: string[]
 }
 
 /** 长文案折列检测：逐字外接框聚类，任何一列都装不齐全部字 = 折列/散列 */
@@ -1274,6 +1278,73 @@ export async function auditCurrentCanvas(
         criticalIssues.push(
           `缺金箔印章（需要 rotate(15deg) + linearGradient 的 <svg> 印章）；诊断：htmlChild=${child ? "有" : "无"}, htmlContent 长度=${child?.htmlContent?.length ?? 0}`,
         );
+      }
+    }
+
+    // 绑定资源实际使用校验（防「搜了/传了字体或图片资源，却没真正放进画布 HTML 里」）
+    const htmlChild: any = getHtmlModelChild();
+    const rawHtmlContent = String(htmlChild?.htmlContent || "");
+    const renderedHtml = String(root.innerHTML || "");
+    const bindings = (htmlChild?.htmlBindings && typeof htmlChild.htmlBindings === "object")
+      ? htmlChild.htmlBindings
+      : {};
+    const boundFonts: Record<string, any> = bindings.font || {};
+    const boundImages: Record<string, any> = bindings.image || {};
+
+    if (Array.isArray(options.requiredFontIds) && options.requiredFontIds.length > 0) {
+      for (const reqFontId of options.requiredFontIds) {
+        const id = String(reqFontId || "").trim();
+        if (!id) continue;
+        const matchedKey = Object.keys(boundFonts).find(
+          (k) => String(boundFonts[k]?.id || "").trim() === id,
+        );
+        const usedByBinding =
+          Boolean(matchedKey) &&
+          (rawHtmlContent.includes(`{{font.${matchedKey}.family}}`) ||
+            renderedHtml.includes(`font_${id}`));
+        const usedDirectly =
+          rawHtmlContent.includes(`font_${id}`) || renderedHtml.includes(`font_${id}`);
+        if (!usedByBinding && !usedDirectly) {
+          criticalIssues.push(
+            `指定字体未实际使用（fontId=${id}）：请通过 htmlBindings.font 绑定并在 CSS 中用 {{font.xxx.family}} 渲染`,
+          );
+        }
+      }
+    }
+
+    if (Array.isArray(options.requiredImageUrls) && options.requiredImageUrls.length > 0) {
+      for (const reqUrl of options.requiredImageUrls) {
+        const url = String(reqUrl || "").trim();
+        if (!url) continue;
+        const matchedKey = Object.keys(boundImages).find(
+          (k) => String(boundImages[k]?.url || "").trim() === url,
+        );
+        const usedByBinding =
+          Boolean(matchedKey) &&
+          (rawHtmlContent.includes(`{{image.${matchedKey}.url}}`) ||
+            renderedHtml.includes(url));
+        const usedDirectly = rawHtmlContent.includes(url) || renderedHtml.includes(url);
+        if (!usedByBinding && !usedDirectly) {
+          criticalIssues.push(
+            `指定图片素材未实际使用（${url.slice(0, 60)}）：请通过 htmlBindings.image 绑定并在 HTML/CSS 中用 {{image.xxx.url}} 渲染`,
+          );
+        }
+      }
+    }
+
+    // 检测已声明在 htmlBindings 但从未在 htmlContent 中引用的闲置绑定
+    if (rawHtmlContent) {
+      const unusedFonts = Object.keys(boundFonts).filter(
+        (k) => !rawHtmlContent.includes(`{{font.${k}.family}}`) && !rawHtmlContent.includes(`font_${boundFonts[k]?.id}`),
+      );
+      if (unusedFonts.length > 0) {
+        advisoryIssues.push(`已绑定但未使用的字体键：${unusedFonts.join("、")}`);
+      }
+      const unusedImages = Object.keys(boundImages).filter(
+        (k) => !rawHtmlContent.includes(`{{image.${k}.url}}`) && !(boundImages[k]?.url && rawHtmlContent.includes(boundImages[k].url)),
+      );
+      if (unusedImages.length > 0) {
+        advisoryIssues.push(`已绑定但未使用的图片键：${unusedImages.join("、")}`);
       }
     }
 

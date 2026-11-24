@@ -77,6 +77,13 @@ registerOperation({
       default: false,
       description: "默认 false：再次调用会替换已有 HTML 作品。设为 true 可叠加多个 HTML 层。",
     },
+    {
+      name: "preserveExactSize",
+      label: "保留精确像素字号",
+      type: "boolean",
+      default: false,
+      description: "为 true 时跳过 px→em 强转和最小字号抬高，适合速查表、印章/角标等需要精确像素排版的场景（也可在 HTML 根元素写 data-exact-typography=\"1\"）。",
+    },
   ],
   async execute(params, ctx) {
     let {
@@ -86,6 +93,7 @@ registerOperation({
       htmlTemplateDefaultBindings,
       htmlTemplateMeta,
       allowMultipleHtml,
+      preserveExactSize,
     } = params;
 
     // 溢出检测和自动修复（带画布尺寸：字号按画布封顶，避免文字撑出画布）
@@ -250,6 +258,7 @@ registerOperation({
     if (htmlTemplateFields !== undefined) options.htmlTemplateFields = htmlTemplateFields;
     if (htmlTemplateDefaultBindings !== undefined) options.htmlTemplateDefaultBindings = htmlTemplateDefaultBindings;
     if (htmlTemplateMeta !== undefined) options.htmlTemplateMeta = htmlTemplateMeta;
+    if (preserveExactSize === true) options.preserveExactSize = true;
 
     // 尝试替换已有 HTML 作品
     if (!allowMultipleHtml) {

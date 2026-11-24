@@ -1276,6 +1276,15 @@ async function handleRemoteCommand(data: any) {
           expectedTexts: Array.isArray(payload?.expectedTexts)
             ? payload.expectedTexts.map((x: any) => String(x))
             : undefined,
+          expectedBackground: payload?.expectedBackground
+            ? String(payload.expectedBackground)
+            : undefined,
+          requiredFontIds: Array.isArray(payload?.requiredFontIds)
+            ? payload.requiredFontIds.map((x: any) => String(x))
+            : undefined,
+          requiredImageUrls: Array.isArray(payload?.requiredImageUrls)
+            ? payload.requiredImageUrls.map((x: any) => String(x))
+            : undefined,
         });
         result.success = auditResult.ok;
         result.phase = auditResult.ok ? "completed" : "failed";
@@ -1337,7 +1346,7 @@ async function handleRemoteCommand(data: any) {
                 pageSize,
                 searchKeyword: keyword || undefined,
                 keyword: keyword || undefined,
-                name: keyword || undefined,
+                searchMode: keyword ? "OR" : undefined,
               }),
             );
             list = p.items; total = p.total;
@@ -1345,6 +1354,19 @@ async function handleRemoteCommand(data: any) {
           }
           case "sticker":
           case "image": {
+            const p = pick(
+              await api.getStickerList({
+                currentPage: page,
+                pageSize,
+                searchText: keyword || undefined,
+                keyword: keyword || undefined,
+                searchMode: keyword ? "OR" : undefined,
+              }),
+            );
+            list = p.items; total = p.total;
+            break;
+          }
+          case "customSticker": {
             const p = pick(
               await api.getCustomStickerList({
                 currentPage: page,

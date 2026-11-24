@@ -55,34 +55,43 @@ function normalizeFontSizeValue(value: string, typography: HtmlTypographyContext
 export function normalizeHtmlTypography(
   htmlContent: string,
   typography: HtmlTypographyContext,
+  options: { preserveExactSize?: boolean } = {},
 ) {
   let convertedDeclarations = 0;
-  const normalizeDeclaration = (
-    _match: string,
-    prefix: string,
-    value: string,
-  ) => {
-    const normalizedValue = normalizeFontSizeValue(value, typography);
-    if (normalizedValue !== value) convertedDeclarations += 1;
-    return `${prefix}${normalizedValue}`;
-  };
+  const raw = String(htmlContent || "");
+  const skipResize =
+    options.preserveExactSize === true ||
+    /data-exact-typography\s*=\s*["']?1["']?/i.test(raw);
 
-  let normalizedHtml = String(htmlContent || "").replace(
-    /--type-(?:hero|title|primary(?:-text)?|subtitle|body|caption|micro)\s*:[^;}]+;?/gi,
-    "",
-  );
-  normalizedHtml = normalizedHtml.replace(
-    /(font-size\s*:\s*)([^;}"']+)/gi,
-    normalizeDeclaration,
-  );
-  normalizedHtml = normalizedHtml.replace(
-    /(--(?:type|font-size|fs)-[\w-]+\s*:\s*)([^;}"']+)/gi,
-    normalizeDeclaration,
-  );
-  normalizedHtml = normalizedHtml.replace(
-    /(\bfont\s*:\s*)([^;}"']+)/gi,
-    normalizeDeclaration,
-  );
+  let normalizedHtml = raw;
+  if (!skipResize) {
+    const normalizeDeclaration = (
+      _match: string,
+      prefix: string,
+      value: string,
+    ) => {
+      const normalizedValue = normalizeFontSizeValue(value, typography);
+      if (normalizedValue !== value) convertedDeclarations += 1;
+      return `${prefix}${normalizedValue}`;
+    };
+
+    normalizedHtml = normalizedHtml.replace(
+      /--type-(?:hero|title|primary(?:-text)?|subtitle|body|caption|micro)\s*:[^;}]+;?/gi,
+      "",
+    );
+    normalizedHtml = normalizedHtml.replace(
+      /(font-size\s*:\s*)([^;}"']+)/gi,
+      normalizeDeclaration,
+    );
+    normalizedHtml = normalizedHtml.replace(
+      /(--(?:type|font-size|fs)-[\w-]+\s*:\s*)([^;}"']+)/gi,
+      normalizeDeclaration,
+    );
+    normalizedHtml = normalizedHtml.replace(
+      /(\bfont\s*:\s*)([^;}"']+)/gi,
+      normalizeDeclaration,
+    );
+  }
 
   // 确保 {{font.xxx.family}} 后面自带高质量中文回退字体，防止特殊/繁体/装饰字体缺字时某些字符空白脱落
   // 注意：必须使用单引号，避免在 style="..." 双引号属性中破坏 HTML/XML 语法导致 SVG 渲染崩溃
@@ -227,6 +236,7 @@ export function prepareHtmlArtworkOptions(
     prepared.htmlContent = normalizeHtmlTypography(
       prepared.htmlContent,
       typography,
+      { preserveExactSize: prepared.preserveExactSize === true },
     ).htmlContent;
   }
 

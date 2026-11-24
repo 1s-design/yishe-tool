@@ -152,6 +152,166 @@ ${stateSummary}
   }
 }
 
+// ============ 双图对照验收（复刻专用：参考图 vs 成品截图） ============
+
+export interface ReplicationEvaluation extends VisualEvaluation {
+  /** 是否通过复刻对照验收 */
+  matched: boolean;
+  /** 底色/配色还原度 (1-10) */
+  colorFidelity: number;
+  /** 构图与视觉重心还原度 (1-10) */
+  layoutFidelity: number;
+  /** 文案与字体气质还原度 (1-10) */
+  textFidelity: number;
+  /** 是否出现明显底色色相漂移（如深红变成蓝橙） */
+  backgroundDrift: boolean;
+}
+
+const REPLICATION_EVAL_SYSTEM_PROMPT = `你是专业的 POD 印花复刻质检专家。你会同时看到两张图片：
+- 图 1：原始参考印花图（可能是电商实拍图，请穿透周围桌面/键盘/拍摄背景，只看印花本体）
+- 图 2：当前画布复刻生成的成品图
+
+请对比图 1 的印花本体与图 2 的成品，严格输出以下 JSON（不要输出 JSON 以外的内容）：
+
+{
+  "score": 综合还原与美学分数(1-10整数),
+  "colorFidelity": 底色与配色还原度(1-10整数),
+  "layoutFidelity": 构图骨架与视觉重心还原度(1-10整数),
+  "textFidelity": 文案逐字准确度与字体气质还原度(1-10整数),
+  "backgroundDrift": true或false(底色色相是否明显漂移),
+  "matched": true或false(是否达到交付标准),
+  "strengths": ["还原得好的点1", "还原得好的点2"],
+  "weaknesses": ["偏差点1", "偏差点2"],
+  "suggestions": ["具体可执行的修正指令1（带具体HEX色值/字号/位置调整）"],
+  "shouldIterate": true或false,
+  "iterationFocus": "需要优先修正的核心偏差"
+}
+
+判定准则：
+- 同款(same)：底色色相漂移、主文案漏字/多字/自创文案、横竖排方向相反、构图严重偏左/偏右 → 必须 matched=false 且 shouldIterate=true。
+- 相似款(similar)：允许配色/字体/装饰做 1-2 维变体，但主题气质、视觉饱满度、居中平衡必须达标。
+- 改进建议必须具体可执行（如“将背景底色改为深酒红 #7A1F2B，去掉蓝橙渐变”），最多 4 条。`;
+
+export async function evaluateReplicationVisual(
+  referenceImageUrl: string,
+  options: {
+    mode?: "same" | "similar";
+    expectedBackground?: string;
+    expectedTexts?: string[];
+  } = {},
+): Promise<ReplicationEvaluation | null> {
+  const refUrl = String(referenceImageUrl || "").trim();
+  if (!refUrl || !isVisionAvailable()) {
+    const single = await evaluateCanvasVisual();
+    if (!single) return null;
+    return {
+      ...single,
+      matched: single.score >= 6,
+      colorFidelity: single.score,
+      layoutFidelity: single.score,
+      textFidelity: single.score,
+      backgroundDrift: false,
+    };
+  }
+
+  console.log("[VisualEval] 开始复刻双图对照验收...");
+  let canvasBase64: string | null = null;
+  try {
+    canvasBase64 = await captureCanvasForAI();
+  } catch (captureErr: any) {
+    markVisionUnavailable(captureErr?.message);
+    return null;
+  }
+
+  const mode = options.mode || "same";
+  const stateSummary = getCanvasStateSummary();
+  const extraConstraints = [
+    `复刻模式：${mode === "same" ? "同款（高还原）" : "相似款（同主题变体）"}`,
+    options.expectedBackground ? `期望底色 HEX：${options.expectedBackground}` : "",
+    options.expectedTexts?.length
+      ? `期望文案清单：${options.expectedTexts.join(" / ")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    const response = await directChat({
+      messages: [
+        { role: "system", content: REPLICATION_EVAL_SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `请对比图 1（原参考图）与图 2（当前复刻成品）给出对照验收 JSON。\n\n## 约束信息\n${extraConstraints}\n\n## 当前画布状态\n${stateSummary}`,
+            },
+            {
+              type: "image_url",
+              image_url: { url: refUrl, detail: "high" },
+            },
+            {
+              type: "image_url",
+              image_url: { url: canvasBase64, detail: "high" },
+            },
+          ],
+        },
+      ],
+      temperature: 0.2,
+      timeoutMs: AI_TIMEOUTS.batchEvaluate,
+    });
+
+    const parsed = parseChatResponse(response);
+    if (!parsed) return null;
+    const evaluation = extractJSON(parsed.content);
+    if (!evaluation) return null;
+
+    const score = clampScore(evaluation.score);
+    const colorFidelity = clampScore(evaluation.colorFidelity ?? score);
+    const layoutFidelity = clampScore(evaluation.layoutFidelity ?? score);
+    const textFidelity = clampScore(evaluation.textFidelity ?? score);
+    const backgroundDrift = Boolean(evaluation.backgroundDrift);
+    const matched =
+      typeof evaluation.matched === "boolean"
+        ? evaluation.matched
+        : score >= 7 && (!backgroundDrift || mode === "similar");
+    const shouldIterate =
+      Boolean(evaluation.shouldIterate) ||
+      !matched ||
+      score < 7 ||
+      (mode === "same" && (backgroundDrift || colorFidelity < 6 || textFidelity < 7));
+
+    const result: ReplicationEvaluation = {
+      score,
+      colorFidelity,
+      layoutFidelity,
+      textFidelity,
+      backgroundDrift,
+      matched,
+      strengths: Array.isArray(evaluation.strengths) ? evaluation.strengths : [],
+      weaknesses: Array.isArray(evaluation.weaknesses) ? evaluation.weaknesses : [],
+      suggestions: Array.isArray(evaluation.suggestions) ? evaluation.suggestions : [],
+      shouldIterate,
+      iterationFocus: evaluation.iterationFocus,
+    };
+
+    console.log("[VisualEval] 双图对照验收完成:", result);
+    return result;
+  } catch (error: any) {
+    console.warn("[VisualEval] 双图对照验收失败，回退单图评估:", error?.message || error);
+    const fallback = await evaluateCanvasVisual();
+    if (!fallback) return null;
+    return {
+      ...fallback,
+      matched: fallback.score >= 6,
+      colorFidelity: fallback.score,
+      layoutFidelity: fallback.score,
+      textFidelity: fallback.score,
+      backgroundDrift: false,
+    };
+  }
+}
+
 // ============ 辅助 ============
 
 function clampScore(score: any): number {

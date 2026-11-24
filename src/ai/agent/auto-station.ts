@@ -5,6 +5,10 @@ import { websocketClient } from "@/services/websocketClient";
 import { useLoginStatusStore } from "@/store/stores/login";
 import { currentEditingCustomStickerId } from "@/components/design/layout/canvas";
 import { auditCurrentCanvas } from "../canvas-audit";
+import { analyzePrintImage, type PrintAnalysisResult } from "../print-analysis";
+import { buildReplicateBrief, type ReplicateMode } from "../print-replicate";
+import { evaluateCanvasVisual, evaluateReplicationVisual, type ReplicationEvaluation } from "../visual-evaluate";
+import { isVisionAvailable } from "../vision-mode";
 
 export interface StationLogItem {
   id: string;
@@ -408,38 +412,86 @@ async function executeProduceJob(job: DesignJobRecord) {
   stationState.status = "producing";
   const insp = job.inspiration;
   const jobTitle = insp?.title || `灵感任务 #${job.inspirationId}`;
+  const primaryImage = Array.isArray(insp?.images)
+    ? insp.images.find((u) => typeof u === "string" && u.trim())?.trim() || undefined
+    : undefined;
+  const replicateMode: ReplicateMode = job.type === "variant" ? "similar" : "same";
+
   addStationLog(
-    `认领到【${job.type === "variant" ? "变体制作" : "新灵感制作"}】：${jobTitle}`,
+    `认领到【${job.type === "variant" ? "变体制作" : "新灵感制作"}${primaryImage ? "·带参考图" : ""}】：${jobTitle}`,
     "info",
   );
 
+  // 1. 若灵感带参考图且视觉能力可用，先走印花视觉解构提取文案/HEX底色/构图骨架
+  let printAnalysis: PrintAnalysisResult | null = null;
+  if (primaryImage && isVisionAvailable()) {
+    stationState.currentStage = "视觉解构参考图";
+    try {
+      printAnalysis = await analyzePrintImage(primaryImage);
+      addStationLog(
+        `参考图解构完成：文案 ${printAnalysis.texts.length} 条、配色 ${printAnalysis.colors.length} 个`,
+        "info",
+      );
+    } catch (err: any) {
+      addStationLog(
+        `参考图解构降级为直传视觉参考：${err?.message || "分析失败"}`,
+        "warn",
+      );
+    }
+  }
+
   stationState.currentStage = "设置画布";
 
-  // 1. 设置尺寸（用户未指定时默认采用 2400x2400 超清规格）
-  const { width: targetWidth, height: targetHeight } = resolveJobDimensions(job.sizeSpec);
+  // 2. 设置尺寸：优先显式 sizeSpec，其次参考图印花本体尺寸，最后默认 2400x2400 超清规格
+  const analysisCanvas = (printAnalysis as any)?.designCanvas;
+  const effectiveSizeSpec =
+    job.sizeSpec ||
+    (analysisCanvas?.width > 0 && analysisCanvas?.height > 0
+      ? { width: Math.round(analysisCanvas.width), height: Math.round(analysisCanvas.height) }
+      : undefined);
+  const { width: targetWidth, height: targetHeight } = resolveJobDimensions(effectiveSizeSpec);
   await executeAITool("canvas.setSize", { width: targetWidth, height: targetHeight });
   await executeAITool("canvas.clear", {});
   currentEditingCustomStickerId.value = null;
 
   stationState.currentStage = "Agent 排版生成";
 
-  // 2. 组装自然语言提示词
+  // 3. 组装设计指令（带图解构成功走 buildReplicateBrief；否则走常规/带参考图指令）
   const digestHint = insp?.feedbackDigest
     ? `\n【历史审核反馈要求】\n${insp.feedbackDigest}\n`
     : "";
   const promptHints = insp?.promptHints ? `\n参考元素/风格：${insp.promptHints}` : "";
   const avoidNotes = insp?.avoidNotes ? `\n避免出现：${insp.avoidNotes}` : "";
 
-  const designPrompt = [
-    `请为设计灵感【${jobTitle}】制作一款精致贴纸作品。`,
-    insp?.content ? `灵感详述：${insp.content}` : "",
-    insp?.keywords?.length ? `关键词标签：${insp.keywords.join(", ")}` : "",
-    promptHints,
-    avoidNotes,
-    digestHint,
-    `画布尺寸已设为 ${targetWidth}x${targetHeight}（超清高分辨率印刷级标准）。`,
-    `要求：使用 canvas.addHtml 注入现代视觉排版，主标题突出，层级分明，色彩协调且自成一体，构图饱满且居中。完成后请严格调用 canvas.updateAndSaveSticker 保存入库。`,
-  ].filter(Boolean).join("\n");
+  let designPrompt: string;
+  if (printAnalysis) {
+    const brief = buildReplicateBrief(printAnalysis, replicateMode);
+    designPrompt = [
+      brief,
+      promptHints,
+      avoidNotes,
+      digestHint,
+      `【工位交付模式】本次由工位在质检通过后统一保存，请先完成画布设计与细节打磨（无需调用 canvas.updateAndSaveSticker）。`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  } else {
+    designPrompt = [
+      `请为设计灵感【${jobTitle}】制作一款精致贴纸作品。`,
+      insp?.content ? `灵感详述：${insp.content}` : "",
+      insp?.keywords?.length ? `关键词标签：${insp.keywords.join(", ")}` : "",
+      promptHints,
+      avoidNotes,
+      digestHint,
+      primaryImage
+        ? `已附带视觉参考图，请严格参考其印花本体的主文案、配色与构图气质（忽略周围拍摄背景）；若文字描述与参考图冲突，以参考图为准。`
+        : "",
+      `画布尺寸已设为 ${targetWidth}x${targetHeight}（超清高分辨率印刷级标准）。`,
+      `要求：优先使用 resource.searchFont 绑定真实字体、resource.searchSticker 绑定外部插画/纹样素材，再用 canvas.addHtml 注入现代视觉排版，主标题突出、构图饱满居中。本次由工位在质检后统一保存。`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
 
   const { designAgent } = await import("@/ai/langgraph");
   designAgent.state.messages.length = 0;
@@ -447,24 +499,84 @@ async function executeProduceJob(job: DesignJobRecord) {
 
   await designAgent.chat(designPrompt, {
     allowInteraction: false,
-    deliveryHandledExternally: false,
+    deliveryHandledExternally: true,
+    referenceImage: primaryImage,
   });
 
-  stationState.currentStage = "内容审查与交付";
+  // 4. 保存前质检：硬伤审计 + 视觉评分/双图对照验收，不达标则自动定向修订一轮
+  const expectedTexts = printAnalysis?.texts?.map((t) => t.content).filter(Boolean);
+  const expectedBackground = printAnalysis?.colors?.find((c) => c.role === "background")?.hex;
 
-  // 3. 画布审计（如果未保存则兜底调用保存）
-  const auditRes = await auditCurrentCanvas({
+  stationState.currentStage = "画布硬伤审计";
+  let auditRes = await auditCurrentCanvas({
     expectedWidth: targetWidth,
     expectedHeight: targetHeight,
+    expectedTexts: expectedTexts?.length ? expectedTexts : undefined,
+    expectedBackground,
   });
 
+  stationState.currentStage = primaryImage ? "复刻双图对照验收" : "视觉质量评分";
+  const visualEval = primaryImage
+    ? await evaluateReplicationVisual(primaryImage, {
+        mode: replicateMode,
+        expectedBackground,
+        expectedTexts,
+      })
+    : await evaluateCanvasVisual();
+
+  const needsRevision =
+    auditRes.criticalIssues.length > 0 || Boolean(visualEval?.shouldIterate);
+
+  if (needsRevision) {
+    const fixLines: string[] = [];
+    if (auditRes.criticalIssues.length > 0) {
+      fixLines.push(
+        `【画布硬伤必须修复】\n${auditRes.criticalIssues.map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
+      );
+    }
+    if (visualEval?.shouldIterate) {
+      const repEval = "colorFidelity" in visualEval ? (visualEval as ReplicationEvaluation) : null;
+      const scoreLabel = repEval
+        ? `综合 ${repEval.score}/10 · 配色 ${repEval.colorFidelity}/10 · 构图 ${repEval.layoutFidelity}/10 · 文案 ${repEval.textFidelity}/10`
+        : `视觉评分 ${visualEval.score}/10`;
+      fixLines.push(
+        `【视觉质检未达标（${scoreLabel}）】${visualEval.iterationFocus ? `\n重点：${visualEval.iterationFocus}` : ""}${visualEval.suggestions.length ? `\n修正建议：\n${visualEval.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : ""}`,
+      );
+    }
+
+    stationState.currentStage = "质检未通过·自动修订";
+    addStationLog(
+      `质检触发自动修订（硬伤 ${auditRes.criticalIssues.length} 条，视觉分 ${visualEval?.score ?? "-"}/10）`,
+      "warn",
+    );
+
+    const fixPrompt = [
+      `请针对当前画布设计执行一次精准修订，逐项解决以下质检问题（保留已有优秀结构，不要推倒重做）：`,
+      ...fixLines,
+      `修订完成后保持画布即可，无需保存，由工位统一落库。`,
+    ].join("\n\n");
+
+    await designAgent.chat(fixPrompt, {
+      allowInteraction: false,
+      deliveryHandledExternally: true,
+      referenceImage: primaryImage,
+    });
+
+    auditRes = await auditCurrentCanvas({
+      expectedWidth: targetWidth,
+      expectedHeight: targetHeight,
+      expectedTexts: expectedTexts?.length ? expectedTexts : undefined,
+      expectedBackground,
+    });
+  }
+
+  stationState.currentStage = "保存入库";
   let customStickerId = currentEditingCustomStickerId.value;
 
-  // 兜底：如果 Agent 没调用保存，工位自动补发 updateAndSaveSticker
+  // 5. 工位统一保存入库
   if (!customStickerId) {
-    stationState.currentStage = "自动补发保存";
     const saveRes = await executeAITool("canvas.updateAndSaveSticker", {
-      name: `${jobTitle.slice(0, 20)}·${job.type === "variant" ? "变体" : "v1"}`,
+      name: `${jobTitle.slice(0, 20)}·${job.type === "variant" ? "变体" : primaryImage ? "复刻" : "v1"}`,
       description: insp?.content?.slice(0, 100) || "自动制作贴纸作品",
       keywords: (insp?.keywords || ["贴纸", "AI自动制作"]).join(","),
       jobId: job.id,
@@ -479,7 +591,7 @@ async function executeProduceJob(job: DesignJobRecord) {
     throw new Error("制作完成但未能生成有效的自定义贴纸 ID");
   }
 
-  // 4. 提交完成
+  // 6. 提交完成
   stationState.currentStage = "上报完成";
   await apiInstance.post("/api/design-job/complete", {
     jobId: job.id,
@@ -488,7 +600,10 @@ async function executeProduceJob(job: DesignJobRecord) {
   });
 
   stationState.todayProduced++;
-  addStationLog(`【制作成功】贴纸 #${customStickerId} 已入库并提交审核 (硬伤: ${auditRes.criticalIssues.length})`, "success");
+  addStationLog(
+    `【制作成功】贴纸 #${customStickerId} 已入库并提交审核 (硬伤: ${auditRes.criticalIssues.length}，视觉分: ${visualEval?.score ?? "-"}/10)`,
+    "success",
+  );
 }
 
 async function executeReworkJob(job: DesignJobRecord) {
