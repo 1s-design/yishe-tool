@@ -232,9 +232,25 @@ export const COMPONENT_CONFIGS: Record<string, ComponentConfigSchema> = {
     componentMapping: {
       list: "wordCloud.engines.wordcloud2.list",
       colors: "wordCloud.engines.wordcloud2.colors",
+      color: "wordCloud.engines.wordcloud2.color",
       fontFamily: "wordCloud.engines.wordcloud2.fontFamily",
+      fontUrl: "wordCloud.engines.wordcloud2.fontUrl",
+      fontFamilyInfo: "wordCloud.engines.wordcloud2.fontFamilyInfo",
+      fontWeight: "wordCloud.engines.wordcloud2.fontWeight",
       colorMode: "wordCloud.engines.wordcloud2.colorMode",
-      shape: "wordCloud.engines.wordcloud2.shape"
+      shape: "wordCloud.engines.wordcloud2.shape",
+      backgroundColor: "wordCloud.engines.wordcloud2.backgroundColor",
+      weightFactor: "wordCloud.engines.wordcloud2.weightFactor",
+      gridSize: "wordCloud.engines.wordcloud2.gridSize",
+      minSize: "wordCloud.engines.wordcloud2.minSize",
+      rotateRatio: "wordCloud.engines.wordcloud2.rotateRatio",
+      minRotation: "wordCloud.engines.wordcloud2.minRotation",
+      maxRotation: "wordCloud.engines.wordcloud2.maxRotation",
+      rotationSteps: "wordCloud.engines.wordcloud2.rotationSteps",
+      ellipticity: "wordCloud.engines.wordcloud2.ellipticity",
+      shrinkToFit: "wordCloud.engines.wordcloud2.shrinkToFit",
+      drawOutOfBound: "wordCloud.engines.wordcloud2.drawOutOfBound",
+      shuffle: "wordCloud.engines.wordcloud2.shuffle"
     },
     defaultConfig: {
       wordCloud: {
@@ -278,7 +294,12 @@ export const COMPONENT_CONFIGS: Record<string, ComponentConfigSchema> = {
     componentMapping: {
       words: "d3Cloud.words",
       colors: "d3Cloud.colors",
-      fontFamily: "d3Cloud.fontFamily"
+      fontFamily: "d3Cloud.fontFamily",
+      fontWeight: "d3Cloud.fontWeight",
+      padding: "d3Cloud.padding",
+      spiral: "d3Cloud.spiral",
+      rotate: "d3Cloud.rotate",
+      backgroundColor: "backgroundColor.color"
     },
     defaultConfig: {
       words: [],

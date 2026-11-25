@@ -16,7 +16,7 @@ import {
     formatToNativeSizeString,
     getPositionInfoFromOptions,
 } from '../../helper.tsx'
-import { onBeforeReturnRender, onCanvasChildSetup } from '../commonHooks.ts'
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from '../commonHooks.ts'
 
 type Vec3Array = [number, number, number]
 
@@ -440,10 +440,8 @@ export const ThreeSceneChild = defineComponent({
             props,
         })
 
-        const canvasPixelSize = computed(() => {
-            const width = Math.max(1, Math.round(Number(formatSizeOptionToPixelValue(props.options.width)) || 1))
-            const height = Math.max(1, Math.round(Number(formatSizeOptionToPixelValue(props.options.height)) || 1))
-            return { width, height }
+        const { slotSize: canvasPixelSize } = useCanvasChildSlotSize(canvasRef, props.options, () => {
+            refresh()
         })
 
         function getEngineOptions() {
@@ -484,13 +482,24 @@ export const ThreeSceneChild = defineComponent({
             }
         }
 
+        function getCappedWebGLSize() {
+            const rawW = Math.max(1, canvasPixelSize.value.width)
+            const rawH = Math.max(1, canvasPixelSize.value.height)
+            const maxDim = Math.max(rawW, rawH)
+            const scale = maxDim > 1024 ? 1024 / maxDim : 1
+            return {
+                width: Math.max(1, Math.round(rawW * scale)),
+                height: Math.max(1, Math.round(rawH * scale)),
+            }
+        }
+
         function applyRendererOptions(config: ThreejsEngineConfig) {
             if (!renderer) {
                 return
             }
 
-            const { width, height } = canvasPixelSize.value
-            const pixelRatio = Math.max(0.1, Math.min(4, Number(config.renderer.pixelRatio || 1)))
+            const { width, height } = getCappedWebGLSize()
+            const pixelRatio = Math.max(0.5, Math.min(2, Number(config.renderer.pixelRatio || 1)))
             renderer.setPixelRatio(pixelRatio)
             renderer.setSize(width, height, false)
             renderer.toneMapping = config.renderer.toneMapping === 'aces' ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping
@@ -628,6 +637,43 @@ export const ThreeSceneChild = defineComponent({
                 return new THREE.Mesh(geometry, material)
             }
 
+            // 兼容 componentConfigSchema 简洁几何体配置：{ type: 'boxGeometry' | 'box' | 'sphere' | ..., color, scale, position, rotation }
+            const raw: any = objectConfig
+            const rawType = String(raw?.type || raw?.geometry || '').toLowerCase()
+            if (rawType) {
+                const geoMap: Record<string, string> = {
+                    boxgeometry: 'box',
+                    box: 'box',
+                    spheregeometry: 'sphere',
+                    sphere: 'sphere',
+                    torusgeometry: 'torus',
+                    torus: 'torus',
+                    planegeometry: 'plane',
+                    plane: 'plane',
+                    conegeometry: 'cone',
+                    cone: 'cone',
+                    cylindergeometry: 'cylinder',
+                    cylinder: 'cylinder',
+                }
+                const geometry = createGeometryByType(geoMap[rawType] || 'box')
+                const material = createMaterial({
+                    type: 'meshStandard',
+                    color: raw.color || '#4f46e5',
+                    metalness: raw.metalness ?? 0.25,
+                    roughness: raw.roughness ?? 0.35,
+                    wireframe: Boolean(raw.wireframe),
+                })
+                const mesh = new THREE.Mesh(geometry, material)
+                if (!objectConfig.transform) {
+                    applyTransform(mesh, {
+                        position: raw.position,
+                        rotation: raw.rotation,
+                        scale: raw.scale,
+                    })
+                }
+                return mesh
+            }
+
             return null
         }
 
@@ -730,30 +776,67 @@ export const ThreeSceneChild = defineComponent({
             }
         }
 
+        function hasActiveAutoRotate(config: ThreejsEngineConfig) {
+            if (config.scene.animation.enabled === false || !sceneObjectGroup) {
+                return false
+            }
+            return sceneObjectGroup.children.some((child) => {
+                const objectConfig = child.userData.threeSceneObjectConfig as ThreeObjectConfig
+                return Boolean(objectConfig?.animation?.autoRotate)
+            })
+        }
+
         function startAnimationLoop() {
             stopAnimationLoop()
+            const initialConfig = getEngineOptions()
+            // 无自动旋转对象或页面处于后台时，仅渲染单帧静态画面，避免 WebGL 空转占用 GPU 并阻塞截图
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera)
+            }
+            if (typeof document !== 'undefined' && document.hidden) {
+                return
+            }
+            if (!hasActiveAutoRotate(initialConfig)) {
+                return
+            }
 
-            const tick = () => {
-                const config = getEngineOptions()
-                if (config.scene.animation.enabled !== false && sceneObjectGroup) {
-                    for (const child of sceneObjectGroup.children) {
-                        const objectConfig = child.userData.threeSceneObjectConfig as ThreeObjectConfig
-                        const animation = objectConfig?.animation
-                        if (animation?.autoRotate) {
-                            const speed = toVec3Array(animation.speed, [0, 0.01, 0])
-                            child.rotation.x += speed[0]
-                            child.rotation.y += speed[1]
-                            child.rotation.z += speed[2]
+            let lastFrameTs = 0
+            const tick = (ts: number) => {
+                if (typeof document !== 'undefined' && document.hidden) {
+                    animationFrameId = null
+                    return
+                }
+                if (ts - lastFrameTs >= 33) {
+                    lastFrameTs = ts
+                    const config = getEngineOptions()
+                    if (config.scene.animation.enabled !== false && sceneObjectGroup) {
+                        for (const child of sceneObjectGroup.children) {
+                            const objectConfig = child.userData.threeSceneObjectConfig as ThreeObjectConfig
+                            const animation = objectConfig?.animation
+                            if (animation?.autoRotate) {
+                                const speed = toVec3Array(animation.speed, [0, 0.01, 0])
+                                child.rotation.x += speed[0]
+                                child.rotation.y += speed[1]
+                                child.rotation.z += speed[2]
+                            }
                         }
                     }
-                }
-
-                if (renderer && scene && camera) {
-                    renderer.render(scene, camera)
+                    if (renderer && scene && camera) {
+                        renderer.render(scene, camera)
+                    }
                 }
                 animationFrameId = requestAnimationFrame(tick)
             }
             animationFrameId = requestAnimationFrame(tick)
+        }
+
+        const handleVisibilityChange = () => {
+            if (typeof document === 'undefined') return
+            if (document.hidden) {
+                stopAnimationLoop()
+            } else {
+                startAnimationLoop()
+            }
         }
 
         function bindPointerEvents() {
@@ -915,6 +998,9 @@ export const ThreeSceneChild = defineComponent({
 
         onMounted(() => {
             bindPointerEvents()
+            if (typeof document !== 'undefined') {
+                document.addEventListener('visibilitychange', handleVisibilityChange)
+            }
             refresh()
         })
         watch(() => props.options, () => {
@@ -926,6 +1012,9 @@ export const ThreeSceneChild = defineComponent({
         }, { deep: true })
 
         onBeforeUnmount(() => {
+            if (typeof document !== 'undefined') {
+                document.removeEventListener('visibilitychange', handleVisibilityChange)
+            }
             unbindPointerEvents()
             stopAnimationLoop()
             objectBuildToken += 1
@@ -975,12 +1064,14 @@ export const ThreeSceneChild = defineComponent({
                 options: props.options,
             })
 
+            const glSize = getCappedWebGLSize()
+
             return <div style={containerStyle}>
                 <canvas
                     ref={canvasRef}
                     style={style}
-                    width={canvasPixelSize.value.width}
-                    height={canvasPixelSize.value.height}
+                    width={glSize.width}
+                    height={glSize.height}
                     data-three-scene-engine={props.options?.threeScene?.engine || 'threejs'}
                     title={getEngineOptions().scene.interaction.dragToRotate.enabled ? '拖动对象旋转角度' : undefined}
                 ></canvas>

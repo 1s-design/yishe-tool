@@ -115,7 +115,9 @@ export const MathChild = defineComponent({
                 zIndex: props.options.zIndex,
                 color: props.options.fontColor?.color || '#111111',
                 background: props.options.backgroundColor?.color || 'transparent',
-                fontSize: formatToNativeSizeString(props.options.fontSize),
+                fontSize: typeof props.options.fontSize === 'number'
+                    ? `${props.options.fontSize}px`
+                    : formatToNativeSizeString(props.options.fontSize),
                 fontFamily: getMathFontFamily(props.options),
                 '--canvas-math-font-family': getMathFontFamily(props.options),
                 display: 'flex',

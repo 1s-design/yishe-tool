@@ -35,12 +35,12 @@ export const createDefaultCanvasChildOpentypeTextOptions = () => {
     fontSize: 72,
     fillColor: "#000000",
     width: {
-      value: 400,
-      unit: "px",
+      value: 100,
+      unit: "vw",
     },
     height: {
-      value: 200,
-      unit: "px",
+      value: 100,
+      unit: "vh",
     },
     position: createPositionDefaultOptions(canvasUnit),
     filter: createFilterDefaultOptions(canvasUnit),
@@ -66,10 +66,10 @@ export const OpentypeTextChild = defineComponent({
   },
   setup(props) {
     const targetRef = ref<HTMLElement>();
-    const containerRef = ref<HTMLElement>();
     const errorMessage = ref("");
-    const svgPath = ref("");
+    const svgHtml = ref("");
     const loading = ref(false);
+    let renderToken = 0;
 
     onCanvasChildSetup({
       targetEl: targetRef,
@@ -85,22 +85,19 @@ export const OpentypeTextChild = defineComponent({
     );
 
     async function loadFontAndRender() {
-      if (!containerRef.value) return;
-
+      const token = ++renderToken;
       const currentText = text.value;
       const currentFontUrl = fontUrl.value;
 
       if (!currentText) {
-        containerRef.value.innerHTML = "";
-        svgPath.value = "";
+        svgHtml.value = "";
         errorMessage.value = "请输入文字内容";
         updateRenderingCanvas();
         return;
       }
 
       if (!currentFontUrl) {
-        containerRef.value.innerHTML = "";
-        svgPath.value = "";
+        svgHtml.value = "";
         errorMessage.value = "请输入字体文件URL";
         updateRenderingCanvas();
         return;
@@ -111,6 +108,7 @@ export const OpentypeTextChild = defineComponent({
 
       try {
         const font = await opentype.load(currentFontUrl);
+        if (token !== renderToken) return;
         const path = font.getPath(
           currentText,
           0,
@@ -118,36 +116,36 @@ export const OpentypeTextChild = defineComponent({
           fontSize.value,
         );
         const pathData = path.toPathData(2);
-        svgPath.value = pathData;
-
         const bbox = path.getBoundingBox();
-        const svgWidth = Math.ceil(bbox.x2 - bbox.x1) || 1000;
-        const svgHeight = Math.ceil(bbox.y2 - bbox.y1) || 200;
-        const viewBox = `${bbox.x1} ${bbox.y1} ${svgWidth} ${svgHeight}`;
+        const pad = Math.max(4, fontSize.value * 0.08);
+        const svgWidth = Math.ceil(bbox.x2 - bbox.x1 + pad * 2) || 400;
+        const svgHeight = Math.ceil(bbox.y2 - bbox.y1 + pad * 2) || 120;
+        const viewBox = `${bbox.x1 - pad} ${bbox.y1 - pad} ${svgWidth} ${svgHeight}`;
 
-        containerRef.value.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="100%" height="100%"><path d="${pathData}" fill="${fillColor.value}"/></svg>`;
+        svgHtml.value = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"><path d="${pathData}" fill="${fillColor.value}"/></svg>`;
       } catch (error: any) {
-        containerRef.value.innerHTML = "";
-        svgPath.value = "";
+        if (token !== renderToken) return;
+        svgHtml.value = "";
         errorMessage.value = error?.message || "字体加载失败";
       } finally {
-        loading.value = false;
-        updateRenderingCanvas();
+        if (token === renderToken) {
+          loading.value = false;
+          await nextTick();
+          updateRenderingCanvas();
+        }
       }
     }
 
     onMounted(() => {
-      nextTick(loadFontAndRender);
+      loadFontAndRender();
     });
 
     watch(
       [text, fontUrl, fontSize, fillColor],
       () => {
-        nextTick(loadFontAndRender);
+        loadFontAndRender();
       },
-      {
-        deep: true,
-      },
+      { deep: true },
     );
 
     return () => {
@@ -172,6 +170,9 @@ export const OpentypeTextChild = defineComponent({
         zIndex: props.options.zIndex,
         overflow: "hidden",
         position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         pointerEvents: "none",
         ..._style,
       };
@@ -184,50 +185,35 @@ export const OpentypeTextChild = defineComponent({
       return (
         <div style={containerStyle}>
           <div ref={targetRef} style={style}>
-            <style>{`
-                        .canvas-opentype-text-child svg {
-                            width: 100%;
-                            height: 100%;
-                            max-width: 100%;
-                            max-height: 100%;
-                            display: block;
-                        }
-                        .canvas-opentype-text-child__error {
-                            color: #c45656;
-                            font-size: 14px;
-                            line-height: 1.4;
-                            padding: 12px;
-                            background: rgba(255, 245, 245, 0.92);
-                            border: 1px solid rgba(196, 86, 86, 0.35);
-                            border-radius: 4px;
-                            white-space: pre-wrap;
-                            max-width: 100%;
-                            max-height: 100%;
-                            overflow: hidden;
-                            box-sizing: border-box;
-                        }
-                        .canvas-opentype-text-child__loading {
-                            color: #666;
-                            font-size: 14px;
-                            padding: 12px;
-                            text-align: center;
-                        }
-                    `}</style>
             {errorMessage.value ? (
-              <div class="canvas-opentype-text-child__error">
+              <div
+                style={{
+                  color: "#c45656",
+                  fontSize: "14px",
+                  padding: "12px",
+                  background: "rgba(255, 245, 245, 0.92)",
+                  border: "1px solid rgba(196, 86, 86, 0.35)",
+                  borderRadius: "4px",
+                }}
+              >
                 {errorMessage.value}
               </div>
             ) : loading.value ? (
-              <div class="canvas-opentype-text-child__loading">加载中...</div>
+              <div style={{ color: "#666", fontSize: "14px", padding: "12px" }}>
+                加载字体路径中...
+              </div>
             ) : (
               <div
-                ref={containerRef}
                 class="canvas-opentype-text-child"
                 style={{
                   width: "100%",
                   height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   overflow: "hidden",
                 }}
+                innerHTML={svgHtml.value}
               ></div>
             )}
           </div>

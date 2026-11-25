@@ -15,8 +15,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
-import confetti from "canvas-confetti";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 export const CONFETTI_PRESETS = [
   "default",
@@ -31,14 +30,10 @@ export const createDefaultCanvasChildConfettiOptions = () => {
 
   return {
     type: "confetti",
-    preset: "default",
-    particleCount: 100,
-    spread: 70,
-    startVelocity: 45,
-    decay: 0.9,
-    gravity: 1,
-    ticks: 200,
-    colors: ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff"],
+    preset: "celebration",
+    particleCount: 120,
+    spread: 110,
+    colors: ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899"],
     backgroundColor: { type: "pure", color: "transparent" },
     width: { value: 100, unit: "vw" },
     height: { value: 100, unit: "vh" },
@@ -60,51 +55,18 @@ export function createCanvasChildConfetti(options: any) {
   );
 }
 
-function getPresetConfig(preset: string): any {
+function getPresetPalette(preset: string): { colors: string[]; shapes: string[]; count: number } {
   switch (preset) {
-    case "fireworks":
-      return {
-        particleCount: 80,
-        spread: 100,
-        startVelocity: 50,
-        decay: 0.85,
-        gravity: 0.8,
-        ticks: 300,
-        origin: { x: 0.5, y: 0.7 },
-      };
     case "snow":
-      return {
-        particleCount: 150,
-        spread: 180,
-        startVelocity: 10,
-        decay: 0.95,
-        gravity: 0.3,
-        ticks: 500,
-        colors: ["#ffffff", "#e0e0ff", "#c0c0ff"],
-        shapes: ["circle"],
-        scalar: 0.8,
-      };
-    case "celebration":
-      return {
-        particleCount: 200,
-        spread: 120,
-        startVelocity: 60,
-        decay: 0.8,
-        gravity: 1.2,
-        ticks: 250,
-      };
+      return { colors: ["#ffffff", "#e0e7ff", "#bfdbfe"], shapes: ["circle"], count: 140 };
     case "school":
-      return {
-        particleCount: 100,
-        spread: 80,
-        startVelocity: 35,
-        decay: 0.9,
-        gravity: 1,
-        ticks: 200,
-        colors: ["#ff6b35", "#ffd700", "#4169e1"],
-      };
+      return { colors: ["#ff6b35", "#ffd700", "#4169e1"], shapes: ["rect", "ribbon"], count: 110 };
+    case "fireworks":
+      return { colors: ["#fbbf24", "#f97316", "#ec4899", "#38bdf8", "#a855f7"], shapes: ["circle", "rect"], count: 140 };
+    case "celebration":
+      return { colors: ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899"], shapes: ["rect", "circle", "ribbon"], count: 160 };
     default:
-      return {};
+      return { colors: ["#ef4444", "#22c55e", "#3b82f6", "#eab308", "#a855f7", "#06b6d4"], shapes: ["rect", "circle", "ribbon"], count: 110 };
   }
 }
 
@@ -120,38 +82,69 @@ export const ConfettiChild = defineComponent({
       props,
     });
 
-    function fire() {
-      const preset = props.options?.preset || "default";
-      const presetConfig = getPresetConfig(preset);
+    function renderStaticConfetti() {
+      const canvas = canvasRef.value;
+      if (!canvas) return;
+      const width = Math.max(100, slotSize.value.width);
+      const height = Math.max(100, slotSize.value.height);
+      canvas.width = width;
+      canvas.height = height;
 
-      const config: any = {
-        particleCount:
-          props.options?.particleCount || presetConfig.particleCount || 100,
-        spread: props.options?.spread || presetConfig.spread || 70,
-        startVelocity:
-          props.options?.startVelocity || presetConfig.startVelocity || 45,
-        decay: props.options?.decay || presetConfig.decay || 0.9,
-        gravity: props.options?.gravity || presetConfig.gravity || 1,
-        ticks: props.options?.ticks || presetConfig.ticks || 200,
-        colors: props.options?.colors?.length
-          ? props.options.colors
-          : presetConfig.colors,
-        shapes: presetConfig.shapes,
-        scalar: presetConfig.scalar,
-        origin: presetConfig.origin || { x: 0.5, y: 0.5 },
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, width, height);
+
+      const preset = props.options?.preset || "celebration";
+      const presetCfg = getPresetPalette(preset);
+      const colors = Array.isArray(props.options?.colors) && props.options.colors.length
+        ? props.options.colors
+        : presetCfg.colors;
+      const count = Math.min(400, Math.max(20, Number(props.options?.particleCount) || presetCfg.count));
+
+      // 确定性伪随机，保证截图与画布一致且永不因动画结束清空
+      let seed = 4219;
+      const rand = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
       };
 
-      if (canvasRef.value) {
-        const myConfetti = confetti.create(canvasRef.value, {
-          resize: true,
-          useWorker: false,
-        });
-        myConfetti(config);
+      const scale = Math.max(0.7, Math.min(width, height) / 700);
+
+      for (let i = 0; i < count; i++) {
+        const x = rand() * width;
+        const y = rand() * height;
+        const color = colors[Math.floor(rand() * colors.length)];
+        const shape = presetCfg.shapes[Math.floor(rand() * presetCfg.shapes.length)];
+        const angle = rand() * Math.PI * 2;
+        const size = (8 + rand() * 14) * scale;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.78 + rand() * 0.22;
+
+        if (shape === "circle") {
+          ctx.beginPath();
+          ctx.arc(0, 0, size * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (shape === "ribbon") {
+          ctx.fillRect(-size * 0.9, -size * 0.24, size * 1.8, size * 0.48);
+        } else {
+          ctx.fillRect(-size * 0.5, -size * 0.35, size, size * 0.7);
+        }
+        ctx.restore();
       }
+      ctx.globalAlpha = 1;
+      updateRenderingCanvas();
     }
 
+    const { slotSize } = useCanvasChildSlotSize(targetRef, props.options, () => {
+      renderStaticConfetti();
+    });
+
     onMounted(() => {
-      setTimeout(fire, 100);
+      renderStaticConfetti();
     });
 
     watch(
@@ -162,8 +155,9 @@ export const ConfettiChild = defineComponent({
         props.options?.colors,
       ],
       () => {
-        setTimeout(fire, 50);
+        renderStaticConfetti();
       },
+      { deep: true },
     );
 
     return () => {
@@ -189,6 +183,7 @@ export const ConfettiChild = defineComponent({
         background: props.options.backgroundColor?.color || "transparent",
         overflow: "hidden",
         pointerEvents: "none",
+        display: "block",
         ..._style,
       };
 

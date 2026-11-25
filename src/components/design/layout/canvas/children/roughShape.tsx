@@ -5,8 +5,8 @@ import {
   ref,
   watch,
   onMounted,
-  onUpdated,
 } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import {
   canvasStickerOptionsOnlyChild,
   updateRenderingCanvas,
@@ -23,7 +23,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 import rough from "roughjs";
 
 export const ROUGH_SHAPE_TYPES = ["rect", "circle", "line", "ellipse"] as const;
@@ -40,11 +40,11 @@ export const createDefaultCanvasChildRoughShapeOptions = () => {
     roughness: 1,
     width: {
       value: 100,
-      unit: "px",
+      unit: "vw",
     },
     height: {
       value: 100,
-      unit: "px",
+      unit: "vh",
     },
     position: createPositionDefaultOptions(canvasUnit),
     filter: createFilterDefaultOptions(canvasUnit),
@@ -72,7 +72,6 @@ export const RoughShapeChild = defineComponent({
     const targetRef = ref<HTMLElement>();
     const canvasRef = ref<HTMLCanvasElement>();
     const errorMessage = ref("");
-    let renderToken = 0;
 
     onCanvasChildSetup({
       targetEl: targetRef,
@@ -86,86 +85,61 @@ export const RoughShapeChild = defineComponent({
     const strokeWidth = computed(() => props.options?.strokeWidth || 2);
     const roughness = computed(() => props.options?.roughness || 1);
 
-    function renderRoughShape() {
-      const token = ++renderToken;
+    const renderRoughShape = useDebounceFn(() => {
       const canvas = canvasRef.value;
       if (!canvas) return;
 
+      const width = Math.max(100, slotSize.value.width);
+      const height = Math.max(100, slotSize.value.height);
+      canvas.width = width;
+      canvas.height = height;
+
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-
-      const rc = rough.canvas(canvas);
-      const width = canvas.width;
-      const height = canvas.height;
-
-      // 清除画布
       ctx.clearRect(0, 0, width, height);
 
       try {
         errorMessage.value = "";
-        const options = {
+        const rc = rough.canvas(canvas);
+        const pad = Math.min(width, height) * 0.1;
+        const drawOpts = {
           fill: fill.value,
+          fillStyle: "hachure",
           stroke: stroke.value,
           strokeWidth: strokeWidth.value,
           roughness: roughness.value,
         };
 
         switch (shape.value) {
-          case "rect":
-            rc.rectangle(10, 10, width - 20, height - 20, options);
+          case "circle": {
+            const diameter = Math.min(width, height) - pad * 2;
+            rc.circle(width / 2, height / 2, diameter, drawOpts);
             break;
-          case "circle":
-            const radius = Math.min(width, height) / 2 - 10;
-            rc.circle(width / 2, height / 2, radius * 2, options);
-            break;
+          }
           case "line":
-            rc.line(10, 10, width - 10, height - 10, options);
+            rc.line(pad, height - pad, width - pad, pad, drawOpts);
             break;
           case "ellipse":
-            rc.ellipse(width / 2, height / 2, width - 20, height - 20, options);
+            rc.ellipse(width / 2, height / 2, width - pad * 2, height - pad * 2, drawOpts);
             break;
+          case "rect":
           default:
-            rc.rectangle(10, 10, width - 20, height - 20, options);
+            rc.rectangle(pad, pad, width - pad * 2, height - pad * 2, drawOpts);
         }
       } catch (error: any) {
-        if (token !== renderToken) return;
         errorMessage.value = error?.message || "手绘图形渲染失败";
       } finally {
-        if (token === renderToken) {
-          nextTick().then(() => {
-            updateRenderingCanvas();
-          });
-        }
+        nextTick(() => {
+          updateRenderingCanvas();
+        });
       }
-    }
+    }, 80);
 
-    function updateCanvasSize() {
-      const canvas = canvasRef.value;
-      if (!canvas) return;
-
-      const container = targetRef.value;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      canvas.style.width = rect.width + "px";
-      canvas.style.height = rect.height + "px";
-
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.scale(dpr, dpr);
-      }
-    }
-
-    onMounted(() => {
-      updateCanvasSize();
+    const { slotSize } = useCanvasChildSlotSize(targetRef, props.options, () => {
       renderRoughShape();
     });
 
-    onUpdated(() => {
-      updateCanvasSize();
+    onMounted(() => {
       renderRoughShape();
     });
 
@@ -178,14 +152,9 @@ export const RoughShapeChild = defineComponent({
         roughness.value,
       ],
       () => {
-        nextTick().then(() => {
-          updateCanvasSize();
-          renderRoughShape();
-        });
+        renderRoughShape();
       },
-      {
-        deep: true,
-      },
+      { deep: true },
     );
 
     return () => {
@@ -231,29 +200,24 @@ export const RoughShapeChild = defineComponent({
             style={style}
             data-shape-type={shape.value}
           >
-            <style>{`
-              .canvas-rough-shape-child canvas {
-                width: 100%;
-                height: 100%;
-              }
-              .canvas-rough-shape-child__error {
-                color: #c45656;
-                font-size: 14px;
-                line-height: 1.4;
-                padding: 12px;
-                background: rgba(255, 245, 245, 0.92);
-                border: 1px solid rgba(196, 86, 86, 0.35);
-                border-radius: 4px;
-                max-width: 80%;
-                text-align: center;
-              }
-            `}</style>
             {errorMessage.value ? (
-              <div class="canvas-rough-shape-child__error">
+              <div
+                style={{
+                  color: "#c45656",
+                  fontSize: "14px",
+                  padding: "12px",
+                  background: "rgba(255, 245, 245, 0.92)",
+                  border: "1px solid rgba(196, 86, 86, 0.35)",
+                  borderRadius: "4px",
+                }}
+              >
                 {errorMessage.value}
               </div>
             ) : (
-              <canvas ref={canvasRef}></canvas>
+              <canvas
+                ref={canvasRef}
+                style={{ width: "100%", height: "100%", display: "block" }}
+              ></canvas>
             )}
           </div>
         </div>

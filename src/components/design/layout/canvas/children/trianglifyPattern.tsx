@@ -15,7 +15,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 import trianglify from "trianglify";
 
 export const createDefaultCanvasChildTrianglifyOptions = () => {
@@ -23,11 +23,11 @@ export const createDefaultCanvasChildTrianglifyOptions = () => {
 
   return {
     type: "trianglify",
-    cellSize: 40,
+    cellSize: 45,
     variance: 0.75,
     seed: null,
     xColors: "random",
-    yColors: "random",
+    yColors: "match",
     palette: "YlGn",
     strokeWidth: 1.51,
     fill: true,
@@ -67,17 +67,18 @@ export const TrianglifyChild = defineComponent({
       if (!svgRef.value) return;
 
       try {
-        const width = 600;
-        const height = 400;
+        const width = Math.max(200, Math.min(1200, slotSize.value.width));
+        const height = Math.max(150, Math.min(900, slotSize.value.height));
 
         const config: any = {
           width,
           height,
-          cellSize: props.options?.cellSize || 40,
+          cellSize: props.options?.cellSize || 45,
           variance: props.options?.variance ?? 0.75,
-          strokeWidth: props.options?.strokeWidth || 1.51,
+          strokeWidth: props.options?.strokeWidth ?? 1.51,
           fill: props.options?.fill !== false,
-          seed: props.options?.seed || null,
+          xColors: props.options?.xColors || props.options?.palette || "random",
+          yColors: props.options?.yColors || "match",
         };
 
         if (props.options?.seed) {
@@ -87,6 +88,7 @@ export const TrianglifyChild = defineComponent({
         const pattern = trianglify(config);
         const svgElement = pattern.toSVG();
 
+        svgRef.value.setAttribute("viewBox", `0 0 ${width} ${height}`);
         svgRef.value.innerHTML = "";
         while (svgElement.firstChild) {
           svgRef.value.appendChild(svgElement.firstChild);
@@ -97,6 +99,10 @@ export const TrianglifyChild = defineComponent({
         console.error("Trianglify render error:", e);
       }
     }
+
+    const { slotSize } = useCanvasChildSlotSize(svgRef, props.options, () => {
+      render();
+    });
 
     onMounted(render);
     watch(
@@ -150,6 +156,7 @@ export const TrianglifyChild = defineComponent({
               height="100%"
               viewBox="0 0 600 400"
               preserveAspectRatio="xMidYMid slice"
+              style={{ display: "block" }}
             />
           </div>
         </div>

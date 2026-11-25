@@ -88,9 +88,12 @@ function equatorialToStereographic(
 function getBodyPosition(
   body: Astronomy.Body,
   date: Date,
+  latitude: number,
+  longitude: number,
 ): { ra: number; dec: number } {
-  const equatorial = Astronomy.Equator(body, date, null, false, true);
-  return { ra: equatorial.ra, dec: equatorial.dec };
+  const observer = new Astronomy.Observer(latitude, longitude, 0);
+  const equatorial = Astronomy.Equator(body, date, observer, false, true);
+  return { ra: equatorial.ra * 15, dec: equatorial.dec };
 }
 
 function getGreenwichSiderealTime(date: Date): number {
@@ -252,7 +255,7 @@ function drawStarChart(
 
   bodies.forEach((body) => {
     try {
-      const pos = getBodyPosition(body, date);
+      const pos = getBodyPosition(body, date, latitude, longitude);
       const proj = equatorialToStereographic(
         pos.ra,
         pos.dec,

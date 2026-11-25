@@ -22,7 +22,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 export const createDefaultCanvasChildMarkmapChartOptions = () => {
   const canvasUnit = canvasStickerOptionsOnlyChild.value.width.unit;
@@ -92,22 +92,16 @@ export const MarkmapChartChild = defineComponent({
 
       try {
         errorMessage.value = "";
-
-        // 清除旧内容
         svgRef.value.innerHTML = "";
 
-        const importModule = (name: string) =>
-          new Function("mod", "return import(mod)")(name);
-
         const [{ Transformer }, { Markmap }] = await Promise.all([
-          importModule("markmap-lib"),
-          importModule("markmap-view"),
+          import("markmap-lib"),
+          import("markmap-view"),
         ]);
 
         const transformer = new Transformer();
         const { root } = transformer.transform(text);
 
-        // 创建新的 markmap 实例
         markmapInstance = Markmap.create(
           svgRef.value,
           {
@@ -116,6 +110,7 @@ export const MarkmapChartChild = defineComponent({
           },
           root,
         );
+        markmapInstance?.fit?.();
       } catch (error: any) {
         errorMessage.value = error?.message || "Markmap 渲染失败";
       } finally {
@@ -124,7 +119,13 @@ export const MarkmapChartChild = defineComponent({
       }
     }
 
-    // 等待 SVG 元素挂载后再渲染
+    useCanvasChildSlotSize(svgRef, props.options, () => {
+      nextTick(() => {
+        markmapInstance?.fit?.();
+        updateRenderingCanvas();
+      });
+    });
+
     onMounted(() => {
       renderMarkmap();
     });
@@ -174,28 +175,28 @@ export const MarkmapChartChild = defineComponent({
         <div style={containerStyle}>
           <div class="canvas-markmap-chart-child" style={style}>
             <style>{`
-                        .canvas-markmap-chart-child svg {
-                            width: 100%;
-                            height: 100%;
-                            max-width: 100%;
-                            max-height: 100%;
-                            display: block;
-                        }
-                        .canvas-markmap-chart-child .canvas-markmap-chart-child__error {
-                            color: #c45656;
-                            font-size: 0.28em;
-                            line-height: 1.4;
-                            padding: 0.75em;
-                            background: rgba(255, 245, 245, 0.92);
-                            border: 1px solid rgba(196, 86, 86, 0.35);
-                            border-radius: 4px;
-                            white-space: pre-wrap;
-                            max-width: 100%;
-                            max-height: 100%;
-                            overflow: hidden;
-                            box-sizing: border-box;
-                        }
-                    `}</style>
+              .canvas-markmap-chart-child svg {
+                width: 100%;
+                height: 100%;
+                max-width: 100%;
+                max-height: 100%;
+                display: block;
+              }
+              .canvas-markmap-chart-child .canvas-markmap-chart-child__error {
+                color: #c45656;
+                font-size: 14px;
+                line-height: 1.4;
+                padding: 12px;
+                background: rgba(255, 245, 245, 0.92);
+                border: 1px solid rgba(196, 86, 86, 0.35);
+                border-radius: 4px;
+                white-space: pre-wrap;
+                max-width: 100%;
+                max-height: 100%;
+                overflow: hidden;
+                box-sizing: border-box;
+              }
+            `}</style>
             {errorMessage.value ? (
               <div class="canvas-markmap-chart-child__error">
                 {errorMessage.value}

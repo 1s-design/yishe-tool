@@ -240,6 +240,7 @@ function getComponentFriendlyName(key: string): string {
   if (key.startsWith("echart.")) return "图表 (ECharts)";
   if (key.startsWith("wordCloud.")) return "词云";
   if (key.startsWith("barcode.")) return "条形码";
+  if (key.startsWith("codeBlock.")) return "代码块 (Shiki)";
   if (key.startsWith("qrcode.")) return "二维码";
   if (key.startsWith("figlet.")) return "艺术字 (Figlet)";
   if (key.startsWith("math.")) return "数学公式 (KaTeX)";

@@ -1,54 +1,35 @@
-import QRCodeStyling from 'qr-code-styling';
-import { ref, watchEffect, watch, onUpdated, onMounted } from 'vue'
-import { canvasStickerOptions, canvasStickerOptionsOnlyChild, updateRenderingCanvas } from '../../index.tsx'
-
-import { getPositionInfoFromOptions, formatToNativeSizeString, formatSizeOptionToPixelValue, getPaddingRealPixel, getBorderRadiusRealPixel } from '../../helper.tsx'
-import { defineAsyncComponent, defineComponent } from 'vue';
-
-import { createPositionDefaultOptions, createBasicDefaultOptions, } from '../defaultOptions.tsx';
-
-import { parse } from 'gradient-parser'
-import { onCanvasChildSetup, onBeforeReturnRender } from '../commonHooks.ts';
+import { ref, watch, onMounted, defineComponent } from 'vue'
+import { canvasStickerOptionsOnlyChild, updateRenderingCanvas } from '../../index.tsx'
+import { getPositionInfoFromOptions, formatSizeOptionToPixelValue } from '../../helper.tsx'
+import { createPositionDefaultOptions, createBasicDefaultOptions } from '../defaultOptions.tsx'
+import { onCanvasChildSetup, onBeforeReturnRender } from '../commonHooks.ts'
 import JsBarcode from 'jsbarcode'
-
-
-import Utils from '@/common/utils'
-import { message } from '@/common/message';
-import { useDebounceFn } from '@vueuse/core';
-
-
+import { message } from '@/common/message'
+import { useDebounceFn } from '@vueuse/core'
 
 export const createDefaultCanvasChildBarcodeOptions = () => {
     const canvasUnit = canvasStickerOptionsOnlyChild.value.width.unit
     return {
+        type: 'barcode',
         barcodeContent: '123456789012',
-        barcodeFormat: '',
+        barcodeFormat: 'CODE128',
         position: createPositionDefaultOptions(canvasUnit),
         lineColor: {
-            color: "#f00",
+            color: '#111827',
             type: 'pure'
-        }, // 条形码颜色
+        },
         background: {
-            color: "#ff0",
+            color: '#ffffff',
             type: 'pure'
-        }, // 背景颜色
+        },
+        displayValue: true,
+        barWidth: 3,
+        barHeight: 140,
         margin: {
-            top: {
-                value: 0,
-                unit: canvasUnit
-            },
-            left: {
-                value: 0,
-                unit: canvasUnit
-            },
-            bottom: {
-                value: 0,
-                unit: canvasUnit
-            },
-            right: {
-                value: 0,
-                unit: canvasUnit
-            }
+            top: { value: 12, unit: 'px' },
+            left: { value: 16, unit: 'px' },
+            bottom: { value: 12, unit: 'px' },
+            right: { value: 16, unit: 'px' }
         },
         scaleX: 1,
         scaleY: 1,
@@ -58,29 +39,18 @@ export const createDefaultCanvasChildBarcodeOptions = () => {
         rotateZ: 0,
         skewX: 0,
         skewY: 0,
-        width: {
-            value: 100,
-            unit: canvasUnit
-        },
-        height: {
-            value: 100,
-            unit: canvasUnit
-        },
+        width: { value: 100, unit: 'vw' },
+        height: { value: 100, unit: 'vh' },
         ...createBasicDefaultOptions()
     }
 }
-
-
 
 export const Barcode = defineComponent({
     props: {
         options: null
     },
-    setup(props, ctx) {
-
-        const options = props.options
-
-        const targetElRef = ref()
+    setup(props) {
+        const targetElRef = ref<HTMLCanvasElement>()
 
         onCanvasChildSetup({
             targetEl: targetElRef,
@@ -89,64 +59,60 @@ export const Barcode = defineComponent({
         })
 
         function _initBarcode() {
-            if (targetElRef.value) {
-                try {
-                    if (!props.options.barcodeContent) {
-                        return
-                    }
-
-                    console.log('barcode before create')
-
-                    JsBarcode(targetElRef.value, props.options.barcodeContent, {
-                        format: props.options.barcodeFormat, // 设置条形码格式
-                        lineColor: props.options.lineColor.color, // 设置条形码颜色
-                        width: formatToNativeSizeString(props.options.width),
-                        height: formatToNativeSizeString(props.options.height),
-                        displayValue: false, // 是否显示文本值
-                        background: props.options.background.color,
-                        marginTop: formatSizeOptionToPixelValue(props.options.margin.top),
-                        marginRight: formatSizeOptionToPixelValue(props.options.margin.right),
-                        marginBottom: formatSizeOptionToPixelValue(props.options.margin.bottom),
-                        marginLeft: formatSizeOptionToPixelValue(props.options.margin.left),
-                        margin: 0 // 这里如果不设置，会始终显示一段多余边框
-                    });
-                } catch (e) {
-                    message.error('条形码生成错误 :' + (e.message || '未知错误'))
-                }
+            if (!targetElRef.value || !props.options.barcodeContent) return
+            try {
+                const rawBarWidth = Number(props.options.barWidth)
+                const rawBarHeight = Number(props.options.barHeight)
+                JsBarcode(targetElRef.value, String(props.options.barcodeContent), {
+                    format: props.options.barcodeFormat || 'CODE128',
+                    lineColor: props.options.lineColor?.color || '#111827',
+                    width: rawBarWidth > 0 && rawBarWidth <= 12 ? rawBarWidth : 3,
+                    height: rawBarHeight > 0 && rawBarHeight <= 600 ? rawBarHeight : 140,
+                    displayValue: props.options.displayValue !== false,
+                    fontSize: 20,
+                    background: props.options.background?.color || '#ffffff',
+                    marginTop: Number(formatSizeOptionToPixelValue(props.options.margin?.top)) || 12,
+                    marginRight: Number(formatSizeOptionToPixelValue(props.options.margin?.right)) || 16,
+                    marginBottom: Number(formatSizeOptionToPixelValue(props.options.margin?.bottom)) || 12,
+                    marginLeft: Number(formatSizeOptionToPixelValue(props.options.margin?.left)) || 16,
+                })
+                updateRenderingCanvas()
+            } catch (e: any) {
+                message.error('条形码生成错误 :' + (e?.message || '未知错误'))
             }
         }
 
-        const initBarcode = useDebounceFn(_initBarcode)
+        const initBarcode = useDebounceFn(_initBarcode, 60)
 
         onMounted(initBarcode)
         watch(props, initBarcode, { deep: true })
 
         return () => {
-
             const {
                 containerStyle: _containerStyle,
                 style: _style
             } = getPositionInfoFromOptions(props.options.position)
 
-            const containerStyle = {
+            const containerStyle: any = {
                 width: '100%',
                 height: '100%',
                 position: 'absolute',
                 top: 0,
                 left: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 ..._containerStyle
             }
 
-
-
-            const style = {
-                // width: formatToNativeSizeString(props.options.width),
-                // height: formatToNativeSizeString(props.options.height),
+            const style: any = {
+                maxWidth: '92%',
+                maxHeight: '92%',
+                objectFit: 'contain',
                 flexShrink: 0,
                 zIndex: props.options.zIndex,
                 ..._style,
             }
-
 
             onBeforeReturnRender({
                 style,
@@ -163,8 +129,3 @@ export const Barcode = defineComponent({
 export function createCanvasChildBarcode(options) {
     return <Barcode options={options} onVnodeUpdated={updateRenderingCanvas} onVnodeMounted={updateRenderingCanvas}></Barcode>
 }
-
-
-
-
-

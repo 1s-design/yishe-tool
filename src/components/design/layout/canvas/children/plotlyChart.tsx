@@ -25,7 +25,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 export const createDefaultCanvasChildPlotlyChartOptions = () => {
   const canvasUnit = canvasStickerOptionsOnlyChild.value.width.unit;
@@ -98,12 +98,11 @@ export const PlotlyChartChild = defineComponent({
 
       try {
         errorMessage.value = "";
-        const containerRect = el.getBoundingClientRect();
         const mergedLayout = {
           autosize: false,
-          width: containerRect.width || 400,
-          height: containerRect.height || 300,
-          margin: { t: 30, r: 30, b: 30, l: 30 },
+          width: slotSize.value.width || 400,
+          height: slotSize.value.height || 300,
+          margin: { t: 48, r: 30, b: 48, l: 50 },
           ...JSON.parse(JSON.stringify(layoutVal)),
         };
         await Plotly.newPlot(
@@ -123,6 +122,10 @@ export const PlotlyChartChild = defineComponent({
     }
 
     const debouncedRender = useDebounceFn(renderPlotly, 150);
+
+    const { slotSize } = useCanvasChildSlotSize(targetRef, props.options, () => {
+      debouncedRender();
+    });
 
     onMounted(debouncedRender);
     watch(data, debouncedRender, { deep: true });

@@ -1,4 +1,4 @@
-import { computed, defineComponent, onBeforeUnmount, ref, watch } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   canvasStickerOptionsOnlyChild,
   updateRenderingCanvas,
@@ -15,7 +15,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 let $3Dmol: any = null;
 
@@ -28,13 +28,19 @@ export const THREEMOL_STYLES = [
 ] as const;
 export const THREEMOL_FORMATS = ["pdb", "sdf", "xyz", "mol2"] as const;
 
+const DEFAULT_WATER_XYZ = `3
+Water
+O 0.000 0.000 0.000
+H 0.757 0.586 0.000
+H -0.757 0.586 0.000`;
+
 export const createDefaultCanvasChildThreeMolOptions = () => {
   const canvasUnit = canvasStickerOptionsOnlyChild.value.width.unit;
 
   return {
     type: "threeMol",
-    data: "",
-    format: "pdb",
+    data: DEFAULT_WATER_XYZ,
+    format: "xyz",
     pdbId: "",
     style: "stick",
     backgroundColor: { type: "pure", color: "#ffffff" },
@@ -81,14 +87,14 @@ export const ThreeMolChild = defineComponent({
     });
 
     const data = computed(() => String(props.options?.data || ""));
-    const format = computed(() => String(props.options?.format || "pdb"));
+    const format = computed(() => String(props.options?.format || "xyz"));
     const pdbId = computed(() => String(props.options?.pdbId || ""));
     const style = computed(() => String(props.options?.style || "stick"));
 
     function getStyleSpec(styleName: string): any {
       switch (styleName) {
         case "sphere":
-          return { sphere: { scale: 0.3 } };
+          return { sphere: { scale: 0.35 } };
         case "cartoon":
           return { cartoon: { color: "spectrum" } };
         case "line":
@@ -97,7 +103,7 @@ export const ThreeMolChild = defineComponent({
           return { cross: { linewidth: 2 } };
         case "stick":
         default:
-          return { stick: { radius: 0.15 } };
+          return { stick: { radius: 0.18 }, sphere: { scale: 0.25 } };
       }
     }
 
@@ -106,47 +112,66 @@ export const ThreeMolChild = defineComponent({
 
       try {
         errorMessage.value = "";
-
         if (!containerRef.value) return;
 
         const mol = await load3Dmol();
-        if (token !== renderToken) return;
+        if (token !== renderToken || !containerRef.value) return;
 
-        // 清除旧 viewer
         if (viewerRef.value) {
           viewerRef.value.clear();
         }
+        containerRef.value.innerHTML = "";
 
         const bgColor = props.options?.backgroundColor?.color || "#ffffff";
         const viewer = mol.createViewer(containerRef.value, {
           backgroundColor: bgColor,
+          antialias: true,
         });
         viewerRef.value = viewer;
 
-        // 加载数据
-        if (pdbId.value) {
-          // 通过 PDB ID 下载
-          await new Promise<void>((resolve, reject) => {
-            mol.download(`pdb:${pdbId.value}`, viewer, {}, () => {
-              resolve();
-            });
-          });
-        } else if (data.value) {
-          // 从字符串加载
+        if (data.value) {
           viewer.addModel(data.value, format.value);
+        } else if (pdbId.value) {
+          await new Promise<void>((resolve) => {
+            mol.download(`pdb:${pdbId.value}`, viewer, {}, () => resolve());
+          });
+        } else {
+          viewer.addModel(DEFAULT_WATER_XYZ, "xyz");
         }
 
         if (token !== renderToken) return;
 
-        // 设置样式
         viewer.setStyle({}, getStyleSpec(style.value));
+        viewer.resize();
         viewer.zoomTo();
         viewer.render();
       } catch (error: any) {
         if (token !== renderToken) return;
         errorMessage.value = error?.message || "3D 分子渲染失败";
+      } finally {
+        if (token === renderToken) {
+          await nextTick();
+          updateRenderingCanvas();
+        }
       }
     }
+
+    useCanvasChildSlotSize(targetRef, props.options, () => {
+      if (viewerRef.value) {
+        try {
+          viewerRef.value.resize();
+          viewerRef.value.zoomTo();
+          viewerRef.value.render();
+          updateRenderingCanvas();
+          return;
+        } catch {}
+      }
+      renderMolecule();
+    });
+
+    onMounted(() => {
+      nextTick(renderMolecule);
+    });
 
     watch(
       () => [
@@ -156,11 +181,13 @@ export const ThreeMolChild = defineComponent({
         style.value,
         props.options?.backgroundColor?.color,
       ],
-      renderMolecule,
-      { immediate: true },
+      () => {
+        nextTick(renderMolecule);
+      },
     );
 
     onBeforeUnmount(() => {
+      renderToken++;
       if (viewerRef.value) {
         viewerRef.value.clear();
         viewerRef.value = null;

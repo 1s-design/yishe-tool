@@ -1,5 +1,5 @@
 import WordCloud from 'wordcloud'
-import { computed, defineComponent, onBeforeUnmount, onMounted, onUpdated, ref, watch } from 'vue'
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { canvasStickerOptionsOnlyChild, updateRenderingCanvas } from '../../index.tsx'
 import {
@@ -14,7 +14,9 @@ import {
     formatToNativeSizeString,
     getPositionInfoFromOptions,
 } from '../../helper.tsx'
-import { onBeforeReturnRender, onCanvasChildSetup } from '../commonHooks.ts'
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from '../commonHooks.ts'
+
+const loadedWordCloudFontCache = new Map<string, Promise<boolean>>()
 
 type WordCloud2ListItem = [string, number, ...any[]]
 
@@ -107,29 +109,107 @@ export const WordCloudChild = defineComponent({
             props,
         })
 
-        const canvasPixelSize = computed(() => {
-            const width = Math.max(1, Math.round(Number(formatSizeOptionToPixelValue(props.options.width)) || 1))
-            const height = Math.max(1, Math.round(Number(formatSizeOptionToPixelValue(props.options.height)) || 1))
-            return {
-                width,
-                height,
-            }
+        const { slotSize: canvasPixelSize } = useCanvasChildSlotSize(canvasRef, props.options, () => {
+            renderWordCloud()
         })
 
-        async function waitForFontsLoaded() {
-            const fontInfo = getWordCloud2Options(props.options)?.fontFamilyInfo
-            if (fontInfo?.url && fontInfo?.id && !document.fonts?.check?.(`12px font_${fontInfo.id}`)) {
+        function getCappedCanvasSize() {
+            const rawW = Math.max(1, canvasPixelSize.value.width)
+            const rawH = Math.max(1, canvasPixelSize.value.height)
+            const maxDim = Math.max(rawW, rawH)
+            const scale = maxDim > 1600 ? 1600 / maxDim : 1
+            return {
+                width: Math.max(1, Math.round(rawW * scale)),
+                height: Math.max(1, Math.round(rawH * scale)),
+                scale,
+            }
+        }
+
+        function resolveInheritedFontFamily(canvas: HTMLCanvasElement, engineOptions: any) {
+            const explicit = String(engineOptions?.fontFamily || '').trim()
+            if (explicit && explicit !== 'inherit' && explicit !== 'sans-serif') {
+                return explicit
+            }
+            const host = canvas.closest('.s1-child-placeholder')?.parentElement || canvas.parentElement
+            if (host && typeof window !== 'undefined') {
+                const computed = window.getComputedStyle(host).fontFamily
+                if (computed && computed !== 'inherit') {
+                    return computed
+                }
+            }
+            return explicit && explicit !== 'inherit' ? explicit : 'sans-serif'
+        }
+
+        function getFontUrlKey(url: string) {
+            return `wc_font_${Math.abs(hashText(url)).toString(36)}`
+        }
+
+        async function ensureRemoteFontLoaded(familyName: string, url: string) {
+            const cacheKey = `${familyName}::${url}`
+            const existing = loadedWordCloudFontCache.get(cacheKey)
+            if (existing) {
+                await existing
+                return
+            }
+            const task = (async () => {
                 try {
-                    const fontFace = new FontFace(`font_${fontInfo.id}`, `url(${fontInfo.url})`)
-                    await fontFace.load()
-                    document.fonts.add(fontFace)
+                    const resp = await fetch(url)
+                    if (!resp.ok) {
+                        throw new Error(`HTTP ${resp.status}`)
+                    }
+                    const buffer = await resp.arrayBuffer()
+                    const fontFace = new FontFace(familyName, buffer)
+                    const loaded = await fontFace.load()
+                    document.fonts.add(loaded)
+                    return true
                 } catch (error) {
-                    console.warn('Word cloud font loading failed:', error)
+                    console.warn('Word cloud fetch font loading failed, trying direct URL:', error)
+                    try {
+                        const fontFace = new FontFace(familyName, `url(${url})`)
+                        const loaded = await fontFace.load()
+                        document.fonts.add(loaded)
+                        return true
+                    } catch (err2) {
+                        console.warn('Word cloud direct font loading failed:', err2)
+                        return false
+                    }
+                }
+            })()
+            loadedWordCloudFontCache.set(cacheKey, task)
+            await Promise.race([
+                task,
+                new Promise((resolve) => setTimeout(resolve, 15000)),
+            ])
+        }
+
+        async function waitForFontsLoaded(canvas: HTMLCanvasElement, engineOptions: any) {
+            const fontInfo = engineOptions?.fontFamilyInfo
+            const directUrl = String(engineOptions?.fontUrl || '').trim()
+
+            if (fontInfo?.url && fontInfo?.id) {
+                await ensureRemoteFontLoaded(`font_${fontInfo.id}`, fontInfo.url)
+            } else if (directUrl) {
+                const familyName = getFontUrlKey(directUrl)
+                await ensureRemoteFontLoaded(familyName, directUrl)
+            }
+
+            const inheritedFamily = resolveInheritedFontFamily(canvas, engineOptions)
+            if (inheritedFamily && document.fonts?.load) {
+                try {
+                    await Promise.race([
+                        document.fonts.load(`700 24px ${inheritedFamily}`),
+                        new Promise((resolve) => setTimeout(resolve, 4000)),
+                    ])
+                } catch {
+                    // 忽略单个字体加载异常，回退系统字体
                 }
             }
 
             if (document.fonts?.ready) {
-                await document.fonts.ready
+                await Promise.race([
+                    document.fonts.ready,
+                    new Promise((resolve) => setTimeout(resolve, 2000)),
+                ])
             }
         }
 
@@ -140,7 +220,7 @@ export const WordCloudChild = defineComponent({
             }
 
             const currentToken = ++renderToken
-            const { width, height } = canvasPixelSize.value
+            const { width, height, scale } = getCappedCanvasSize()
             if (canvas.width !== width) {
                 canvas.width = width
             }
@@ -157,9 +237,22 @@ export const WordCloudChild = defineComponent({
                 return
             }
 
-            await waitForFontsLoaded()
+            await waitForFontsLoaded(canvas, engineOptions)
+            if (currentToken !== renderToken) {
+                return
+            }
 
-            const options = createWordCloud2RenderOptions(engineOptions, canvas)
+            const resolvedFontFamily = engineOptions?.fontFamilyInfo?.id
+                ? `font_${engineOptions.fontFamilyInfo.id}`
+                : engineOptions?.fontUrl
+                    ? getFontUrlKey(String(engineOptions.fontUrl).trim())
+                    : resolveInheritedFontFamily(canvas, engineOptions)
+
+            const options = createWordCloud2RenderOptions(
+                { ...engineOptions, fontFamily: resolvedFontFamily },
+                canvas,
+                scale,
+            )
             const finish = () => {
                 if (currentToken === renderToken) {
                     updateRenderingCanvas()
@@ -168,11 +261,15 @@ export const WordCloudChild = defineComponent({
 
             await new Promise<void>((resolve) => {
                 let resolved = false
+                const safetyTimer = setTimeout(() => {
+                    done()
+                }, 2500)
                 const done = () => {
                     if (resolved) {
                         return
                     }
                     resolved = true
+                    clearTimeout(safetyTimer)
                     canvas.removeEventListener('wordcloudstop', done)
                     canvas.removeEventListener('wordcloudabort', done)
                     resolve()
@@ -182,7 +279,8 @@ export const WordCloudChild = defineComponent({
                 canvas.addEventListener('wordcloudabort', done)
 
                 try {
-                    WordCloud(canvas, options)
+                    const wordCloudFn = (WordCloud as any)?.default || WordCloud
+                    wordCloudFn(canvas, options)
                 } catch (error) {
                     console.warn('Word cloud render failed:', error)
                     done()
@@ -193,7 +291,6 @@ export const WordCloudChild = defineComponent({
         }, 120)
 
         onMounted(renderWordCloud)
-        onUpdated(renderWordCloud)
         watch(() => props.options, renderWordCloud, { deep: true })
 
         onBeforeUnmount(() => {
@@ -217,8 +314,10 @@ export const WordCloudChild = defineComponent({
 
             const style: any = {
                 flexShrink: 0,
-                width: formatToNativeSizeString(props.options.width),
-                height: formatToNativeSizeString(props.options.height),
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                objectFit: 'contain',
                 filter: createFilterFromOptions(props.options.filter),
                 zIndex: props.options.zIndex,
                 ..._style,
@@ -233,8 +332,6 @@ export const WordCloudChild = defineComponent({
                 <canvas
                     ref={canvasRef}
                     style={style}
-                    width={canvasPixelSize.value.width}
-                    height={canvasPixelSize.value.height}
                     data-word-cloud-engine={props.options.wordCloud?.engine || 'wordcloud2'}
                 ></canvas>
             </div>
@@ -247,36 +344,49 @@ function getWordCloud2Options(options: any) {
 }
 
 function isWordCloudSupported() {
-    return WordCloud.isSupported !== false
+    const wordCloudFn = (WordCloud as any)?.default || WordCloud
+    return wordCloudFn?.isSupported !== false
 }
 
-function createWordCloud2RenderOptions(options: any, canvas: HTMLCanvasElement) {
+function createWordCloud2RenderOptions(options: any, canvas: HTMLCanvasElement, scale = 1) {
+    const baseGrid = Number(options.gridSize) || 8
+    const safeGrid = Math.max(baseGrid, Math.round(Math.min(canvas.width, canvas.height) / 68))
+    const baseWeight = Number(options.weightFactor) || 1
+    const rawEllipticity = Number(options.ellipticity)
+    const autoAspect = canvas.width > 0 ? Math.max(0.35, Math.min(1.5, canvas.height / canvas.width)) : 1
+    const ellipticity = (!rawEllipticity || rawEllipticity === 1) && Math.abs(autoAspect - 1) > 0.15
+        ? autoAspect
+        : (rawEllipticity || 1)
+    const shape = options.shape || 'circle'
+    const normalizedOrigin = normalizeOrigin(options.origin, canvas)
+    const effectiveOrigin = normalizedOrigin
+        || (shape === 'cardioid' ? [Math.round(canvas.width / 2), Math.round(canvas.height * 0.28)] : null)
     return {
         list: normalizeList(options.list),
         fontFamily: getWordCloud2FontFamily(options),
         fontWeight: options.fontWeight,
         color: createWordCloud2ColorOption(options),
         minSize: Number(options.minSize) || 0,
-        weightFactor: Number(options.weightFactor) || 1,
+        weightFactor: baseWeight * scale,
         clearCanvas: options.clearCanvas !== false,
         backgroundColor: options.backgroundColor || 'rgba(0,0,0,0)',
-        gridSize: Number(options.gridSize) || 8,
-        origin: normalizeOrigin(options.origin, canvas),
+        gridSize: safeGrid,
+        origin: effectiveOrigin,
         drawOutOfBound: !!options.drawOutOfBound,
         shrinkToFit: options.shrinkToFit !== false,
         drawMask: !!options.drawMask,
         maskColor: options.maskColor || 'rgba(255,0,0,0.3)',
         maskGapWidth: Number(options.maskGapWidth) || 0,
         wait: Number(options.wait) || 0,
-        abortThreshold: Number(options.abortThreshold) || 0,
+        abortThreshold: Number(options.abortThreshold) || 1800,
         abort: () => null,
         minRotation: Number(options.minRotation) || 0,
         maxRotation: Number(options.maxRotation) || 0,
         rotationSteps: Math.max(0, Number(options.rotationSteps) || 0),
         shuffle: options.shuffle !== false,
         rotateRatio: Number(options.rotateRatio) || 0,
-        shape: options.shape || 'circle',
-        ellipticity: Number(options.ellipticity) || 1,
+        shape,
+        ellipticity,
     }
 }
 

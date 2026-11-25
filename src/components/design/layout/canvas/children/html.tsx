@@ -2,9 +2,14 @@
  * @description 支持 HTML 画布元素
  */
 
-import { canvasStickerOptionsOnlyChild, updateRenderingCanvas } from "../index.tsx";
+import {
+  canvasStickerOptionsOnlyChild,
+  reparentCanvasChildren,
+  rescueReparentedCanvasChildren,
+  updateRenderingCanvas,
+} from "../index.tsx";
 import { createFilterFromOptions, createTransformString, formatToNativeSizeString } from "../helper.tsx";
-import { computed, defineComponent, ref, watchEffect } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from "vue";
 import {
   createFilterDefaultOptions,
   createTransformDefaultOptions,
@@ -49,6 +54,7 @@ export const Html = defineComponent({
   },
   setup(props) {
     const targetElRef = ref();
+    const contentElRef = ref<HTMLElement>();
 
     onCanvasChildSetup({
       targetEl: targetElRef,
@@ -65,6 +71,33 @@ export const Html = defineComponent({
     });
 
     const renderPayload = computed(() => createHtmlRenderPayload(props.options));
+
+    function syncHtmlContentDom() {
+      const container = contentElRef.value;
+      if (!container) return;
+      // 更新 innerHTML 前先将已挂载的嵌入子组件安全撤回离屏池，避免被 innerHTML 替换销毁
+      rescueReparentedCanvasChildren(container);
+      container.innerHTML = renderPayload.value.sanitizedHtml || "";
+      nextTick(() => {
+        reparentCanvasChildren();
+        updateRenderingCanvas();
+      });
+    }
+
+    onMounted(() => {
+      syncHtmlContentDom();
+    });
+
+    watch(
+      () => renderPayload.value.sanitizedHtml,
+      () => {
+        nextTick(syncHtmlContentDom);
+      }
+    );
+
+    onBeforeUnmount(() => {
+      rescueReparentedCanvasChildren(contentElRef.value);
+    });
 
     return () => {
       const canvasUnit = canvasStickerOptionsOnlyChild.value.width.unit;
@@ -133,8 +166,16 @@ export const Html = defineComponent({
           >
             <style>{`
               .${renderPayload.value.scopeClassName} .canvas-html-child__content,
-              .${renderPayload.value.scopeClassName} .canvas-html-child__content * {
+              .${renderPayload.value.scopeClassName} .canvas-html-child__content *:not(.s1-child-placeholder):not(.s1-child-placeholder *) {
                 all: revert;
+                box-sizing: border-box;
+              }
+
+              .${renderPayload.value.scopeClassName} .canvas-html-child__content .s1-child-placeholder {
+                font-size: 16px;
+                line-height: 1.4;
+                color: #111827;
+                text-align: left;
                 box-sizing: border-box;
               }
 
@@ -156,6 +197,7 @@ export const Html = defineComponent({
 
             {renderPayload.value.sanitizedHtml ? (
               <div
+                ref={contentElRef}
                 class="canvas-html-child__content"
                 style={{
                   width: "100%",
@@ -169,7 +211,6 @@ export const Html = defineComponent({
                   minWidth: "100%",
                   minHeight: "100%"
                 }}
-                innerHTML={renderPayload.value.sanitizedHtml}
               ></div>
             ) : (
               <div

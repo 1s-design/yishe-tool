@@ -15,7 +15,7 @@ import {
   createTransformDefaultOptions,
   createBasicDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 import WaveSurfer from "wavesurfer.js";
 
 export const createDefaultCanvasChildWaveformOptions = () => {
@@ -25,21 +25,12 @@ export const createDefaultCanvasChildWaveformOptions = () => {
     type: "waveform",
     ...createBasicDefaultOptions(),
     position: createPositionDefaultOptions(canvasUnit),
-    width: {
-      value: 100,
-      unit: "vw",
-    },
-    height: {
-      value: 100,
-      unit: "vh",
-    },
+    width: { value: 100, unit: "vw" },
+    height: { value: 100, unit: "vh" },
     audioUrl: "",
-    waveColor: "#4ECDC4",
-    progressColor: "#FF6B6B",
-    backgroundColor: {
-      type: "pure",
-      color: "#ffffff",
-    },
+    waveColor: "#2563eb",
+    progressColor: "#06b6d4",
+    backgroundColor: { type: "pure", color: "#ffffff" },
     filter: createFilterDefaultOptions(canvasUnit),
     transform: createTransformDefaultOptions(canvasUnit),
     zIndex: 0,
@@ -60,8 +51,10 @@ export const Waveform = defineComponent({
   props: {
     options: null,
   },
-  setup(props, ctx) {
-    const containerRef = ref();
+  setup(props) {
+    const containerRef = ref<HTMLElement>();
+    const fallbackCanvasRef = ref<HTMLCanvasElement>();
+    const useFallback = ref(true);
     let wavesurfer: WaveSurfer | null = null;
 
     onCanvasChildSetup({
@@ -77,55 +70,99 @@ export const Waveform = defineComponent({
       }
     }
 
+    function drawProceduralWaveform() {
+      const canvas = fallbackCanvasRef.value;
+      if (!canvas) return;
+      const width = Math.max(200, slotSize.value.width);
+      const height = Math.max(100, slotSize.value.height);
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, width, height);
+
+      const barCount = Math.max(40, Math.min(120, Math.floor(width / 10)));
+      const gap = Math.max(2, Math.floor(width / barCount * 0.3));
+      const barW = Math.max(2, (width - gap * (barCount + 1)) / barCount);
+      const waveColor = props.options?.waveColor || "#2563eb";
+      const progressColor = props.options?.progressColor || "#06b6d4";
+      const midY = height / 2;
+      const maxAmp = height * 0.42;
+
+      for (let i = 0; i < barCount; i++) {
+        const t = i / barCount;
+        const env = Math.sin(t * Math.PI);
+        const raw =
+          0.35 +
+          0.35 * Math.abs(Math.sin(i * 0.45)) +
+          0.3 * Math.abs(Math.cos(i * 1.13 + 0.7));
+        const barH = Math.max(8, raw * env * maxAmp * 2);
+        const x = gap + i * (barW + gap);
+        const y = midY - barH / 2;
+
+        ctx.fillStyle = t < 0.42 ? progressColor : waveColor;
+        const r = Math.min(barW / 2, 4);
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, barH, r);
+        ctx.fill();
+      }
+      updateRenderingCanvas();
+    }
+
     function initWaveSurfer() {
       destroyWaveSurfer();
 
-      if (!containerRef.value || !props.options.audioUrl) {
+      const audioUrl = String(props.options?.audioUrl || "").trim();
+      if (!containerRef.value || !audioUrl) {
+        useFallback.value = true;
+        requestAnimationFrame(drawProceduralWaveform);
         return;
       }
 
-      wavesurfer = WaveSurfer.create({
-        container: containerRef.value,
-        waveColor: props.options.waveColor,
-        progressColor: props.options.progressColor,
-        height: props.options.height,
-        cursorWidth: 0,
-        interact: false,
-      });
+      try {
+        useFallback.value = false;
+        const pixelHeight = Math.max(80, slotSize.value.height - 24);
+        wavesurfer = WaveSurfer.create({
+          container: containerRef.value,
+          waveColor: props.options.waveColor || "#2563eb",
+          progressColor: props.options.progressColor || "#06b6d4",
+          height: pixelHeight,
+          cursorWidth: 0,
+          interact: false,
+        });
 
-      wavesurfer.load(props.options.audioUrl);
-
-      wavesurfer.on("ready", () => {
-        updateRenderingCanvas();
-      });
+        wavesurfer.on("ready", () => {
+          updateRenderingCanvas();
+        });
+        wavesurfer.on("error", () => {
+          destroyWaveSurfer();
+          useFallback.value = true;
+          requestAnimationFrame(drawProceduralWaveform);
+        });
+        wavesurfer.load(audioUrl);
+      } catch {
+        useFallback.value = true;
+        requestAnimationFrame(drawProceduralWaveform);
+      }
     }
+
+    const { slotSize } = useCanvasChildSlotSize(containerRef, props.options, () => {
+      if (useFallback.value) {
+        drawProceduralWaveform();
+      } else {
+        initWaveSurfer();
+      }
+    });
 
     onMounted(() => {
       initWaveSurfer();
     });
 
     watch(
-      () => props.options.audioUrl,
+      () => [props.options.audioUrl, props.options.waveColor, props.options.progressColor],
       () => {
         initWaveSurfer();
-      },
-    );
-
-    watch(
-      () => props.options.waveColor,
-      (val) => {
-        if (wavesurfer) {
-          wavesurfer.setOptions({ waveColor: val });
-        }
-      },
-    );
-
-    watch(
-      () => props.options.progressColor,
-      (val) => {
-        if (wavesurfer) {
-          wavesurfer.setOptions({ progressColor: val });
-        }
       },
     );
 
@@ -155,6 +192,9 @@ export const Waveform = defineComponent({
         filter: createFilterFromOptions(props.options.filter),
         zIndex: props.options.zIndex,
         overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         ..._style,
       };
 
@@ -166,20 +206,11 @@ export const Waveform = defineComponent({
       return (
         <div style={containerStyle}>
           <div ref={containerRef} style={style}>
-            {!props.options.audioUrl && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  height: "100%",
-                  color: "#999",
-                  fontSize: "14px",
-                }}
-              >
-                请设置音频URL
-              </div>
+            {useFallback.value && (
+              <canvas
+                ref={fallbackCanvasRef}
+                style={{ width: "100%", height: "100%", display: "block" }}
+              />
             )}
           </div>
         </div>

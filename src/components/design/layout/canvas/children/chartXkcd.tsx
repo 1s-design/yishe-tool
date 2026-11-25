@@ -4,6 +4,7 @@ import {
   defineComponent,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   ref,
   watch,
 } from "vue";
@@ -24,7 +25,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 export const CHART_XKCD_TYPES = [
   { value: "bar", label: "柱状图" },
@@ -84,6 +85,7 @@ export const ChartXkcdChild = defineComponent({
   },
   setup(props) {
     const chartContainerRef = ref<HTMLElement>();
+    const svgHostRef = ref<HTMLElement>();
     const chartInstance = ref<any>(null);
     const errorMessage = ref("");
 
@@ -112,7 +114,8 @@ export const ChartXkcdChild = defineComponent({
     });
 
     function renderChart() {
-      if (!chartContainerRef.value) return;
+      const host = svgHostRef.value;
+      if (!host) return;
 
       try {
         errorMessage.value = "";
@@ -121,13 +124,15 @@ export const ChartXkcdChild = defineComponent({
           chartInstance.value = null;
         }
 
-        chartContainerRef.value.innerHTML = "";
+        host.innerHTML = "";
 
         const svgEl = document.createElementNS(
           "http://www.w3.org/2000/svg",
           "svg",
         );
-        chartContainerRef.value.appendChild(svgEl);
+        svgEl.style.width = "100%";
+        svgEl.style.height = "100%";
+        host.appendChild(svgEl);
 
         const chartData = JSON.parse(JSON.stringify(data.value));
         const currentChartType = chartType.value;
@@ -144,7 +149,7 @@ export const ChartXkcdChild = defineComponent({
           chartInstance.value = new chartXkcd.Line(svgEl, {
             data: chartData,
           });
-        } else if (currentChartType === "XY") {
+        } else if (currentChartType === "XY" || currentChartType === "scatter") {
           chartInstance.value = new chartXkcd.XY(svgEl, {
             data: chartData,
           });
@@ -160,8 +165,13 @@ export const ChartXkcdChild = defineComponent({
 
     const debouncedRender = useDebounceFn(renderChart, 120);
 
+    useCanvasChildSlotSize(chartContainerRef, props.options, () => {
+      debouncedRender();
+    });
+
+    onMounted(debouncedRender);
+
     watch([chartType, data], debouncedRender, {
-      immediate: true,
       deep: true,
     });
 
@@ -223,9 +233,9 @@ export const ChartXkcdChild = defineComponent({
               }
               .canvas-chart-xkcd-child .canvas-chart-xkcd-child__error {
                 color: #c45656;
-                font-size: 0.28em;
+                font-size: 14px;
                 line-height: 1.4;
-                padding: 0.75em;
+                padding: 12px;
                 background: rgba(255, 245, 245, 0.92);
                 border: 1px solid rgba(196, 86, 86, 0.35);
                 border-radius: 4px;
@@ -240,7 +250,9 @@ export const ChartXkcdChild = defineComponent({
               <div class="canvas-chart-xkcd-child__error">
                 {errorMessage.value}
               </div>
-            ) : null}
+            ) : (
+              <div ref={svgHostRef} style={{ width: "100%", height: "100%" }}></div>
+            )}
           </div>
         </div>
       );

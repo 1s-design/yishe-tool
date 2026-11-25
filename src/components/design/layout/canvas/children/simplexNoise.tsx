@@ -1,4 +1,5 @@
-import { computed, defineComponent, nextTick, ref, watch } from "vue";
+import { computed, defineComponent, nextTick, onMounted, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import {
   canvasStickerOptionsOnlyChild,
   updateRenderingCanvas,
@@ -15,7 +16,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 import { createNoise2D } from "simplex-noise";
 
 export const createDefaultCanvasChildSimplexNoiseOptions = () => {
@@ -26,21 +27,15 @@ export const createDefaultCanvasChildSimplexNoiseOptions = () => {
     scale: 50,
     octaves: 4,
     persistence: 0.5,
-    color1: "#000000",
-    color2: "#ffffff",
+    color1: "#1e3a8a",
+    color2: "#93c5fd",
     backgroundColor: {
       type: "pure",
       color: "transparent",
     },
     backgroundSize: "cover",
-    width: {
-      value: 100,
-      unit: "vw",
-    },
-    height: {
-      value: 100,
-      unit: "vh",
-    },
+    width: { value: 100, unit: "vw" },
+    height: { value: 100, unit: "vh" },
     position: createPositionDefaultOptions(canvasUnit),
     filter: createFilterDefaultOptions(canvasUnit),
     zIndex: 0,
@@ -90,6 +85,8 @@ function renderNoiseToCanvas(
 
   const c1 = hexToRgb(color1);
   const c2 = hexToRgb(color2);
+  const safeScale = Math.max(4, Number(scale) || 50);
+  const safeOctaves = Math.max(1, Math.min(6, Math.round(Number(octaves) || 4)));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -98,9 +95,9 @@ function renderNoiseToCanvas(
       let noiseValue = 0;
       let maxAmplitude = 0;
 
-      for (let i = 0; i < octaves; i++) {
+      for (let i = 0; i < safeOctaves; i++) {
         noiseValue +=
-          amplitude * noise2D((x * frequency) / scale, (y * frequency) / scale);
+          amplitude * noise2D((x * frequency) / safeScale, (y * frequency) / safeScale);
         maxAmplitude += amplitude;
         amplitude *= persistence;
         frequency *= 2;
@@ -137,15 +134,20 @@ export const SimplexNoiseChild = defineComponent({
     const scale = computed(() => props.options?.scale ?? 50);
     const octaves = computed(() => props.options?.octaves ?? 4);
     const persistence = computed(() => props.options?.persistence ?? 0.5);
-    const color1 = computed(() => props.options?.color1 ?? "#000000");
-    const color2 = computed(() => props.options?.color2 ?? "#ffffff");
+    const color1 = computed(() => props.options?.color1 ?? "#1e3a8a");
+    const color2 = computed(() => props.options?.color2 ?? "#93c5fd");
 
-    function renderNoise() {
+    const renderNoise = useDebounceFn(() => {
       const canvas = canvasRef.value;
       if (!canvas) return;
 
-      canvas.width = canvas.offsetWidth || 256;
-      canvas.height = canvas.offsetHeight || 256;
+      // 限制内部渲染分辨率最高 512px，避免大画布下百万像素 CPU 阻塞，再用 CSS 平滑铺满
+      const rawW = Math.max(128, slotSize.value.width);
+      const rawH = Math.max(128, slotSize.value.height);
+      const maxDim = Math.max(rawW, rawH);
+      const ratio = maxDim > 512 ? 512 / maxDim : 1;
+      canvas.width = Math.max(64, Math.round(rawW * ratio));
+      canvas.height = Math.max(64, Math.round(rawH * ratio));
 
       renderNoiseToCanvas(
         canvas,
@@ -159,7 +161,15 @@ export const SimplexNoiseChild = defineComponent({
       nextTick(() => {
         updateRenderingCanvas();
       });
-    }
+    }, 80);
+
+    const { slotSize } = useCanvasChildSlotSize(targetRef, props.options, () => {
+      renderNoise();
+    });
+
+    onMounted(() => {
+      renderNoise();
+    });
 
     watch(
       () => [
@@ -170,12 +180,8 @@ export const SimplexNoiseChild = defineComponent({
         color2.value,
       ],
       renderNoise,
-      { immediate: true, deep: true },
+      { deep: true },
     );
-
-    watch(canvasRef, () => {
-      nextTick(renderNoise);
-    });
 
     return () => {
       const { containerStyle: _containerStyle, style: _style } =

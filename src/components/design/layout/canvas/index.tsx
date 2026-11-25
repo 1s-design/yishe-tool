@@ -273,8 +273,23 @@ let lastKnownCanvasSize = {
 const DEFAULT_HTML_CONTENT = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #fafafa; color: #666; font-family: sans-serif; font-size: 24px;">\n  主 HTML 模板\n</div>`;
 
 watch(
-  canvasStickerOptions,
-  (newVal) => {
+  () => {
+    const children = canvasStickerOptions.value?.children;
+    if (!Array.isArray(children)) return "no-children";
+    const canvasEl = children.find((c: any) => c?.type === "canvas") as any;
+    const htmlEl = children.find((c: any) => c?.id === "this_is_html_id") as any;
+    return [
+      children.length,
+      canvasEl?.width?.value,
+      canvasEl?.height?.value,
+      canvasEl?.width?.unit,
+      Boolean(htmlEl),
+      Boolean(String(htmlEl?.htmlContent || "").trim()),
+      Boolean(htmlEl?.filter?.filterUrl),
+    ].join("|");
+  },
+  () => {
+    const newVal = canvasStickerOptions.value;
     if (!newVal.children) {
       newVal.children = [];
     }
@@ -300,8 +315,8 @@ watch(
     }
 
     // 2. 确保始终存在 id 为 "this_is_html_id" 的 html 元素
-    let hasHtml = children.some((c) => c.id === "this_is_html_id");
-    if (!hasHtml) {
+    const htmlChild = children.find((c) => c.id === "this_is_html_id");
+    if (!htmlChild) {
       const defaultHtml = {
         id: "this_is_html_id",
         type: "html",
@@ -341,38 +356,32 @@ watch(
         children.push(defaultHtml);
       }
     } else {
-      const htmlChild = children.find((c) => c.id === "this_is_html_id");
-      if (htmlChild) {
-        // 代码画布内容为空时补回默认占位模板：
-        // 覆盖「编辑器清空后保存」「加载了旧的空内容贴纸」等场景，
-        // 否则打开代码画布会看到空白。
-        if (!String((htmlChild as any).htmlContent || "").trim()) {
-          htmlChild.htmlContent = DEFAULT_HTML_CONTENT;
-        }
-        if (!htmlChild.filter) {
-          htmlChild.filter = {
-            blur: { value: 0, unit: "px" },
-            brightness: { value: 100, unit: "%" },
-            contrast: { value: 100, unit: "%" },
-            grayscale: { value: 0, unit: "%" },
-            hueRotate: { value: 0, unit: "deg" },
-            invert: { value: 0, unit: "%" },
-            opacity: { value: 100, unit: "%" },
-            saturate: { value: 100, unit: "%" },
-            sepia: { value: 0, unit: "%" },
-          } as any;
-        }
-        if (!htmlChild.filter.filterUrl) {
-          htmlChild.filter.filterUrl = {
-            isCompositeFilter: false,
-            filterChildren: [],
-          };
-        }
-        htmlChild.undeletable = true;
+      if (!String((htmlChild as any).htmlContent || "").trim()) {
+        htmlChild.htmlContent = DEFAULT_HTML_CONTENT;
       }
+      if (!htmlChild.filter) {
+        htmlChild.filter = {
+          blur: { value: 0, unit: "px" },
+          brightness: { value: 100, unit: "%" },
+          contrast: { value: 100, unit: "%" },
+          grayscale: { value: 0, unit: "%" },
+          hueRotate: { value: 0, unit: "deg" },
+          invert: { value: 0, unit: "%" },
+          opacity: { value: 100, unit: "%" },
+          saturate: { value: 100, unit: "%" },
+          sepia: { value: 0, unit: "%" },
+        } as any;
+      }
+      if (!htmlChild.filter.filterUrl) {
+        htmlChild.filter.filterUrl = {
+          isCompositeFilter: false,
+          filterChildren: [],
+        };
+      }
+      htmlChild.undeletable = true;
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
 
 export const canvasStickerOptionsOnlyChild = computed(() => {
@@ -952,7 +961,19 @@ export const renderingLoading = ref(false);
 
 let activeResizeObserver: ResizeObserver | null = null;
 
-function reparentCanvasChildren() {
+export function rescueReparentedCanvasChildren(rootEl?: HTMLElement | null) {
+  if (!rootEl) return;
+  const pool = document.getElementById("s1-offscreen-pool");
+  if (!pool) return;
+  const mountedNodes = rootEl.querySelectorAll('[id^="s1-child-render-"]');
+  mountedNodes.forEach((node) => {
+    if (node.parentNode !== pool) {
+      pool.appendChild(node);
+    }
+  });
+}
+
+export function reparentCanvasChildren() {
   const children = canvasStickerOptions.value.children;
 
   if (!activeResizeObserver) {
@@ -984,7 +1005,7 @@ function reparentCanvasChildren() {
     if (child.type === "canvas" || child.type === "html") return;
 
     // 支持 data-s1-child-id 或 class="s1-child"
-    const placeholder = document.querySelector(`[data-s1-child-id="${child.id}"]`);
+    const placeholder = document.querySelector(`[data-s1-child-id="${child.id}"]`) as HTMLElement | null;
     const renderNode = document.getElementById(`s1-child-render-${child.id}`);
 
     if (placeholder && renderNode) {
@@ -1009,8 +1030,18 @@ function reparentCanvasChildren() {
         childEl.style.transform = "none";
       }
 
-      // 监听插槽尺寸变化
+      // 监听插槽尺寸变化，并立即派发一次当前槽位真实尺寸
       activeResizeObserver.observe(placeholder);
+      if (placeholder.clientWidth > 0 && placeholder.clientHeight > 0) {
+        renderNode.dispatchEvent(
+          new CustomEvent("s1-child-resize", {
+            detail: {
+              width: placeholder.clientWidth,
+              height: placeholder.clientHeight,
+            },
+          })
+        );
+      }
     } else if (renderNode) {
       // 找不到插槽时退回到离屏池中，防止被销毁
       const pool = document.getElementById("s1-offscreen-pool");
@@ -1079,30 +1110,105 @@ function getNodeRenderSize(node: HTMLElement, options: Record<string, any> = {})
   };
 }
 
+let hiddenRafPatchDepth = 0;
+let originalRequestAnimationFrame: typeof window.requestAnimationFrame | null = null;
+
+async function withHiddenTabRafFallback<T>(fn: () => Promise<T>): Promise<T> {
+  const shouldPatch =
+    typeof window !== "undefined" &&
+    typeof document !== "undefined" &&
+    document.visibilityState === "hidden" &&
+    typeof window.requestAnimationFrame === "function";
+
+  if (!shouldPatch) {
+    return fn();
+  }
+
+  if (hiddenRafPatchDepth === 0) {
+    originalRequestAnimationFrame = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+      return window.setTimeout(() => cb(performance.now()), 0);
+    }) as typeof window.requestAnimationFrame;
+  }
+  hiddenRafPatchDepth += 1;
+
+  try {
+    return await fn();
+  } finally {
+    hiddenRafPatchDepth -= 1;
+    if (hiddenRafPatchDepth === 0 && originalRequestAnimationFrame) {
+      window.requestAnimationFrame = originalRequestAnimationFrame;
+      originalRequestAnimationFrame = null;
+    }
+  }
+}
+
 async function renderNodeToCanvas(
   node: HTMLElement,
   options: Record<string, any> = {},
 ): Promise<HTMLCanvasElement> {
   const { width, height } = getNodeRenderSize(node, options);
-  const svgUrl = await toSvg(node, { ...options, width, height });
-  const img = await loadImageWithoutRaf(svgUrl);
+  // html-to-image 的 toSvg 在克隆子 <canvas> 时内部会调用 createImage -> img.decode() + requestAnimationFrame，
+  // 在后台标签页下两者都可能永久挂起。这里先用同步 dataURL <img> 临时替换可见 <canvas>，
+  // 让 toSvg 直接走同步 cloneNode，彻底绕开 createImage 挂起，结束后在 finally 无损还原。
+  const swappedCanvases: Array<{
+    canvas: HTMLCanvasElement;
+    placeholder: HTMLImageElement;
+  }> = [];
 
-  const ratio = Number(options.pixelRatio) || 1;
-  const canvasWidth = Number(options.canvasWidth) || width;
-  const canvasHeight = Number(options.canvasHeight) || height;
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(canvasWidth * ratio);
-  canvas.height = Math.round(canvasHeight * ratio);
-  canvas.style.width = `${canvasWidth}px`;
-  canvas.style.height = `${canvasHeight}px`;
+  try {
+    const canvases = Array.from(node.querySelectorAll("canvas"));
+    for (const canvas of canvases) {
+      if (!canvas.parentNode || canvas.width === 0 || canvas.height === 0) {
+        continue;
+      }
+      try {
+        const dataUrl = canvas.toDataURL("image/png");
+        if (!dataUrl || dataUrl === "data:,") {
+          continue;
+        }
+        const img = document.createElement("img");
+        img.src = dataUrl;
+        img.style.cssText = canvas.style.cssText;
+        if (!img.style.width) img.style.width = `${canvas.clientWidth || canvas.width}px`;
+        if (!img.style.height) img.style.height = `${canvas.clientHeight || canvas.height}px`;
+        img.style.display = img.style.display || "block";
+        canvas.parentNode.replaceChild(img, canvas);
+        swappedCanvases.push({ canvas, placeholder: img });
+      } catch {
+        // 跨域污染或不可读取的 canvas 保持原样
+      }
+    }
 
-  const context = canvas.getContext("2d");
-  if (options.backgroundColor) {
-    context.fillStyle = options.backgroundColor;
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    const svgUrl = await withHiddenTabRafFallback(() =>
+      toSvg(node, { ...options, width, height }),
+    );
+    const img = await loadImageWithoutRaf(svgUrl);
+
+    const ratio = Number(options.pixelRatio) || 1;
+    const canvasWidth = Number(options.canvasWidth) || width;
+    const canvasHeight = Number(options.canvasHeight) || height;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(canvasWidth * ratio);
+    canvas.height = Math.round(canvasHeight * ratio);
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+
+    const context = canvas.getContext("2d");
+    if (options.backgroundColor) {
+      context.fillStyle = options.backgroundColor;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    context.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  } finally {
+    for (let i = swappedCanvases.length - 1; i >= 0; i--) {
+      const { canvas, placeholder } = swappedCanvases[i];
+      if (placeholder.parentNode) {
+        placeholder.parentNode.replaceChild(canvas, placeholder);
+      }
+    }
   }
-  context.drawImage(img, 0, 0, canvas.width, canvas.height);
-  return canvas;
 }
 
 // 二维的画布控制器
@@ -1323,8 +1429,8 @@ export class CanvasController {
   _renderingPromise: Promise<void> | null = null;
   _renderingStartedAt = 0;
 
-  // 渲染超过该时长仍未结束，视为僵死，允许下一次渲染重新开始
-  static readonly RENDER_STALE_MS = 180_000;
+  // 渲染超过该时长仍未结束，视为僵死，允许下一次渲染重新开始（略大于单次 45s 超时）
+  static readonly RENDER_STALE_MS = 55_000;
 
   async updateRenderingCanvasJob() {
     if (this._renderingLock && this._renderingPromise) {

@@ -15,7 +15,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 interface Particle {
   x: number;
@@ -31,30 +31,30 @@ const PRESETS: Record<string, () => Partial<Particle>> = {
   stars: () => ({
     vx: (Math.random() - 0.5) * 0.5,
     vy: (Math.random() - 0.5) * 0.5,
-    size: Math.random() * 2 + 0.5,
-    opacity: Math.random() * 0.8 + 0.2,
-    color: `hsl(${Math.random() * 60 + 40}, 100%, ${Math.random() * 30 + 70}%)`,
+    size: Math.random() * 3.5 + 1.2,
+    opacity: Math.random() * 0.7 + 0.3,
+    color: `hsl(${Math.random() * 60 + 40}, 100%, ${Math.random() * 25 + 75}%)`,
   }),
   bubbles: () => ({
     vx: (Math.random() - 0.5) * 0.3,
     vy: -Math.random() * 1 - 0.5,
-    size: Math.random() * 8 + 2,
-    opacity: Math.random() * 0.5 + 0.2,
-    color: `hsla(${Math.random() * 40 + 180}, 70%, 70%, 0.6)`,
+    size: Math.random() * 12 + 4,
+    opacity: Math.random() * 0.5 + 0.25,
+    color: `hsla(${Math.random() * 40 + 180}, 75%, 70%, 0.7)`,
   }),
   snow: () => ({
     vx: (Math.random() - 0.5) * 0.5,
     vy: Math.random() * 1 + 0.3,
-    size: Math.random() * 3 + 1,
-    opacity: Math.random() * 0.6 + 0.4,
-    color: `hsla(0, 0%, 100%, ${Math.random() * 0.5 + 0.5})`,
+    size: Math.random() * 4 + 1.5,
+    opacity: Math.random() * 0.5 + 0.5,
+    color: `hsla(0, 0%, 100%, ${Math.random() * 0.4 + 0.6})`,
   }),
   fire: () => ({
     vx: (Math.random() - 0.5) * 1,
     vy: -Math.random() * 2 - 1,
-    size: Math.random() * 4 + 2,
-    opacity: 1,
-    color: `hsl(${Math.random() * 30 + 10}, 100%, ${Math.random() * 30 + 40}%)`,
+    size: Math.random() * 6 + 2.5,
+    opacity: 0.9,
+    color: `hsl(${Math.random() * 35 + 10}, 100%, ${Math.random() * 30 + 45}%)`,
   }),
 };
 
@@ -64,8 +64,8 @@ export const createDefaultCanvasChildParticlesEffectOptions = () => {
   return {
     type: "particlesEffect",
     preset: "stars",
-    particleCount: 80,
-    backgroundColor: { type: "pure", color: "#000000" },
+    particleCount: 100,
+    backgroundColor: { type: "pure", color: "#0b1026" },
     width: { value: 100, unit: "vw" },
     height: { value: 100, unit: "vh" },
     position: createPositionDefaultOptions(canvasUnit),
@@ -110,42 +110,52 @@ export const ParticlesEffectChild = defineComponent({
         y: Math.random() * height,
         vx: base.vx || 0,
         vy: base.vy || 0,
-        size: base.size || 2,
+        size: base.size || 2.5,
         opacity: base.opacity || 1,
         color: base.color || "#ffffff",
       };
     }
 
-    function animate() {
-      const token = renderToken;
+    function drawFrame(advance = false) {
       const canvas = canvasRef.value;
-      if (!canvas || token !== renderToken) return;
-
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
       const width = canvas.width;
       const height = canvas.height;
-
       ctx.clearRect(0, 0, width, height);
 
       for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
-        if (p.y < -10) p.y = height + 10;
-        if (p.y > height + 10) p.y = -10;
-
+        if (advance) {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < -10) p.x = width + 10;
+          if (p.x > width + 10) p.x = -10;
+          if (p.y < -10) p.y = height + 10;
+          if (p.y > height + 10) p.y = -10;
+        }
         ctx.globalAlpha = p.opacity;
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
       }
-
       ctx.globalAlpha = 1;
+    }
+
+    let lastTickTs = 0
+    function animate(ts: number) {
+      const token = renderToken;
+      if (!canvasRef.value || token !== renderToken) return;
+      if (typeof document !== "undefined" && document.hidden) {
+        animationId = null;
+        return;
+      }
+      if (ts - lastTickTs >= 33) {
+        lastTickTs = ts;
+        drawFrame(true);
+      }
       animationId = requestAnimationFrame(animate);
     }
 
@@ -153,42 +163,70 @@ export const ParticlesEffectChild = defineComponent({
       const canvas = canvasRef.value;
       if (!canvas) return;
 
-      const parent = canvas.parentElement;
-      if (!parent) return;
+      const rawW = Math.max(100, slotSize.value.width);
+      const rawH = Math.max(100, slotSize.value.height);
+      const maxDim = Math.max(rawW, rawH);
+      const ratio = maxDim > 1024 ? 1024 / maxDim : 1;
+      const width = Math.max(100, Math.round(rawW * ratio));
+      const height = Math.max(100, Math.round(rawH * ratio));
+      canvas.width = width;
+      canvas.height = height;
 
-      const rect = parent.getBoundingClientRect();
-      canvas.width = Math.max(1, Math.round(rect.width));
-      canvas.height = Math.max(1, Math.round(rect.height));
-
-      const count = props.options?.particleCount || 80;
+      const count = props.options?.particleCount || 100;
       particles.length = 0;
       for (let i = 0; i < count; i++) {
-        particles.push(createParticle(canvas.width, canvas.height));
+        particles.push(createParticle(width, height));
       }
 
+      // 同步绘制首帧，保证后台标签页与静态截图立即有粒子画面
+      drawFrame(false);
+      updateRenderingCanvas();
+
       if (animationId) cancelAnimationFrame(animationId);
-      animate();
+      if (typeof document === "undefined" || !document.hidden) {
+        animationId = requestAnimationFrame(animate);
+      } else {
+        animationId = null;
+      }
     }
 
+    const handleVisibilityChange = () => {
+      if (typeof document === "undefined") return;
+      if (document.hidden) {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+      } else if (!animationId) {
+        animationId = requestAnimationFrame(animate);
+      }
+    };
+
+    const { slotSize } = useCanvasChildSlotSize(canvasRef, props.options, () => {
+      initParticles();
+    });
+
     onMounted(() => {
-      const token = ++renderToken;
-      setTimeout(() => {
-        if (token === renderToken) initParticles();
-      }, 50);
+      ++renderToken;
+      if (typeof document !== "undefined") {
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+      }
+      initParticles();
     });
 
     watch(
       () => [props.options?.preset, props.options?.particleCount],
       () => {
-        const token = ++renderToken;
-        setTimeout(() => {
-          if (token === renderToken) initParticles();
-        }, 50);
+        ++renderToken;
+        initParticles();
       },
     );
 
     onBeforeUnmount(() => {
       renderToken++;
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
       if (animationId) {
         cancelAnimationFrame(animationId);
         animationId = null;
@@ -208,7 +246,7 @@ export const ParticlesEffectChild = defineComponent({
         ..._containerStyle,
       };
 
-      const bgColor = props.options?.backgroundColor?.color || "#000000";
+      const bgColor = props.options?.backgroundColor?.color || "#0b1026";
 
       const style: any = {
         flexShrink: 0,
@@ -219,6 +257,7 @@ export const ParticlesEffectChild = defineComponent({
         zIndex: props.options.zIndex,
         background: bgColor,
         overflow: "hidden",
+        display: "block",
         ..._style,
       };
 

@@ -15,7 +15,7 @@ import {
     formatToNativeSizeString,
     getPositionInfoFromOptions,
 } from '../../helper.tsx'
-import { onBeforeReturnRender, onCanvasChildSetup } from '../commonHooks.ts'
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from '../commonHooks.ts'
 
 const DEFAULT_ECHART_OPTION = {}
 const STATIC_ECHART_OPTION = {
@@ -84,11 +84,7 @@ export const EchartChild = defineComponent({
             props,
         })
 
-        const pixelSize = computed(() => {
-            const width = Math.max(1, Math.round(Number(formatSizeOptionToPixelValue(props.options.width)) || 1))
-            const height = Math.max(1, Math.round(Number(formatSizeOptionToPixelValue(props.options.height)) || 1))
-            return { width, height }
-        })
+        const { slotSize: pixelSize } = useCanvasChildSlotSize(targetRef, props.options)
 
         function getEngineOptions() {
             ensureEchartOptions(props.options)

@@ -25,7 +25,7 @@ import {
   formatToNativeSizeString,
   getPositionInfoFromOptions,
 } from "../helper.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 const DEFAULT_WORDS = [
   { text: "Hello", size: 40 },
@@ -70,7 +70,7 @@ export const createDefaultCanvasChildD3CloudOptions = () => {
     transform: createTransformDefaultOptions(canvasUnit),
     backgroundColor: {
       type: "pure",
-      color: "#ffffff",
+      color: "transparent",
     },
     d3Cloud: {
       version: 1,
@@ -89,6 +89,30 @@ export function createCanvasChildD3Cloud(options) {
   );
 }
 
+function resolveD3CloudRotate(rotateOption: any): () => number {
+  if (typeof rotateOption === "function") {
+    return rotateOption;
+  }
+  if (Array.isArray(rotateOption) && rotateOption.length > 0) {
+    const angles = rotateOption.map((v) => Number(v) || 0);
+    return () => angles[Math.floor(Math.random() * angles.length)];
+  }
+  if (typeof rotateOption === "number") {
+    return () => rotateOption;
+  }
+  if (rotateOption === "horizontal") {
+    return () => 0;
+  }
+  if (rotateOption === "orthogonal") {
+    return () => (Math.random() < 0.25 ? 90 : 0);
+  }
+  if (rotateOption === "diagonal") {
+    const angles = [-35, 0, 0, 35];
+    return () => angles[Math.floor(Math.random() * angles.length)];
+  }
+  return () => (~~(Math.random() * 5) - 2) * 30;
+}
+
 export const D3CloudChild = defineComponent({
   props: {
     options: null,
@@ -105,24 +129,13 @@ export const D3CloudChild = defineComponent({
       props,
     });
 
-    const canvasPixelSize = computed(() => {
-      const width = Math.max(
-        1,
-        Math.round(
-          Number(formatSizeOptionToPixelValue(props.options.width)) || 1,
-        ),
-      );
-      const height = Math.max(
-        1,
-        Math.round(
-          Number(formatSizeOptionToPixelValue(props.options.height)) || 1,
-        ),
-      );
-      return {
-        width,
-        height,
-      };
-    });
+    const { slotSize: canvasPixelSize } = useCanvasChildSlotSize(
+      containerRef,
+      props.options,
+      () => {
+        renderCloud();
+      },
+    );
 
     const d3CloudOptions = computed(() => {
       return props.options?.d3Cloud || createDefaultD3CloudOptions();
@@ -137,8 +150,9 @@ export const D3CloudChild = defineComponent({
       const currentToken = ++renderToken;
       const { width, height } = canvasPixelSize.value;
 
-      // 清除旧内容
+      // 清除旧内容并同步外层 viewBox
       svg.innerHTML = "";
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
       const options = d3CloudOptions.value;
       if (!options?.words?.length) {
@@ -158,8 +172,8 @@ export const D3CloudChild = defineComponent({
               size: word.size || 10,
             })),
           )
-          .padding(options.padding || 5)
-          .rotate(options.rotate || (() => (~~(Math.random() * 6) - 3) * 30))
+          .padding(options.padding ?? 6)
+          .rotate(resolveD3CloudRotate(options.rotate))
           .font(options.fontFamily || "sans-serif")
           .fontWeight(options.fontWeight || "bold")
           .fontSize((d) => d.size || 10)
@@ -171,16 +185,6 @@ export const D3CloudChild = defineComponent({
 
             const colors = options.colors || ["#111111"];
 
-            // 创建 SVG 元素
-            const svgElement = document.createElementNS(
-              "http://www.w3.org/2000/svg",
-              "svg",
-            );
-            svgElement.setAttribute("width", String(width));
-            svgElement.setAttribute("height", String(height));
-            svgElement.setAttribute("viewBox", `0 0 ${width} ${height}`);
-
-            // 创建 g 元素并居中
             const g = document.createElementNS(
               "http://www.w3.org/2000/svg",
               "g",
@@ -190,7 +194,6 @@ export const D3CloudChild = defineComponent({
               `translate(${width / 2},${height / 2})`,
             );
 
-            // 渲染每个词语
             words.forEach((word, index) => {
               const text = document.createElementNS(
                 "http://www.w3.org/2000/svg",
@@ -212,9 +215,7 @@ export const D3CloudChild = defineComponent({
               g.appendChild(text);
             });
 
-            svgElement.appendChild(g);
-            svg.appendChild(svgElement);
-
+            svg.appendChild(g);
             updateRenderingCanvas();
           });
 
@@ -226,10 +227,6 @@ export const D3CloudChild = defineComponent({
     }, 120);
 
     onMounted(() => {
-      nextTick(renderCloud);
-    });
-
-    onUpdated(() => {
       nextTick(renderCloud);
     });
 

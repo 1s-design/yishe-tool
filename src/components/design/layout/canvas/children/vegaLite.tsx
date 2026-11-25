@@ -3,6 +3,7 @@ import {
   defineComponent,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   ref,
   watch,
 } from "vue";
@@ -23,7 +24,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 const DEFAULT_VEGA_LITE_SPEC = {
   $schema: "https://vega.github.io/schema/vega-lite/v5.json",
@@ -121,20 +122,25 @@ export const VegaLiteChild = defineComponent({
 
         el.innerHTML = "";
 
-        const importModule = (name: string) =>
-          new Function("mod", "return import(mod)")(name);
-
-        const [{ compile }, vegaModule] = await Promise.all([
-          importModule("vega-lite"),
-          importModule("vega"),
+        const [vegaLiteModule, vegaModule] = await Promise.all([
+          import("vega-lite"),
+          import("vega"),
         ]);
 
+        const compile = vegaLiteModule?.compile;
         if (!vegaModule || !compile) {
           throw new Error("Vega 依赖未加载成功");
         }
 
         const { parse, View: VegaView } = vegaModule;
-        const vgSpec = compile(specVal).spec;
+        const normalizedSpec = JSON.parse(JSON.stringify(specVal));
+        if (!normalizedSpec.width || normalizedSpec.width === "container") {
+          normalizedSpec.width = Math.max(200, slotSize.value.width - 100);
+        }
+        if (!normalizedSpec.height || normalizedSpec.height === "container") {
+          normalizedSpec.height = Math.max(160, slotSize.value.height - 100);
+        }
+        const vgSpec = compile(normalizedSpec).spec;
         view = new VegaView(parse(vgSpec), {
           renderer: "svg",
           container: el,
@@ -149,6 +155,10 @@ export const VegaLiteChild = defineComponent({
     }
 
     const debouncedRender = useDebounceFn(renderChart, 150);
+
+    const { slotSize } = useCanvasChildSlotSize(targetRef, props.options, () => {
+      debouncedRender();
+    });
 
     onMounted(debouncedRender);
     watch(spec, debouncedRender, { deep: true });

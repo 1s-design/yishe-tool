@@ -1,6 +1,5 @@
 import { Chart, registerables } from "chart.js";
 import {
-  computed,
   defineComponent,
   nextTick,
   onBeforeUnmount,
@@ -22,11 +21,10 @@ import {
 import {
   createFilterFromOptions,
   createTransformString,
-  formatSizeOptionToPixelValue,
   formatToNativeSizeString,
   getPositionInfoFromOptions,
 } from "../helper.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 Chart.register(...registerables);
 
@@ -91,11 +89,12 @@ export const ChartjsChild = defineComponent({
     options: null,
   },
   setup(props) {
+    const targetRef = ref<HTMLDivElement>();
     const canvasRef = ref<HTMLCanvasElement>();
     let chart: Chart | null = null;
 
     onCanvasChildSetup({
-      targetEl: canvasRef,
+      targetEl: targetRef,
       options: props.options,
       props,
     });
@@ -114,6 +113,10 @@ export const ChartjsChild = defineComponent({
 
       destroyChart();
 
+      const { width, height } = slotSize.value;
+      canvas.width = width;
+      canvas.height = height;
+
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
@@ -126,7 +129,7 @@ export const ChartjsChild = defineComponent({
           type: chartType as any,
           data: JSON.parse(JSON.stringify(data)),
           options: {
-            responsive: true,
+            responsive: false,
             maintainAspectRatio: false,
             animation: false,
             ...JSON.parse(JSON.stringify(chartOptions)),
@@ -137,6 +140,10 @@ export const ChartjsChild = defineComponent({
         console.warn("Chart.js render failed:", error);
       }
     }, 120);
+
+    const { slotSize } = useCanvasChildSlotSize(targetRef, props.options, () => {
+      renderChart();
+    });
 
     onMounted(renderChart);
     watch(() => props.options.chartType, renderChart);
@@ -180,8 +187,8 @@ export const ChartjsChild = defineComponent({
 
       return (
         <div style={containerStyle}>
-          <div ref={canvasRef} style={style}>
-            <canvas style={{ width: "100%", height: "100%" }}></canvas>
+          <div ref={targetRef} style={style}>
+            <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block" }}></canvas>
           </div>
         </div>
       );

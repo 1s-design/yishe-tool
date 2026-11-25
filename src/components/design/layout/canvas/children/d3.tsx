@@ -13,39 +13,26 @@ import {
     createPositionDefaultOptions,
     createTransformDefaultOptions,
 } from './defaultOptions.tsx'
-import { onBeforeReturnRender, onCanvasChildSetup } from './commonHooks.ts'
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from './commonHooks.ts'
 
-const DEFAULT_CODE = `// D3.js 代码编辑器
-// 可用: d3 (D3.js 库), container (DOM 容器), width, height
-
-// 示例: 简单柱状图
-const data = [30, 86, 168, 281, 303, 365];
-
+const DEFAULT_CODE = `const data = [30, 86, 168, 281, 303, 365];
 const svg = d3.select(container)
   .append('svg')
   .attr('width', width)
   .attr('height', height);
-
+const pad = 40;
+const maxVal = d3.max(data) || 1;
+const barW = (width - pad * 2) / data.length;
 svg.selectAll('rect')
   .data(data)
   .enter()
   .append('rect')
-  .attr('x', (d, i) => i * (width / data.length))
-  .attr('y', (d) => height - d)
-  .attr('width', width / data.length - 2)
-  .attr('height', (d) => d)
-  .attr('fill', '#4A90D9');
-
-svg.selectAll('text')
-  .data(data)
-  .enter()
-  .append('text')
-  .text((d) => d)
-  .attr('x', (d, i) => i * (width / data.length) + (width / data.length - 2) / 2)
-  .attr('y', (d) => height - d - 5)
-  .attr('text-anchor', 'middle')
-  .attr('fill', '#333')
-  .attr('font-size', '12px');`
+  .attr('x', (d, i) => pad + i * barW + 8)
+  .attr('y', (d) => height - pad - (d / maxVal) * (height - pad * 2))
+  .attr('width', Math.max(8, barW - 16))
+  .attr('height', (d) => (d / maxVal) * (height - pad * 2))
+  .attr('rx', 6)
+  .attr('fill', '#2563eb');`
 
 export const createDefaultCanvasChildD3Options = () => {
     const canvasUnit = canvasStickerOptionsOnlyChild.value.width.unit
@@ -97,7 +84,6 @@ export const D3Child = defineComponent({
         function renderD3() {
             if (!containerRef.value) return
 
-            // 清除旧内容
             containerRef.value.innerHTML = ''
 
             const codeText = code.value
@@ -110,10 +96,9 @@ export const D3Child = defineComponent({
             try {
                 errorMessage.value = ''
 
-                const width = containerRef.value.clientWidth || 400
-                const height = containerRef.value.clientHeight || 300
+                const width = slotSize.value.width || containerRef.value.clientWidth || 400
+                const height = slotSize.value.height || containerRef.value.clientHeight || 300
 
-                // 创建沙箱函数
                 const sandboxFunction = new Function(
                     'd3',
                     'container',
@@ -122,7 +107,6 @@ export const D3Child = defineComponent({
                     codeText
                 )
 
-                // 执行代码
                 sandboxFunction(d3, containerRef.value, width, height)
             } catch (error: any) {
                 containerRef.value.innerHTML = ''
@@ -131,6 +115,10 @@ export const D3Child = defineComponent({
                 updateRenderingCanvas()
             }
         }
+
+        const { slotSize } = useCanvasChildSlotSize(targetRef, props.options, () => {
+            nextTick(renderD3)
+        })
 
         onMounted(() => {
             nextTick(renderD3)
@@ -181,10 +169,7 @@ export const D3Child = defineComponent({
             })
 
             return <div style={containerStyle}>
-                <div
-                    ref={targetRef}
-                    style={style}
-                >
+                <div ref={targetRef} style={style}>
                     <style>{`
                         .canvas-d3-child__error {
                             color: #c45656;

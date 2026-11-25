@@ -1,5 +1,5 @@
 import { Chart } from "frappe-charts";
-import { computed, defineComponent, nextTick, ref, watch } from "vue";
+import { computed, defineComponent, nextTick, onMounted, ref, watch } from "vue";
 import {
   canvasStickerOptionsOnlyChild,
   updateRenderingCanvas,
@@ -16,7 +16,7 @@ import {
   createPositionDefaultOptions,
   createTransformDefaultOptions,
 } from "./defaultOptions.tsx";
-import { onBeforeReturnRender, onCanvasChildSetup } from "./commonHooks.ts";
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from "./commonHooks.ts";
 
 export const FRAPPE_CHART_TYPES = [
   "bar",
@@ -112,13 +112,14 @@ export const FrappeChartChild = defineComponent({
           chartInstance.value = null;
         }
 
+        const height = Math.max(200, Math.min(slotSize.value.height - 40, 900));
         chartInstance.value = new Chart(chartContainerRef.value, {
           data: {
             labels: labels.value,
             datasets: datasets.value,
           },
           type: chartType.value,
-          height: 300,
+          height,
           colors: ["#7cd6fd", "#743ee2", "#ffa3ef", "#5e5e5e"],
         });
       } catch (error: any) {
@@ -130,8 +131,17 @@ export const FrappeChartChild = defineComponent({
       }
     }
 
-    watch([chartType, labels, datasets], renderChart, {
-      immediate: true,
+    const { slotSize } = useCanvasChildSlotSize(chartContainerRef, props.options, () => {
+      nextTick(renderChart);
+    });
+
+    onMounted(() => {
+      nextTick(renderChart);
+    });
+
+    watch([chartType, labels, datasets], () => {
+      nextTick(renderChart);
+    }, {
       deep: true,
     });
 
@@ -181,31 +191,31 @@ export const FrappeChartChild = defineComponent({
             data-chart-engine="frappe-charts"
           >
             <style>{`
-                        .canvas-frappe-chart-child .chart-container {
-                            width: 100%;
-                            height: 100%;
-                        }
-                        .canvas-frappe-chart-child svg {
-                            width: 100%;
-                            height: 100%;
-                            max-width: 100%;
-                            max-height: 100%;
-                        }
-                        .canvas-frappe-chart-child .canvas-frappe-chart-child__error {
-                            color: #c45656;
-                            font-size: 0.28em;
-                            line-height: 1.4;
-                            padding: 0.75em;
-                            background: rgba(255, 245, 245, 0.92);
-                            border: 1px solid rgba(196, 86, 86, 0.35);
-                            border-radius: 4px;
-                            white-space: pre-wrap;
-                            max-width: 100%;
-                            max-height: 100%;
-                            overflow: hidden;
-                            box-sizing: border-box;
-                        }
-                    `}</style>
+              .canvas-frappe-chart-child .chart-container {
+                width: 100%;
+                height: 100%;
+              }
+              .canvas-frappe-chart-child svg {
+                width: 100%;
+                height: 100%;
+                max-width: 100%;
+                max-height: 100%;
+              }
+              .canvas-frappe-chart-child .canvas-frappe-chart-child__error {
+                color: #c45656;
+                font-size: 14px;
+                line-height: 1.4;
+                padding: 12px;
+                background: rgba(255, 245, 245, 0.92);
+                border: 1px solid rgba(196, 86, 86, 0.35);
+                border-radius: 4px;
+                white-space: pre-wrap;
+                max-width: 100%;
+                max-height: 100%;
+                overflow: hidden;
+                box-sizing: border-box;
+              }
+            `}</style>
             {errorMessage.value ? (
               <div class="canvas-frappe-chart-child__error">
                 {errorMessage.value}

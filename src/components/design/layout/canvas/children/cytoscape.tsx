@@ -13,7 +13,7 @@ import {
     createPositionDefaultOptions,
     createTransformDefaultOptions,
 } from './defaultOptions.tsx'
-import { onBeforeReturnRender, onCanvasChildSetup } from './commonHooks.ts'
+import { onBeforeReturnRender, onCanvasChildSetup, useCanvasChildSlotSize } from './commonHooks.ts'
 
 export const createDefaultCanvasChildCytoscapeOptions = () => {
     const canvasUnit = canvasStickerOptionsOnlyChild.value.width.unit
@@ -27,12 +27,12 @@ export const createDefaultCanvasChildCytoscapeOptions = () => {
             { data: { source: 'A', target: 'B' } },
             { data: { source: 'B', target: 'C' } },
         ],
-        layout: 'preset',
+        layout: 'circle',
         style: {
             nodeColor: '#4A90D9',
             nodeBorderColor: '#2C6FAC',
             edgeColor: '#666666',
-            labelColor: '#333333',
+            labelColor: '#ffffff',
         },
         width: {
             value: 100,
@@ -75,13 +75,22 @@ export const CytoscapeChild = defineComponent({
         })
 
         const elements = computed(() => props.options?.elements || [])
-        const layout = computed(() => String(props.options?.layout || 'preset'))
+        const rawLayout = computed(() => props.options?.layout)
+        const layoutName = computed(() => {
+            const val = rawLayout.value
+            if (val && typeof val === 'object' && val.name) {
+                return String(val.name)
+            }
+            if (typeof val === 'string' && val.trim()) {
+                return val.trim()
+            }
+            return 'circle'
+        })
         const styleConfig = computed(() => props.options?.style || {})
 
         function renderCytoscape() {
             if (!containerRef.value) return
 
-            // 销毁旧实例
             if (cyInstance) {
                 cyInstance.destroy()
                 cyInstance = null
@@ -100,14 +109,16 @@ export const CytoscapeChild = defineComponent({
                 const nodeColor = styleConfig.value.nodeColor || '#4A90D9'
                 const nodeBorderColor = styleConfig.value.nodeBorderColor || '#2C6FAC'
                 const edgeColor = styleConfig.value.edgeColor || '#666666'
-                const labelColor = styleConfig.value.labelColor || '#333333'
+                const labelColor = styleConfig.value.labelColor || '#ffffff'
+                const extraLayout = rawLayout.value && typeof rawLayout.value === 'object' ? rawLayout.value : {}
 
                 cyInstance = cytoscape({
                     container: containerRef.value,
-                    elements: elements.value,
+                    elements: JSON.parse(JSON.stringify(elements.value)),
                     layout: {
-                        name: layout.value,
                         ...getLayoutOptions(),
+                        ...extraLayout,
+                        name: layoutName.value,
                     },
                     style: [
                         {
@@ -120,15 +131,16 @@ export const CytoscapeChild = defineComponent({
                                 'color': labelColor,
                                 'text-valign': 'center',
                                 'text-halign': 'center',
-                                'font-size': '12px',
-                                'width': 40,
-                                'height': 40,
+                                'font-size': '14px',
+                                'font-weight': '600',
+                                'width': 64,
+                                'height': 64,
                             },
                         },
                         {
                             selector: 'edge',
                             style: {
-                                'width': 2,
+                                'width': 2.5,
                                 'line-color': edgeColor,
                                 'target-arrow-color': edgeColor,
                                 'target-arrow-shape': 'triangle',
@@ -141,6 +153,8 @@ export const CytoscapeChild = defineComponent({
                     boxSelectionEnabled: false,
                     autoungrabify: true,
                 })
+                cyInstance.resize()
+                cyInstance.fit(undefined, 32)
             } catch (error: any) {
                 containerRef.value.innerHTML = ''
                 errorMessage.value = error?.message || 'Cytoscape 渲染失败'
@@ -150,45 +164,29 @@ export const CytoscapeChild = defineComponent({
         }
 
         function getLayoutOptions() {
-            const layoutName = layout.value
-
-            if (layoutName === 'preset') {
-                // 为 preset 布局提供默认位置
+            const name = layoutName.value
+            if (name === 'preset') {
                 const nodes = elements.value.filter((el: any) => el.data && !el.data.source)
                 const positions: any = {}
                 nodes.forEach((node: any, index: number) => {
                     if (!node.position) {
                         positions[node.data.id] = {
-                            x: 50 + (index % 5) * 100,
-                            y: 50 + Math.floor(index / 5) * 100,
+                            x: 80 + (index % 5) * 140,
+                            y: 80 + Math.floor(index / 5) * 120,
                         }
                     }
                 })
                 return { positions }
             }
-
-            if (layoutName === 'grid') {
-                return { rows: undefined, cols: undefined }
-            }
-
-            if (layoutName === 'circle') {
-                return {}
-            }
-
-            if (layoutName === 'concentric') {
-                return {}
-            }
-
-            if (layoutName === 'breadthfirst') {
+            if (name === 'breadthfirst') {
                 return { directed: true }
             }
-
-            if (layoutName === 'cose') {
-                return {}
-            }
-
             return {}
         }
+
+        useCanvasChildSlotSize(targetRef, props.options, () => {
+            nextTick(renderCytoscape)
+        })
 
         onMounted(() => {
             nextTick(renderCytoscape)
@@ -202,7 +200,7 @@ export const CytoscapeChild = defineComponent({
         })
 
         watch(
-            [elements, layout, styleConfig],
+            [elements, rawLayout, styleConfig],
             () => {
                 nextTick(renderCytoscape)
             },
@@ -246,10 +244,7 @@ export const CytoscapeChild = defineComponent({
             })
 
             return <div style={containerStyle}>
-                <div
-                    ref={targetRef}
-                    style={style}
-                >
+                <div ref={targetRef} style={style}>
                     <style>{`
                         .canvas-cytoscape-child__error {
                             color: #c45656;
