@@ -165,8 +165,8 @@ export const Html = defineComponent({
             ref={targetElRef}
           >
             <style>{`
-              .${renderPayload.value.scopeClassName} .canvas-html-child__content,
-              .${renderPayload.value.scopeClassName} .canvas-html-child__content *:not(.s1-child-placeholder):not(.s1-child-placeholder *) {
+              :where(.${renderPayload.value.scopeClassName} .canvas-html-child__content),
+              :where(.${renderPayload.value.scopeClassName} .canvas-html-child__content *:not(.s1-child-placeholder):not(.s1-child-placeholder *)) {
                 all: revert;
                 box-sizing: border-box;
               }

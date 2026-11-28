@@ -38,6 +38,30 @@ const DEFAULT_HTML_TEMPLATE_MARKER = "主 HTML 模板";
  * 与素材库 sticker.isCutout 同一语义：有透明背景即可直接叠用。
  * 只取 256px 缩略版采样，避免逐像素扫大图卡住主线程。
  */
+function hasCanvasTransparency(sourceCanvas: HTMLCanvasElement): boolean {
+  try {
+    const maxSide = 256;
+    const scale = Math.min(1, maxSide / Math.max(sourceCanvas.width, sourceCanvas.height, 1));
+    const width = Math.max(1, Math.round(sourceCanvas.width * scale));
+    const height = Math.max(1, Math.round(sourceCanvas.height * scale));
+    const tmp = document.createElement("canvas");
+    tmp.width = width;
+    tmp.height = height;
+    const ctx = tmp.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return false;
+    ctx.drawImage(sourceCanvas, 0, 0, width, height);
+    const { data } = ctx.getImageData(0, 0, width, height);
+    let transparent = 0;
+    const total = width * height;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 250) transparent += 1;
+    }
+    return transparent / total > 0.01;
+  } catch {
+    return false;
+  }
+}
+
 async function detectCutout(source: Blob): Promise<boolean> {
   try {
     const bitmap = await createImageBitmap(source);
@@ -405,7 +429,21 @@ registerOperation({
       label: "保存格式",
       type: "string",
       default: "png",
-      description: "png 或 jpg。png 保留透明背景（推荐）；jpg 自动合成白底，适合非抠图素材",
+      description: "png / jpg / auto。超大画幅（>=800万像素）且无透明底时自动切换 jpg 避免上传 502",
+    },
+    {
+      name: "createNew",
+      label: "新建贴纸",
+      type: "boolean",
+      default: false,
+      description: "为 true 时强制新建一条自定义贴纸，不覆盖当前编辑态 ID",
+    },
+    {
+      name: "isTemplate",
+      label: "设为模板",
+      type: "boolean",
+      default: false,
+      description: "保存时是否直接标记为模板（isTemplate=true）",
     },
   ],
   async execute(params, ctx) {
@@ -420,14 +458,16 @@ registerOperation({
       autoImportToLibrary = false,
       materialFolderId,
       format = "png",
+      createNew = false,
+      isTemplate,
       jobId,
       inspirationId,
       parentId,
       revision,
       reviewStatus,
     } = params;
-    // 批量创作的每一张图都必须创建独立的 custom_sticker，不能沿用上一张的编辑 ID。
-    const editingCustomStickerId = batchTaskState
+    // 批量创作或显式 createNew 时必须创建独立的 custom_sticker，不能沿用上一张的编辑 ID。
+    const editingCustomStickerId = batchTaskState || createNew
       ? undefined
       : requestedCustomStickerId || currentEditingCustomStickerId.value || undefined;
 
@@ -533,17 +573,16 @@ registerOperation({
 
       setStep("导出贴纸图片…");
       let file: File;
-      const uniqueFileName = `sticker_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
-      let exportWidth = canvasEl.width;
-      let exportHeight = canvasEl.height;
-      if (autoTrim) {
-        const trimmedCanvas = Utils.trimCanvas(canvasEl);
-        file = await canvasToFile(trimmedCanvas, uniqueFileName, { format: format as 'png' | 'jpg' });
-        exportWidth = trimmedCanvas.width;
-        exportHeight = trimmedCanvas.height;
-      } else {
-        file = await canvasToFile(canvasEl, uniqueFileName, { format: format as 'png' | 'jpg' });
-      }
+      const targetCanvas = autoTrim ? Utils.trimCanvas(canvasEl) : canvasEl;
+      const exportWidth = targetCanvas.width;
+      const exportHeight = targetCanvas.height;
+      // 超大画幅且无透明像素（如 5400x2400 桌垫）默认 PNG 体积过大易触发代理 502，自动切换高质量 JPG
+      const isHugeOpaque =
+        exportWidth * exportHeight >= 8_000_000 && !hasCanvasTransparency(targetCanvas);
+      const effectiveFormat: "png" | "jpg" =
+        format === "jpg" || (format !== "png-force" && isHugeOpaque) ? "jpg" : "png";
+      const uniqueFileName = `sticker_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${effectiveFormat}`;
+      file = await canvasToFile(targetCanvas, uniqueFileName, { format: effectiveFormat });
 
       // 验证文件有效性
       if (!file || file.size < 100) {
@@ -589,7 +628,7 @@ registerOperation({
 
       const payload: any = {
         url: cos.url,
-        suffix: format === "jpg" ? "jpg" : "png",
+        suffix: effectiveFormat,
         name: name || "未命名贴纸",
         description: description || "",
         keywords: keywords || "",
@@ -605,6 +644,7 @@ registerOperation({
         parentId: parentId || undefined,
         revision: typeof revision === "number" ? revision : undefined,
         reviewStatus: reviewStatus || (jobId || inspirationId ? "pending" : undefined),
+        ...(typeof isTemplate === "boolean" ? { isTemplate } : {}),
       };
       setStep(editingCustomStickerId ? "更新贴纸记录…" : "写入贴纸库…");
       const savedRecord: any = await Promise.race([

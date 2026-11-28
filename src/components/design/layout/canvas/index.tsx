@@ -54,10 +54,6 @@ import {
 
 
 import {
-  createCanvasChildRawCanvas,
-  createDefaultCanvasChildRawCanvasOptions,
-} from "./children/rawCanvas.tsx";
-import {
   createCanvasChildWordCloud,
   createDefaultCanvasChildWordCloudOptions,
 } from "./children/wordCloud/index.tsx";
@@ -82,33 +78,13 @@ import {
   createDefaultCanvasChildCodeBlockOptions,
 } from "./children/codeBlock.tsx";
 import {
-  createCanvasChildMolecule,
-  createDefaultCanvasChildMoleculeOptions,
-} from "./children/molecule.tsx";
-import {
-  createCanvasChildThreeMol,
-  createDefaultCanvasChildThreeMolOptions,
-} from "./children/threeMol.tsx";
-import {
   createCanvasChildAbcNotation,
   createDefaultCanvasChildAbcNotationOptions,
 } from "./children/abcNotation.tsx";
 import {
-  createCanvasChildVexFlow,
-  createDefaultCanvasChildVexFlowOptions,
-} from "./children/vexFlow.tsx";
-import {
   createCanvasChildCytoscape,
   createDefaultCanvasChildCytoscapeOptions,
 } from "./children/cytoscape.tsx";
-import {
-  createCanvasChildCytoscapeGraph,
-  createDefaultCanvasChildCytoscapeGraphOptions,
-} from "./children/cytoscapeGraph.tsx";
-import {
-  createCanvasChildVueDataUi,
-  createDefaultCanvasChildVueDataUiOptions,
-} from "./children/vueDataUi.tsx";
 import {
   createCanvasChildD3,
   createDefaultCanvasChildD3Options,
@@ -130,14 +106,6 @@ import {
   createDefaultCanvasChildSimplexNoiseOptions,
 } from "./children/simplexNoise.tsx";
 import {
-  createCanvasChildGraphviz,
-  createDefaultCanvasChildGraphvizOptions,
-} from "./children/graphviz.tsx";
-import {
-  createCanvasChildDagreGraph,
-  createDefaultCanvasChildDagreGraphOptions,
-} from "./children/dagreGraph.tsx";
-import {
   createCanvasChildRoughShape,
   createDefaultCanvasChildRoughShapeOptions,
 } from "./children/roughShape.tsx";
@@ -146,21 +114,9 @@ import {
   createDefaultCanvasChildChartjsOptions,
 } from "./children/chartjs.tsx";
 import {
-  createCanvasChildFrappeChart,
-  createDefaultCanvasChildFrappeChartOptions,
-} from "./children/frappeChart.tsx";
-import {
   createCanvasChildChartXkcd,
   createDefaultCanvasChildChartXkcdOptions,
 } from "./children/chartXkcd.tsx";
-import {
-  createCanvasChildPlotlyChart,
-  createDefaultCanvasChildPlotlyChartOptions,
-} from "./children/plotlyChart.tsx";
-import {
-  createCanvasChildVegaLite,
-  createDefaultCanvasChildVegaLiteOptions,
-} from "./children/vegaLite.tsx";
 import {
   createCanvasChildWaveform,
   createDefaultCanvasChildWaveformOptions,
@@ -169,14 +125,6 @@ import {
   createCanvasChildMarkmapChart,
   createDefaultCanvasChildMarkmapChartOptions,
 } from "./children/markmapChart.tsx";
-import {
-  createCanvasChildParticlesEffect,
-  createDefaultCanvasChildParticlesEffectOptions,
-} from "./children/particlesEffect.tsx";
-import {
-  createCanvasChildConfetti,
-  createDefaultCanvasChildConfettiOptions,
-} from "./children/confetti.tsx";
 import {
   createCanvasChildTrianglify,
   createDefaultCanvasChildTrianglifyOptions,
@@ -429,7 +377,6 @@ import backgroundLayout from "./operateLayout/background.vue";
 import canvasLayout from "./operateLayout/canvas.vue";
 import textLayout from "./operateLayout/text.vue";
 import imageLayout from "./operateLayout/image.vue";
-import rawCanvasLayout from "./operateLayout/rawCanvas.vue";
 import qrcodeLayout from "./operateLayout/qrcode.vue";
 import rectLayout from "./operateLayout/rect.vue";
 import ellipseLayout from "./operateLayout/ellipse.vue";
@@ -441,31 +388,19 @@ import echartLayout from "./operateLayout/echart.vue";
 import mathLayout from "./operateLayout/mathFormula.vue";
 import mermaidLayout from "./operateLayout/mermaid.vue";
 import codeBlockLayout from "./operateLayout/codeBlock.vue";
-import moleculeLayout from "./operateLayout/molecule.vue";
-import threeMolLayout from "./operateLayout/threeMol.vue";
 import abcNotationLayout from "./operateLayout/abcNotation.vue";
-import vexFlowLayout from "./operateLayout/vexFlow.vue";
 import cytoscapeLayout from "./operateLayout/cytoscape.vue";
-import cytoscapeGraphLayout from "./operateLayout/cytoscapeGraph.vue";
-import vueDataUiLayout from "./operateLayout/vueDataUi.vue";
 import d3Layout from "./operateLayout/d3.vue";
 import d3CloudLayout from "./operateLayout/d3Cloud.vue";
 import figletLayout from "./operateLayout/figlet.vue";
 import opentypeTextLayout from "./operateLayout/opentypeText.vue";
 import simplexNoiseLayout from "./operateLayout/simplexNoise.vue";
-import graphvizLayout from "./operateLayout/graphviz.vue";
-import dagreGraphLayout from "./operateLayout/dagreGraph.vue";
 import roughShapeLayout from "./operateLayout/roughShape.vue";
 import chartjsLayout from "./operateLayout/chartjs.vue";
-import frappeChartLayout from "./operateLayout/frappeChart.vue";
 import chartXkcdLayout from "./operateLayout/chartXkcd.vue";
-import plotlyChartLayout from "./operateLayout/plotlyChart.vue";
-import vegaLiteLayout from "./operateLayout/vegaLite.vue";
 import starChartLayout from "./operateLayout/starChart.vue";
 import waveformLayout from "./operateLayout/waveform.vue";
 import markmapChartLayout from "./operateLayout/markmapChart.vue";
-import particlesEffectLayout from "./operateLayout/particlesEffect.vue";
-import confettiLayout from "./operateLayout/confetti.vue";
 import trianglifyPatternLayout from "./operateLayout/trianglifyPattern.vue";
 
 import {
@@ -515,15 +450,6 @@ defineCanvasChild({
 });
 
 defineCanvasChild({
-  typeName: "rawCanvas",
-  typeKey: "rawCanvas",
-  label: "程序画布 (Canvas)",
-  defaultOptionsCreator: createDefaultCanvasChildRawCanvasOptions,
-  renderer: createCanvasChildRawCanvas,
-  operationLayout: rawCanvasLayout,
-});
-
-defineCanvasChild({
   typeName: "wordCloud",
   typeKey: "wordCloud",
   label: "词云 (wordcloud2)",
@@ -566,15 +492,6 @@ defineCanvasChild({
   defaultOptionsCreator: createDefaultCanvasChildMermaidOptions,
   renderer: createCanvasChildMermaid,
   operationLayout: mermaidLayout,
-});
-
-defineCanvasChild({
-  typeName: "graphviz",
-  typeKey: "graphviz",
-  label: "Graphviz (DOT)",
-  defaultOptionsCreator: createDefaultCanvasChildGraphvizOptions,
-  renderer: createCanvasChildGraphviz,
-  operationLayout: graphvizLayout,
 });
 
 defineCanvasChild({
@@ -632,24 +549,6 @@ defineCanvasChild({
 });
 
 defineCanvasChild({
-  typeName: "molecule",
-  typeKey: "molecule",
-  label: "分子结构 (RDKit.js)",
-  defaultOptionsCreator: createDefaultCanvasChildMoleculeOptions,
-  renderer: createCanvasChildMolecule,
-  operationLayout: moleculeLayout,
-});
-
-defineCanvasChild({
-  typeName: "threeMol",
-  typeKey: "threeMol",
-  label: "3D分子 (3Dmol.js)",
-  defaultOptionsCreator: createDefaultCanvasChildThreeMolOptions,
-  renderer: createCanvasChildThreeMol,
-  operationLayout: threeMolLayout,
-});
-
-defineCanvasChild({
   typeName: "abcNotation",
   typeKey: "abcNotation",
   label: "乐谱 (abcjs)",
@@ -659,39 +558,12 @@ defineCanvasChild({
 });
 
 defineCanvasChild({
-  typeName: "vexFlow",
-  typeKey: "vexFlow",
-  label: "五线谱 (VexFlow)",
-  defaultOptionsCreator: createDefaultCanvasChildVexFlowOptions,
-  renderer: createCanvasChildVexFlow,
-  operationLayout: vexFlowLayout,
-});
-
-defineCanvasChild({
   typeName: "cytoscape",
   typeKey: "cytoscape",
   label: "关系图 (Cytoscape.js)",
   defaultOptionsCreator: createDefaultCanvasChildCytoscapeOptions,
   renderer: createCanvasChildCytoscape,
   operationLayout: cytoscapeLayout,
-});
-
-defineCanvasChild({
-  typeName: "cytoscapeGraph",
-  typeKey: "cytoscapeGraph",
-  label: "网络图 (Cytoscape Graph)",
-  defaultOptionsCreator: createDefaultCanvasChildCytoscapeGraphOptions,
-  renderer: createCanvasChildCytoscapeGraph,
-  operationLayout: cytoscapeGraphLayout,
-});
-
-defineCanvasChild({
-  typeName: "vueDataUi",
-  typeKey: "vueDataUi",
-  label: "数据图表 (vue-data-ui)",
-  defaultOptionsCreator: createDefaultCanvasChildVueDataUiOptions,
-  renderer: createCanvasChildVueDataUi,
-  operationLayout: vueDataUiLayout,
 });
 
 defineCanvasChild({
@@ -749,30 +621,12 @@ defineCanvasChild({
 });
 
 defineCanvasChild({
-  typeName: "dagreGraph",
-  typeKey: "dagreGraph",
-  label: "有向图布局 (dagre)",
-  defaultOptionsCreator: createDefaultCanvasChildDagreGraphOptions,
-  renderer: createCanvasChildDagreGraph,
-  operationLayout: dagreGraphLayout,
-});
-
-defineCanvasChild({
   typeName: "chartjs",
   typeKey: "chartjs",
   label: "图表 (Chart.js)",
   defaultOptionsCreator: createDefaultCanvasChildChartjsOptions,
   renderer: createCanvasChildChartjs,
   operationLayout: chartjsLayout,
-});
-
-defineCanvasChild({
-  typeName: "frappeChart",
-  typeKey: "frappeChart",
-  label: "图表 (Frappe Charts)",
-  defaultOptionsCreator: createDefaultCanvasChildFrappeChartOptions,
-  renderer: createCanvasChildFrappeChart,
-  operationLayout: frappeChartLayout,
 });
 
 defineCanvasChild({
@@ -794,24 +648,6 @@ defineCanvasChild({
 });
 
 defineCanvasChild({
-  typeName: "plotlyChart",
-  typeKey: "plotlyChart",
-  label: "科学图表 (Plotly.js)",
-  defaultOptionsCreator: createDefaultCanvasChildPlotlyChartOptions,
-  renderer: createCanvasChildPlotlyChart,
-  operationLayout: plotlyChartLayout,
-});
-
-defineCanvasChild({
-  typeName: "vegaLite",
-  typeKey: "vegaLite",
-  label: "图表 (Vega-Lite)",
-  defaultOptionsCreator: createDefaultCanvasChildVegaLiteOptions,
-  renderer: createCanvasChildVegaLite,
-  operationLayout: vegaLiteLayout,
-});
-
-defineCanvasChild({
   typeName: "waveform",
   typeKey: "waveform",
   label: "音频波形 (Wavesurfer.js)",
@@ -827,24 +663,6 @@ defineCanvasChild({
   defaultOptionsCreator: createDefaultCanvasChildMarkmapChartOptions,
   renderer: createCanvasChildMarkmapChart,
   operationLayout: markmapChartLayout,
-});
-
-defineCanvasChild({
-  typeName: "particlesEffect",
-  typeKey: "particlesEffect",
-  label: "粒子效果 (Particles.js)",
-  defaultOptionsCreator: createDefaultCanvasChildParticlesEffectOptions,
-  renderer: createCanvasChildParticlesEffect,
-  operationLayout: particlesEffectLayout,
-});
-
-defineCanvasChild({
-  typeName: "confetti",
-  typeKey: "confetti",
-  label: "撒花效果 (canvas-confetti)",
-  defaultOptionsCreator: createDefaultCanvasChildConfettiOptions,
-  renderer: createCanvasChildConfetti,
-  operationLayout: confettiLayout,
 });
 
 defineCanvasChild({

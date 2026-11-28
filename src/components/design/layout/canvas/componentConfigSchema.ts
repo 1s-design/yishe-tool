@@ -1276,12 +1276,32 @@ export function remapBindingBySchema(componentType: string, binding: Record<stri
 }
 
 /**
+ * 已精简下线的冗余/低频组件（不向 AI 提示词与添加菜单暴露，仅保留映射兼容）
+ */
+export const PRUNED_COMPONENT_TYPES = new Set([
+  "cytoscapeGraph",
+  "frappeChart",
+  "plotlyChart",
+  "vegaLite",
+  "vueDataUi",
+  "dagreGraph",
+  "graphviz",
+  "rawCanvas",
+  "molecule",
+  "threeMol",
+  "vexFlow",
+  "particlesEffect",
+  "confetti",
+]);
+
+/**
  * 生成 AI 提示词中使用的组件文档说明
  */
 export function generateAiComponentDocs(): string {
   const docsLines: string[] = [];
   
   for (const [type, config] of Object.entries(COMPONENT_CONFIGS)) {
+    if (PRUNED_COMPONENT_TYPES.has(type)) continue;
     docsLines.push(`    * **${type}** (${config.label})：`);
     
     const props = Object.entries(config.aiBindingSchema)

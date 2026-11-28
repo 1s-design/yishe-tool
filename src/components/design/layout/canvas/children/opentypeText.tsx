@@ -107,7 +107,12 @@ export const OpentypeTextChild = defineComponent({
       errorMessage.value = "";
 
       try {
-        const font = await opentype.load(currentFontUrl);
+        const resp = await fetch(currentFontUrl);
+        if (!resp.ok) {
+          throw new Error(`字体请求失败 (${resp.status})`);
+        }
+        const buffer = await resp.arrayBuffer();
+        const font = opentype.parse(buffer);
         if (token !== renderToken) return;
         const path = font.getPath(
           currentText,
@@ -163,8 +168,8 @@ export const OpentypeTextChild = defineComponent({
 
       const style: any = {
         flexShrink: 0,
-        width: formatToNativeSizeString(props.options.width),
-        height: formatToNativeSizeString(props.options.height),
+        width: "100%",
+        height: "100%",
         transform: createTransformString(props.options.transform),
         filter: createFilterFromOptions(props.options.filter),
         zIndex: props.options.zIndex,

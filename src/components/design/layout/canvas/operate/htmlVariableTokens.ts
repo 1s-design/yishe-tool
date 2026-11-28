@@ -60,37 +60,32 @@ export const systemGroupedVariables = [
 
 export const componentReferenceItems = [
   {
+    category: "文字与编码",
+    items: [
+      { name: "词云图 (WordCloud2)", token: "{{wordCloud.myCloud}}" },
+      { name: "D3 矢量词云", token: "{{d3Cloud.myCloud}}" },
+      { name: "OpenType 路径字", token: "{{opentypeText.brandTitle}}" },
+      { name: "Figlet 艺术字", token: "{{figlet.artText}}" },
+      { name: "二维码", token: "{{qrcode.myCode}}" },
+      { name: "条形码", token: "{{barcode.myCode}}" },
+      { name: "Shiki 代码高亮", token: "{{codeBlock.myCode}}" },
+    ],
+  },
+  {
     category: "数据图表",
     items: [
       { name: "ECharts 图表", token: "{{echart.myChart}}" },
       { name: "Chart.js 图表", token: "{{chartjs.myChart}}" },
-      { name: "Plotly 科学图表", token: "{{plotlyChart.myChart}}" },
-      { name: "Frappe 极简图表", token: "{{frappeChart.myChart}}" },
       { name: "xkcd 手绘图表", token: "{{chartXkcd.myChart}}" },
-      { name: "Data UI 图表", token: "{{vueDataUi.myReport}}" },
-      { name: "Vega-Lite 规范", token: "{{vegaLite.myChart}}" },
     ],
   },
   {
-    category: "3D与图形",
+    category: "3D 与图形",
     items: [
       { name: "Three.js 3D场景", token: "{{threejs.myScene}}" },
       { name: "Cytoscape 关系图", token: "{{cytoscape.myGraph}}" },
-      { name: "Dagre 拓扑图", token: "{{dagreGraph.myGraph}}" },
       { name: "D3 自定义绘图", token: "{{d3.myChart}}" },
       { name: "Rough 手绘图形", token: "{{roughShape.myShape}}" },
-      { name: "程序画布 Canvas", token: "{{rawCanvas.myCanvas}}" },
-    ],
-  },
-  {
-    category: "文字与编码",
-    items: [
-      { name: "二维码", token: "{{qrcode.myCode}}" },
-      { name: "条形码", token: "{{barcode.myCode}}" },
-      { name: "Figlet 艺术字", token: "{{figlet.artText}}" },
-      { name: "OpenType 路径字", token: "{{opentypeText.brandTitle}}" },
-      { name: "Shiki 代码高亮", token: "{{codeBlock.myCode}}" },
-      { name: "D3 词云图", token: "{{wordCloud.myCloud}}" },
     ],
   },
   {
@@ -98,24 +93,13 @@ export const componentReferenceItems = [
     items: [
       { name: "KaTeX 数学公式", token: "{{math.formula}}" },
       { name: "Mermaid 流程图", token: "{{mermaid.flowchart}}" },
-      { name: "Graphviz DOT网络", token: "{{graphviz.dotGraph}}" },
-      { name: "RDKit 2D分子式", token: "{{molecule.mol2d}}" },
-      { name: "3Dmol 3D分子结构", token: "{{threeMol.mol3d}}" },
       { name: "Markmap 思维导图", token: "{{markmapChart.mindmap}}" },
-    ],
-  },
-  {
-    category: "乐谱",
-    items: [
       { name: "ABC 简易乐谱", token: "{{abcNotation.score}}" },
-      { name: "VexFlow 五线谱", token: "{{vexFlow.musicSheet}}" },
     ],
   },
   {
-    category: "特效与背景",
+    category: "特效与纹理",
     items: [
-      { name: "Particles 粒子特效", token: "{{particlesEffect.particles}}" },
-      { name: "Confetti 撒花效果", token: "{{confetti.effect}}" },
       { name: "Trianglify 三角背景", token: "{{trianglify.pattern}}" },
       { name: "Astronomy 星座图", token: "{{starChart.starMap}}" },
       { name: "Waveform 音频波形", token: "{{waveform.audioWave}}" },

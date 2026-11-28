@@ -55,7 +55,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 const open = ref(false);
 const keyword = ref("");
 
-// 固定图层及已废弃的旧元素类型不在「添加组件」中暴露
+// 固定图层、已废弃元素及已精简的冗余组件不在「添加组件」中暴露
 const HIDDEN_TYPES = new Set([
   "canvas",
   "html",
@@ -64,32 +64,41 @@ const HIDDEN_TYPES = new Set([
   "background",
   "rect",
   "ellipse",
+  "cytoscapeGraph",
+  "frappeChart",
+  "plotlyChart",
+  "vegaLite",
+  "vueDataUi",
+  "dagreGraph",
+  "graphviz",
+  "rawCanvas",
+  "molecule",
+  "threeMol",
+  "vexFlow",
+  "particlesEffect",
+  "confetti",
 ]);
 
 const CATEGORY_DEFS: Array<{ title: string; keys: string[] }> = [
   {
     title: "文字与编码",
-    keys: ["wordCloud", "d3Cloud", "qrcode", "barcode", "figlet", "opentypeText", "codeBlock"],
+    keys: ["wordCloud", "d3Cloud", "opentypeText", "figlet", "qrcode", "barcode", "codeBlock"],
   },
   {
     title: "数据图表",
-    keys: ["echart", "chartjs", "plotlyChart", "frappeChart", "chartXkcd", "vueDataUi", "vegaLite"],
+    keys: ["echart", "chartjs", "chartXkcd"],
   },
   {
     title: "3D 与图形",
-    keys: ["threeScene", "cytoscape", "cytoscapeGraph", "dagreGraph", "d3", "roughShape", "rawCanvas"],
+    keys: ["threeScene", "cytoscape", "d3", "roughShape"],
   },
   {
     title: "科学与文档",
-    keys: ["math", "mermaid", "graphviz", "molecule", "threeMol", "markmapChart"],
+    keys: ["math", "mermaid", "markmapChart", "abcNotation"],
   },
   {
-    title: "乐谱",
-    keys: ["abcNotation", "vexFlow"],
-  },
-  {
-    title: "特效与背景",
-    keys: ["particlesEffect", "confetti", "trianglify", "starChart", "waveform", "simplexNoise"],
+    title: "特效与纹理",
+    keys: ["trianglify", "starChart", "waveform", "simplexNoise"],
   },
 ];
 
